@@ -1,0 +1,11 @@
+[tool.uv.workspace]
+members = [
+    "packages/core",
+    "packages/instrumentation-livekit",
+]
+
+[tool.uv.sources]
+# Resolve parlot-core from the local workspace during development.
+# When published to PyPI, the version constraint in each package's
+# pyproject.toml takes over.
+parlot-core = { workspace = true }

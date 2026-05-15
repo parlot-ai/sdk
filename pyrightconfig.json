@@ -1,0 +1,11 @@
+{
+  "pythonVersion": "3.11",
+  "venvPath": ".",
+  "venv": ".venv",
+  "include": [
+    "packages/core/src",
+    "packages/instrumentation-livekit/src",
+    "examples",
+    "packages/instrumentation-livekit/tests"
+  ]
+}

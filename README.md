@@ -3,4 +3,4 @@
 Open-source SDK and instrumentation libraries for the Parlot.ai multi-agent observability platform.
 
 ## Structure
-- `packages/instrumentation-livekit/`: LiveKit span processor
+- `packages/instrumentation-livekit/`: LiveKit span processor (own `pyproject.toml`, `CHANGELOG.md`, release-please component)

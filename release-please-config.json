@@ -1,7 +1,9 @@
 {
   "packages": {
-    ".": {
-      "release-type": "node",
+    "packages/instrumentation-livekit": {
+      "release-type": "python",
+      "component": "instrumentation-livekit",
+      "package-name": "parlot-instrumentation-livekit",
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true
     }
