@@ -9,6 +9,7 @@ from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 
+from ._export import QuietOTLPMetricExporter
 from parlot.core.attrs import (
     ATTR_SESSION_ID,
     ATTR_TURN_INDEX,
@@ -20,9 +21,10 @@ if TYPE_CHECKING:
 
 
 def build_meter_provider(endpoint: str, headers: dict[str, str]) -> MeterProvider:
-    exporter = OTLPMetricExporter(
-        endpoint=endpoint.rstrip("/") + "/v1/metrics",
-        headers=headers,
+    metrics_endpoint = endpoint.rstrip("/") + "/v1/metrics"
+    exporter = QuietOTLPMetricExporter(
+        OTLPMetricExporter(endpoint=metrics_endpoint, headers=headers),
+        endpoint_label=metrics_endpoint,
     )
     reader = PeriodicExportingMetricReader(exporter, export_interval_millis=5_000)
     return MeterProvider(metric_readers=[reader])

@@ -108,6 +108,7 @@ def _build_provider(
 
     from opentelemetry import metrics as otel_metrics
 
+    from ._export import QuietOTLPSpanExporter
     from ._metrics import ParlotMetricsRecorder, build_meter_provider
     from ._processor import LiveKitGenAIProcessor
 
@@ -115,9 +116,10 @@ def _build_provider(
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
 
-    exporter = OTLPSpanExporter(
-        endpoint=endpoint.rstrip("/") + "/v1/traces",
-        headers=headers,
+    trace_endpoint = endpoint.rstrip("/") + "/v1/traces"
+    exporter = QuietOTLPSpanExporter(
+        OTLPSpanExporter(endpoint=trace_endpoint, headers=headers),
+        endpoint_label=trace_endpoint,
     )
 
     processor = LiveKitGenAIProcessor(
