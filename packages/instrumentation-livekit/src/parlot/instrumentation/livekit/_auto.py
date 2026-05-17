@@ -106,6 +106,9 @@ def _build_provider(
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
+    from opentelemetry import metrics as otel_metrics
+
+    from ._metrics import ParlotMetricsRecorder, build_meter_provider
     from ._processor import LiveKitGenAIProcessor
 
     headers = {}
@@ -117,12 +120,20 @@ def _build_provider(
         headers=headers,
     )
 
-    provider = TracerProvider()
-    provider.add_span_processor(LiveKitGenAIProcessor(
+    processor = LiveKitGenAIProcessor(
         capture_content=capture_content,
         prices=prices,
-    ))
+    )
+
+    provider = TracerProvider()
+    provider.add_span_processor(processor)
     provider.add_span_processor(BatchSpanProcessor(exporter))
+
+    meter_provider = build_meter_provider(endpoint, headers)
+    otel_metrics.set_meter_provider(meter_provider)
+    processor.set_tracer(provider.get_tracer("parlot.instrumentation.livekit"))
+    processor.set_metrics(ParlotMetricsRecorder(meter_provider))
+
     return provider
 
 

@@ -74,6 +74,7 @@ ATTR_CONVERSATION_ID      = "conversation.id"
 ATTR_CONVERSATION_CHANNEL = "conversation.channel"  # voice | webchat | sms | whatsapp
 
 # -- Turn ------------------------------------------------------------------
+ATTR_TURN_PREV_TRACE_ID     = "turn.prev_trace_id"
 ATTR_TURN_INDEX             = "turn.index"
 ATTR_TURN_PARTICIPANT_ID    = "turn.participant_id"
 ATTR_TURN_PARTICIPANT_ROLE  = "turn.participant_role"

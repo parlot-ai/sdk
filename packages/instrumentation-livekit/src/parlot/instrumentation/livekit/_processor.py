@@ -43,6 +43,7 @@ from typing import Optional
 from opentelemetry.sdk.trace import ReadableSpan
 
 from parlot.core.attrs import (
+    ATTR_AGENT_FRAMEWORK,
     ATTR_GEN_AI_AUDIO_IN,
     ATTR_GEN_AI_AUDIO_OUT,
     ATTR_GEN_AI_CACHE_HIT_RATE,
@@ -87,7 +88,11 @@ from parlot.core.attrs import (
     ATTR_LK_TURN_INTERRUPTED,
     ATTR_LK_TTS_INPUT_TEXT,
     ATTR_LK_USER_INPUT,
+    ATTR_SESSION_CONVERSATION_ID,
+    ATTR_SESSION_ID,
+    ATTR_TURN_INDEX,
 )
+from parlot.core.ids import new_session_id
 from ._platform_refs import (
     clear_livekit_job_context,
     lookup_room_context,
@@ -96,6 +101,7 @@ from ._platform_refs import (
 from parlot.core.pricing import DEFAULT_PRICES, compute_cost
 from parlot.core.processor import ParlotBaseProcessor
 from parlot.core.session import SessionState as _BaseSessionState
+from ._turn_traces import emit_turn_root_span
 
 logger = logging.getLogger("parlot.instrumentation.livekit")
 
@@ -110,6 +116,9 @@ class _LiveKitSessionState(_BaseSessionState):
     # Set when a handoff span ends; cleared when the next LLM span starts.
     # Used to compute the dead-air transition latency between agents.
     pending_handoff_end_ns: int = 0
+    parlot_session_id: str = ""
+    conversation_id: str = ""
+    last_turn_trace_id: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -151,6 +160,8 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         self._capture_content = capture_content
         self._handoff_tools = handoff_tool_names or set()
         self._sessions: dict[str, _LiveKitSessionState] = {}
+        self._tracer = None  # set by configure() for per-turn root spans
+        self._metrics = None  # ParlotMetricsRecorder from configure()
 
     def on_end(self, span: ReadableSpan) -> None:
         try:
@@ -162,12 +173,20 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
     # Dispatch
     # ------------------------------------------------------------------
 
+    def set_tracer(self, tracer) -> None:
+        """Called from configure() so turn roots can be exported."""
+        self._tracer = tracer
+
+    def set_metrics(self, metrics) -> None:
+        """Called from configure() for OTLP metric export."""
+        self._metrics = metrics
+
     def _enrich(self, span: ReadableSpan) -> None:
         name     = span.name
-        trace_id = self._trace_id_hex(span)
-        state    = self._sessions.setdefault(trace_id, _LiveKitSessionState())
-
         attrs = span.attributes or {}
+        job_key = str(attrs.get(ATTR_LK_JOB_ID) or self._trace_id_hex(span))
+        state    = self._sessions.setdefault(job_key, _LiveKitSessionState())
+
         self._maybe_update(state, "session_id",  attrs.get(ATTR_LK_JOB_ID))
         self._maybe_update(state, "room_name",   attrs.get(ATTR_LK_ROOM_NAME))
         self._maybe_update(state, "room_sid",    attrs.get(ATTR_LK_ROOM_SID))
@@ -192,6 +211,10 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             room_sid=state.room_sid,
         )
 
+        self._ensure_parlot_session(state)
+        self._stamp_session_turn_attrs(span, state)
+        self._set(span, ATTR_AGENT_FRAMEWORK, "livekit")
+
         if   name == "llm_request_run":      self._enrich_llm_request(span, state)
         elif name == "llm_node":             self._enrich_llm_node(span, state)
         elif name == "tts_node":             self._enrich_tts_node(span, state)
@@ -199,7 +222,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         elif name == "function_tool":        self._enrich_function_tool(span, state)
         elif name == "drain_agent_activity": self._enrich_turn(span, state)
         elif name == "eou_detection":        self._enrich_eou(span, state)
-        elif name == "job_entrypoint":       self._enrich_root(span, state, trace_id)
+        elif name == "job_entrypoint":       self._enrich_root(span, state, job_key)
 
     # ------------------------------------------------------------------
     # llm_request_run — actual LLM API call
@@ -246,6 +269,8 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         attrs = span.attributes or {}
         state.turn_count += 1
         self._set(span, ATTR_LK_TURN_INDEX, state.turn_count)
+        self._set(span, ATTR_TURN_INDEX, state.turn_count)
+        self._emit_turn_trace(state)
 
         if not attrs.get(ATTR_GEN_AI_SYSTEM):
             system = _provider_to_system(str(attrs.get(ATTR_GEN_AI_PROVIDER, "")))
@@ -352,6 +377,14 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if attrs.get(ATTR_LK_INTERRUPTED):
             self._set(span, ATTR_LK_TURN_INTERRUPTED, True)
 
+        if self._metrics and state.parlot_session_id:
+            e2e = attrs.get(ATTR_LK_E2E_LATENCY)
+            self._metrics.record_turn(
+                state,
+                e2e_latency_s=float(e2e) if e2e is not None else None,
+                interrupted=bool(attrs.get(ATTR_LK_INTERRUPTED)),
+            )
+
         if self._capture_content:
             user_input = attrs.get(ATTR_LK_USER_INPUT, "")
             if user_input:
@@ -374,8 +407,34 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
     # job_entrypoint — root span; write session-level aggregates then clean up
     # ------------------------------------------------------------------
 
+    def _ensure_parlot_session(self, state: _LiveKitSessionState) -> None:
+        if not state.parlot_session_id:
+            state.parlot_session_id = new_session_id()
+            state.conversation_id = state.parlot_session_id
+
+    def _stamp_session_turn_attrs(
+        self, span: ReadableSpan, state: _LiveKitSessionState
+    ) -> None:
+        if state.parlot_session_id:
+            self._set(span, ATTR_SESSION_ID, state.parlot_session_id)
+            self._set(span, ATTR_SESSION_CONVERSATION_ID, state.conversation_id)
+        if state.turn_count:
+            self._set(span, ATTR_TURN_INDEX, state.turn_count)
+
+    def _emit_turn_trace(self, state: _LiveKitSessionState) -> None:
+        if not self._tracer or not state.parlot_session_id:
+            return
+        prev = state.last_turn_trace_id
+        state.last_turn_trace_id = emit_turn_root_span(
+            self._tracer,
+            session_id=state.parlot_session_id,
+            conversation_id=state.conversation_id,
+            turn_index=state.turn_count,
+            prev_trace_id=prev,
+        )
+
     def _enrich_root(
-        self, span: ReadableSpan, state: _LiveKitSessionState, trace_id: str
+        self, span: ReadableSpan, state: _LiveKitSessionState, job_key: str
     ) -> None:
         self._set(span, ATTR_LK_SESSION_TURNS,        state.turn_count)
         self._set(span, ATTR_LK_SESSION_TOOL_CALLS,   state.tool_call_count)
@@ -391,8 +450,11 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             self._set(span, ATTR_LK_SESSION_AGENT_CHAIN,
                       " → ".join(state.agent_chain))
 
+        if self._metrics and state.parlot_session_id:
+            self._metrics.record_session_close(state)
+
         clear_livekit_job_context(state.session_id)
-        self._sessions.pop(trace_id, None)
+        self._sessions.pop(job_key, None)
 
 
 # ---------------------------------------------------------------------------
