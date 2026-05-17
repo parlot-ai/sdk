@@ -58,6 +58,9 @@ from parlot.core.attrs import (
     ATTR_GEN_AI_TOOL_DURATION_MS,
     ATTR_GEN_AI_TOOL_IS_HANDOFF,
     ATTR_GEN_AI_TTS_TTFB_S,
+    EVENT_GEN_AI_ASSISTANT_MESSAGE,
+    EVENT_GEN_AI_TOOL_MESSAGE,
+    EVENT_GEN_AI_USER_MESSAGE,
     ATTR_LK_AGENT_LABEL,
     ATTR_LK_AGENT_NAME,
     ATTR_LK_E2E_LATENCY,
@@ -310,7 +313,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if self._capture_content:
             text = attrs.get(ATTR_LK_TTS_INPUT_TEXT, "")
             if text:
-                self._add_event(span, "gen_ai.assistant.message",
+                self._add_event(span, EVENT_GEN_AI_ASSISTANT_MESSAGE,
                                 {"content": str(text), "modality": "text_for_speech"})
 
     # ------------------------------------------------------------------
@@ -355,11 +358,11 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if self._capture_content:
             tool_args = attrs.get(ATTR_LK_FNC_TOOL_ARGS, "")
             if tool_args:
-                self._add_event(span, "gen_ai.tool.message",
+                self._add_event(span, EVENT_GEN_AI_TOOL_MESSAGE,
                                 {"role": "tool", "content": str(tool_args),
                                  "direction": "input", "name": tool_name})
             if tool_output and not is_error:
-                self._add_event(span, "gen_ai.tool.message",
+                self._add_event(span, EVENT_GEN_AI_TOOL_MESSAGE,
                                 {"role": "tool", "content": tool_output,
                                  "direction": "output", "name": tool_name})
 
@@ -388,11 +391,11 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if self._capture_content:
             user_input = attrs.get(ATTR_LK_USER_INPUT, "")
             if user_input:
-                self._add_event(span, "gen_ai.user.message",
+                self._add_event(span, EVENT_GEN_AI_USER_MESSAGE,
                                 {"content": str(user_input)})
             response = attrs.get(ATTR_LK_RESPONSE_TEXT, "")
             if response:
-                self._add_event(span, "gen_ai.assistant.message",
+                self._add_event(span, EVENT_GEN_AI_ASSISTANT_MESSAGE,
                                 {"content": str(response)})
 
     # ------------------------------------------------------------------

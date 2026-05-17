@@ -10,8 +10,14 @@ from __future__ import annotations
 from .attrs import (
     ATTR_PLATFORM_FRAMEWORK,
     ATTR_PLATFORM_KIND,
+    ATTR_PLATFORM_REF_PREFIX,
     ATTR_PLATFORM_VALUE,
 )
+
+
+def platform_ref_flat_key(kind: str) -> str:
+    """Flat ``platform.ref.{kind}`` attribute key for ingestion fallbacks."""
+    return f"{ATTR_PLATFORM_REF_PREFIX}{kind}"
 
 
 def stamp_platform_refs(
@@ -44,4 +50,4 @@ def stamp_platform_refs(
     span._attributes[ATTR_PLATFORM_VALUE] = val
 
     for fw_i, kind_i, val_i in refs:
-        span._attributes[f"platform.ref.{kind_i}"] = val_i
+        span._attributes[platform_ref_flat_key(kind_i)] = val_i

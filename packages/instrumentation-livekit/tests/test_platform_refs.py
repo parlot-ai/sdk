@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+from parlot.core.attrs import (
+    ATTR_LK_JOB_ID,
+    ATTR_LK_ROOM_SID,
+    ATTR_PLATFORM_FRAMEWORK,
+    ATTR_PLATFORM_KIND,
+    ATTR_PLATFORM_VALUE,
+)
+from parlot.core.platform_refs import platform_ref_flat_key
 from parlot.instrumentation.livekit._platform_refs import (
     _livekit_platform_ref_triples,
     lookup_room_context,
@@ -40,12 +48,12 @@ def test_stamp_livekit_platform_refs() -> None:
         room_name="demo",
         room_sid="RM_test",
     )
-    assert span._attributes["platform.ref.framework"] == "livekit"
-    assert span._attributes["platform.ref.kind"] == "room_sid"
-    assert span._attributes["platform.ref.value"] == "RM_test"
-    assert span._attributes["lk.room.sid"] == "RM_test"
-    assert span._attributes["lk.job_id"] == "job-1"
-    assert span._attributes["platform.ref.room_name"] == "demo"
+    assert span._attributes[ATTR_PLATFORM_FRAMEWORK] == "livekit"
+    assert span._attributes[ATTR_PLATFORM_KIND] == "room_sid"
+    assert span._attributes[ATTR_PLATFORM_VALUE] == "RM_test"
+    assert span._attributes[ATTR_LK_ROOM_SID] == "RM_test"
+    assert span._attributes[ATTR_LK_JOB_ID] == "job-1"
+    assert span._attributes[platform_ref_flat_key("room_name")] == "demo"
 
 
 def test_stamp_skipped_when_no_ids() -> None:

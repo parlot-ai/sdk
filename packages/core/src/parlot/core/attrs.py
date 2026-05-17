@@ -39,6 +39,11 @@ ATTR_GEN_AI_TTS_TTFB_S      = "gen_ai.tts.ttfb_s"
 ATTR_GEN_AI_TOOL_IS_HANDOFF  = "gen_ai.tool.is_handoff"
 ATTR_GEN_AI_TOOL_DURATION_MS = "gen_ai.tool.duration_ms"
 
+# GenAI message events (OTel GenAI events, used for content capture)
+EVENT_GEN_AI_USER_MESSAGE       = "gen_ai.user.message"
+EVENT_GEN_AI_ASSISTANT_MESSAGE  = "gen_ai.assistant.message"
+EVENT_GEN_AI_TOOL_MESSAGE       = "gen_ai.tool.message"
+
 # ---------------------------------------------------------------------------
 # Layer 2 — OpenInference
 # ---------------------------------------------------------------------------
@@ -81,6 +86,7 @@ ATTR_TURN_PARTICIPANT_ROLE  = "turn.participant_role"
 ATTR_TURN_PARTICIPANT_LABEL = "turn.participant_label"
 ATTR_TURN_MEDIA_START_MS    = "turn.media_segment_start_ms"
 ATTR_TURN_MEDIA_END_MS      = "turn.media_segment_end_ms"
+ATTR_TURN_INTERRUPTED       = "turn.interrupted"
 
 # -- Participant / Diarization ---------------------------------------------
 ATTR_PARTICIPANT_ID           = "participant.id"
@@ -104,6 +110,7 @@ ATTR_EVAL_SCORE       = "eval.score"
 ATTR_EVAL_EXPLANATION = "eval.explanation"
 
 # -- Platform external references (session resolve / debug linking) --------
+ATTR_PLATFORM_REF_PREFIX = "platform.ref."  # append kind for flat ref keys
 ATTR_PLATFORM_FRAMEWORK = "platform.ref.framework"
 ATTR_PLATFORM_KIND      = "platform.ref.kind"
 ATTR_PLATFORM_VALUE     = "platform.ref.value"

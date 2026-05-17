@@ -9,6 +9,12 @@ from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 
+from parlot.core.attrs import (
+    ATTR_SESSION_ID,
+    ATTR_TURN_INDEX,
+    ATTR_TURN_INTERRUPTED,
+)
+
 if TYPE_CHECKING:
     from ._processor import _LiveKitSessionState
 
@@ -58,16 +64,16 @@ class ParlotMetricsRecorder:
       interrupted: bool,
   ) -> None:
       attrs = {
-          "session.id": state.parlot_session_id,
-          "turn.index": state.turn_count,
+          ATTR_SESSION_ID: state.parlot_session_id,
+          ATTR_TURN_INDEX: state.turn_count,
       }
       if e2e_latency_s is not None:
           self._turn_e2e.record(e2e_latency_s * 1000.0, attributes=attrs)
       if interrupted:
-          attrs = {**attrs, "turn.interrupted": True}
+          attrs = {**attrs, ATTR_TURN_INTERRUPTED: True}
 
   def record_session_close(self, state: "_LiveKitSessionState") -> None:
-      attrs = {"session.id": state.parlot_session_id}
+      attrs = {ATTR_SESSION_ID: state.parlot_session_id}
       if state.turn_count:
           self._session_turns.add(state.turn_count, attributes=attrs)
       if state.total_cost_usd:

@@ -6,6 +6,28 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from parlot.core.attrs import (
+    ATTR_GEN_AI_CACHE_HIT_RATE,
+    ATTR_GEN_AI_CACHED_TOKENS,
+    ATTR_GEN_AI_COST_USD,
+    ATTR_GEN_AI_IN_TOKENS,
+    ATTR_GEN_AI_MODEL,
+    ATTR_GEN_AI_OP_NAME,
+    ATTR_GEN_AI_OUT_TOKENS,
+    ATTR_GEN_AI_PROVIDER,
+    ATTR_GEN_AI_SYSTEM,
+    ATTR_GEN_AI_TOOL_DURATION_MS,
+    ATTR_GEN_AI_TOOL_IS_HANDOFF,
+    ATTR_LK_FNC_TOOL_NAME,
+    ATTR_LK_FNC_TOOL_OUTPUT,
+    ATTR_LK_JOB_ID,
+    ATTR_LK_RESPONSE_TEXT,
+    ATTR_LK_SESSION_TURNS,
+    ATTR_LK_TURN_INDEX,
+    ATTR_LK_USER_INPUT,
+    EVENT_GEN_AI_ASSISTANT_MESSAGE,
+    EVENT_GEN_AI_USER_MESSAGE,
+)
 from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
 
 
@@ -35,94 +57,94 @@ class TestLlmRequestEnrichment:
     def test_cost_computed(self) -> None:
         proc = LiveKitGenAIProcessor()
         span = _make_span("llm_request_run", {
-            "gen_ai.request.model": "gpt-4o",
-            "gen_ai.usage.input_tokens": 1000,
-            "gen_ai.usage.output_tokens": 500,
+            ATTR_GEN_AI_MODEL: "gpt-4o",
+            ATTR_GEN_AI_IN_TOKENS: 1000,
+            ATTR_GEN_AI_OUT_TOKENS: 500,
         })
         proc.on_end(span)
-        assert "gen_ai.usage.cost_usd" in span._attributes
-        assert span._attributes["gen_ai.usage.cost_usd"] > 0
+        assert ATTR_GEN_AI_COST_USD in span._attributes
+        assert span._attributes[ATTR_GEN_AI_COST_USD] > 0
 
     def test_system_inferred_from_provider(self) -> None:
         proc = LiveKitGenAIProcessor()
         span = _make_span("llm_request_run", {
-            "gen_ai.provider.name": "openai",
-            "gen_ai.usage.input_tokens": 10,
-            "gen_ai.usage.output_tokens": 10,
+            ATTR_GEN_AI_PROVIDER: "openai",
+            ATTR_GEN_AI_IN_TOKENS: 10,
+            ATTR_GEN_AI_OUT_TOKENS: 10,
         })
         proc.on_end(span)
-        assert span._attributes.get("gen_ai.system") == "openai"
+        assert span._attributes.get(ATTR_GEN_AI_SYSTEM) == "openai"
 
     def test_cache_hit_rate(self) -> None:
         proc = LiveKitGenAIProcessor()
         span = _make_span("llm_request_run", {
-            "gen_ai.request.model": "gpt-4o",
-            "gen_ai.usage.input_tokens": 1000,
-            "gen_ai.usage.output_tokens": 200,
-            "gen_ai.usage.input_cached_tokens": 400,
+            ATTR_GEN_AI_MODEL: "gpt-4o",
+            ATTR_GEN_AI_IN_TOKENS: 1000,
+            ATTR_GEN_AI_OUT_TOKENS: 200,
+            ATTR_GEN_AI_CACHED_TOKENS: 400,
         })
         proc.on_end(span)
-        assert span._attributes.get("gen_ai.usage.cache_hit_rate") == pytest.approx(0.4)
+        assert span._attributes.get(ATTR_GEN_AI_CACHE_HIT_RATE) == pytest.approx(0.4)
 
     def test_unknown_model_no_cost(self) -> None:
         proc = LiveKitGenAIProcessor()
         span = _make_span("llm_request_run", {
-            "gen_ai.request.model": "completely-unknown-model",
-            "gen_ai.usage.input_tokens": 100,
-            "gen_ai.usage.output_tokens": 50,
+            ATTR_GEN_AI_MODEL: "completely-unknown-model",
+            ATTR_GEN_AI_IN_TOKENS: 100,
+            ATTR_GEN_AI_OUT_TOKENS: 50,
         })
         proc.on_end(span)
-        assert "gen_ai.usage.cost_usd" not in span._attributes
+        assert ATTR_GEN_AI_COST_USD not in span._attributes
 
 
 class TestLlmNodeEnrichment:
     def test_turn_index_increments(self) -> None:
         proc = LiveKitGenAIProcessor()
         for expected in range(1, 4):
-            span = _make_span("llm_node", {"gen_ai.provider.name": "openai"})
+            span = _make_span("llm_node", {ATTR_GEN_AI_PROVIDER: "openai"})
             proc.on_end(span)
-            assert span._attributes["lk.turn_index"] == expected
+            assert span._attributes[ATTR_LK_TURN_INDEX] == expected
 
     def test_op_name_defaulted(self) -> None:
         proc = LiveKitGenAIProcessor()
         span = _make_span("llm_node")
         proc.on_end(span)
-        assert span._attributes.get("gen_ai.operation.name") == "chat"
+        assert span._attributes.get(ATTR_GEN_AI_OP_NAME) == "chat"
 
 
 class TestFunctionToolEnrichment:
     def test_handoff_auto_detected(self) -> None:
         proc = LiveKitGenAIProcessor()
         span = _make_span("function_tool", {
-            "lk.function_tool.name": "route",
-            "lk.function_tool.output": "AgentHandoff(agent=<BillingAgent object at 0x1>)",
+            ATTR_LK_FNC_TOOL_NAME: "route",
+            ATTR_LK_FNC_TOOL_OUTPUT: "AgentHandoff(agent=<BillingAgent object at 0x1>)",
         })
         proc.on_end(span)
-        assert span._attributes.get("gen_ai.tool.is_handoff") is True
+        assert span._attributes.get(ATTR_GEN_AI_TOOL_IS_HANDOFF) is True
 
     def test_handoff_explicit_name(self) -> None:
         proc = LiveKitGenAIProcessor(handoff_tool_names={"transfer_to_billing"})
         span = _make_span("function_tool", {
-            "lk.function_tool.name": "transfer_to_billing",
-            "lk.function_tool.output": "ok",
+            ATTR_LK_FNC_TOOL_NAME: "transfer_to_billing",
+            ATTR_LK_FNC_TOOL_OUTPUT: "ok",
         })
         proc.on_end(span)
-        assert span._attributes.get("gen_ai.tool.is_handoff") is True
+        assert span._attributes.get(ATTR_GEN_AI_TOOL_IS_HANDOFF) is True
 
     def test_non_handoff_tool(self) -> None:
         proc = LiveKitGenAIProcessor()
         span = _make_span("function_tool", {
-            "lk.function_tool.name": "get_account_balance",
-            "lk.function_tool.output": "1234.56",
+            ATTR_LK_FNC_TOOL_NAME: "get_account_balance",
+            ATTR_LK_FNC_TOOL_OUTPUT: "1234.56",
         })
         proc.on_end(span)
-        assert "gen_ai.tool.is_handoff" not in span._attributes
+        assert ATTR_GEN_AI_TOOL_IS_HANDOFF not in span._attributes
 
     def test_tool_duration_computed(self) -> None:
         proc = LiveKitGenAIProcessor()
         span = _make_span("function_tool", start_time=0, end_time=500_000_000)
         proc.on_end(span)
-        assert span._attributes.get("gen_ai.tool.duration_ms") == pytest.approx(500.0)
+        assert span._attributes.get(ATTR_GEN_AI_TOOL_DURATION_MS) == pytest.approx(500.0)
 
 
 class TestRootSpanAggregates:
@@ -137,7 +159,7 @@ class TestRootSpanAggregates:
             return s
 
         def _root():
-            s = _make_span("job_entrypoint", {"lk.job_id": "job-root"})
+            s = _make_span("job_entrypoint", {ATTR_LK_JOB_ID: "job-root"})
             s.context.trace_id = trace_id
             s.attributes = s._attributes
             return s
@@ -147,12 +169,12 @@ class TestRootSpanAggregates:
         root = _root()
         proc.on_end(root)
 
-        assert root._attributes["lk.session.turn_count"] == 2
+        assert root._attributes[ATTR_LK_SESSION_TURNS] == 2
 
     def test_state_cleaned_up_after_root(self) -> None:
         proc = LiveKitGenAIProcessor()
         trace_id = 0xABCD1234
-        root = _make_span("job_entrypoint", {"lk.job_id": "j1"})
+        root = _make_span("job_entrypoint", {ATTR_LK_JOB_ID: "j1"})
         root.context.trace_id = trace_id
         root.attributes = root._attributes
         proc.on_end(root)
@@ -164,19 +186,19 @@ class TestContentCapture:
     def test_content_captured_by_default(self) -> None:
         proc = LiveKitGenAIProcessor(capture_content=True)
         span = _make_span("drain_agent_activity", {
-            "lk.user_input": "Hello agent",
-            "lk.response.text": "Hi there",
+            ATTR_LK_USER_INPUT: "Hello agent",
+            ATTR_LK_RESPONSE_TEXT: "Hi there",
         })
         proc.on_end(span)
         event_names = [e.name for e in span._events]
-        assert "gen_ai.user.message" in event_names
-        assert "gen_ai.assistant.message" in event_names
+        assert EVENT_GEN_AI_USER_MESSAGE in event_names
+        assert EVENT_GEN_AI_ASSISTANT_MESSAGE in event_names
 
     def test_content_suppressed_when_disabled(self) -> None:
         proc = LiveKitGenAIProcessor(capture_content=False)
         span = _make_span("drain_agent_activity", {
-            "lk.user_input": "Hello agent",
-            "lk.response.text": "Hi there",
+            ATTR_LK_USER_INPUT: "Hello agent",
+            ATTR_LK_RESPONSE_TEXT: "Hi there",
         })
         proc.on_end(span)
         assert span._events == []
