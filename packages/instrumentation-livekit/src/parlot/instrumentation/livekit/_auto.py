@@ -4,7 +4,7 @@ Auto-configuration helpers for parlot-instrumentation-livekit.
 ``configure()`` is the main entry point. It:
   1. Builds a TracerProvider from env vars (or accepts a BYO provider).
   2. Registers it with livekit.agents.telemetry.
-  3. Patches WorkerOptions to auto-register the LiveKit job context
+  3. Patches the LiveKit job process to auto-register job context
      (room SID, job ID) before the user's entrypoint runs.
   4. Patches AgentSession to auto-install the handoff hook.
 
@@ -84,7 +84,7 @@ def configure(
         )
 
     _register_with_livekit(tracer_provider)
-    _patch_worker_options()
+    _patch_job_proc_entrypoint()
     _patch_agent_session_with_tracer(tracer_provider)
 
     _configured = True
@@ -150,52 +150,68 @@ def _register_with_livekit(provider) -> None:
         )
 
 
-def _patch_worker_options() -> None:
-    """Wrap WorkerOptions.entrypoint_fnc to auto-register job context.
+# Module-level wrapt decorator (pickle-safe identity; see _patch_job_proc_entrypoint).
+try:
+    import wrapt
 
-    This means the developer never needs to call
-    ``register_livekit_job_context_from_ctx(ctx)`` in their entrypoint.
-    """
-    try:
-        import livekit.agents as _lk_agents
-    except ImportError:
-        logger.debug("livekit-agents not importable; skipping WorkerOptions patch")
-        return
+    @wrapt.decorator
+    async def _parlot_entrypoint_wrapper(wrapped, instance, args, kwargs):
+        from ._platform_refs import register_livekit_job_context_from_ctx
 
-    WorkerOptions = getattr(_lk_agents, "WorkerOptions", None)
-    if WorkerOptions is None:
-        return
+        ctx = args[0] if args else kwargs.get("ctx")
+        if ctx is not None:
+            try:
+                register_livekit_job_context_from_ctx(ctx)
+            except Exception:
+                logger.debug("Could not auto-register job context", exc_info=True)
+        return await wrapped(*args, **kwargs)
 
-    if getattr(WorkerOptions, "_parlot_patched", False):
-        return
-
-    _original_init = WorkerOptions.__init__
-
-    def _patched_init(self, *args, **kwargs):
-        _original_init(self, *args, **kwargs)
-        if self.entrypoint_fnc is not None:
-            self.entrypoint_fnc = _wrap_entrypoint(self.entrypoint_fnc)
-
-    WorkerOptions.__init__ = _patched_init
-    WorkerOptions._parlot_patched = True
-    logger.debug("Patched WorkerOptions.__init__ for auto job context registration")
+except ImportError:  # pragma: no cover - configure() requires wrapt via pyproject
+    wrapt = None  # type: ignore[assignment]
+    _parlot_entrypoint_wrapper = None  # type: ignore[assignment,misc]
 
 
 def _wrap_entrypoint(entrypoint_fnc):
-    """Return a coroutine wrapper that registers job context before user code runs."""
-    from ._platform_refs import register_livekit_job_context_from_ctx
+    """Wrap the user entrypoint with the module-level Parlot decorator."""
+    if _parlot_entrypoint_wrapper is None:
+        raise RuntimeError(
+            "wrapt is required for parlot-instrumentation-livekit. "
+            "Install with: pip install wrapt"
+        )
+    if isinstance(entrypoint_fnc, wrapt.FunctionWrapper):
+        return entrypoint_fnc
+    return _parlot_entrypoint_wrapper(entrypoint_fnc)
 
-    import functools
 
-    @functools.wraps(entrypoint_fnc)
-    async def _wrapped(ctx):
-        try:
-            register_livekit_job_context_from_ctx(ctx)
-        except Exception:
-            logger.debug("Could not auto-register job context", exc_info=True)
-        return await entrypoint_fnc(ctx)
+def _patch_job_proc_entrypoint() -> None:
+    """Wrap the job entrypoint inside the job subprocess, not on WorkerOptions.
 
-    return _wrapped
+    LiveKit ``dev`` mode pickles ``AgentServer`` (including ``entrypoint_fnc``) into a
+    spawned worker via ``watchfiles``. Wrapping at ``WorkerOptions`` time produces a
+    non-picklable wrapper (nested function or ``__main__`` name collision).
+
+    We instead patch ``_JobProc.__init__`` so the wrapt wrapper is created only after
+    the user's function has been unpickled in the job process.
+    """
+    try:
+        from livekit.agents.ipc.job_proc_lazy_main import _JobProc
+    except ImportError:
+        logger.debug("livekit-agents not importable; skipping _JobProc patch")
+        return
+
+    if getattr(_JobProc, "_parlot_patched", False):
+        return
+
+    _original_init = _JobProc.__init__
+
+    def _patched_init(self, *args, **kwargs):
+        _original_init(self, *args, **kwargs)
+        if self._job_entrypoint_fnc is not None:
+            self._job_entrypoint_fnc = _wrap_entrypoint(self._job_entrypoint_fnc)
+
+    _JobProc.__init__ = _patched_init
+    _JobProc._parlot_patched = True
+    logger.debug("Patched _JobProc.__init__ for auto job context registration")
 
 
 def _patch_agent_session_with_tracer(provider) -> None:
