@@ -8,6 +8,8 @@ keys expected by Parlot ingestion.
 
 from __future__ import annotations
 
+import inspect
+
 from parlot.core.attrs import (
     ATTR_LK_JOB_ID,
     ATTR_LK_ROOM_NAME,
@@ -91,7 +93,35 @@ def stamp_livekit_platform_refs(
             span._attributes[ATTR_LK_ROOM_NAME] = val
 
 
-def register_livekit_job_context_from_ctx(ctx) -> None:
+async def _coerce_livekit_field(obj, *attr_names: str) -> str:
+    """Read a string field from a LiveKit object, awaiting async properties."""
+    if obj is None:
+        return ""
+    for name in attr_names:
+        try:
+            val = getattr(obj, name, None)
+        except Exception:
+            continue
+        if val is None:
+            continue
+        if inspect.isawaitable(val):
+            val = await val
+        elif callable(val) and not isinstance(val, type):
+            try:
+                called = val()
+            except TypeError:
+                continue
+            if inspect.isawaitable(called):
+                val = await called
+            else:
+                val = called
+        text = str(val).strip() if val is not None else ""
+        if text:
+            return text
+    return ""
+
+
+async def register_livekit_job_context_from_ctx(ctx) -> None:
     """Convenience: register room context from a LiveKit ``JobContext``.
 
     Equivalent to::
@@ -99,11 +129,13 @@ def register_livekit_job_context_from_ctx(ctx) -> None:
         register_livekit_job_context(
             job_id=ctx.job.id,
             room_name=ctx.room.name,
-            room_sid=ctx.room.sid,
+            room_sid=await ctx.room.sid,
         )
+
+    ``room.sid`` is async in current LiveKit RTC SDKs and must be awaited.
     """
     job_id = str(getattr(ctx.job, "id", "") or "")
     room = getattr(ctx, "room", None)
-    room_name = str(getattr(room, "name", "") or "") if room else ""
-    room_sid = str(getattr(room, "sid", "") or getattr(room, "id", "") or "") if room else ""
+    room_name = await _coerce_livekit_field(room, "name")
+    room_sid = await _coerce_livekit_field(room, "sid", "id")
     register_livekit_job_context(job_id, room_name=room_name, room_sid=room_sid)

@@ -85,6 +85,7 @@ def configure(
 
     _register_with_livekit(tracer_provider)
     _patch_job_proc_entrypoint()
+    _patch_job_context_connect()
     _patch_agent_session_with_tracer(tracer_provider)
 
     _configured = True
@@ -163,7 +164,7 @@ try:
         ctx = args[0] if args else kwargs.get("ctx")
         if ctx is not None:
             try:
-                register_livekit_job_context_from_ctx(ctx)
+                await register_livekit_job_context_from_ctx(ctx)
             except Exception:
                 logger.debug("Could not auto-register job context", exc_info=True)
         return await wrapped(*args, **kwargs)
@@ -214,6 +215,36 @@ def _patch_job_proc_entrypoint() -> None:
     _JobProc.__init__ = _patched_init
     _JobProc._parlot_patched = True
     logger.debug("Patched _JobProc.__init__ for auto job context registration")
+
+
+def _patch_job_context_connect() -> None:
+    """Re-register room context after ``JobContext.connect`` (room SID is available then)."""
+    try:
+        from livekit.agents import JobContext
+    except ImportError:
+        logger.debug("livekit-agents not importable; skipping JobContext.connect patch")
+        return
+
+    if getattr(JobContext, "_parlot_connect_patched", False):
+        return
+
+    _original_connect = JobContext.connect
+
+    async def _patched_connect(self, *args, **kwargs):
+        result = await _original_connect(self, *args, **kwargs)
+        try:
+            from ._platform_refs import register_livekit_job_context_from_ctx
+
+            await register_livekit_job_context_from_ctx(self)
+        except Exception:
+            logger.debug(
+                "Could not refresh job context after connect", exc_info=True
+            )
+        return result
+
+    JobContext.connect = _patched_connect
+    JobContext._parlot_connect_patched = True
+    logger.debug("Patched JobContext.connect for room SID refresh")
 
 
 def _patch_agent_session_with_tracer(provider) -> None:

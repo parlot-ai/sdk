@@ -14,6 +14,7 @@ from parlot.instrumentation.livekit._platform_refs import (
     _livekit_platform_ref_triples,
     lookup_room_context,
     register_livekit_job_context,
+    register_livekit_job_context_from_ctx,
     stamp_livekit_platform_refs,
 )
 
@@ -60,3 +61,25 @@ def test_stamp_skipped_when_no_ids() -> None:
     span = _FakeSpan()
     stamp_livekit_platform_refs(span)
     assert span._attributes == {}
+
+
+async def test_register_from_ctx_awaits_async_room_sid() -> None:
+    class _FakeRoom:
+        name = "demo-room"
+
+        @property
+        def sid(self):
+            async def _resolve():
+                return "RM_async123"
+
+            return _resolve()
+
+    class _FakeJob:
+        id = "job-async"
+
+    class _FakeCtx:
+        job = _FakeJob()
+        room = _FakeRoom()
+
+    await register_livekit_job_context_from_ctx(_FakeCtx())
+    assert lookup_room_context("job-async") == ("demo-room", "RM_async123")
