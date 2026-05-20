@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "parlot-instrumentation-livekit"
 version = "0.1.0"
-description = "Zero-config OTel instrumentation for LiveKit Agents"
+description = "OTel instrumentation for LiveKit Agents"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -13,7 +13,6 @@ dependencies = [
     "opentelemetry-api>=1.27.0",
     "opentelemetry-sdk>=1.27.0",
     "opentelemetry-exporter-otlp-proto-http>=1.27.0",
-    "wrapt>=1.17.0",
 ]
 
 [project.optional-dependencies]

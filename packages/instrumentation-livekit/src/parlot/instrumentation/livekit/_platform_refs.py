@@ -9,6 +9,7 @@ keys expected by Parlot ingestion.
 from __future__ import annotations
 
 import inspect
+import logging
 
 from parlot.core.attrs import (
     ATTR_LK_JOB_ID,
@@ -16,6 +17,8 @@ from parlot.core.attrs import (
     ATTR_LK_ROOM_SID,
 )
 from parlot.core.platform_refs import stamp_platform_refs as _stamp_platform_refs
+
+logger = logging.getLogger("parlot.instrumentation.livekit")
 
 _FRAMEWORK_LIVEKIT = "livekit"
 
@@ -29,11 +32,7 @@ def register_livekit_job_context(
     room_name: str = "",
     room_sid: str = "",
 ) -> None:
-    """Register room metadata for a LiveKit job before spans are exported.
-
-    Call once from the agent entrypoint (or use
-    ``register_livekit_job_context_from_ctx`` if you have a ``JobContext``).
-    """
+    """Register room metadata for a LiveKit job (internal; used by the processor)."""
     if not job_id:
         return
     _job_room_context[job_id] = (room_name or "", room_sid or "")
@@ -93,6 +92,25 @@ def stamp_livekit_platform_refs(
             span._attributes[ATTR_LK_ROOM_NAME] = val
 
 
+def _str_field(obj, *attr_names: str) -> str:
+    """Read a plain string field without awaiting (protobuf / sync attrs)."""
+    if obj is None:
+        return ""
+    for name in attr_names:
+        try:
+            val = getattr(obj, name, None)
+        except Exception:
+            continue
+        if val is None or inspect.isawaitable(val):
+            continue
+        if callable(val) and not isinstance(val, type):
+            continue
+        text = str(val).strip()
+        if text:
+            return text
+    return ""
+
+
 async def _coerce_livekit_field(obj, *attr_names: str) -> str:
     """Read a string field from a LiveKit object, awaiting async properties."""
     if obj is None:
@@ -115,27 +133,46 @@ async def _coerce_livekit_field(obj, *attr_names: str) -> str:
                 val = await called
             else:
                 val = called
+        if inspect.isawaitable(val):
+            logger.debug(
+                "Skipping un-awaited LiveKit field %s on %r", name, type(obj).__name__
+            )
+            continue
         text = str(val).strip() if val is not None else ""
-        if text:
+        if text and "coroutine" not in text:
             return text
     return ""
 
 
-async def register_livekit_job_context_from_ctx(ctx) -> None:
-    """Convenience: register room context from a LiveKit ``JobContext``.
-
-    Equivalent to::
-
-        register_livekit_job_context(
-            job_id=ctx.job.id,
-            room_name=ctx.room.name,
-            room_sid=await ctx.room.sid,
-        )
-
-    ``room.sid`` is async in current LiveKit RTC SDKs and must be awaited.
-    """
+def _job_room_fields(ctx) -> tuple[str, str, str]:
+    """Sync fields from job assignment (safe before ``ctx.connect()``)."""
     job_id = str(getattr(ctx.job, "id", "") or "")
-    room = getattr(ctx, "room", None)
-    room_name = await _coerce_livekit_field(room, "name")
-    room_sid = await _coerce_livekit_field(room, "sid", "id")
+    job_room = getattr(ctx.job, "room", None)
+    room_name = _str_field(job_room, "name")
+    room_sid = _str_field(job_room, "sid")
+    if not room_name:
+        room_name = _str_field(getattr(ctx, "room", None), "name")
+    return job_id, room_name, room_sid
+
+
+async def register_job_context(ctx) -> None:
+    """Register room metadata from a LiveKit ``JobContext``.
+
+    Call once per job, after ``await ctx.connect()``::
+
+        await ctx.connect()
+        await register_job_context(ctx)
+
+    Uses ``ctx.job.room.sid`` from the job assignment (sync). Only falls back to
+    ``await ctx.room.sid`` when the job protobuf has no SID and the room is
+    already connected.
+    """
+    job_id, room_name, room_sid = _job_room_fields(ctx)
+
+    if not room_sid and getattr(ctx, "_connected", False):
+        room = getattr(ctx, "room", None)
+        room_sid = await _coerce_livekit_field(room, "sid", "id")
+        if not room_name:
+            room_name = await _coerce_livekit_field(room, "name")
+
     register_livekit_job_context(job_id, room_name=room_name, room_sid=room_sid)

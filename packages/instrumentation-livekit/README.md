@@ -2,6 +2,21 @@
 
 LiveKit span processor and `platform.ref.*` attributes for Parlot session resolve.
 
+## Usage
+
+```python
+from parlot.instrumentation.livekit import configure, register_job_context
+
+configure()
+
+async def entrypoint(ctx: JobContext):
+    await ctx.connect()
+    await register_job_context(ctx)
+    ...
+```
+
+Set `PARLOT_ENDPOINT` (and optionally `PARLOT_API_KEY`) in the environment, or pass `endpoint=` / `api_key=` to `configure()`.
+
 ```bash
 uv sync --extra dev
 uv run pytest -q
