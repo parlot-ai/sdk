@@ -4,7 +4,7 @@ Shared semantic conventions, base span processor, and utilities for all Parlot i
 
 ## Contents
 
-- `parlot.core.attrs` — all semconv string constants (`ATTR_GEN_AI_*`, `ATTR_LK_*`, Parlot extension namespaces)
+- `parlot.core.attrs` — all semconv string constants (`ATTR_GEN_AI_*`, `ATTR_LK_*`, Parlot extension namespaces); TypeScript mirror in `@parlot/core` (`packages/core-ts`, run `uv run python scripts/generate_attrs_ts.py` after edits)
 - `parlot.core.session` — `SessionState` base dataclass for per-trace accumulators
 - `parlot.core.pricing` — `DEFAULT_PRICES` table and `compute_cost()` helper
 - `parlot.core.processor` — `ParlotBaseProcessor(SpanProcessor)` with shared span-mutation helpers

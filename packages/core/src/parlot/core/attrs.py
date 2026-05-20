@@ -1,6 +1,9 @@
 """
 Semantic convention attribute name constants for Parlot instrumentation.
 
+TypeScript: ``@parlot/core`` (``packages/core-ts/src/attrs.gen.ts``), generated via
+``uv run python scripts/generate_attrs_ts.py``.
+
 Three-layer strategy (system-design.md §3.6):
   Layer 1 — gen_ai.*          OTel GenAI SemConv (never deviate)
   Layer 2 — openinference.*   OpenInference semantic model
