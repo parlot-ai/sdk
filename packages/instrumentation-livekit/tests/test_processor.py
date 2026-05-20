@@ -98,12 +98,19 @@ class TestLlmRequestEnrichment:
 
 
 class TestLlmNodeEnrichment:
-    def test_turn_index_increments(self) -> None:
+    def test_turn_index_stamped_not_incremented(self) -> None:
         proc = LiveKitGenAIProcessor()
-        for expected in range(1, 4):
-            span = _make_span("llm_node", {ATTR_GEN_AI_PROVIDER: "openai"})
-            proc.on_end(span)
-            assert span._attributes[ATTR_LK_TURN_INDEX] == expected
+        from parlot.instrumentation.livekit._processor import _LiveKitSessionState
+
+        proc._sessions["job-llm"] = _LiveKitSessionState()
+        state = proc._sessions["job-llm"]
+        state.parlot_session_id = "f" * 32
+        state.turn_count = 2
+
+        span = _make_span("llm_node", {ATTR_LK_JOB_ID: "job-llm"})
+        proc.on_end(span)
+        assert span._attributes[ATTR_LK_TURN_INDEX] == 2
+        assert state.turn_count == 2
 
     def test_op_name_defaulted(self) -> None:
         proc = LiveKitGenAIProcessor()
@@ -150,23 +157,11 @@ class TestFunctionToolEnrichment:
 class TestRootSpanAggregates:
     def test_session_aggregates_written(self) -> None:
         proc = LiveKitGenAIProcessor()
-        trace_id = 0xCAFEBABE
+        job_id = "job-root"
 
-        def _llm_node():
-            s = _make_span("llm_node")
-            s.context.trace_id = trace_id
-            s.attributes = s._attributes
-            return s
-
-        def _root():
-            s = _make_span("job_entrypoint", {ATTR_LK_JOB_ID: "job-root"})
-            s.context.trace_id = trace_id
-            s.attributes = s._attributes
-            return s
-
-        proc.on_end(_llm_node())
-        proc.on_end(_llm_node())
-        root = _root()
+        proc.on_end(_make_span("eou_detection", {ATTR_LK_JOB_ID: job_id}))
+        proc.on_end(_make_span("drain_agent_activity", {ATTR_LK_JOB_ID: job_id}))
+        root = _make_span("job_entrypoint", {ATTR_LK_JOB_ID: job_id})
         proc.on_end(root)
 
         assert root._attributes[ATTR_LK_SESSION_TURNS] == 2

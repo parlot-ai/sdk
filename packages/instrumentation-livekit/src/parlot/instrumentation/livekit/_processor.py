@@ -73,6 +73,7 @@ from parlot.core.attrs import (
     ATTR_LK_HANDOFF_TARGET,
     ATTR_LK_HANDOFF_TRANSITION,
     ATTR_LK_INTERRUPTED,
+    ATTR_LK_IS_INTERRUPTION,
     ATTR_LK_JOB_ID,
     ATTR_LK_RESPONSE_TEXT,
     ATTR_LK_RESPONSE_TTFB,
@@ -270,10 +271,9 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
     def _enrich_llm_node(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
-        state.turn_count += 1
-        self._set(span, ATTR_LK_TURN_INDEX, state.turn_count)
-        self._set(span, ATTR_TURN_INDEX, state.turn_count)
-        self._emit_turn_trace(state)
+        if state.turn_count:
+            self._set(span, ATTR_LK_TURN_INDEX, state.turn_count)
+            self._set(span, ATTR_TURN_INDEX, state.turn_count)
 
         if not attrs.get(ATTR_GEN_AI_SYSTEM):
             system = _provider_to_system(str(attrs.get(ATTR_GEN_AI_PROVIDER, "")))
@@ -373,6 +373,18 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
     def _enrich_turn(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
 
+        state.turn_count += 1
+        self._set(span, ATTR_LK_TURN_INDEX, state.turn_count)
+        self._set(span, ATTR_TURN_INDEX, state.turn_count)
+        agent_id = state.agent_label or "agent"
+        self._emit_turn_trace(
+            state,
+            role="agent",
+            participant_id=agent_id,
+            label=agent_id,
+            diarization_source="agent_id",
+        )
+
         e2e = attrs.get(ATTR_LK_E2E_LATENCY)
         if e2e is not None:
             self._set(span, ATTR_LK_TURN_E2E_LATENCY, float(e2e))
@@ -403,8 +415,22 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
     # ------------------------------------------------------------------
 
     def _enrich_eou(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
-        if not (span.attributes or {}).get(ATTR_GEN_AI_OP_NAME):
+        attrs = span.attributes or {}
+        if not attrs.get(ATTR_GEN_AI_OP_NAME):
             self._set(span, ATTR_GEN_AI_OP_NAME, "end_of_utterance_detection")
+
+        if attrs.get(ATTR_LK_IS_INTERRUPTION):
+            return
+
+        state.turn_count += 1
+        self._set(span, ATTR_LK_TURN_INDEX, state.turn_count)
+        self._set(span, ATTR_TURN_INDEX, state.turn_count)
+        self._emit_turn_trace(
+            state,
+            role="user",
+            participant_id="caller",
+            diarization_source="livekit_vad",
+        )
 
     # ------------------------------------------------------------------
     # job_entrypoint — root span; write session-level aggregates then clean up
@@ -424,7 +450,15 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if state.turn_count:
             self._set(span, ATTR_TURN_INDEX, state.turn_count)
 
-    def _emit_turn_trace(self, state: _LiveKitSessionState) -> None:
+    def _emit_turn_trace(
+        self,
+        state: _LiveKitSessionState,
+        *,
+        role: str,
+        participant_id: str,
+        label: str = "",
+        diarization_source: str = "",
+    ) -> None:
         if not self._tracer or not state.parlot_session_id:
             return
         prev = state.last_turn_trace_id
@@ -434,6 +468,10 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             conversation_id=state.conversation_id,
             turn_index=state.turn_count,
             prev_trace_id=prev,
+            participant_role=role,
+            participant_id=participant_id,
+            participant_label=label,
+            diarization_source=diarization_source,
         )
 
     def _enrich_root(
