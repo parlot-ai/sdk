@@ -112,20 +112,24 @@ def _build_provider(
     from ._export import QuietOTLPSpanExporter
     from ._metrics import ParlotMetricsRecorder, build_meter_provider
     from ._processor import LiveKitGenAIProcessor
+    from ._turn_trace_export import TurnTraceRemappingExporter
 
     headers = {}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
 
     trace_endpoint = endpoint.rstrip("/") + "/v1/traces"
-    exporter = QuietOTLPSpanExporter(
-        OTLPSpanExporter(endpoint=trace_endpoint, headers=headers),
-        endpoint_label=trace_endpoint,
-    )
+    otlp_exporter = OTLPSpanExporter(endpoint=trace_endpoint, headers=headers)
 
     processor = LiveKitGenAIProcessor(
         capture_content=capture_content,
         prices=prices,
+    )
+
+    remapping_exporter = TurnTraceRemappingExporter(otlp_exporter, processor)
+    exporter = QuietOTLPSpanExporter(
+        remapping_exporter,
+        endpoint_label=trace_endpoint,
     )
 
     provider = TracerProvider()

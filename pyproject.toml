@@ -1,3 +1,22 @@
+[project]
+name = "parlot-sdk"
+version = "0.0.0"
+description = "Parlot SDK workspace (dev/test runner)"
+requires-python = ">=3.11"
+dependencies = [
+    "parlot-core",
+    "parlot-instrumentation-livekit",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+]
+
+[tool.uv]
+package = false
+
 [tool.uv.workspace]
 members = [
     "packages/core",
@@ -5,7 +24,12 @@ members = [
 ]
 
 [tool.uv.sources]
-# Resolve parlot-core from the local workspace during development.
-# When published to PyPI, the version constraint in each package's
-# pyproject.toml takes over.
 parlot-core = { workspace = true }
+parlot-instrumentation-livekit = { workspace = true }
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = [
+    "packages/core/tests",
+    "packages/instrumentation-livekit/tests",
+]

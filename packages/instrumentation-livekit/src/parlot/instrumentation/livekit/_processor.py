@@ -38,7 +38,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import FrozenSet, Optional
 
 from opentelemetry.sdk.trace import ReadableSpan
 
@@ -109,6 +109,15 @@ from ._turn_traces import emit_turn_root_span
 
 logger = logging.getLogger("parlot.instrumentation.livekit")
 
+_AGENT_PIPELINE_SPANS: FrozenSet[str] = frozenset({
+    "llm_node",
+    "llm_request_run",
+    "tts_node",
+    "tts_request_run",
+    "function_tool",
+    "drain_agent_activity",
+})
+
 
 # ---------------------------------------------------------------------------
 # LiveKit-specific session accumulator
@@ -123,6 +132,9 @@ class _LiveKitSessionState(_BaseSessionState):
     parlot_session_id: str = ""
     conversation_id: str = ""
     last_turn_trace_id: str = ""
+    turn_trace_by_index: dict[int, str] = field(default_factory=dict)
+    turn_root_span_by_index: dict[int, str] = field(default_factory=dict)
+    open_agent_turn_index: Optional[int] = None
 
 
 # ---------------------------------------------------------------------------
@@ -164,6 +176,8 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         self._capture_content = capture_content
         self._handoff_tools = handoff_tool_names or set()
         self._sessions: dict[str, _LiveKitSessionState] = {}
+        # parlot session_id -> turn_index -> (trace_id, root_span_id)
+        self._turn_trace_registry: dict[str, dict[int, tuple[str, str]]] = {}
         self._tracer = None  # set by configure() for per-turn root spans
         self._metrics = None  # ParlotMetricsRecorder from configure()
 
@@ -184,6 +198,29 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
     def set_metrics(self, metrics) -> None:
         """Called from configure() for OTLP metric export."""
         self._metrics = metrics
+
+    def lookup_turn_trace(
+        self, session_id: str, turn_index: int
+    ) -> tuple[str, str] | None:
+        """Return (trace_id, parlot.turn span_id) for export-time trace remapping."""
+        by_turn = self._turn_trace_registry.get(session_id)
+        if not by_turn:
+            return None
+        return by_turn.get(turn_index)
+
+    def _active_turn_index(
+        self, state: _LiveKitSessionState, span_name: str
+    ) -> Optional[int]:
+        if span_name == "job_entrypoint":
+            return None
+        if (
+            state.open_agent_turn_index is not None
+            and span_name in _AGENT_PIPELINE_SPANS
+        ):
+            return state.open_agent_turn_index
+        if state.turn_count:
+            return state.turn_count
+        return None
 
     def _enrich(self, span: ReadableSpan) -> None:
         name     = span.name
@@ -271,9 +308,6 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
     def _enrich_llm_node(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
-        if state.turn_count:
-            self._set(span, ATTR_LK_TURN_INDEX, state.turn_count)
-            self._set(span, ATTR_TURN_INDEX, state.turn_count)
 
         if not attrs.get(ATTR_GEN_AI_SYSTEM):
             system = _provider_to_system(str(attrs.get(ATTR_GEN_AI_PROVIDER, "")))
@@ -373,17 +407,22 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
     def _enrich_turn(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
 
-        state.turn_count += 1
-        self._set(span, ATTR_LK_TURN_INDEX, state.turn_count)
-        self._set(span, ATTR_TURN_INDEX, state.turn_count)
+        agent_turn_idx = state.open_agent_turn_index
+        if agent_turn_idx is None:
+            agent_turn_idx = state.turn_count + 1
+        self._set(span, ATTR_LK_TURN_INDEX, agent_turn_idx)
+        self._set(span, ATTR_TURN_INDEX, agent_turn_idx)
         agent_id = state.agent_label or "agent"
         self._emit_turn_trace(
             state,
+            turn_index=agent_turn_idx,
             role="agent",
             participant_id=agent_id,
             label=agent_id,
             diarization_source="agent_id",
         )
+        state.turn_count = agent_turn_idx
+        state.open_agent_turn_index = None
 
         e2e = attrs.get(ATTR_LK_E2E_LATENCY)
         if e2e is not None:
@@ -427,10 +466,12 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         self._set(span, ATTR_TURN_INDEX, state.turn_count)
         self._emit_turn_trace(
             state,
+            turn_index=state.turn_count,
             role="user",
             participant_id="caller",
             diarization_source="livekit_vad",
         )
+        state.open_agent_turn_index = state.turn_count + 1
 
     # ------------------------------------------------------------------
     # job_entrypoint — root span; write session-level aggregates then clean up
@@ -447,13 +488,16 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if state.parlot_session_id:
             self._set(span, ATTR_SESSION_ID, state.parlot_session_id)
             self._set(span, ATTR_SESSION_CONVERSATION_ID, state.conversation_id)
-        if state.turn_count:
-            self._set(span, ATTR_TURN_INDEX, state.turn_count)
+        active = self._active_turn_index(state, span.name)
+        if active is not None:
+            self._set(span, ATTR_TURN_INDEX, active)
+            self._set(span, ATTR_LK_TURN_INDEX, active)
 
     def _emit_turn_trace(
         self,
         state: _LiveKitSessionState,
         *,
+        turn_index: int,
         role: str,
         participant_id: str,
         label: str = "",
@@ -462,17 +506,23 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if not self._tracer or not state.parlot_session_id:
             return
         prev = state.last_turn_trace_id
-        state.last_turn_trace_id = emit_turn_root_span(
+        trace_id, root_span_id = emit_turn_root_span(
             self._tracer,
             session_id=state.parlot_session_id,
             conversation_id=state.conversation_id,
-            turn_index=state.turn_count,
+            turn_index=turn_index,
             prev_trace_id=prev,
             participant_role=role,
             participant_id=participant_id,
             participant_label=label,
             diarization_source=diarization_source,
         )
+        state.last_turn_trace_id = trace_id
+        state.turn_trace_by_index[turn_index] = trace_id
+        state.turn_root_span_by_index[turn_index] = root_span_id
+        self._turn_trace_registry.setdefault(state.parlot_session_id, {})[
+            turn_index
+        ] = (trace_id, root_span_id)
 
     def _enrich_root(
         self, span: ReadableSpan, state: _LiveKitSessionState, job_key: str

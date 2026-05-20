@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from parlot.core.attrs import (
     ATTR_LK_JOB_ID,
     ATTR_LK_ROOM_SID,
@@ -63,6 +65,7 @@ def test_stamp_skipped_when_no_ids() -> None:
     assert span._attributes == {}
 
 
+@pytest.mark.asyncio
 async def test_register_from_ctx_awaits_async_room_sid() -> None:
     class _FakeRoom:
         name = "demo-room"

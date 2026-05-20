@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 members = [
     "parlot-core",
     "parlot-instrumentation-livekit",
+    "parlot-sdk",
 ]
 
 [[package]]
@@ -299,6 +300,33 @@ requires-dist = [
     { name = "wrapt", specifier = ">=1.17.0" },
 ]
 provides-extras = ["dev"]
+
+[[package]]
+name = "parlot-sdk"
+version = "0.0.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "parlot-core" },
+    { name = "parlot-instrumentation-livekit" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "parlot-core", editable = "packages/core" },
+    { name = "parlot-instrumentation-livekit", editable = "packages/instrumentation-livekit" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=8.0" },
+    { name = "pytest-asyncio", specifier = ">=0.24" },
+]
 
 [[package]]
 name = "pluggy"

@@ -34,11 +34,11 @@ def emit_turn_root_span(
     participant_id: str = "",
     participant_label: str = "",
     diarization_source: str = "",
-) -> str:
+) -> tuple[str, str]:
     """
     Start and immediately end a ``parlot.turn`` root span in a **new** trace.
 
-    Returns the new trace_id (32-char hex).
+    Returns ``(trace_id, span_id)`` as 32- and 16-char hex strings.
     """
     trace_id = random.getrandbits(128)
     span_id = random.getrandbits(64)
@@ -66,4 +66,4 @@ def emit_turn_root_span(
         if diarization_source:
             span.set_attribute(ATTR_PARTICIPANT_DIAR_SOURCE, diarization_source)
 
-    return format(trace_id, "032x")
+    return format(trace_id, "032x"), format(span_id, "016x")
