@@ -41,6 +41,10 @@ from parlot.instrumentation.livekit.attrs import (
     ATTR_LK_USER_INPUT,
     ATTR_LK_USER_TRANSCRIPT,
 )
+from parlot.instrumentation.livekit._platform_refs import (
+    _job_room_context,
+    register_livekit_job_context,
+)
 from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
 
 
@@ -165,6 +169,57 @@ class TestFunctionToolEnrichment:
         span = _make_span("function_tool", start_time=0, end_time=500_000_000)
         proc.on_end(span)
         assert span._attributes.get(ATTR_GEN_AI_TOOL_DURATION_MS) == pytest.approx(500.0)
+
+
+class TestRegisteredJobSessionId:
+    """Child spans without lk.job_id must share the job_entrypoint session id."""
+
+    def setup_method(self) -> None:
+        _job_room_context.clear()
+
+    def teardown_method(self) -> None:
+        _job_room_context.clear()
+
+    def test_spans_without_lk_job_id_share_session_with_entrypoint(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        job_id = "AJ_test"
+        register_livekit_job_context(job_id, room_sid="RM_test")
+
+        llm = _make_span("llm_node")
+        proc.on_end(llm)
+
+        proc.on_end(
+            _make_span("user_turn", {ATTR_LK_USER_TRANSCRIPT: "hello"}),
+        )
+        proc.on_end(
+            _make_span("agent_turn", {ATTR_LK_AGENT_LABEL: "agent"}),
+        )
+
+        session_id = llm._attributes[ATTR_SESSION_ID]
+        assert session_id
+        assert len(session_id) == 32
+        assert llm._attributes[ATTR_LK_JOB_ID] == job_id
+        assert job_id in proc._sessions
+        assert len(proc._sessions) == 1
+
+        root = _make_span("job_entrypoint", {ATTR_LK_JOB_ID: job_id})
+        proc.on_end(root)
+
+        assert root._attributes[ATTR_SESSION_ID] == session_id
+        assert root._attributes[ATTR_SESSION_TURN_COUNT] == 2
+
+    def test_multiple_registered_jobs_use_trace_id_fallback(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        register_livekit_job_context("job-a")
+        register_livekit_job_context("job-b")
+
+        span = _make_span("llm_node")
+        proc.on_end(span)
+
+        trace_hex = format(span.context.trace_id, "032x")
+        assert trace_hex in proc._sessions
+        assert "job-a" not in proc._sessions
+        assert "job-b" not in proc._sessions
 
 
 class TestRootSpanAggregates:

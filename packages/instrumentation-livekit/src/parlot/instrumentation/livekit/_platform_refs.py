@@ -48,6 +48,17 @@ def lookup_room_context(job_id: str) -> tuple[str, str]:
     return _job_room_context.get(job_id, ("", ""))
 
 
+def resolve_registered_job_id() -> str | None:
+    """Return the sole registered job id when exactly one job is active on this worker.
+
+    Used by the processor to key session state when LiveKit child spans omit
+    ``lk.job_id``. Returns ``None`` when zero or multiple jobs are registered.
+    """
+    if len(_job_room_context) != 1:
+        return None
+    return next(iter(_job_room_context))
+
+
 def _livekit_platform_ref_triples(
     *,
     job_id: str = "",

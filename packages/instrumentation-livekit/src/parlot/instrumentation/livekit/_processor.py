@@ -86,6 +86,7 @@ from parlot.instrumentation.livekit.attrs import (
 from ._platform_refs import (
     clear_livekit_job_context,
     lookup_room_context,
+    resolve_registered_job_id,
     stamp_livekit_platform_refs,
 )
 from parlot.core.pricing import DEFAULT_PRICES, compute_cost
@@ -181,11 +182,13 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         return by_turn.get(turn_index)
 
     def _resolve_job_key(self, span: ReadableSpan, attrs: Mapping[str, AttributeValue]) -> str:
-        return str(
-            attrs.get(ATTR_LK_JOB_ID)
-            or attrs.get(METADATA_JOB_ID)
-            or self._trace_id_hex(span)
-        )
+        explicit = attrs.get(ATTR_LK_JOB_ID) or attrs.get(METADATA_JOB_ID)
+        if explicit:
+            return str(explicit)
+        registered = resolve_registered_job_id()
+        if registered:
+            return registered
+        return self._trace_id_hex(span)
 
     def _track_agent_label(
         self, state: _LiveKitSessionState, attrs: Mapping[str, AttributeValue]
@@ -214,7 +217,11 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         job_key = self._resolve_job_key(span, attrs)
         state = self._sessions.setdefault(job_key, _LiveKitSessionState())
 
-        self._maybe_update(state, "session_id", attrs.get(ATTR_LK_JOB_ID) or attrs.get(METADATA_JOB_ID))
+        explicit_job = attrs.get(ATTR_LK_JOB_ID) or attrs.get(METADATA_JOB_ID)
+        if explicit_job:
+            self._maybe_update(state, "session_id", explicit_job)
+        elif job_key != self._trace_id_hex(span):
+            self._maybe_update(state, "session_id", job_key)
         self._maybe_update(state, "room_name", attrs.get(ATTR_LK_ROOM_NAME))
         self._maybe_update(state, "room_sid", attrs.get(ATTR_LK_ROOM_SID) or attrs.get(METADATA_ROOM_ID))
 

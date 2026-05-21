@@ -17,10 +17,12 @@ from parlot.instrumentation.livekit.attrs import (
 )
 from parlot.core.platform_refs import platform_ref_flat_key
 from parlot.instrumentation.livekit._platform_refs import (
+    _job_room_context,
     _livekit_platform_ref_triples,
     lookup_room_context,
     register_job_context,
     register_livekit_job_context,
+    resolve_registered_job_id,
     stamp_livekit_platform_refs,
 )
 
@@ -45,6 +47,16 @@ def test_register_livekit_job_context_lookup() -> None:
     register_livekit_job_context("job-99", room_name="demo", room_sid="RM_xyz")
     assert lookup_room_context("job-99") == ("demo", "RM_xyz")
     assert lookup_room_context("missing") == ("", "")
+
+
+def test_resolve_registered_job_id_singleton() -> None:
+    _job_room_context.clear()
+    assert resolve_registered_job_id() is None
+    register_livekit_job_context("AJ_only")
+    assert resolve_registered_job_id() == "AJ_only"
+    register_livekit_job_context("AJ_second")
+    assert resolve_registered_job_id() is None
+    _job_room_context.clear()
 
 
 def test_stamp_livekit_platform_refs() -> None:
