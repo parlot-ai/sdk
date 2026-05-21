@@ -222,6 +222,42 @@ class TestRegisteredJobSessionId:
         assert "job-b" not in proc._sessions
 
 
+class TestEntrypointTraceSessionMerge:
+    """job_entrypoint with lk.job_id must adopt trace-keyed session state."""
+
+    def setup_method(self) -> None:
+        _job_room_context.clear()
+
+    def teardown_method(self) -> None:
+        _job_room_context.clear()
+
+    def test_entrypoint_adopts_trace_bucket_without_register(self) -> None:
+        """Reproduces production split: children lack lk.job_id, entrypoint has it."""
+        proc = LiveKitGenAIProcessor()
+        job_id = "AJ_merge"
+        job_trace = 0xCAFEBABECAFEBABECAFEBABECAFEBABE
+
+        def _job_trace_span(name: str, attributes: dict | None = None) -> MagicMock:
+            span = _make_span(name, attributes)
+            span.context.trace_id = job_trace
+            return span
+
+        child = _job_trace_span(
+            "user_turn",
+            {ATTR_LK_USER_TRANSCRIPT: "hello"},
+        )
+        proc.on_end(child)
+        canonical_session = child._attributes[ATTR_SESSION_ID]
+
+        root = _job_trace_span("job_entrypoint", {ATTR_LK_JOB_ID: job_id})
+        proc.on_end(root)
+
+        assert root._attributes[ATTR_SESSION_ID] == canonical_session
+        assert root._attributes[ATTR_SESSION_TURN_COUNT] == 1
+        assert root._attributes[ATTR_LK_JOB_ID] == job_id
+        assert job_id not in proc._sessions
+
+
 class TestRootSpanAggregates:
     def test_session_aggregates_written(self) -> None:
         proc = LiveKitGenAIProcessor()

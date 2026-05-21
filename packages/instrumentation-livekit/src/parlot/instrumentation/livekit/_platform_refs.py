@@ -166,17 +166,24 @@ def _job_room_fields(ctx) -> tuple[str, str, str]:
     return job_id, room_name, room_sid
 
 
-async def register_job_context(ctx) -> None:
-    """Register room metadata from a LiveKit ``JobContext``.
+async def register_job_context(ctx) -> str:
+    """Register job and room metadata for session correlation and paste-search.
 
-    Call once per job, after ``await ctx.connect()``::
+    **Call at the start of ``entrypoint``, before ``await ctx.connect()``** so
+    spans without ``lk.job_id`` resolve to one Parlot ``session.id`` for the job.
 
-        await ctx.connect()
-        await register_job_context(ctx)
+    Example::
 
-    Uses ``ctx.job.room.sid`` from the job assignment (sync). Only falls back to
-    ``await ctx.room.sid`` when the job protobuf has no SID and the room is
-    already connected.
+        async def entrypoint(ctx: JobContext):
+            await register_job_context(ctx)
+            await ctx.connect()
+            ...
+
+    Uses ``ctx.job.room`` from the job assignment (sync, safe before connect).
+    If ``room_sid`` is still empty after connect, you may call this again to
+    resolve ``ctx.room.sid`` from the connected room.
+
+    Returns the LiveKit job id.
     """
     job_id, room_name, room_sid = _job_room_fields(ctx)
 
@@ -187,3 +194,4 @@ async def register_job_context(ctx) -> None:
             room_name = await _coerce_livekit_field(room, "name")
 
     register_livekit_job_context(job_id, room_name=room_name, room_sid=room_sid)
+    return job_id

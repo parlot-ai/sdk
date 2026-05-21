@@ -43,11 +43,11 @@ from parlot.instrumentation.livekit import configure, register_job_context
 configure()
 ```
 
-In `entrypoint`, after connecting:
+In `entrypoint`, before connecting:
 
 ```python
-await ctx.connect()
 await register_job_context(ctx)
+await ctx.connect()
 ```
 
 Specifically:

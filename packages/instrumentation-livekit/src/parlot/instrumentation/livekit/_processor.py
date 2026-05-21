@@ -190,6 +190,39 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             return registered
         return self._trace_id_hex(span)
 
+    @staticmethod
+    def _state_has_session_activity(state: _LiveKitSessionState) -> bool:
+        return bool(
+            state.turn_count
+            or state.turn_trace_by_index
+            or state.total_input_tokens
+            or state.total_output_tokens
+            or state.tool_call_count
+        )
+
+    def _merge_trace_session_into_job_key(
+        self, job_key: str, span: ReadableSpan
+    ) -> None:
+        """Adopt trace-keyed session state when job_entrypoint uses lk.job_id.
+
+        LiveKit child spans often omit ``lk.job_id`` and accumulate state under
+        ``trace_id_hex``. ``job_entrypoint`` carries ``lk.job_id`` and would
+        otherwise mint a second ``parlot_session_id`` and ``sessions`` row.
+        """
+        trace_key = self._trace_id_hex(span)
+        if trace_key == job_key:
+            return
+        trace_state = self._sessions.get(trace_key)
+        if not trace_state or not trace_state.parlot_session_id:
+            return
+        if not self._state_has_session_activity(trace_state):
+            return
+        job_state = self._sessions.get(job_key)
+        if job_state and self._state_has_session_activity(job_state):
+            return
+        self._sessions[job_key] = trace_state
+        self._sessions.pop(trace_key, None)
+
     def _track_agent_label(
         self, state: _LiveKitSessionState, attrs: Mapping[str, AttributeValue]
     ) -> None:
@@ -215,6 +248,8 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         name = span.name
         attrs = span.attributes or {}
         job_key = self._resolve_job_key(span, attrs)
+        if name == "job_entrypoint":
+            self._merge_trace_session_into_job_key(job_key, span)
         state = self._sessions.setdefault(job_key, _LiveKitSessionState())
 
         explicit_job = attrs.get(ATTR_LK_JOB_ID) or attrs.get(METADATA_JOB_ID)

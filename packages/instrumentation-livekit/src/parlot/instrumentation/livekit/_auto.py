@@ -6,7 +6,8 @@ Auto-configuration helpers for parlot-instrumentation-livekit.
   2. Registers it with livekit.agents.telemetry.
   3. Patches AgentSession to auto-install the handoff hook.
 
-Call ``register_job_context(ctx)`` in your entrypoint after ``await ctx.connect()``.
+Call ``await register_job_context(ctx)`` at the start of your entrypoint, **before**
+``await ctx.connect()``.
 
 Environment variables:
   PARLOT_ENDPOINT         OTLP HTTP endpoint (e.g. http://localhost:4318)
@@ -43,8 +44,8 @@ def configure(
         from livekit.agents import AgentSession, JobContext, WorkerOptions, cli
 
         async def entrypoint(ctx: JobContext):
-            await ctx.connect()
             await register_job_context(ctx)
+            await ctx.connect()
             ...
 
     All arguments are optional; configuration falls back to environment

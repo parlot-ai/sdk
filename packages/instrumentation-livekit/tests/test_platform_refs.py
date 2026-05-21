@@ -82,6 +82,28 @@ def test_stamp_skipped_when_no_ids() -> None:
 
 
 @pytest.mark.asyncio
+async def test_register_job_context_before_connect() -> None:
+    class _JobRoom:
+        name = "pre-connect-room"
+        sid = "RM_pre"
+
+    class _FakeJob:
+        id = "job-pre"
+        room = _JobRoom()
+
+    class _FakeCtx:
+        job = _FakeJob()
+        room = None
+        _connected = False
+
+    job_id = await register_job_context(_FakeCtx())
+    assert job_id == "job-pre"
+    assert resolve_registered_job_id() == "job-pre"
+    assert lookup_room_context("job-pre") == ("pre-connect-room", "RM_pre")
+    _job_room_context.clear()
+
+
+@pytest.mark.asyncio
 async def test_register_job_context_uses_job_room_sid() -> None:
     class _JobRoom:
         name = "demo-room"

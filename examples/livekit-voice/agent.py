@@ -2,7 +2,7 @@
 Minimal Parlot-instrumented LiveKit voice agent.
 
 This file shows the complete integration — configure() at import and
-register_job_context() after connect. Everything else is unchanged LiveKit code.
+register_job_context() before connect. Everything else is unchanged LiveKit code.
 
 Environment variables required:
     LIVEKIT_URL         wss://your-project.livekit.cloud
@@ -28,8 +28,8 @@ from livekit.plugins import openai, silero
 
 
 async def entrypoint(ctx: agents.JobContext) -> None:
-    await ctx.connect()
     await register_job_context(ctx)
+    await ctx.connect()
 
     session = AgentSession(
         vad=silero.VAD.load(),

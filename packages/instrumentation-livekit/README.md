@@ -10,8 +10,8 @@ from parlot.instrumentation.livekit import configure, register_job_context
 configure()
 
 async def entrypoint(ctx: JobContext):
+    await register_job_context(ctx)  # before connect — required for one session id per job
     await ctx.connect()
-    await register_job_context(ctx)
     ...
 ```
 
