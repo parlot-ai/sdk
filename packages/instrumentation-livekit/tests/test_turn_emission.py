@@ -13,6 +13,7 @@ from parlot.core.attrs import (
     ATTR_PARTICIPANT_DIAR_SOURCE,
     ATTR_SESSION_ID,
     ATTR_TURN_INDEX,
+    ATTR_TURN_INPUT_MODALITY,
     ATTR_TURN_PARTICIPANT_ID,
     ATTR_TURN_PARTICIPANT_ROLE,
 )
@@ -20,6 +21,7 @@ from parlot.instrumentation.livekit.attrs import (
     ATTR_LK_AGENT_LABEL,
     ATTR_LK_IS_INTERRUPTION,
     ATTR_LK_JOB_ID,
+    ATTR_LK_USER_INPUT,
     ATTR_LK_USER_TRANSCRIPT,
 )
 from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor, _LiveKitSessionState
@@ -85,6 +87,7 @@ class TestParlotTurnEmission:
         assert turns[0].attributes[ATTR_TURN_PARTICIPANT_ROLE] == "user"
         assert turns[0].attributes[ATTR_TURN_PARTICIPANT_ID] == "caller"
         assert turns[0].attributes[ATTR_PARTICIPANT_DIAR_SOURCE] == "livekit_vad"
+        assert turns[0].attributes[ATTR_TURN_INPUT_MODALITY] == "voice"
 
     def test_user_turn_interruption_skips_emission(self) -> None:
         proc, exporter = _proc_with_exporter()
@@ -121,6 +124,46 @@ class TestParlotTurnEmission:
         assert turns[0].attributes[ATTR_TURN_PARTICIPANT_ROLE] == "agent"
         assert turns[0].attributes[ATTR_TURN_PARTICIPANT_ID] == "Orchestrator"
         assert turns[0].attributes[ATTR_PARTICIPANT_DIAR_SOURCE] == "agent_id"
+
+    def test_agent_turn_synthesizes_user_turn_without_user_turn_span(self) -> None:
+        proc, exporter = _proc_with_exporter()
+        _seed_state(proc)
+
+        proc.on_end(
+            _make_span(
+                "agent_turn",
+                {
+                    ATTR_LK_JOB_ID: "job-1",
+                    ATTR_LK_AGENT_LABEL: "Orchestrator",
+                    ATTR_LK_USER_INPUT: "friday 2pm",
+                },
+            )
+        )
+
+        turns = _parlot_turns(exporter)
+        assert len(turns) == 2
+        assert turns[0].attributes[ATTR_TURN_PARTICIPANT_ROLE] == "user"
+        assert turns[0].attributes[ATTR_TURN_PARTICIPANT_ID] == "caller"
+        assert turns[0].attributes[ATTR_PARTICIPANT_DIAR_SOURCE] == "livekit_text_input"
+        assert turns[0].attributes[ATTR_TURN_INPUT_MODALITY] == "text"
+        assert turns[1].attributes[ATTR_TURN_PARTICIPANT_ROLE] == "agent"
+        assert [t.attributes[ATTR_TURN_INDEX] for t in turns] == [1, 2]
+
+    def test_user_turn_text_only_modality(self) -> None:
+        proc, exporter = _proc_with_exporter()
+        _seed_state(proc)
+
+        proc.on_end(
+            _make_span(
+                "user_turn",
+                {ATTR_LK_JOB_ID: "job-1", ATTR_LK_USER_INPUT: "friday 2pm"},
+            )
+        )
+
+        turns = _parlot_turns(exporter)
+        assert len(turns) == 1
+        assert turns[0].attributes[ATTR_TURN_INPUT_MODALITY] == "text"
+        assert turns[0].attributes[ATTR_PARTICIPANT_DIAR_SOURCE] == "livekit_text_input"
 
     def test_llm_node_does_not_emit_parlot_turn(self) -> None:
         proc, exporter = _proc_with_exporter()

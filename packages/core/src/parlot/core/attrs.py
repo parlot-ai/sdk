@@ -101,6 +101,7 @@ ATTR_TURN_INDEX             = "turn.index"
 ATTR_TURN_PARTICIPANT_ID    = "turn.participant_id"
 ATTR_TURN_PARTICIPANT_ROLE  = "turn.participant_role"
 ATTR_TURN_PARTICIPANT_LABEL = "turn.participant_label"
+ATTR_TURN_INPUT_MODALITY    = "turn.input_modality"      # voice | text (user turns)
 ATTR_TURN_MEDIA_START_MS    = "turn.media_segment_start_ms"
 ATTR_TURN_MEDIA_END_MS      = "turn.media_segment_end_ms"
 ATTR_TURN_INTERRUPTED       = "turn.interrupted"

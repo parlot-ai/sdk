@@ -56,6 +56,7 @@ from parlot.core.attrs import (
     ATTR_SESSION_TURN_COUNT,
     ATTR_TURN_E2E_LATENCY_S,
     ATTR_TURN_INDEX,
+    ATTR_TURN_INPUT_MODALITY,
     ATTR_TURN_INTERRUPTED,
 )
 from parlot.core.ids import new_session_id
@@ -98,6 +99,7 @@ _AGENT_PIPELINE_SPANS: FrozenSet[str] = frozenset({
     "user_turn",
     "agent_turn",
     "llm_node",
+    "llm_request",
     "llm_request_run",
     "tts_node",
     "tts_request_run",
@@ -242,7 +244,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         self._stamp_session_turn_attrs(span, state)
         self._set(span, ATTR_AGENT_FRAMEWORK, "livekit")
 
-        if name == "llm_request_run":
+        if name in ("llm_request", "llm_request_run"):
             self._enrich_llm_request(span, state)
         elif name == "llm_node":
             self._enrich_llm_node(span, state)
@@ -436,6 +438,35 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
                     },
                 )
 
+    def _record_user_turn(
+        self,
+        span: ReadableSpan,
+        state: _LiveKitSessionState,
+        attrs: Mapping[str, AttributeValue],
+        *,
+        transcript: str,
+        modality: str,
+    ) -> None:
+        state.turn_count += 1
+        self._set(span, ATTR_TURN_INDEX, state.turn_count)
+        self._set(span, ATTR_TURN_INPUT_MODALITY, modality)
+        self._emit_turn_trace(
+            state,
+            turn_index=state.turn_count,
+            role="user",
+            participant_id="caller",
+            diarization_source=self._user_turn_diarization_source(modality),
+            input_modality=modality,
+        )
+        state.open_agent_turn_index = state.turn_count + 1
+
+        if self._capture_content:
+            self._add_event(
+                span,
+                EVENT_GEN_AI_USER_MESSAGE,
+                {"content": transcript},
+            )
+
     def _enrich_user_turn(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
         if attrs.get(ATTR_LK_IS_INTERRUPTION):
@@ -447,27 +478,32 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if not transcript:
             return
 
-        state.turn_count += 1
-        self._set(span, ATTR_TURN_INDEX, state.turn_count)
-        self._emit_turn_trace(
+        self._record_user_turn(
+            span,
             state,
-            turn_index=state.turn_count,
-            role="user",
-            participant_id="caller",
-            diarization_source="livekit_vad",
+            attrs,
+            transcript=transcript,
+            modality=self._user_turn_modality(attrs),
         )
-        state.open_agent_turn_index = state.turn_count + 1
-
-        if self._capture_content:
-            self._add_event(
-                span,
-                EVENT_GEN_AI_USER_MESSAGE,
-                {"content": transcript},
-            )
 
     def _enrich_agent_turn(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
         self._stamp_agent_identity(span, state, attrs)
+
+        if state.open_agent_turn_index is None:
+            transcript = str(
+                attrs.get(ATTR_LK_USER_TRANSCRIPT)
+                or attrs.get(ATTR_LK_USER_INPUT)
+                or ""
+            ).strip()
+            if transcript and not attrs.get(ATTR_LK_IS_INTERRUPTION):
+                self._record_user_turn(
+                    span,
+                    state,
+                    attrs,
+                    transcript=transcript,
+                    modality=self._user_turn_modality(attrs),
+                )
 
         turn_index = state.open_agent_turn_index or (state.turn_count + 1)
         self._set(span, ATTR_TURN_INDEX, turn_index)
@@ -574,6 +610,17 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if active is not None:
             self._set(span, ATTR_TURN_INDEX, active)
 
+    @staticmethod
+    def _user_turn_modality(attrs: Mapping[str, AttributeValue]) -> str:
+        """``voice`` when STT produced a transcript; ``text`` for typed/console input."""
+        if str(attrs.get(ATTR_LK_USER_TRANSCRIPT, "")).strip():
+            return "voice"
+        return "text"
+
+    @staticmethod
+    def _user_turn_diarization_source(modality: str) -> str:
+        return "livekit_vad" if modality == "voice" else "livekit_text_input"
+
     def _emit_turn_trace(
         self,
         state: _LiveKitSessionState,
@@ -583,6 +630,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         participant_id: str,
         label: str = "",
         diarization_source: str = "",
+        input_modality: str = "",
     ) -> None:
         if not self._tracer or not state.parlot_session_id:
             return
@@ -597,6 +645,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             participant_id=participant_id,
             participant_label=label,
             diarization_source=diarization_source,
+            input_modality=input_modality,
         )
         state.last_turn_trace_id = trace_id
         state.turn_trace_by_index[turn_index] = trace_id

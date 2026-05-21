@@ -57,6 +57,7 @@ export const ATTR_TURN_INDEX = "turn.index" as const;
 export const ATTR_TURN_PARTICIPANT_ID = "turn.participant_id" as const;
 export const ATTR_TURN_PARTICIPANT_ROLE = "turn.participant_role" as const;
 export const ATTR_TURN_PARTICIPANT_LABEL = "turn.participant_label" as const;
+export const ATTR_TURN_INPUT_MODALITY = "turn.input_modality" as const;
 export const ATTR_TURN_MEDIA_START_MS = "turn.media_segment_start_ms" as const;
 export const ATTR_TURN_MEDIA_END_MS = "turn.media_segment_end_ms" as const;
 export const ATTR_TURN_INTERRUPTED = "turn.interrupted" as const;
