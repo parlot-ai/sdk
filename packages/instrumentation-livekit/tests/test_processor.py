@@ -7,8 +7,13 @@ from unittest.mock import MagicMock
 import pytest
 
 from parlot.core.attrs import (
+    ATTR_AGENT_ROLE,
+    ATTR_AGENT_TRANSFER_FROM,
+    ATTR_AGENT_TRANSFER_TO,
+    ATTR_GEN_AI_AGENT_NAME,
     ATTR_GEN_AI_CACHE_HIT_RATE,
     ATTR_GEN_AI_CACHED_TOKENS,
+    ATTR_GEN_AI_CONVERSATION_ID,
     ATTR_GEN_AI_COST_USD,
     ATTR_GEN_AI_IN_TOKENS,
     ATTR_GEN_AI_MODEL,
@@ -18,17 +23,26 @@ from parlot.core.attrs import (
     ATTR_GEN_AI_SYSTEM,
     ATTR_GEN_AI_TOOL_DURATION_MS,
     ATTR_GEN_AI_TOOL_IS_HANDOFF,
+    ATTR_LK_AGENT_LABEL,
     ATTR_LK_FNC_TOOL_NAME,
     ATTR_LK_FNC_TOOL_OUTPUT,
+    ATTR_LK_HANDOFF_SOURCE,
+    ATTR_LK_HANDOFF_TARGET,
     ATTR_LK_JOB_ID,
     ATTR_LK_RESPONSE_TEXT,
     ATTR_LK_SESSION_TURNS,
     ATTR_LK_TURN_INDEX,
     ATTR_LK_USER_INPUT,
+    ATTR_SESSION_CONTACT_TYPE,
+    ATTR_SESSION_CONVERSATION_ID,
+    ATTR_SESSION_ID,
     EVENT_GEN_AI_ASSISTANT_MESSAGE,
     EVENT_GEN_AI_USER_MESSAGE,
 )
-from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
+from parlot.instrumentation.livekit._processor import (
+    LK_AMD_CATEGORY,
+    LiveKitGenAIProcessor,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -197,3 +211,80 @@ class TestContentCapture:
         })
         proc.on_end(span)
         assert span._events == []
+
+
+class TestConversationId:
+    def test_gen_ai_conversation_id_stamped(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        span = _make_span("llm_node", {ATTR_LK_JOB_ID: "job-conv"})
+        proc.on_end(span)
+        session_id = span._attributes[ATTR_SESSION_ID]
+        assert span._attributes[ATTR_GEN_AI_CONVERSATION_ID] == session_id
+        assert span._attributes[ATTR_SESSION_CONVERSATION_ID] == session_id
+
+
+class TestAgentIdentity:
+    def test_function_tool_stamps_gen_ai_agent_name(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        span = _make_span("function_tool", {
+            ATTR_LK_JOB_ID: "job-agent",
+            ATTR_LK_AGENT_LABEL: "ReceptionistAgent",
+            ATTR_LK_FNC_TOOL_NAME: "lookup",
+            ATTR_LK_FNC_TOOL_OUTPUT: "ok",
+        })
+        proc.on_end(span)
+        assert span._attributes[ATTR_GEN_AI_AGENT_NAME] == "ReceptionistAgent"
+
+    def test_drain_agent_activity_stamps_gen_ai_agent_name_from_state(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        from parlot.instrumentation.livekit._processor import _LiveKitSessionState
+
+        proc._sessions["job-turn"] = _LiveKitSessionState()
+        state = proc._sessions["job-turn"]
+        state.parlot_session_id = "a" * 32
+        state.agent_label = "BillingAgent"
+        state.open_agent_turn_index = 1
+
+        span = _make_span("drain_agent_activity", {ATTR_LK_JOB_ID: "job-turn"})
+        proc.on_end(span)
+        assert span._attributes[ATTR_GEN_AI_AGENT_NAME] == "BillingAgent"
+
+
+class TestAmdEnrichment:
+    def test_amd_maps_category_and_role(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        span = _make_span("amd", {
+            ATTR_LK_JOB_ID: "job-amd",
+            LK_AMD_CATEGORY: "machine-vm",
+        })
+        proc.on_end(span)
+        assert span._attributes[ATTR_AGENT_ROLE] == "amd"
+        assert span._attributes[ATTR_GEN_AI_OP_NAME] == "classify_contact"
+        assert span._attributes[ATTR_SESSION_CONTACT_TYPE] == "voicemail"
+        assert span._attributes[ATTR_LK_TURN_INDEX] == 0
+
+    def test_amd_contact_type_on_root(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        job_id = "job-amd-root"
+        proc.on_end(_make_span("amd", {
+            ATTR_LK_JOB_ID: job_id,
+            LK_AMD_CATEGORY: "human",
+        }))
+        root = _make_span("job_entrypoint", {ATTR_LK_JOB_ID: job_id})
+        proc.on_end(root)
+        assert root._attributes[ATTR_SESSION_CONTACT_TYPE] == "human"
+
+
+class TestHandoffSpanEnrichment:
+    def test_lk_agent_handoff_transfer_and_conversation_id(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        span = _make_span("lk.agent_handoff", {
+            ATTR_LK_HANDOFF_SOURCE: "agent-old",
+            ATTR_LK_HANDOFF_TARGET: "agent-new",
+        })
+        proc.on_end(span)
+        assert span._attributes[ATTR_AGENT_TRANSFER_FROM] == "agent-old"
+        assert span._attributes[ATTR_AGENT_TRANSFER_TO] == "agent-new"
+        assert span._attributes[ATTR_GEN_AI_AGENT_NAME] == "agent-new"
+        assert ATTR_GEN_AI_CONVERSATION_ID in span._attributes
+        assert ATTR_SESSION_ID in span._attributes

@@ -24,30 +24,38 @@ drain_agent_activity  lk.agent_label, lk.generation_id,
                       lk.instructions, lk.interrupted,
                       lk.speech_id, lk.response.text, lk.e2e_latency
 eou_detection         lk.is_interruption, eou probability attrs
+amd                   lk.amd.category (→ session.contact_type, agent.role=amd)
+lk.agent_handoff      lk.handoff.* (emitted by _hooks.py; enriched here)
 judge_evaluation      gen_ai.operation.name="judge" (test-only)
 
-NOTE on handoffs: there is NO dedicated handoff span in LK 1.5.x.
-Handoffs surface as a function_tool span (auto-detected via output repr)
-or as a conversation_item_added session event (handled by install_handoff_hook
-in _hooks.py).  For explicit control, pass handoff_tool_names to the
-constructor; for BYO TracerProvider, construct this class directly.
+NOTE on handoffs: LK 1.5.x has no native handoff span; handoffs surface as
+function_tool (auto-detected via output repr) or conversation_item_added
+(install_handoff_hook in _hooks.py). Pass handoff_tool_names for non-standard
+wrappers; for BYO TracerProvider, construct this class directly.
 """
 
 from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import FrozenSet, Optional
 
 from opentelemetry.sdk.trace import ReadableSpan
+from opentelemetry.util.types import AttributeValue
 
 from parlot.core.attrs import (
     ATTR_AGENT_FRAMEWORK,
+    ATTR_AGENT_ROLE,
+    ATTR_AGENT_TRANSFER_FROM,
+    ATTR_AGENT_TRANSFER_TO,
+    ATTR_GEN_AI_AGENT_NAME,
     ATTR_GEN_AI_AUDIO_IN,
     ATTR_GEN_AI_AUDIO_OUT,
     ATTR_GEN_AI_CACHE_HIT_RATE,
     ATTR_GEN_AI_CACHED_TOKENS,
+    ATTR_GEN_AI_CONVERSATION_ID,
     ATTR_GEN_AI_COST_USD,
     ATTR_GEN_AI_IN_TOKENS,
     ATTR_GEN_AI_MODEL,
@@ -70,6 +78,7 @@ from parlot.core.attrs import (
     ATTR_LK_FNC_TOOL_OUTPUT,
     ATTR_LK_HANDOFF_CREATED_AT,
     ATTR_LK_HANDOFF_INDEX,
+    ATTR_LK_HANDOFF_SOURCE,
     ATTR_LK_HANDOFF_TARGET,
     ATTR_LK_HANDOFF_TRANSITION,
     ATTR_LK_INTERRUPTED,
@@ -92,6 +101,7 @@ from parlot.core.attrs import (
     ATTR_LK_TURN_INTERRUPTED,
     ATTR_LK_TTS_INPUT_TEXT,
     ATTR_LK_USER_INPUT,
+    ATTR_SESSION_CONTACT_TYPE,
     ATTR_SESSION_CONVERSATION_ID,
     ATTR_SESSION_ID,
     ATTR_TURN_INDEX,
@@ -116,7 +126,18 @@ _AGENT_PIPELINE_SPANS: FrozenSet[str] = frozenset({
     "tts_request_run",
     "function_tool",
     "drain_agent_activity",
+    "amd",
 })
+
+LK_AMD_CATEGORY = "lk.amd.category"
+
+_AMD_CATEGORY_TO_CONTACT_TYPE: dict[str, str] = {
+    "human": "human",
+    "machine-ivr": "ivr",
+    "machine-vm": "voicemail",
+    "machine-unavailable": "unavailable",
+    "uncertain": "unknown",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -135,6 +156,7 @@ class _LiveKitSessionState(_BaseSessionState):
     turn_trace_by_index: dict[int, str] = field(default_factory=dict)
     turn_root_span_by_index: dict[int, str] = field(default_factory=dict)
     open_agent_turn_index: Optional[int] = None
+    contact_type: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -263,6 +285,8 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         elif name == "function_tool":        self._enrich_function_tool(span, state)
         elif name == "drain_agent_activity": self._enrich_turn(span, state)
         elif name == "eou_detection":        self._enrich_eou(span, state)
+        elif name == "amd":                  self._enrich_amd(span, state)
+        elif name == "lk.agent_handoff":     self._enrich_handoff(span, state)
         elif name == "job_entrypoint":       self._enrich_root(span, state, job_key)
 
     # ------------------------------------------------------------------
@@ -279,9 +303,9 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
                 self._set(span, ATTR_GEN_AI_SYSTEM, system)
 
         model         = str(attrs.get(ATTR_GEN_AI_MODEL, ""))
-        input_tokens  = int(attrs.get(ATTR_GEN_AI_IN_TOKENS,  0))
-        output_tokens = int(attrs.get(ATTR_GEN_AI_OUT_TOKENS, 0))
-        cached_tokens = int(attrs.get(ATTR_GEN_AI_CACHED_TOKENS, 0))
+        input_tokens  = _attr_int(attrs, ATTR_GEN_AI_IN_TOKENS)
+        output_tokens = _attr_int(attrs, ATTR_GEN_AI_OUT_TOKENS)
+        cached_tokens = _attr_int(attrs, ATTR_GEN_AI_CACHED_TOKENS)
 
         cost = compute_cost(model, input_tokens, output_tokens, self._prices)
         if cost is not None:
@@ -354,8 +378,27 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
     # function_tool — tool call span
     # ------------------------------------------------------------------
 
+    def _stamp_agent_identity(
+        self,
+        span: ReadableSpan,
+        state: _LiveKitSessionState,
+        attrs: Mapping[str, AttributeValue] | None = None,
+        *,
+        label_override: str | None = None,
+    ) -> None:
+        resolved: Mapping[str, AttributeValue] = (
+            attrs if attrs is not None else (span.attributes or {})
+        )
+        if resolved.get(ATTR_GEN_AI_AGENT_NAME):
+            return
+        label = label_override or resolved.get(ATTR_LK_AGENT_LABEL) or state.agent_label
+        if label:
+            self._set(span, ATTR_GEN_AI_AGENT_NAME, str(label))
+
     def _enrich_function_tool(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
+
+        self._stamp_agent_identity(span, state, attrs)
 
         state.tool_call_count += 1
         self._set(span, ATTR_LK_TOOL_CALL_INDEX, state.tool_call_count)
@@ -406,6 +449,8 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
     def _enrich_turn(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
+
+        self._stamp_agent_identity(span, state, attrs)
 
         agent_turn_idx = state.open_agent_turn_index
         if agent_turn_idx is None:
@@ -474,6 +519,54 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         state.open_agent_turn_index = state.turn_count + 1
 
     # ------------------------------------------------------------------
+    # amd — answering machine detection (pre-turn)
+    # ------------------------------------------------------------------
+
+    def _enrich_amd(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
+        attrs = span.attributes or {}
+
+        self._set(span, ATTR_AGENT_ROLE, "amd")
+        if not attrs.get(ATTR_GEN_AI_OP_NAME):
+            self._set(span, ATTR_GEN_AI_OP_NAME, "classify_contact")
+
+        category = str(attrs.get(LK_AMD_CATEGORY, "")).strip().lower()
+        contact_type = _AMD_CATEGORY_TO_CONTACT_TYPE.get(category, "unknown")
+        self._set(span, ATTR_SESSION_CONTACT_TYPE, contact_type)
+        state.contact_type = contact_type
+
+        self._stamp_agent_identity(span, state, attrs)
+
+        if state.turn_count == 0 and state.open_agent_turn_index is None:
+            self._set(span, ATTR_TURN_INDEX, 0)
+            self._set(span, ATTR_LK_TURN_INDEX, 0)
+
+    # ------------------------------------------------------------------
+    # lk.agent_handoff — conversation-item handoff (from _hooks.py)
+    # ------------------------------------------------------------------
+
+    def _enrich_handoff(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
+        attrs = span.attributes or {}
+
+        source = attrs.get(ATTR_LK_HANDOFF_SOURCE)
+        target = attrs.get(ATTR_LK_HANDOFF_TARGET)
+        if source is not None:
+            self._set(span, ATTR_AGENT_TRANSFER_FROM, str(source))
+        if target is not None:
+            self._set(span, ATTR_AGENT_TRANSFER_TO, str(target))
+
+        if target is not None:
+            self._stamp_agent_identity(span, state, attrs, label_override=str(target))
+            target_str = str(target)
+            if not state.agent_chain or state.agent_chain[-1] != target_str:
+                state.agent_chain.append(target_str)
+        else:
+            self._stamp_agent_identity(span, state, attrs)
+
+        state.handoff_count += 1
+        self._set(span, ATTR_LK_HANDOFF_INDEX, state.handoff_count)
+        state.pending_handoff_end_ns = span.end_time or time.time_ns()
+
+    # ------------------------------------------------------------------
     # job_entrypoint — root span; write session-level aggregates then clean up
     # ------------------------------------------------------------------
 
@@ -488,6 +581,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if state.parlot_session_id:
             self._set(span, ATTR_SESSION_ID, state.parlot_session_id)
             self._set(span, ATTR_SESSION_CONVERSATION_ID, state.conversation_id)
+            self._set(span, ATTR_GEN_AI_CONVERSATION_ID, state.conversation_id)
         active = self._active_turn_index(state, span.name)
         if active is not None:
             self._set(span, ATTR_TURN_INDEX, active)
@@ -541,6 +635,9 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             self._set(span, ATTR_LK_SESSION_AGENT_CHAIN,
                       " → ".join(state.agent_chain))
 
+        if state.contact_type:
+            self._set(span, ATTR_SESSION_CONTACT_TYPE, state.contact_type)
+
         if self._metrics and state.parlot_session_id:
             self._metrics.record_session_close(state)
 
@@ -551,6 +648,25 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 # ---------------------------------------------------------------------------
 # Private helpers
 # ---------------------------------------------------------------------------
+
+def _attr_int(
+    attrs: Mapping[str, AttributeValue], key: str, default: int = 0
+) -> int:
+    """Coerce an OTel span attribute to int (AttributeValue is not int()-safe)."""
+    val = attrs.get(key, default)
+    if isinstance(val, bool):
+        return int(val)
+    if isinstance(val, int):
+        return val
+    if isinstance(val, float):
+        return int(val)
+    if isinstance(val, str):
+        try:
+            return int(val)
+        except ValueError:
+            return default
+    return default
+
 
 def _provider_to_system(provider: str) -> str:
     """Map livekit gen_ai.provider.name → gen_ai.system semconv value."""
