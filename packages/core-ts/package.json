@@ -9,9 +9,13 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./livekit": {
+      "types": "./dist/livekit.d.ts",
+      "import": "./dist/livekit.js"
     }
   },
-  "files": ["dist", "src/attrs.gen.ts"],
+  "files": ["dist", "src/attrs.gen.ts", "src/attrs.livekit.gen.ts"],
   "scripts": {
     "generate": "cd ../.. && uv run python scripts/generate_attrs_ts.py",
     "build": "tsc",

@@ -16,6 +16,7 @@ from opentelemetry.sdk.trace import ReadableSpan, SpanProcessor
 from .session import SessionState
 
 logger = logging.getLogger("parlot.processor")
+logger.setLevel(logging.DEBUG)
 
 
 class ParlotBaseProcessor(SpanProcessor):

@@ -4,6 +4,8 @@ Semantic convention attribute name constants for Parlot instrumentation.
 TypeScript: ``@parlot/core`` (``packages/core-ts/src/attrs.gen.ts``), generated via
 ``uv run python scripts/generate_attrs_ts.py``.
 
+LiveKit vendor keys: ``parlot.instrumentation.livekit.attrs`` → ``@parlot/core/livekit``.
+
 Three-layer strategy (system-design.md §3.6):
   Layer 1 — gen_ai.*          OTel GenAI SemConv (never deviate)
   Layer 2 — openinference.*   OpenInference semantic model
@@ -67,7 +69,12 @@ ATTR_AGENT_TRANSFER_FROM    = "agent.transfer.from_agent_id"
 ATTR_AGENT_TRANSFER_TO      = "agent.transfer.to_agent_id"
 ATTR_AGENT_TRANSFER_REASON  = "agent.transfer.reason"
 ATTR_AGENT_TRANSFER_BYTES   = "agent.transfer.context_payload_bytes"
+ATTR_AGENT_TRANSFER_SEQUENCE = "agent.transfer.sequence"
+ATTR_AGENT_TRANSFER_ITEM_ID = "agent.transfer.item_id"
+ATTR_AGENT_TRANSFER_CREATED_AT = "agent.transfer.created_at"
+ATTR_AGENT_TRANSFER_LATENCY_MS = "agent.transfer.transition_latency_ms"
 ATTR_AGENT_COORD_OVERHEAD   = "agent.coordination.overhead_ms"
+ATTR_AGENT_TOOL_CALL_INDEX  = "agent.tool_call.index"
 
 # -- Session ---------------------------------------------------------------
 ATTR_SESSION_ID             = "session.id"
@@ -76,6 +83,13 @@ ATTR_SESSION_MODALITY       = "session.modality"         # voice | text | multim
 ATTR_SESSION_PARTICIPANT_COUNT = "session.participant_count"
 ATTR_SESSION_INTENT_LABEL   = "session.intent_label"
 ATTR_SESSION_CONTACT_TYPE   = "session.contact_type"     # human | voicemail | ivr | unavailable | unknown
+ATTR_SESSION_TURN_COUNT     = "session.turn_count"
+ATTR_SESSION_TOOL_CALL_COUNT = "session.tool_call_count"
+ATTR_SESSION_HANDOFF_COUNT  = "session.handoff_count"
+ATTR_SESSION_TOTAL_INPUT_TOKENS = "session.total_input_tokens"
+ATTR_SESSION_TOTAL_OUTPUT_TOKENS = "session.total_output_tokens"
+ATTR_SESSION_TOTAL_COST_USD = "session.total_cost_usd"
+ATTR_SESSION_AGENT_CHAIN    = "session.agent_chain"
 
 # -- Conversation ----------------------------------------------------------
 ATTR_CONVERSATION_ID      = "conversation.id"
@@ -90,6 +104,7 @@ ATTR_TURN_PARTICIPANT_LABEL = "turn.participant_label"
 ATTR_TURN_MEDIA_START_MS    = "turn.media_segment_start_ms"
 ATTR_TURN_MEDIA_END_MS      = "turn.media_segment_end_ms"
 ATTR_TURN_INTERRUPTED       = "turn.interrupted"
+ATTR_TURN_E2E_LATENCY_S     = "turn.e2e_latency_s"
 
 # -- Participant / Diarization ---------------------------------------------
 ATTR_PARTICIPANT_ID           = "participant.id"
@@ -117,54 +132,3 @@ ATTR_PLATFORM_REF_PREFIX = "platform.ref."  # append kind for flat ref keys
 ATTR_PLATFORM_FRAMEWORK = "platform.ref.framework"
 ATTR_PLATFORM_KIND      = "platform.ref.kind"
 ATTR_PLATFORM_VALUE     = "platform.ref.value"
-
-# ---------------------------------------------------------------------------
-# LiveKit-native attribute names (emitted by livekit-agents SDK directly)
-# Used by instrumentation-livekit; defined here so they can be imported
-# without taking a hard dep on livekit-agents.
-# ---------------------------------------------------------------------------
-
-ATTR_LK_JOB_ID          = "lk.job_id"
-ATTR_LK_AGENT_NAME      = "lk.agent_name"
-ATTR_LK_AGENT_LABEL     = "lk.agent_label"
-ATTR_LK_ROOM_NAME       = "lk.room_name"
-ATTR_LK_ROOM_SID        = "lk.room.sid"
-
-ATTR_LK_TURN_ID         = "lk.generation_id"
-ATTR_LK_PARENT_TURN_ID  = "lk.parent_generation_id"
-ATTR_LK_USER_INPUT      = "lk.user_input"
-ATTR_LK_INSTRUCTIONS    = "lk.instructions"
-ATTR_LK_INTERRUPTED     = "lk.interrupted"
-ATTR_LK_IS_INTERRUPTION = "lk.is_interruption"
-ATTR_LK_SPEECH_ID       = "lk.speech_id"
-ATTR_LK_RESPONSE_TEXT   = "lk.response.text"
-ATTR_LK_E2E_LATENCY     = "lk.e2e_latency"
-ATTR_LK_CHAT_CTX        = "lk.chat_ctx"
-ATTR_LK_RESPONSE_TTFT   = "lk.response.ttft"
-ATTR_LK_TTS_INPUT_TEXT  = "lk.input_text"
-ATTR_LK_RESPONSE_TTFB   = "lk.response.ttfb"
-
-ATTR_LK_FNC_TOOL_ID     = "lk.function_tool.id"
-ATTR_LK_FNC_TOOL_NAME   = "lk.function_tool.name"
-ATTR_LK_FNC_TOOL_ARGS   = "lk.function_tool.arguments"
-ATTR_LK_FNC_TOOL_OUTPUT = "lk.function_tool.output"
-ATTR_LK_FNC_TOOL_ERROR  = "lk.function_tool.is_error"
-
-ATTR_LK_TURN_INDEX         = "lk.turn_index"
-ATTR_LK_TOOL_CALL_INDEX    = "lk.tool_call_index"
-ATTR_LK_HANDOFF_INDEX      = "lk.handoff_index"
-ATTR_LK_HANDOFF_TARGET     = "lk.handoff.target_agent"
-ATTR_LK_HANDOFF_SOURCE     = "lk.handoff.source_agent_id"
-ATTR_LK_HANDOFF_TRANSITION = "lk.handoff.transition_latency_ms"
-ATTR_LK_HANDOFF_ITEM_ID    = "lk.handoff.item_id"
-ATTR_LK_HANDOFF_CREATED_AT = "lk.handoff.created_at"
-ATTR_LK_TURN_E2E_LATENCY   = "lk.turn.e2e_latency_s"
-ATTR_LK_TURN_INTERRUPTED   = "lk.turn.interrupted"
-
-ATTR_LK_SESSION_TURNS        = "lk.session.turn_count"
-ATTR_LK_SESSION_TOOL_CALLS   = "lk.session.tool_call_count"
-ATTR_LK_SESSION_HANDOFFS     = "lk.session.handoff_count"
-ATTR_LK_SESSION_INPUT_TOKENS = "lk.session.total_input_tokens"
-ATTR_LK_SESSION_OUT_TOKENS   = "lk.session.total_output_tokens"
-ATTR_LK_SESSION_COST_USD     = "lk.session.total_cost_usd"
-ATTR_LK_SESSION_AGENT_CHAIN  = "lk.session.agent_chain"

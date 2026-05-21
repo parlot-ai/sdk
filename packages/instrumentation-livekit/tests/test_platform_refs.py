@@ -7,11 +7,13 @@ import asyncio
 import pytest
 
 from parlot.core.attrs import (
-    ATTR_LK_JOB_ID,
-    ATTR_LK_ROOM_SID,
     ATTR_PLATFORM_FRAMEWORK,
     ATTR_PLATFORM_KIND,
     ATTR_PLATFORM_VALUE,
+)
+from parlot.instrumentation.livekit.attrs import (
+    ATTR_LK_JOB_ID,
+    ATTR_LK_ROOM_SID,
 )
 from parlot.core.platform_refs import platform_ref_flat_key
 from parlot.instrumentation.livekit._platform_refs import (

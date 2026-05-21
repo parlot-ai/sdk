@@ -10,13 +10,17 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanE
 from opentelemetry.trace import SpanContext, TraceFlags
 
 from parlot.core.attrs import (
-    ATTR_LK_AGENT_LABEL,
-    ATTR_LK_IS_INTERRUPTION,
-    ATTR_LK_JOB_ID,
     ATTR_PARTICIPANT_DIAR_SOURCE,
+    ATTR_SESSION_ID,
     ATTR_TURN_INDEX,
     ATTR_TURN_PARTICIPANT_ID,
     ATTR_TURN_PARTICIPANT_ROLE,
+)
+from parlot.instrumentation.livekit.attrs import (
+    ATTR_LK_AGENT_LABEL,
+    ATTR_LK_IS_INTERRUPTION,
+    ATTR_LK_JOB_ID,
+    ATTR_LK_USER_TRANSCRIPT,
 )
 from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor, _LiveKitSessionState
 from parlot.instrumentation.livekit._turn_trace_export import TurnTraceRemappingExporter
@@ -62,11 +66,19 @@ def _seed_state(proc: LiveKitGenAIProcessor, job_id: str = "job-1") -> _LiveKitS
 
 
 class TestParlotTurnEmission:
-    def test_eou_detection_emits_user_turn(self) -> None:
+    def test_user_turn_emits_user_turn(self) -> None:
         proc, exporter = _proc_with_exporter()
         _seed_state(proc)
 
-        proc.on_end(_make_span("eou_detection", {ATTR_LK_JOB_ID: "job-1"}))
+        proc.on_end(
+            _make_span(
+                "user_turn",
+                {
+                    ATTR_LK_JOB_ID: "job-1",
+                    ATTR_LK_USER_TRANSCRIPT: "I want an appointment",
+                },
+            )
+        )
 
         turns = _parlot_turns(exporter)
         assert len(turns) == 1
@@ -74,27 +86,32 @@ class TestParlotTurnEmission:
         assert turns[0].attributes[ATTR_TURN_PARTICIPANT_ID] == "caller"
         assert turns[0].attributes[ATTR_PARTICIPANT_DIAR_SOURCE] == "livekit_vad"
 
-    def test_eou_interruption_skips_user_turn(self) -> None:
+    def test_user_turn_interruption_skips_emission(self) -> None:
         proc, exporter = _proc_with_exporter()
         _seed_state(proc)
 
         proc.on_end(
             _make_span(
-                "eou_detection",
-                {ATTR_LK_JOB_ID: "job-1", ATTR_LK_IS_INTERRUPTION: True},
+                "user_turn",
+                {
+                    ATTR_LK_JOB_ID: "job-1",
+                    ATTR_LK_IS_INTERRUPTION: True,
+                    ATTR_LK_USER_TRANSCRIPT: "hello",
+                },
             )
         )
 
         assert _parlot_turns(exporter) == []
 
-    def test_drain_agent_activity_emits_agent_turn(self) -> None:
+    def test_agent_turn_emits_agent_turn(self) -> None:
         proc, exporter = _proc_with_exporter()
         state = _seed_state(proc)
         state.agent_label = "Orchestrator"
+        state.open_agent_turn_index = 2
 
         proc.on_end(
             _make_span(
-                "drain_agent_activity",
+                "agent_turn",
                 {ATTR_LK_JOB_ID: "job-1", ATTR_LK_AGENT_LABEL: "Orchestrator"},
             )
         )
@@ -117,9 +134,24 @@ class TestParlotTurnEmission:
         proc, exporter = _proc_with_exporter()
         _seed_state(proc)
 
-        proc.on_end(_make_span("eou_detection", {ATTR_LK_JOB_ID: "job-1"}))
-        proc.on_end(_make_span("drain_agent_activity", {ATTR_LK_JOB_ID: "job-1"}))
-        proc.on_end(_make_span("eou_detection", {ATTR_LK_JOB_ID: "job-1"}))
+        proc.on_end(
+            _make_span(
+                "user_turn",
+                {ATTR_LK_JOB_ID: "job-1", ATTR_LK_USER_TRANSCRIPT: "hi"},
+            )
+        )
+        proc.on_end(
+            _make_span(
+                "agent_turn",
+                {ATTR_LK_JOB_ID: "job-1", ATTR_LK_AGENT_LABEL: "Orchestrator"},
+            )
+        )
+        proc.on_end(
+            _make_span(
+                "user_turn",
+                {ATTR_LK_JOB_ID: "job-1", ATTR_LK_USER_TRANSCRIPT: "book"},
+            )
+        )
 
         turns = _parlot_turns(exporter)
         assert len(turns) == 3
@@ -129,31 +161,73 @@ class TestParlotTurnEmission:
         assert turns[2].attributes[ATTR_TURN_PARTICIPANT_ROLE] == "user"
 
     def test_agent_pipeline_turn_index_matches_agent_turn(self) -> None:
-        """After user EOU, llm_node stamps open_agent_turn_index (not stale turn_count)."""
         proc, exporter = _proc_with_exporter()
         _seed_state(proc)
 
-        proc.on_end(_make_span("eou_detection", {ATTR_LK_JOB_ID: "job-1"}))
+        proc.on_end(
+            _make_span(
+                "user_turn",
+                {ATTR_LK_JOB_ID: "job-1", ATTR_LK_USER_TRANSCRIPT: "hello"},
+            )
+        )
 
         llm = _make_span("llm_node", {ATTR_LK_JOB_ID: "job-1"})
         proc.on_end(llm)
         assert llm._attributes[ATTR_TURN_INDEX] == 2
 
-        drain = _make_span("drain_agent_activity", {ATTR_LK_JOB_ID: "job-1"})
-        proc.on_end(drain)
-        assert drain._attributes[ATTR_TURN_INDEX] == 2
+        proc.on_end(
+            _make_span(
+                "agent_turn",
+                {ATTR_LK_JOB_ID: "job-1", ATTR_LK_AGENT_LABEL: "Orchestrator"},
+            )
+        )
 
         turns = _parlot_turns(exporter)
         assert [t.attributes[ATTR_TURN_INDEX] for t in turns] == [1, 2]
+
+    def test_agent_label_from_start_agent_activity(self) -> None:
+        proc, exporter = _proc_with_exporter()
+        _seed_state(proc)
+
+        proc.on_end(
+            _make_span(
+                "start_agent_activity",
+                {ATTR_LK_JOB_ID: "job-1", ATTR_LK_AGENT_LABEL: "get_email_task"},
+            )
+        )
+        proc.on_end(
+            _make_span(
+                "user_turn",
+                {ATTR_LK_JOB_ID: "job-1", ATTR_LK_USER_TRANSCRIPT: "email?"},
+            )
+        )
+        proc.on_end(
+            _make_span(
+                "agent_turn",
+                {ATTR_LK_JOB_ID: "job-1"},
+            )
+        )
+
+        turns = _parlot_turns(exporter)
+        assert len(turns) == 2
+        assert turns[1].attributes[ATTR_TURN_PARTICIPANT_ID] == "get_email_task"
 
     def test_export_remaps_child_trace_id(self) -> None:
         proc, _exporter = _proc_with_exporter()
         state = _seed_state(proc)
 
-        proc.on_end(_make_span("eou_detection", {ATTR_LK_JOB_ID: "job-1"}))
-        proc.on_end(_make_span("drain_agent_activity", {ATTR_LK_JOB_ID: "job-1"}))
-
-        from parlot.core.attrs import ATTR_SESSION_ID
+        proc.on_end(
+            _make_span(
+                "user_turn",
+                {ATTR_LK_JOB_ID: "job-1", ATTR_LK_USER_TRANSCRIPT: "hi"},
+            )
+        )
+        proc.on_end(
+            _make_span(
+                "agent_turn",
+                {ATTR_LK_JOB_ID: "job-1", ATTR_LK_AGENT_LABEL: "agent"},
+            )
+        )
 
         session_id = state.parlot_session_id
         job_trace = 0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA

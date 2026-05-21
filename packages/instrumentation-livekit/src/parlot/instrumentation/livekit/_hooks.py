@@ -11,11 +11,11 @@ from __future__ import annotations
 import logging
 
 from parlot.core.attrs import (
+    ATTR_AGENT_TRANSFER_CREATED_AT,
+    ATTR_AGENT_TRANSFER_FROM,
+    ATTR_AGENT_TRANSFER_ITEM_ID,
+    ATTR_AGENT_TRANSFER_TO,
     ATTR_GEN_AI_OP_NAME,
-    ATTR_LK_HANDOFF_CREATED_AT,
-    ATTR_LK_HANDOFF_ITEM_ID,
-    ATTR_LK_HANDOFF_SOURCE,
-    ATTR_LK_HANDOFF_TARGET,
 )
 
 logger = logging.getLogger("parlot.instrumentation.livekit")
@@ -42,11 +42,11 @@ def install_handoff_hook(session, tracer) -> None:
 
         with tracer.start_as_current_span("lk.agent_handoff") as span:
             if item.old_agent_id:
-                span.set_attribute(ATTR_LK_HANDOFF_SOURCE, str(item.old_agent_id))
-            span.set_attribute(ATTR_LK_HANDOFF_TARGET,  str(item.new_agent_id))
-            span.set_attribute(ATTR_GEN_AI_OP_NAME,      "agent_handoff")
-            span.set_attribute(ATTR_LK_HANDOFF_ITEM_ID,  str(item.id))
-            span.set_attribute(ATTR_LK_HANDOFF_CREATED_AT, float(item.created_at))
+                span.set_attribute(ATTR_AGENT_TRANSFER_FROM, str(item.old_agent_id))
+            span.set_attribute(ATTR_AGENT_TRANSFER_TO, str(item.new_agent_id))
+            span.set_attribute(ATTR_GEN_AI_OP_NAME, "agent_handoff")
+            span.set_attribute(ATTR_AGENT_TRANSFER_ITEM_ID, str(item.id))
+            span.set_attribute(ATTR_AGENT_TRANSFER_CREATED_AT, float(item.created_at))
             # Transition latency (dead air) is computed by LiveKitGenAIProcessor
             # when it sees the next llm_request_run span.
 

@@ -11,7 +11,7 @@ from __future__ import annotations
 import inspect
 import logging
 
-from parlot.core.attrs import (
+from parlot.instrumentation.livekit.attrs import (
     ATTR_LK_JOB_ID,
     ATTR_LK_ROOM_NAME,
     ATTR_LK_ROOM_SID,

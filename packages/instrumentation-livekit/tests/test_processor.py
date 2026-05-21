@@ -23,26 +23,25 @@ from parlot.core.attrs import (
     ATTR_GEN_AI_SYSTEM,
     ATTR_GEN_AI_TOOL_DURATION_MS,
     ATTR_GEN_AI_TOOL_IS_HANDOFF,
-    ATTR_LK_AGENT_LABEL,
-    ATTR_LK_FNC_TOOL_NAME,
-    ATTR_LK_FNC_TOOL_OUTPUT,
-    ATTR_LK_HANDOFF_SOURCE,
-    ATTR_LK_HANDOFF_TARGET,
-    ATTR_LK_JOB_ID,
-    ATTR_LK_RESPONSE_TEXT,
-    ATTR_LK_SESSION_TURNS,
-    ATTR_LK_TURN_INDEX,
-    ATTR_LK_USER_INPUT,
     ATTR_SESSION_CONTACT_TYPE,
     ATTR_SESSION_CONVERSATION_ID,
     ATTR_SESSION_ID,
+    ATTR_SESSION_TURN_COUNT,
+    ATTR_TURN_INDEX,
     EVENT_GEN_AI_ASSISTANT_MESSAGE,
     EVENT_GEN_AI_USER_MESSAGE,
 )
-from parlot.instrumentation.livekit._processor import (
-    LK_AMD_CATEGORY,
-    LiveKitGenAIProcessor,
+from parlot.instrumentation.livekit.attrs import (
+    ATTR_AMD_CATEGORY,
+    ATTR_LK_AGENT_LABEL,
+    ATTR_LK_FNC_TOOL_NAME,
+    ATTR_LK_FNC_TOOL_OUTPUT,
+    ATTR_LK_JOB_ID,
+    ATTR_LK_RESPONSE_TEXT,
+    ATTR_LK_USER_INPUT,
+    ATTR_LK_USER_TRANSCRIPT,
 )
+from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
 
 
 # ---------------------------------------------------------------------------
@@ -123,7 +122,7 @@ class TestLlmNodeEnrichment:
 
         span = _make_span("llm_node", {ATTR_LK_JOB_ID: "job-llm"})
         proc.on_end(span)
-        assert span._attributes[ATTR_LK_TURN_INDEX] == 2
+        assert span._attributes[ATTR_TURN_INDEX] == 2
         assert state.turn_count == 2
 
     def test_op_name_defaulted(self) -> None:
@@ -173,12 +172,22 @@ class TestRootSpanAggregates:
         proc = LiveKitGenAIProcessor()
         job_id = "job-root"
 
-        proc.on_end(_make_span("eou_detection", {ATTR_LK_JOB_ID: job_id}))
-        proc.on_end(_make_span("drain_agent_activity", {ATTR_LK_JOB_ID: job_id}))
+        proc.on_end(
+            _make_span(
+                "user_turn",
+                {ATTR_LK_JOB_ID: job_id, ATTR_LK_USER_TRANSCRIPT: "hello"},
+            )
+        )
+        proc.on_end(
+            _make_span(
+                "agent_turn",
+                {ATTR_LK_JOB_ID: job_id, ATTR_LK_AGENT_LABEL: "agent"},
+            )
+        )
         root = _make_span("job_entrypoint", {ATTR_LK_JOB_ID: job_id})
         proc.on_end(root)
 
-        assert root._attributes[ATTR_LK_SESSION_TURNS] == 2
+        assert root._attributes[ATTR_SESSION_TURN_COUNT] == 2
 
     def test_state_cleaned_up_after_root(self) -> None:
         proc = LiveKitGenAIProcessor()
@@ -194,7 +203,8 @@ class TestRootSpanAggregates:
 class TestContentCapture:
     def test_content_captured_by_default(self) -> None:
         proc = LiveKitGenAIProcessor(capture_content=True)
-        span = _make_span("drain_agent_activity", {
+        span = _make_span("agent_turn", {
+            ATTR_LK_JOB_ID: "job-content",
             ATTR_LK_USER_INPUT: "Hello agent",
             ATTR_LK_RESPONSE_TEXT: "Hi there",
         })
@@ -205,7 +215,8 @@ class TestContentCapture:
 
     def test_content_suppressed_when_disabled(self) -> None:
         proc = LiveKitGenAIProcessor(capture_content=False)
-        span = _make_span("drain_agent_activity", {
+        span = _make_span("agent_turn", {
+            ATTR_LK_JOB_ID: "job-content",
             ATTR_LK_USER_INPUT: "Hello agent",
             ATTR_LK_RESPONSE_TEXT: "Hi there",
         })
@@ -255,20 +266,20 @@ class TestAmdEnrichment:
         proc = LiveKitGenAIProcessor()
         span = _make_span("amd", {
             ATTR_LK_JOB_ID: "job-amd",
-            LK_AMD_CATEGORY: "machine-vm",
+            ATTR_AMD_CATEGORY: "machine-vm",
         })
         proc.on_end(span)
         assert span._attributes[ATTR_AGENT_ROLE] == "amd"
         assert span._attributes[ATTR_GEN_AI_OP_NAME] == "classify_contact"
         assert span._attributes[ATTR_SESSION_CONTACT_TYPE] == "voicemail"
-        assert span._attributes[ATTR_LK_TURN_INDEX] == 0
+        assert span._attributes[ATTR_TURN_INDEX] == 0
 
     def test_amd_contact_type_on_root(self) -> None:
         proc = LiveKitGenAIProcessor()
         job_id = "job-amd-root"
         proc.on_end(_make_span("amd", {
             ATTR_LK_JOB_ID: job_id,
-            LK_AMD_CATEGORY: "human",
+            ATTR_AMD_CATEGORY: "human",
         }))
         root = _make_span("job_entrypoint", {ATTR_LK_JOB_ID: job_id})
         proc.on_end(root)
@@ -279,8 +290,8 @@ class TestHandoffSpanEnrichment:
     def test_lk_agent_handoff_transfer_and_conversation_id(self) -> None:
         proc = LiveKitGenAIProcessor()
         span = _make_span("lk.agent_handoff", {
-            ATTR_LK_HANDOFF_SOURCE: "agent-old",
-            ATTR_LK_HANDOFF_TARGET: "agent-new",
+            ATTR_AGENT_TRANSFER_FROM: "agent-old",
+            ATTR_AGENT_TRANSFER_TO: "agent-new",
         })
         proc.on_end(span)
         assert span._attributes[ATTR_AGENT_TRANSFER_FROM] == "agent-old"
