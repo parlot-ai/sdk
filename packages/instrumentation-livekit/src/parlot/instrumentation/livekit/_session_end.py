@@ -30,24 +30,27 @@ async def handle_session_end(ctx: Any) -> None:
     else:
         report = getattr(ctx, "session_report", None)
 
+    logger.debug(f"session_end: {report}")
     from ._session import finalize_deferred_session_end
 
     finalize_deferred_session_end(job_id=job_id, report=report)
 
 
-def _compose_session_end(
-    parlot_fn: Callable[[Any], Awaitable[None]],
-    user_fn: Callable[[Any], Awaitable[None]] | None,
-) -> Callable[[Any], Awaitable[None]]:
-    async def composed(ctx: Any) -> None:
+class _ComposedSessionEnd:
+    """Pickle-friendly ``on_session_end`` that runs Parlot then an optional user handler."""
+
+    __slots__ = ("user_fn",)
+
+    def __init__(self, user_fn: Callable[[Any], Awaitable[None]] | None) -> None:
+        self.user_fn = user_fn
+
+    async def __call__(self, ctx: Any) -> None:
         try:
-            await parlot_fn(ctx)
+            await handle_session_end(ctx)
         except Exception:
             logger.debug("parlot: handle_session_end failed", exc_info=True)
-        if user_fn is not None:
-            await user_fn(ctx)
-
-    return composed
+        if self.user_fn is not None:
+            await self.user_fn(ctx)
 
 
 def patch_agent_server_run() -> None:
@@ -66,7 +69,7 @@ def patch_agent_server_run() -> None:
     async def patched_run(self, *, devmode: bool = False, unregistered: bool = False):
         if not getattr(self, "_parlot_session_end_wrapped", False):
             original_end = self._session_end_fnc
-            self._session_end_fnc = _compose_session_end(handle_session_end, original_end)
+            self._session_end_fnc = _ComposedSessionEnd(original_end)
             self._parlot_session_end_wrapped = True
         return await original_run(self, devmode=devmode, unregistered=unregistered)
 

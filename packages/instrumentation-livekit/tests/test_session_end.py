@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pickle
 from unittest.mock import MagicMock
 
 import pytest
@@ -13,7 +14,10 @@ from parlot.instrumentation.livekit._session import (
     finalize_deferred_session_end,
     get_job_bootstrap,
 )
-from parlot.instrumentation.livekit._session_end import handle_session_end
+from parlot.instrumentation.livekit._session_end import (
+    _ComposedSessionEnd,
+    handle_session_end,
+)
 from parlot.instrumentation.livekit.attrs import ATTR_LK_JOB_ID
 from opentelemetry.sdk.trace import TracerProvider
 
@@ -39,6 +43,12 @@ def _provider_with_processor(proc: LiveKitGenAIProcessor) -> TracerProvider:
 
 
 class TestSessionEnd:
+    def test_composed_session_end_is_picklable(self) -> None:
+        composed = _ComposedSessionEnd(None)
+        roundtripped = pickle.loads(pickle.dumps(composed))
+        assert isinstance(roundtripped, _ComposedSessionEnd)
+        assert roundtripped.user_fn is None
+
     @pytest.mark.asyncio
     async def test_handle_session_end_sets_recording_anchor(self) -> None:
         proc = LiveKitGenAIProcessor()
