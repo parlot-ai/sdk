@@ -44,6 +44,9 @@ _parlot_job_bootstrap: ContextVar["_JobBootstrap | None"] = ContextVar(
     default=None,
 )
 
+# Jobs awaiting on_session_end (SessionReport + recording anchor) before conversation.session ends.
+_pending_session_teardown: dict[str, _JobBootstrap] = {}
+
 
 @dataclass
 class _JobBootstrap:
@@ -55,6 +58,7 @@ class _JobBootstrap:
     ctx_token: Token[Context] | None = None
     aggregates_applied: bool = False
     session_span_ended: bool = False
+    deferred_end_time: int | None = None
 
 
 def set_span_context_attach_enabled(enabled: bool) -> None:
@@ -155,8 +159,53 @@ def _finalize_session_aggregates(bootstrap: _JobBootstrap) -> None:
     bootstrap.aggregates_applied = True
 
 
+def finalize_deferred_session_end(
+    *,
+    job_id: str,
+    report: object | None = None,
+    end_time: int | None = None,
+) -> None:
+    """Apply SessionReport anchor and end ``conversation.session`` after ``on_session_end``."""
+    bootstrap = _pending_session_teardown.pop(job_id, None)
+    if bootstrap is None:
+        return
+
+    processor = bootstrap.processor
+    state = bootstrap.state
+
+    from parlot.instrumentation.livekit._recording_anchor import (
+        apply_recording_anchor_from_report,
+        try_set_recording_anchor_from_report,
+    )
+
+    if report is not None:
+        apply_recording_anchor_from_report(processor, state, report)
+    else:
+        try_set_recording_anchor_from_report(processor, state)
+
+    if report is not None and state.recording_anchor_wall_ms is not None:
+        bootstrap.aggregates_applied = False
+
+    _finalize_session_aggregates(bootstrap)
+
+    if not bootstrap.session_span_ended:
+        span_end_time = end_time if end_time is not None else bootstrap.deferred_end_time
+        if span_end_time is not None and hasattr(bootstrap.session_span, "end"):
+            bootstrap.session_span.end(end_time=span_end_time)
+        else:
+            bootstrap.session_span.end()
+        bootstrap.session_span_ended = True
+
+    from parlot.instrumentation.livekit._platform_refs import clear_livekit_job_context
+
+    vendor_job_id = state.session_id
+    if vendor_job_id:
+        clear_livekit_job_context(vendor_job_id)
+    processor._sessions.pop(bootstrap.session_id, None)
+
+
 def teardown_job_entrypoint(processor: "LiveKitGenAIProcessor", entrypoint_span: "ReadableSpan") -> None:
-    """End ``conversation.session``, detach context, clear bootstrap."""
+    """Detach job context; defer ``conversation.session`` end until ``on_session_end``."""
     bootstrap = _parlot_job_bootstrap.get()
     if bootstrap is None:
         logger.error("parlot: job_entrypoint on_end without active bootstrap")
@@ -177,6 +226,7 @@ def teardown_job_entrypoint(processor: "LiveKitGenAIProcessor", entrypoint_span:
         try_set_recording_anchor_from_report,
     )
 
+    # Only use ctx.session_report if already populated; never call make_session_report here.
     try_set_recording_anchor_from_report(processor, state)
     _finalize_session_aggregates(bootstrap)
 
@@ -192,18 +242,16 @@ def teardown_job_entrypoint(processor: "LiveKitGenAIProcessor", entrypoint_span:
                 pass
         otel_context.detach(bootstrap.ctx_token)
 
-    if not bootstrap.session_span_ended:
-        if end_time is not None and hasattr(bootstrap.session_span, "end"):
-            bootstrap.session_span.end(end_time=end_time)
-        else:
-            bootstrap.session_span.end()
-        bootstrap.session_span_ended = True
-
-    from parlot.instrumentation.livekit._platform_refs import clear_livekit_job_context
-
     if vendor_job_id:
-        clear_livekit_job_context(vendor_job_id)
-    processor._sessions.pop(bootstrap.session_id, None)
+        bootstrap.deferred_end_time = end_time
+        _pending_session_teardown[vendor_job_id] = bootstrap
+    else:
+        logger.warning(
+            "parlot: job_entrypoint teardown without vendor job id; finalizing session immediately"
+        )
+        _pending_session_teardown[bootstrap.session_id] = bootstrap
+        finalize_deferred_session_end(job_id=bootstrap.session_id, report=None, end_time=end_time)
+
     _parlot_job_bootstrap.set(None)
 
 

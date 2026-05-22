@@ -14,7 +14,7 @@ async def entrypoint(ctx: JobContext):
     ...
 ```
 
-`configure()` bootstraps one Parlot `session.id` per job on LiveKit's `job_entrypoint` span and exports a child `conversation.session` root for ingestion. Room metadata is captured when `JobContext.connect()` completes.
+`configure()` bootstraps one Parlot `session.id` per job on LiveKit's `job_entrypoint` span and exports a child `conversation.session` root for ingestion. Room metadata is captured when `JobContext.connect()` completes. After recording finishes, Parlot's **`on_session_end`** handler (wired via `AgentServer.run`) builds LiveKit's SessionReport and stamps **`session.recording_anchor_wall_ms`** for timeline alignment.
 
 Set `PARLOT_ENDPOINT` (and optionally `PARLOT_API_KEY`) in the environment, or pass `endpoint=` / `api_key=` to `configure()`.
 

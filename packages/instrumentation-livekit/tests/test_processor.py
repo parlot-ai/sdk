@@ -42,7 +42,7 @@ from parlot.instrumentation.livekit.attrs import (
     ATTR_LK_USER_TRANSCRIPT,
 )
 from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
-from parlot.instrumentation.livekit._session import get_job_bootstrap
+from parlot.instrumentation.livekit._session import finalize_deferred_session_end, get_job_bootstrap
 from opentelemetry.sdk.trace import TracerProvider
 
 
@@ -205,6 +205,7 @@ class TestRootSpanAggregates:
         entry = _bootstrap_proc(proc, "j1")
         sid = get_job_bootstrap().session_id
         proc.on_end(entry)
+        finalize_deferred_session_end(job_id="j1")
         assert sid not in proc._sessions
         assert get_job_bootstrap() is None
 

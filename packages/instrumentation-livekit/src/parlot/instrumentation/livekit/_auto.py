@@ -97,6 +97,9 @@ def configure(
     _register_with_livekit(tracer_provider)
     _patch_agent_session_with_tracer(tracer_provider)
     _patch_job_context_connect()
+    from ._session_end import patch_agent_server_run
+
+    patch_agent_server_run()
 
     _configured = True
     logger.debug("parlot-instrumentation.livekit configured (endpoint=%s)", resolved_endpoint)
