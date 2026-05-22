@@ -98,6 +98,7 @@ ATTR_SESSION_TOPOLOGY_AGENTS = "session.topology.agents"
 ATTR_SESSION_TOPOLOGY_TOOLS  = "session.topology.tools"
 ATTR_SESSION_TOPOLOGY_EDGES = "session.topology.edges"
 ATTR_SESSION_TOPOLOGY_ORCHESTRATOR_INSTRUCTIONS = "session.topology.orchestrator_instructions"
+ATTR_SESSION_RECORDING_ANCHOR_WALL_MS = "session.recording_anchor_wall_ms"
 
 # -- Conversation ----------------------------------------------------------
 ATTR_CONVERSATION_ID      = "conversation.id"
@@ -112,6 +113,8 @@ ATTR_TURN_PARTICIPANT_LABEL = "turn.participant_label"
 ATTR_TURN_INPUT_MODALITY    = "turn.input_modality"      # voice | text (user turns)
 ATTR_TURN_MEDIA_START_MS    = "turn.media_segment_start_ms"
 ATTR_TURN_MEDIA_END_MS      = "turn.media_segment_end_ms"
+ATTR_TURN_SPEECH_WALL_START_MS = "turn.speech_wall_start_ms"
+ATTR_TURN_SPEECH_WALL_END_MS   = "turn.speech_wall_end_ms"
 ATTR_TURN_INTERRUPTED       = "turn.interrupted"
 ATTR_TURN_E2E_LATENCY_S     = "turn.e2e_latency_s"
 ATTR_TURN_INTENT_LABEL      = "turn.intent_label"

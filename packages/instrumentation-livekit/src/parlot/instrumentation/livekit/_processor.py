@@ -61,6 +61,7 @@ from parlot.core.attrs import (
     ATTR_SESSION_TOTAL_COST_USD,
     ATTR_SESSION_TOTAL_INPUT_TOKENS,
     ATTR_SESSION_TOTAL_OUTPUT_TOKENS,
+    ATTR_SESSION_RECORDING_ANCHOR_WALL_MS,
     ATTR_SESSION_TURN_COUNT,
     ATTR_TURN_E2E_LATENCY_S,
     ATTR_TURN_INDEX,
@@ -159,6 +160,7 @@ class _LiveKitSessionState(_BaseSessionState):
     turn_root_span_by_index: dict[int, str] = field(default_factory=dict)
     open_agent_turn_index: Optional[int] = None
     contact_type: str = ""
+    recording_anchor_wall_ms: Optional[int] = None
     topology: SessionTopology = field(
         default_factory=lambda: SessionTopology(default_framework="livekit")
     )
@@ -578,6 +580,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             diarization_source=self._user_turn_diarization_source(modality),
             input_modality=modality,
             agent_hint=agent_hint,
+            source_span=span,
         )
         state.open_agent_turn_index = state.turn_count + 1
 
@@ -629,6 +632,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         turn_index = state.open_agent_turn_index or (state.turn_count + 1)
         self._set(span, ATTR_TURN_INDEX, turn_index)
         agent_id = str(state.agent_label or "agent")
+        agent_modality = self._user_turn_modality(attrs)
         self._emit_turn_trace(
             state,
             turn_index=turn_index,
@@ -636,7 +640,9 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             participant_id=agent_id,
             label=agent_id,
             diarization_source="agent_id",
+            input_modality=agent_modality,
             agent_hint=agent_id,
+            source_span=span if agent_modality == "voice" else None,
         )
         state.turn_count = turn_index
         state.open_agent_turn_index = None
@@ -761,6 +767,39 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
     def _user_turn_diarization_source(modality: str) -> str:
         return "livekit_vad" if modality == "voice" else "livekit_text_input"
 
+    @staticmethod
+    def _speech_wall_ms_from_span(span: ReadableSpan) -> tuple[int, int] | None:
+        """Wall-clock epoch ms from OTLP span bounds (LiveKit user_turn / agent_turn)."""
+        start_ns = span.start_time
+        end_ns = span.end_time
+        if start_ns is None or end_ns is None:
+            return None
+        if end_ns <= start_ns:
+            return None
+        return start_ns // 1_000_000, end_ns // 1_000_000
+
+    @staticmethod
+    def _media_segments_from_speech(
+        state: _LiveKitSessionState,
+        speech_start_wall_ms: int,
+        speech_end_wall_ms: int,
+    ) -> tuple[int, int]:
+        anchor = state.recording_anchor_wall_ms
+        if anchor is None:
+            return 0, 0
+        return (
+            max(0, speech_start_wall_ms - anchor),
+            max(0, speech_end_wall_ms - anchor),
+        )
+
+    def set_recording_anchor_wall_ms(
+        self, state: _LiveKitSessionState, anchor_wall_ms: int
+    ) -> None:
+        """Recording timeline t=0 (``audio_recording_started_at``) for media_segment_*."""
+        if anchor_wall_ms <= 0:
+            return
+        state.recording_anchor_wall_ms = anchor_wall_ms
+
     def _intent_agent_for_turn(
         self, state: _LiveKitSessionState, agent_hint: str = ""
     ) -> str:
@@ -795,6 +834,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         diarization_source: str = "",
         input_modality: str = "",
         agent_hint: str = "",
+        source_span: ReadableSpan | None = None,
     ) -> None:
         if not self._tracer or not state.parlot_session_id:
             return
@@ -802,6 +842,26 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             state, turn_index, agent_hint=agent_hint
         )
         prev = state.last_turn_trace_id
+
+        speech_wall: tuple[int, int] | None = None
+        start_time_unix_ns: int | None = None
+        end_time_unix_ns: int | None = None
+        if source_span is not None and input_modality == "voice":
+            speech_wall = self._speech_wall_ms_from_span(source_span)
+            if speech_wall is not None:
+                start_time_unix_ns = source_span.start_time
+                end_time_unix_ns = source_span.end_time
+
+        media_start_ms = 0
+        media_end_ms = 0
+        speech_start_wall_ms: int | None = None
+        speech_end_wall_ms: int | None = None
+        if speech_wall is not None:
+            speech_start_wall_ms, speech_end_wall_ms = speech_wall
+            media_start_ms, media_end_ms = self._media_segments_from_speech(
+                state, speech_start_wall_ms, speech_end_wall_ms
+            )
+
         trace_id, root_span_id = emit_turn_root_span(
             self._tracer,
             session_id=state.parlot_session_id,
@@ -816,6 +876,12 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             intent_label=intent_label,
             intent_key=intent_key,
             active_agent_id=active_agent_id,
+            speech_start_wall_ms=speech_start_wall_ms,
+            speech_end_wall_ms=speech_end_wall_ms,
+            media_segment_start_ms=media_start_ms,
+            media_segment_end_ms=media_end_ms,
+            start_time_unix_ns=start_time_unix_ns,
+            end_time_unix_ns=end_time_unix_ns,
         )
         state.last_turn_trace_id = trace_id
         state.turn_trace_by_index[turn_index] = trace_id
@@ -865,6 +931,11 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             )
         if state.contact_type:
             session_span.set_attribute(ATTR_SESSION_CONTACT_TYPE, state.contact_type)
+        if state.recording_anchor_wall_ms is not None:
+            session_span.set_attribute(
+                ATTR_SESSION_RECORDING_ANCHOR_WALL_MS,
+                state.recording_anchor_wall_ms,
+            )
         if state.session_id:
             stamp_livekit_platform_refs(
                 session_span,

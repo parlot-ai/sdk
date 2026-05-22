@@ -173,6 +173,11 @@ def teardown_job_entrypoint(processor: "LiveKitGenAIProcessor", entrypoint_span:
         if rs:
             state.room_sid = rs
 
+    from parlot.instrumentation.livekit._recording_anchor import (
+        try_set_recording_anchor_from_report,
+    )
+
+    try_set_recording_anchor_from_report(processor, state)
     _finalize_session_aggregates(bootstrap)
 
     end_time = getattr(entrypoint_span, "end_time", None)

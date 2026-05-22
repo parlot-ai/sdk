@@ -14,8 +14,12 @@ from parlot.core.attrs import (
     ATTR_SESSION_ID,
     ATTR_TURN_INDEX,
     ATTR_TURN_INPUT_MODALITY,
+    ATTR_TURN_MEDIA_END_MS,
+    ATTR_TURN_MEDIA_START_MS,
     ATTR_TURN_PARTICIPANT_ID,
     ATTR_TURN_PARTICIPANT_ROLE,
+    ATTR_TURN_SPEECH_WALL_END_MS,
+    ATTR_TURN_SPEECH_WALL_START_MS,
 )
 from parlot.instrumentation.livekit.attrs import (
     ATTR_LK_AGENT_LABEL,
@@ -317,3 +321,57 @@ class TestParlotTurnEmission:
         turn_trace_hex, _ = proc.lookup_turn_trace(session_id, 2)
         assert turn_trace_hex is not None
         assert captured[0].get_span_context().trace_id == int(turn_trace_hex, 16)
+
+    def test_user_turn_copies_speech_wall_and_otlp_duration(self) -> None:
+        proc, exporter = _proc_with_exporter()
+        _seed_state(proc)
+
+        speech_start = 1_700_000_000_000_000_000
+        speech_end = speech_start + 1_000_000_000
+
+        proc.on_end(
+            _make_span(
+                "user_turn",
+                {
+                    ATTR_LK_JOB_ID: "job-1",
+                    ATTR_LK_USER_TRANSCRIPT: "hello",
+                },
+                start_time=speech_start,
+                end_time=speech_end,
+            )
+        )
+
+        turns = _parlot_turns(exporter)
+        assert len(turns) == 1
+        attrs = turns[0].attributes
+        assert attrs[ATTR_TURN_SPEECH_WALL_START_MS] == speech_start // 1_000_000
+        assert attrs[ATTR_TURN_SPEECH_WALL_END_MS] == speech_end // 1_000_000
+        assert attrs.get(ATTR_TURN_MEDIA_START_MS, 0) == 0
+        assert attrs.get(ATTR_TURN_MEDIA_END_MS, 0) == 0
+        assert turns[0].end_time - turns[0].start_time == speech_end - speech_start
+
+    def test_recording_anchor_sets_media_segments(self) -> None:
+        proc, exporter = _proc_with_exporter()
+        state = _seed_state(proc)
+
+        anchor_ms = 1_700_000_000_000
+        proc.set_recording_anchor_wall_ms(state, anchor_ms)
+
+        speech_start = (anchor_ms + 500) * 1_000_000
+        speech_end = (anchor_ms + 2500) * 1_000_000
+
+        proc.on_end(
+            _make_span(
+                "user_turn",
+                {
+                    ATTR_LK_JOB_ID: "job-1",
+                    ATTR_LK_USER_TRANSCRIPT: "book",
+                },
+                start_time=speech_start,
+                end_time=speech_end,
+            )
+        )
+
+        turns = _parlot_turns(exporter)
+        assert turns[0].attributes[ATTR_TURN_MEDIA_START_MS] == 500
+        assert turns[0].attributes[ATTR_TURN_MEDIA_END_MS] == 2500
