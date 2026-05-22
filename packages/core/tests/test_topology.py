@@ -1,6 +1,8 @@
 """Unit tests for SessionTopology (framework-agnostic)."""
 
-from parlot.core.topology import SessionTopology
+import json
+
+from parlot.core.topology import SessionTopology, _json_dumps_cap
 
 
 def test_bootstrap_id_only() -> None:
@@ -38,3 +40,27 @@ def test_default_framework_on_upsert() -> None:
     topo = SessionTopology(default_framework="livekit")
     topo.upsert_agent("orchestrator")
     assert topo.agents_seen["orchestrator"].framework == "livekit"
+
+
+def test_first_handoff_without_prior_segment_uses_bootstrap_index() -> None:
+    topo = SessionTopology()
+    topo.open_segment_after_handoff("orchestrator", handoff_index=1, turn_count=0)
+    topo.finalize_intent_sequence(1)
+    assert len(topo.intent_segments) == 1
+    assert topo.intent_segments[0].handoff_index == 0
+
+
+def test_append_edge_skips_agent_self_loop() -> None:
+    topo = SessionTopology()
+    topo.upsert_agent("orchestrator")
+    topo.append_edge("orchestrator", "orchestrator", "agent", turn_index=0)
+    assert topo.edges == []
+
+
+def test_json_dumps_cap_truncates_list_without_invalid_json() -> None:
+    big = [{"id": "agent_" + str(i), "role": "task", "notes": "x" * 500} for i in range(300)]
+    raw = _json_dumps_cap(big)
+    parsed = json.loads(raw)
+    assert isinstance(parsed, list)
+    assert len(parsed) < len(big)
+    assert len(raw) <= 64_000

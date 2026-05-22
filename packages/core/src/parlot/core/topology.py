@@ -140,6 +140,8 @@ class SessionTopology:
         dst = to.strip()
         if not src or not dst:
             return
+        if src == dst and to_kind == "agent":
+            return
         self.edges.append(
             EdgeEvent(
                 from_agent=src,
@@ -214,10 +216,13 @@ class SessionTopology:
             return
         self.upsert_agent(aid)
         self.pending_segment_from_turn = max(1, turn_count + 1)
+        effective_handoff_index = handoff_index
+        if not self.intent_segments and self.active_segment is None:
+            effective_handoff_index = 0
         self.active_segment = self._new_segment(
             aid,
             from_turn=self.pending_segment_from_turn,
-            handoff_index=handoff_index,
+            handoff_index=effective_handoff_index,
         )
 
     def apply_pending_from_turn_on_emit(self, turn_index: int) -> None:
@@ -352,7 +357,17 @@ def _truncate(text: str, limit: int) -> str:
 
 
 def _json_dumps_cap(payload: Any) -> str:
+    """Serialize to compact JSON, never emitting truncated invalid JSON."""
+    if isinstance(payload, list):
+        items = list(payload)
+        while items:
+            raw = json.dumps(items, separators=(",", ":"), ensure_ascii=False)
+            if len(raw) <= _MAX_JSON_CHARS:
+                return raw
+            items = items[:-1]
+        return "[]"
+
     raw = json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
     if len(raw) <= _MAX_JSON_CHARS:
         return raw
-    return raw[: _MAX_JSON_CHARS - 3] + "..."
+    return "[]"

@@ -138,6 +138,30 @@ class TestIntentProcessorIntegration:
         assert turns[0].attributes[ATTR_TURN_INTENT_LABEL] == "Orchestrator"
         assert turns[0].attributes[ATTR_TURN_INTENT_KEY] == "orchestrator"
 
+    def test_handoff_before_first_turn_bootstrap_handoff_index(self) -> None:
+        """Handoff at turn_count=0 with no prior segment still uses handoff_index 0."""
+        proc, _exporter = _proc_with_exporter()
+        entry = _make_span("job_entrypoint", {ATTR_LK_JOB_ID: "job-intent-handoff-0"})
+        proc.on_start(entry)
+        session_span = get_job_bootstrap().session_span
+        proc.on_end(
+            _make_span(
+                "lk.agent_handoff",
+                {
+                    ATTR_LK_JOB_ID: "job-intent-handoff-0",
+                    ATTR_AGENT_TRANSFER_FROM: "orchestrator",
+                    ATTR_AGENT_TRANSFER_TO: "cancel_task",
+                },
+            )
+        )
+        proc.on_end(entry)
+        raw = session_span._attributes.get(ATTR_SESSION_INTENT_SEQUENCE)
+        assert raw
+        segments = json.loads(str(raw))
+        assert len(segments) == 1
+        assert segments[0]["handoff_index"] == 0
+        assert segments[0]["agent_id"] == "cancel_task"
+
     def test_session_close_before_instructions(self) -> None:
         proc, _exporter = _proc_with_exporter()
         entry = _make_span("job_entrypoint", {ATTR_LK_JOB_ID: "job-intent-2"})
