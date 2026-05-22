@@ -41,11 +41,9 @@ from parlot.instrumentation.livekit.attrs import (
     ATTR_LK_USER_INPUT,
     ATTR_LK_USER_TRANSCRIPT,
 )
-from parlot.instrumentation.livekit._platform_refs import (
-    _job_room_context,
-    register_livekit_job_context,
-)
 from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
+from parlot.instrumentation.livekit._session import get_job_bootstrap
+from opentelemetry.sdk.trace import TracerProvider
 
 
 # ---------------------------------------------------------------------------
@@ -66,6 +64,16 @@ def _make_span(name: str, attributes: dict | None = None,
     return span
 
 
+def _bootstrap_proc(proc: LiveKitGenAIProcessor, job_id: str = "job-test") -> MagicMock:
+    """Start ``job_entrypoint`` so child spans resolve session via ContextVar."""
+    provider = TracerProvider()
+    provider.add_span_processor(proc)
+    proc.set_tracer(provider.get_tracer("test"))
+    entry = _make_span("job_entrypoint", {ATTR_LK_JOB_ID: job_id})
+    proc.on_start(entry)
+    return entry
+
+
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
@@ -73,6 +81,7 @@ def _make_span(name: str, attributes: dict | None = None,
 class TestLlmRequestEnrichment:
     def test_cost_computed(self) -> None:
         proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
         span = _make_span("llm_request_run", {
             ATTR_GEN_AI_MODEL: "gpt-4o",
             ATTR_GEN_AI_IN_TOKENS: 1000,
@@ -84,6 +93,7 @@ class TestLlmRequestEnrichment:
 
     def test_system_inferred_from_provider(self) -> None:
         proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
         span = _make_span("llm_request_run", {
             ATTR_GEN_AI_PROVIDER: "openai",
             ATTR_GEN_AI_IN_TOKENS: 10,
@@ -94,6 +104,7 @@ class TestLlmRequestEnrichment:
 
     def test_cache_hit_rate(self) -> None:
         proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
         span = _make_span("llm_request_run", {
             ATTR_GEN_AI_MODEL: "gpt-4o",
             ATTR_GEN_AI_IN_TOKENS: 1000,
@@ -105,6 +116,7 @@ class TestLlmRequestEnrichment:
 
     def test_unknown_model_no_cost(self) -> None:
         proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
         span = _make_span("llm_request_run", {
             ATTR_GEN_AI_MODEL: "completely-unknown-model",
             ATTR_GEN_AI_IN_TOKENS: 100,
@@ -117,20 +129,18 @@ class TestLlmRequestEnrichment:
 class TestLlmNodeEnrichment:
     def test_turn_index_stamped_not_incremented(self) -> None:
         proc = LiveKitGenAIProcessor()
-        from parlot.instrumentation.livekit._processor import _LiveKitSessionState
-
-        proc._sessions["job-llm"] = _LiveKitSessionState()
-        state = proc._sessions["job-llm"]
-        state.parlot_session_id = "f" * 32
+        _bootstrap_proc(proc)
+        state = get_job_bootstrap().state
         state.turn_count = 2
 
-        span = _make_span("llm_node", {ATTR_LK_JOB_ID: "job-llm"})
+        span = _make_span("llm_node")
         proc.on_end(span)
         assert span._attributes[ATTR_TURN_INDEX] == 2
         assert state.turn_count == 2
 
     def test_op_name_defaulted(self) -> None:
         proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
         span = _make_span("llm_node")
         proc.on_end(span)
         assert span._attributes.get(ATTR_GEN_AI_OP_NAME) == "chat"
@@ -139,6 +149,7 @@ class TestLlmNodeEnrichment:
 class TestFunctionToolEnrichment:
     def test_handoff_auto_detected(self) -> None:
         proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
         span = _make_span("function_tool", {
             ATTR_LK_FNC_TOOL_NAME: "route",
             ATTR_LK_FNC_TOOL_OUTPUT: "AgentHandoff(agent=<BillingAgent object at 0x1>)",
@@ -148,6 +159,7 @@ class TestFunctionToolEnrichment:
 
     def test_handoff_explicit_name(self) -> None:
         proc = LiveKitGenAIProcessor(handoff_tool_names={"transfer_to_billing"})
+        _bootstrap_proc(proc)
         span = _make_span("function_tool", {
             ATTR_LK_FNC_TOOL_NAME: "transfer_to_billing",
             ATTR_LK_FNC_TOOL_OUTPUT: "ok",
@@ -157,6 +169,7 @@ class TestFunctionToolEnrichment:
 
     def test_non_handoff_tool(self) -> None:
         proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
         span = _make_span("function_tool", {
             ATTR_LK_FNC_TOOL_NAME: "get_account_balance",
             ATTR_LK_FNC_TOOL_OUTPUT: "1234.56",
@@ -166,27 +179,17 @@ class TestFunctionToolEnrichment:
 
     def test_tool_duration_computed(self) -> None:
         proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
         span = _make_span("function_tool", start_time=0, end_time=500_000_000)
         proc.on_end(span)
         assert span._attributes.get(ATTR_GEN_AI_TOOL_DURATION_MS) == pytest.approx(500.0)
 
 
-class TestRegisteredJobSessionId:
-    """Child spans without lk.job_id must share the job_entrypoint session id."""
-
-    def setup_method(self) -> None:
-        _job_room_context.clear()
-
-    def teardown_method(self) -> None:
-        _job_room_context.clear()
-
-    def test_spans_without_lk_job_id_share_session_with_entrypoint(self) -> None:
+class TestRootSpanAggregates:
+    def test_session_aggregates_on_conversation_session(self) -> None:
         proc = LiveKitGenAIProcessor()
-        job_id = "AJ_test"
-        register_livekit_job_context(job_id, room_sid="RM_test")
-
-        llm = _make_span("llm_node")
-        proc.on_end(llm)
+        job_id = "job-root"
+        entry = _bootstrap_proc(proc, job_id)
 
         proc.on_end(
             _make_span("user_turn", {ATTR_LK_USER_TRANSCRIPT: "hello"}),
@@ -194,108 +197,23 @@ class TestRegisteredJobSessionId:
         proc.on_end(
             _make_span("agent_turn", {ATTR_LK_AGENT_LABEL: "agent"}),
         )
-
-        session_id = llm._attributes[ATTR_SESSION_ID]
-        assert session_id
-        assert len(session_id) == 32
-        assert llm._attributes[ATTR_LK_JOB_ID] == job_id
-        assert job_id in proc._sessions
-        assert len(proc._sessions) == 1
-
-        root = _make_span("job_entrypoint", {ATTR_LK_JOB_ID: job_id})
-        proc.on_end(root)
-
-        assert root._attributes[ATTR_SESSION_ID] == session_id
-        assert root._attributes[ATTR_SESSION_TURN_COUNT] == 2
-
-    def test_multiple_registered_jobs_use_trace_id_fallback(self) -> None:
-        proc = LiveKitGenAIProcessor()
-        register_livekit_job_context("job-a")
-        register_livekit_job_context("job-b")
-
-        span = _make_span("llm_node")
-        proc.on_end(span)
-
-        trace_hex = format(span.context.trace_id, "032x")
-        assert trace_hex in proc._sessions
-        assert "job-a" not in proc._sessions
-        assert "job-b" not in proc._sessions
-
-
-class TestEntrypointTraceSessionMerge:
-    """job_entrypoint with lk.job_id must adopt trace-keyed session state."""
-
-    def setup_method(self) -> None:
-        _job_room_context.clear()
-
-    def teardown_method(self) -> None:
-        _job_room_context.clear()
-
-    def test_entrypoint_adopts_trace_bucket_without_register(self) -> None:
-        """Reproduces production split: children lack lk.job_id, entrypoint has it."""
-        proc = LiveKitGenAIProcessor()
-        job_id = "AJ_merge"
-        job_trace = 0xCAFEBABECAFEBABECAFEBABECAFEBABE
-
-        def _job_trace_span(name: str, attributes: dict | None = None) -> MagicMock:
-            span = _make_span(name, attributes)
-            span.context.trace_id = job_trace
-            return span
-
-        child = _job_trace_span(
-            "user_turn",
-            {ATTR_LK_USER_TRANSCRIPT: "hello"},
-        )
-        proc.on_end(child)
-        canonical_session = child._attributes[ATTR_SESSION_ID]
-
-        root = _job_trace_span("job_entrypoint", {ATTR_LK_JOB_ID: job_id})
-        proc.on_end(root)
-
-        assert root._attributes[ATTR_SESSION_ID] == canonical_session
-        assert root._attributes[ATTR_SESSION_TURN_COUNT] == 1
-        assert root._attributes[ATTR_LK_JOB_ID] == job_id
-        assert job_id not in proc._sessions
-
-
-class TestRootSpanAggregates:
-    def test_session_aggregates_written(self) -> None:
-        proc = LiveKitGenAIProcessor()
-        job_id = "job-root"
-
-        proc.on_end(
-            _make_span(
-                "user_turn",
-                {ATTR_LK_JOB_ID: job_id, ATTR_LK_USER_TRANSCRIPT: "hello"},
-            )
-        )
-        proc.on_end(
-            _make_span(
-                "agent_turn",
-                {ATTR_LK_JOB_ID: job_id, ATTR_LK_AGENT_LABEL: "agent"},
-            )
-        )
-        root = _make_span("job_entrypoint", {ATTR_LK_JOB_ID: job_id})
-        proc.on_end(root)
-
-        assert root._attributes[ATTR_SESSION_TURN_COUNT] == 2
+        assert get_job_bootstrap().state.turn_count == 2
+        proc.on_end(entry)
 
     def test_state_cleaned_up_after_root(self) -> None:
         proc = LiveKitGenAIProcessor()
-        trace_id = 0xABCD1234
-        root = _make_span("job_entrypoint", {ATTR_LK_JOB_ID: "j1"})
-        root.context.trace_id = trace_id
-        root.attributes = root._attributes
-        proc.on_end(root)
-        hex_id = format(trace_id, "032x")
-        assert hex_id not in proc._sessions
+        entry = _bootstrap_proc(proc, "j1")
+        sid = get_job_bootstrap().session_id
+        proc.on_end(entry)
+        assert sid not in proc._sessions
+        assert get_job_bootstrap() is None
 
 
 class TestContentCapture:
     def test_content_captured_by_default(self) -> None:
         proc = LiveKitGenAIProcessor(capture_content=True)
+        _bootstrap_proc(proc, "job-content")
         span = _make_span("agent_turn", {
-            ATTR_LK_JOB_ID: "job-content",
             ATTR_LK_USER_INPUT: "Hello agent",
             ATTR_LK_RESPONSE_TEXT: "Hi there",
         })
@@ -306,8 +224,8 @@ class TestContentCapture:
 
     def test_content_suppressed_when_disabled(self) -> None:
         proc = LiveKitGenAIProcessor(capture_content=False)
+        _bootstrap_proc(proc, "job-content")
         span = _make_span("agent_turn", {
-            ATTR_LK_JOB_ID: "job-content",
             ATTR_LK_USER_INPUT: "Hello agent",
             ATTR_LK_RESPONSE_TEXT: "Hi there",
         })
@@ -318,7 +236,8 @@ class TestContentCapture:
 class TestConversationId:
     def test_gen_ai_conversation_id_stamped(self) -> None:
         proc = LiveKitGenAIProcessor()
-        span = _make_span("llm_node", {ATTR_LK_JOB_ID: "job-conv"})
+        _bootstrap_proc(proc, "job-conv")
+        span = _make_span("llm_node")
         proc.on_end(span)
         session_id = span._attributes[ATTR_SESSION_ID]
         assert span._attributes[ATTR_GEN_AI_CONVERSATION_ID] == session_id
@@ -328,8 +247,8 @@ class TestConversationId:
 class TestAgentIdentity:
     def test_function_tool_stamps_gen_ai_agent_name(self) -> None:
         proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc, "job-agent")
         span = _make_span("function_tool", {
-            ATTR_LK_JOB_ID: "job-agent",
             ATTR_LK_AGENT_LABEL: "ReceptionistAgent",
             ATTR_LK_FNC_TOOL_NAME: "lookup",
             ATTR_LK_FNC_TOOL_OUTPUT: "ok",
@@ -339,15 +258,12 @@ class TestAgentIdentity:
 
     def test_drain_agent_activity_stamps_gen_ai_agent_name_from_state(self) -> None:
         proc = LiveKitGenAIProcessor()
-        from parlot.instrumentation.livekit._processor import _LiveKitSessionState
-
-        proc._sessions["job-turn"] = _LiveKitSessionState()
-        state = proc._sessions["job-turn"]
-        state.parlot_session_id = "a" * 32
+        _bootstrap_proc(proc, "job-turn")
+        state = get_job_bootstrap().state
         state.agent_label = "BillingAgent"
         state.open_agent_turn_index = 1
 
-        span = _make_span("drain_agent_activity", {ATTR_LK_JOB_ID: "job-turn"})
+        span = _make_span("drain_agent_activity")
         proc.on_end(span)
         assert span._attributes[ATTR_GEN_AI_AGENT_NAME] == "BillingAgent"
 
@@ -355,8 +271,8 @@ class TestAgentIdentity:
 class TestAmdEnrichment:
     def test_amd_maps_category_and_role(self) -> None:
         proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc, "job-amd")
         span = _make_span("amd", {
-            ATTR_LK_JOB_ID: "job-amd",
             ATTR_AMD_CATEGORY: "machine-vm",
         })
         proc.on_end(span)
@@ -368,18 +284,16 @@ class TestAmdEnrichment:
     def test_amd_contact_type_on_root(self) -> None:
         proc = LiveKitGenAIProcessor()
         job_id = "job-amd-root"
-        proc.on_end(_make_span("amd", {
-            ATTR_LK_JOB_ID: job_id,
-            ATTR_AMD_CATEGORY: "human",
-        }))
-        root = _make_span("job_entrypoint", {ATTR_LK_JOB_ID: job_id})
-        proc.on_end(root)
-        assert root._attributes[ATTR_SESSION_CONTACT_TYPE] == "human"
+        entry = _bootstrap_proc(proc, job_id)
+        proc.on_end(_make_span("amd", {ATTR_AMD_CATEGORY: "human"}))
+        assert get_job_bootstrap().state.contact_type == "human"
+        proc.on_end(entry)
 
 
 class TestHandoffSpanEnrichment:
     def test_lk_agent_handoff_transfer_and_conversation_id(self) -> None:
         proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
         span = _make_span("lk.agent_handoff", {
             ATTR_AGENT_TRANSFER_FROM: "agent-old",
             ATTR_AGENT_TRANSFER_TO: "agent-new",

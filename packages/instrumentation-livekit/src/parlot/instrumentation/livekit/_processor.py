@@ -59,7 +59,6 @@ from parlot.core.attrs import (
     ATTR_TURN_INPUT_MODALITY,
     ATTR_TURN_INTERRUPTED,
 )
-from parlot.core.ids import new_session_id
 from parlot.instrumentation.livekit.attrs import (
     ATTR_AMD_CATEGORY,
     ATTR_LK_AGENT_LABEL,
@@ -83,11 +82,13 @@ from parlot.instrumentation.livekit.attrs import (
     METADATA_JOB_ID,
     METADATA_ROOM_ID,
 )
-from ._platform_refs import (
-    clear_livekit_job_context,
-    lookup_room_context,
-    resolve_registered_job_id,
-    stamp_livekit_platform_refs,
+from ._platform_refs import lookup_room_context, stamp_livekit_platform_refs
+from ._session import (
+    SPAN_CONVERSATION_SESSION,
+    bootstrap_job_entrypoint,
+    get_job_bootstrap,
+    handle_conversation_session_on_end,
+    teardown_job_entrypoint,
 )
 from parlot.core.pricing import DEFAULT_PRICES, compute_cost
 from parlot.core.processor import ParlotBaseProcessor
@@ -160,9 +161,20 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         self._tracer = None
         self._metrics = None
 
+    def on_start(self, span, parent_context=None) -> None:
+        if span.name == "job_entrypoint":
+            bootstrap_job_entrypoint(self, span)
+
     def on_end(self, span: ReadableSpan) -> None:
         try:
             logger.debug("on_end: %s attrs: %s", span.name, span.attributes)
+            name = span.name
+            if name == SPAN_CONVERSATION_SESSION:
+                handle_conversation_session_on_end()
+                return
+            if name == "job_entrypoint":
+                teardown_job_entrypoint(self, span)
+                return
             self._enrich(span)
         except Exception:
             logger.exception("LiveKitGenAIProcessor failed on span %r", span.name)
@@ -181,47 +193,23 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             return None
         return by_turn.get(turn_index)
 
-    def _resolve_job_key(self, span: ReadableSpan, attrs: Mapping[str, AttributeValue]) -> str:
-        explicit = attrs.get(ATTR_LK_JOB_ID) or attrs.get(METADATA_JOB_ID)
-        if explicit:
-            return str(explicit)
-        registered = resolve_registered_job_id()
-        if registered:
-            return registered
-        return self._trace_id_hex(span)
-
-    @staticmethod
-    def _state_has_session_activity(state: _LiveKitSessionState) -> bool:
-        return bool(
-            state.turn_count
-            or state.turn_trace_by_index
-            or state.total_input_tokens
-            or state.total_output_tokens
-            or state.tool_call_count
+    def _resolve_session_state(
+        self, span: ReadableSpan, attrs: Mapping[str, AttributeValue]
+    ) -> _LiveKitSessionState | None:
+        bootstrap = get_job_bootstrap()
+        if bootstrap is not None:
+            return bootstrap.state
+        sid = attrs.get(ATTR_SESSION_ID)
+        if sid:
+            state = self._sessions.get(str(sid))
+            if state is not None:
+                return state
+        logger.error(
+            "parlot: no session bootstrap for span %s (trace=%s)",
+            span.name,
+            self._trace_id_hex(span),
         )
-
-    def _merge_trace_session_into_job_key(
-        self, job_key: str, span: ReadableSpan
-    ) -> None:
-        """Adopt trace-keyed session state when job_entrypoint uses lk.job_id.
-
-        LiveKit child spans often omit ``lk.job_id`` and accumulate state under
-        ``trace_id_hex``. ``job_entrypoint`` carries ``lk.job_id`` and would
-        otherwise mint a second ``parlot_session_id`` and ``sessions`` row.
-        """
-        trace_key = self._trace_id_hex(span)
-        if trace_key == job_key:
-            return
-        trace_state = self._sessions.get(trace_key)
-        if not trace_state or not trace_state.parlot_session_id:
-            return
-        if not self._state_has_session_activity(trace_state):
-            return
-        job_state = self._sessions.get(job_key)
-        if job_state and self._state_has_session_activity(job_state):
-            return
-        self._sessions[job_key] = trace_state
-        self._sessions.pop(trace_key, None)
+        return None
 
     def _track_agent_label(
         self, state: _LiveKitSessionState, attrs: Mapping[str, AttributeValue]
@@ -246,17 +234,16 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
     def _enrich(self, span: ReadableSpan) -> None:
         name = span.name
+        if name in ("parlot.turn", SPAN_CONVERSATION_SESSION):
+            return
         attrs = span.attributes or {}
-        job_key = self._resolve_job_key(span, attrs)
-        if name == "job_entrypoint":
-            self._merge_trace_session_into_job_key(job_key, span)
-        state = self._sessions.setdefault(job_key, _LiveKitSessionState())
+        state = self._resolve_session_state(span, attrs)
+        if state is None:
+            return
 
         explicit_job = attrs.get(ATTR_LK_JOB_ID) or attrs.get(METADATA_JOB_ID)
         if explicit_job:
             self._maybe_update(state, "session_id", explicit_job)
-        elif job_key != self._trace_id_hex(span):
-            self._maybe_update(state, "session_id", job_key)
         self._maybe_update(state, "room_name", attrs.get(ATTR_LK_ROOM_NAME))
         self._maybe_update(state, "room_sid", attrs.get(ATTR_LK_ROOM_SID) or attrs.get(METADATA_ROOM_ID))
 
@@ -282,7 +269,6 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             room_sid=state.room_sid,
         )
 
-        self._ensure_parlot_session(state)
         self._stamp_session_turn_attrs(span, state)
         self._set(span, ATTR_AGENT_FRAMEWORK, "livekit")
 
@@ -308,8 +294,6 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             self._enrich_amd(span, state)
         elif name == "lk.agent_handoff":
             self._enrich_handoff(span, state)
-        elif name == "job_entrypoint":
-            self._enrich_root(span, state, job_key)
 
     def _enrich_llm_request(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
@@ -636,11 +620,6 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
         state.pending_handoff_end_ns = span.end_time or time.time_ns()
 
-    def _ensure_parlot_session(self, state: _LiveKitSessionState) -> None:
-        if not state.parlot_session_id:
-            state.parlot_session_id = new_session_id()
-            state.conversation_id = state.parlot_session_id
-
     def _stamp_session_turn_attrs(
         self, span: ReadableSpan, state: _LiveKitSessionState
     ) -> None:
@@ -696,29 +675,40 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             turn_index
         ] = (trace_id, root_span_id)
 
-    def _enrich_root(
-        self, span: ReadableSpan, state: _LiveKitSessionState, job_key: str
+    def _apply_root_to_live_span(
+        self, session_span: Any, state: _LiveKitSessionState
     ) -> None:
-        self._set(span, ATTR_SESSION_TURN_COUNT, state.turn_count)
-        self._set(span, ATTR_SESSION_TOOL_CALL_COUNT, state.tool_call_count)
-        self._set(span, ATTR_SESSION_HANDOFF_COUNT, state.handoff_count)
-        self._set(span, ATTR_SESSION_TOTAL_INPUT_TOKENS, state.total_input_tokens)
-        self._set(span, ATTR_SESSION_TOTAL_OUTPUT_TOKENS, state.total_output_tokens)
-
+        """Stamp session aggregates on the live ``conversation.session`` span."""
+        if session_span is None or not hasattr(session_span, "set_attribute"):
+            return
+        session_span.set_attribute(ATTR_SESSION_TURN_COUNT, state.turn_count)
+        session_span.set_attribute(ATTR_SESSION_TOOL_CALL_COUNT, state.tool_call_count)
+        session_span.set_attribute(ATTR_SESSION_HANDOFF_COUNT, state.handoff_count)
+        session_span.set_attribute(
+            ATTR_SESSION_TOTAL_INPUT_TOKENS, state.total_input_tokens
+        )
+        session_span.set_attribute(
+            ATTR_SESSION_TOTAL_OUTPUT_TOKENS, state.total_output_tokens
+        )
         if state.total_cost_usd:
-            self._set(span, ATTR_SESSION_TOTAL_COST_USD, round(state.total_cost_usd, 6))
-
+            session_span.set_attribute(
+                ATTR_SESSION_TOTAL_COST_USD, round(state.total_cost_usd, 6)
+            )
         if state.agent_chain:
-            self._set(span, ATTR_SESSION_AGENT_CHAIN, " → ".join(state.agent_chain))
-
+            session_span.set_attribute(
+                ATTR_SESSION_AGENT_CHAIN, " → ".join(state.agent_chain)
+            )
         if state.contact_type:
-            self._set(span, ATTR_SESSION_CONTACT_TYPE, state.contact_type)
-
+            session_span.set_attribute(ATTR_SESSION_CONTACT_TYPE, state.contact_type)
+        if state.session_id:
+            stamp_livekit_platform_refs(
+                session_span,
+                job_id=state.session_id,
+                room_name=state.room_name,
+                room_sid=state.room_sid,
+            )
         if self._metrics and state.parlot_session_id:
             self._metrics.record_session_close(state)
-
-        clear_livekit_job_context(state.session_id)
-        self._sessions.pop(job_key, None)
 
 
 def _attr_int(

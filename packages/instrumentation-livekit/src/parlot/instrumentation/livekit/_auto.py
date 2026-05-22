@@ -6,8 +6,8 @@ Auto-configuration helpers for parlot-instrumentation-livekit.
   2. Registers it with livekit.agents.telemetry.
   3. Patches AgentSession to auto-install the handoff hook.
 
-Call ``await register_job_context(ctx)`` at the start of your entrypoint, **before**
-``await ctx.connect()``.
+Session identity is bootstrapped automatically on LiveKit's ``job_entrypoint`` span.
+Call ``await ctx.connect()`` as usual — room metadata is captured on connect.
 
 Environment variables:
   PARLOT_ENDPOINT         OTLP HTTP endpoint (e.g. http://localhost:4318)
@@ -37,14 +37,13 @@ def configure(
 
     Call once at module import (before starting the worker)::
 
-        from parlot.instrumentation.livekit import configure, register_job_context
+        from parlot.instrumentation.livekit import configure
 
         configure()
 
         from livekit.agents import AgentSession, JobContext, WorkerOptions, cli
 
         async def entrypoint(ctx: JobContext):
-            await register_job_context(ctx)
             await ctx.connect()
             ...
 
@@ -88,8 +87,16 @@ def configure(
             prices=prices,
         )
 
+    from parlot.core.processor import assert_sync_span_processors
+
+    from ._session import set_span_context_attach_enabled
+
+    attach_ok = assert_sync_span_processors(tracer_provider)
+    set_span_context_attach_enabled(attach_ok)
+
     _register_with_livekit(tracer_provider)
     _patch_agent_session_with_tracer(tracer_provider)
+    _patch_job_context_connect()
 
     _configured = True
     logger.debug("parlot-instrumentation.livekit configured (endpoint=%s)", resolved_endpoint)
@@ -139,6 +146,13 @@ def _build_provider(
     provider.add_span_processor(processor)
     provider.add_span_processor(BatchSpanProcessor(exporter))
 
+    from parlot.core.processor import assert_sync_span_processors
+
+    from ._session import set_span_context_attach_enabled
+
+    attach_ok = assert_sync_span_processors(provider)
+    set_span_context_attach_enabled(attach_ok)
+
     meter_provider = build_meter_provider(endpoint, headers)
     otel_metrics.set_meter_provider(meter_provider)
     processor.set_tracer(provider.get_tracer("parlot.instrumentation.livekit"))
@@ -168,3 +182,27 @@ def _patch_agent_session_with_tracer(provider) -> None:
     from ._hooks import _patch_agent_session
 
     _patch_agent_session(tracer)
+
+
+def _patch_job_context_connect() -> None:
+    """Stamp ``room_sid`` on the live session span after ``JobContext.connect``."""
+    try:
+        from livekit.agents import JobContext
+    except ImportError:
+        logger.debug("livekit-agents not importable; JobContext.connect not patched")
+        return
+
+    if getattr(JobContext.connect, "_parlot_connect_patched", False):
+        return
+
+    _orig_connect = JobContext.connect
+
+    async def _parlot_connect(self, *args, **kwargs):
+        await _orig_connect(self, *args, **kwargs)
+        from ._session import refresh_bootstrap_room_from_ctx
+
+        await refresh_bootstrap_room_from_ctx(self)
+
+    _parlot_connect._parlot_connect_patched = True
+    JobContext.connect = _parlot_connect
+    logger.debug("Patched JobContext.connect for mid-flight room_sid")

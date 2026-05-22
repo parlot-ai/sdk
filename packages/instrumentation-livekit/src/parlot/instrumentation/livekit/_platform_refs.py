@@ -48,17 +48,6 @@ def lookup_room_context(job_id: str) -> tuple[str, str]:
     return _job_room_context.get(job_id, ("", ""))
 
 
-def resolve_registered_job_id() -> str | None:
-    """Return the sole registered job id when exactly one job is active on this worker.
-
-    Used by the processor to key session state when LiveKit child spans omit
-    ``lk.job_id``. Returns ``None`` when zero or multiple jobs are registered.
-    """
-    if len(_job_room_context) != 1:
-        return None
-    return next(iter(_job_room_context))
-
-
 def _livekit_platform_ref_triples(
     *,
     job_id: str = "",
@@ -166,32 +155,3 @@ def _job_room_fields(ctx) -> tuple[str, str, str]:
     return job_id, room_name, room_sid
 
 
-async def register_job_context(ctx) -> str:
-    """Register job and room metadata for session correlation and paste-search.
-
-    **Call at the start of ``entrypoint``, before ``await ctx.connect()``** so
-    spans without ``lk.job_id`` resolve to one Parlot ``session.id`` for the job.
-
-    Example::
-
-        async def entrypoint(ctx: JobContext):
-            await register_job_context(ctx)
-            await ctx.connect()
-            ...
-
-    Uses ``ctx.job.room`` from the job assignment (sync, safe before connect).
-    If ``room_sid`` is still empty after connect, you may call this again to
-    resolve ``ctx.room.sid`` from the connected room.
-
-    Returns the LiveKit job id.
-    """
-    job_id, room_name, room_sid = _job_room_fields(ctx)
-
-    if not room_sid and getattr(ctx, "_connected", False):
-        room = getattr(ctx, "room", None)
-        room_sid = await _coerce_livekit_field(room, "sid", "id")
-        if not room_name:
-            room_name = await _coerce_livekit_field(room, "name")
-
-    register_livekit_job_context(job_id, room_name=room_name, room_sid=room_sid)
-    return job_id

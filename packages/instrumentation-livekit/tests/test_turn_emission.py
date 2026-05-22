@@ -48,10 +48,17 @@ def _make_span(
 def _proc_with_exporter() -> tuple[LiveKitGenAIProcessor, InMemorySpanExporter]:
     exporter = InMemorySpanExporter()
     provider = TracerProvider()
-    provider.add_span_processor(SimpleSpanProcessor(exporter))
     proc = LiveKitGenAIProcessor()
+    provider.add_span_processor(proc)
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
     proc.set_tracer(provider.get_tracer("test"))
     return proc, exporter
+
+
+def _bootstrap_job(proc: LiveKitGenAIProcessor, job_id: str = "job-1") -> MagicMock:
+    entry = _make_span("job_entrypoint", {ATTR_LK_JOB_ID: job_id})
+    proc.on_start(entry)
+    return entry
 
 
 def _parlot_turns(exporter: InMemorySpanExporter) -> list:
@@ -59,12 +66,10 @@ def _parlot_turns(exporter: InMemorySpanExporter) -> list:
 
 
 def _seed_state(proc: LiveKitGenAIProcessor, job_id: str = "job-1") -> _LiveKitSessionState:
-    state = _LiveKitSessionState()
-    state.parlot_session_id = "a" * 32
-    state.conversation_id = state.parlot_session_id
-    state.session_id = job_id
-    proc._sessions[job_id] = state
-    return state
+    _bootstrap_job(proc, job_id)
+    from parlot.instrumentation.livekit._session import get_job_bootstrap
+
+    return get_job_bootstrap().state
 
 
 class TestParlotTurnEmission:

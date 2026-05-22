@@ -1,10 +1,11 @@
-"""Tests for platform.ref.* stamping and job context registration (LiveKit)."""
+"""Tests for platform.ref.* stamping and job room registry (LiveKit)."""
 
 from __future__ import annotations
 
 import asyncio
 
 import pytest
+from opentelemetry.sdk.trace import TracerProvider
 
 from parlot.core.attrs import (
     ATTR_PLATFORM_FRAMEWORK,
@@ -20,11 +21,11 @@ from parlot.instrumentation.livekit._platform_refs import (
     _job_room_context,
     _livekit_platform_ref_triples,
     lookup_room_context,
-    register_job_context,
     register_livekit_job_context,
-    resolve_registered_job_id,
     stamp_livekit_platform_refs,
 )
+from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
+from parlot.instrumentation.livekit._session import refresh_bootstrap_room_from_ctx
 
 
 class _FakeSpan:
@@ -47,16 +48,6 @@ def test_register_livekit_job_context_lookup() -> None:
     register_livekit_job_context("job-99", room_name="demo", room_sid="RM_xyz")
     assert lookup_room_context("job-99") == ("demo", "RM_xyz")
     assert lookup_room_context("missing") == ("", "")
-
-
-def test_resolve_registered_job_id_singleton() -> None:
-    _job_room_context.clear()
-    assert resolve_registered_job_id() is None
-    register_livekit_job_context("AJ_only")
-    assert resolve_registered_job_id() == "AJ_only"
-    register_livekit_job_context("AJ_second")
-    assert resolve_registered_job_id() is None
-    _job_room_context.clear()
 
 
 def test_stamp_livekit_platform_refs() -> None:
@@ -82,7 +73,9 @@ def test_stamp_skipped_when_no_ids() -> None:
 
 
 @pytest.mark.asyncio
-async def test_register_job_context_before_connect() -> None:
+async def test_refresh_bootstrap_room_from_job_assignment() -> None:
+    _job_room_context.clear()
+
     class _JobRoom:
         name = "pre-connect-room"
         sid = "RM_pre"
@@ -96,15 +89,28 @@ async def test_register_job_context_before_connect() -> None:
         room = None
         _connected = False
 
-    job_id = await register_job_context(_FakeCtx())
-    assert job_id == "job-pre"
-    assert resolve_registered_job_id() == "job-pre"
+    proc = LiveKitGenAIProcessor()
+    provider = TracerProvider()
+    provider.add_span_processor(proc)
+    proc.set_tracer(provider.get_tracer("test"))
+    from unittest.mock import MagicMock
+
+    from parlot.instrumentation.livekit.attrs import ATTR_LK_JOB_ID as LK_JOB
+
+    entry = MagicMock()
+    entry.name = "job_entrypoint"
+    entry.attributes = {LK_JOB: "job-pre"}
+    proc.on_start(entry)
+
+    await refresh_bootstrap_room_from_ctx(_FakeCtx())
     assert lookup_room_context("job-pre") == ("pre-connect-room", "RM_pre")
     _job_room_context.clear()
 
 
 @pytest.mark.asyncio
-async def test_register_job_context_uses_job_room_sid() -> None:
+async def test_refresh_bootstrap_prefers_job_room_sid_over_rtc() -> None:
+    _job_room_context.clear()
+
     class _JobRoom:
         name = "demo-room"
         sid = "RM_from_job"
@@ -129,12 +135,28 @@ async def test_register_job_context_uses_job_room_sid() -> None:
         room = _HungRoom()
         _connected = False
 
-    await register_job_context(_FakeCtx())
+    proc = LiveKitGenAIProcessor()
+    provider = TracerProvider()
+    provider.add_span_processor(proc)
+    proc.set_tracer(provider.get_tracer("test"))
+    from unittest.mock import MagicMock
+
+    from parlot.instrumentation.livekit.attrs import ATTR_LK_JOB_ID as LK_JOB
+
+    entry = MagicMock()
+    entry.name = "job_entrypoint"
+    entry.attributes = {LK_JOB: "job-1"}
+    proc.on_start(entry)
+
+    await refresh_bootstrap_room_from_ctx(_FakeCtx())
     assert lookup_room_context("job-1") == ("demo-room", "RM_from_job")
+    _job_room_context.clear()
 
 
 @pytest.mark.asyncio
-async def test_register_job_context_rtc_fallback_when_connected() -> None:
+async def test_refresh_bootstrap_rtc_fallback_when_connected() -> None:
+    _job_room_context.clear()
+
     class _JobRoom:
         name = ""
         sid = ""
@@ -158,34 +180,19 @@ async def test_register_job_context_rtc_fallback_when_connected() -> None:
         room = _RtcRoom()
         _connected = True
 
-    await register_job_context(_FakeCtx())
+    proc = LiveKitGenAIProcessor()
+    provider = TracerProvider()
+    provider.add_span_processor(proc)
+    proc.set_tracer(provider.get_tracer("test"))
+    from unittest.mock import MagicMock
+
+    from parlot.instrumentation.livekit.attrs import ATTR_LK_JOB_ID as LK_JOB
+
+    entry = MagicMock()
+    entry.name = "job_entrypoint"
+    entry.attributes = {LK_JOB: "job-fallback"}
+    proc.on_start(entry)
+
+    await refresh_bootstrap_room_from_ctx(_FakeCtx())
     assert lookup_room_context("job-fallback") == ("rtc-name", "RM_rtc123")
-
-
-@pytest.mark.asyncio
-async def test_register_job_context_never_stores_coroutine_repr() -> None:
-    class _JobRoom:
-        name = "n"
-        sid = ""
-
-    class _FakeJob:
-        id = "job-coro"
-        room = _JobRoom()
-
-    class _RtcRoom:
-        @property
-        def sid(self):
-            async def _inner():
-                return "RM_ok"
-
-            return _inner()
-
-    class _FakeCtx:
-        job = _FakeJob()
-        room = _RtcRoom()
-        _connected = True
-
-    await register_job_context(_FakeCtx())
-    _name, sid = lookup_room_context("job-coro")
-    assert "coroutine" not in sid
-    assert sid == "RM_ok"
+    _job_room_context.clear()

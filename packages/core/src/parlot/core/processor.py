@@ -70,3 +70,41 @@ class ParlotBaseProcessor(SpanProcessor):
         """Set a state attribute only if it is currently falsy."""
         if value and not getattr(state, attr, ""):
             setattr(state, attr, str(value))
+
+
+def assert_sync_span_processors(provider) -> bool:
+    """Require ``SynchronousMultiSpanProcessor`` on the provider.
+
+    Parlot processors rely on synchronous ``on_start`` / ``on_end`` ordering and
+    often on ``contextvars`` copied at task creation. ``ConcurrentMultiSpanProcessor``
+    runs handlers on worker threads and breaks that model.
+
+    Returns ``False`` when ``ConcurrentMultiSpanProcessor`` is active (callers
+    should disable OTel ``context.attach`` and similar). Raises ``RuntimeError``
+    for unknown processor layouts.
+
+    Uses OTel SDK-private ``_active_span_processor`` — re-validate on SDK upgrades.
+    """
+    from opentelemetry.sdk.trace import (
+        ConcurrentMultiSpanProcessor,
+        SynchronousMultiSpanProcessor,
+    )
+
+    asp = getattr(provider, "_active_span_processor", None)
+    if asp is None:
+        raise RuntimeError(
+            "parlot: TracerProvider has no _active_span_processor; "
+            "cannot verify synchronous span processing"
+        )
+    if isinstance(asp, ConcurrentMultiSpanProcessor):
+        logger.error(
+            "parlot: ConcurrentMultiSpanProcessor detected — "
+            "unsupported for Parlot span processors (use synchronous layout)"
+        )
+        return False
+    if not isinstance(asp, SynchronousMultiSpanProcessor):
+        raise RuntimeError(
+            f"parlot: unsupported active span processor {type(asp).__name__!r}; "
+            "expected SynchronousMultiSpanProcessor"
+        )
+    return True
