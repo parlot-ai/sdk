@@ -43,6 +43,9 @@ ATTR_GEN_AI_TTS_TTFB_S      = "gen_ai.tts.ttfb_s"
 # Tool extensions
 ATTR_GEN_AI_TOOL_IS_HANDOFF  = "gen_ai.tool.is_handoff"
 ATTR_GEN_AI_TOOL_DURATION_MS = "gen_ai.tool.duration_ms"
+ATTR_TOOL_INPUT_PAYLOAD        = "tool.input.payload"
+ATTR_TOOL_INPUT_PAYLOAD_PREVIEW = "tool.input.payload_preview"
+ATTR_TOOL_OUTPUT_PAYLOAD_PREVIEW = "tool.output.payload_preview"
 
 # GenAI message events (OTel GenAI events, used for content capture)
 EVENT_GEN_AI_USER_MESSAGE       = "gen_ai.user.message"
@@ -81,7 +84,8 @@ ATTR_SESSION_ID             = "session.id"
 ATTR_SESSION_CONVERSATION_ID = "session.conversation_id"
 ATTR_SESSION_MODALITY       = "session.modality"         # voice | text | multimodal
 ATTR_SESSION_PARTICIPANT_COUNT = "session.participant_count"
-ATTR_SESSION_INTENT_LABEL   = "session.intent_label"
+ATTR_SESSION_INTENT_LABEL   = "session.intent_label"  # legacy scalar; leave empty for new sessions
+ATTR_SESSION_INTENT_SEQUENCE = "session.intent.sequence"
 ATTR_SESSION_CONTACT_TYPE   = "session.contact_type"     # human | voicemail | ivr | unavailable | unknown
 ATTR_SESSION_TURN_COUNT     = "session.turn_count"
 ATTR_SESSION_TOOL_CALL_COUNT = "session.tool_call_count"
@@ -90,6 +94,10 @@ ATTR_SESSION_TOTAL_INPUT_TOKENS = "session.total_input_tokens"
 ATTR_SESSION_TOTAL_OUTPUT_TOKENS = "session.total_output_tokens"
 ATTR_SESSION_TOTAL_COST_USD = "session.total_cost_usd"
 ATTR_SESSION_AGENT_CHAIN    = "session.agent_chain"
+ATTR_SESSION_TOPOLOGY_AGENTS = "session.topology.agents"
+ATTR_SESSION_TOPOLOGY_TOOLS  = "session.topology.tools"
+ATTR_SESSION_TOPOLOGY_EDGES = "session.topology.edges"
+ATTR_SESSION_TOPOLOGY_ORCHESTRATOR_INSTRUCTIONS = "session.topology.orchestrator_instructions"
 
 # -- Conversation ----------------------------------------------------------
 ATTR_CONVERSATION_ID      = "conversation.id"
@@ -106,6 +114,9 @@ ATTR_TURN_MEDIA_START_MS    = "turn.media_segment_start_ms"
 ATTR_TURN_MEDIA_END_MS      = "turn.media_segment_end_ms"
 ATTR_TURN_INTERRUPTED       = "turn.interrupted"
 ATTR_TURN_E2E_LATENCY_S     = "turn.e2e_latency_s"
+ATTR_TURN_INTENT_LABEL      = "turn.intent_label"
+ATTR_TURN_INTENT_KEY        = "turn.intent_key"
+ATTR_TURN_ACTIVE_AGENT_ID   = "turn.active_agent_id"
 
 # -- Participant / Diarization ---------------------------------------------
 ATTR_PARTICIPANT_ID           = "participant.id"

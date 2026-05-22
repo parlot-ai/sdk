@@ -13,6 +13,7 @@ from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
 from parlot.instrumentation.livekit._session import (
     SPAN_CONVERSATION_SESSION,
     get_job_bootstrap,
+    handle_conversation_session_on_end,
 )
 from parlot.core.processor import assert_sync_span_processors
 from parlot.instrumentation.livekit.attrs import (
@@ -138,3 +139,25 @@ class TestSessionBootstrap:
         if hasattr(bootstrap.session_span, "attributes"):
             attrs = bootstrap.session_span.attributes or attrs
         assert bootstrap.state.room_sid == "RM_connect"
+
+    def test_early_conversation_session_end_applies_aggregates(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        _provider_with_processor(proc)
+        entry = _make_readable_span("job_entrypoint", {ATTR_LK_JOB_ID: "AJ_early"})
+        proc.on_start(entry)
+        proc.on_end(
+            _make_readable_span(
+                "user_turn",
+                {ATTR_LK_USER_TRANSCRIPT: "cancel please"},
+            )
+        )
+        bootstrap = get_job_bootstrap()
+        assert bootstrap is not None
+        assert bootstrap.aggregates_applied is False
+
+        proc.on_end(_make_readable_span(SPAN_CONVERSATION_SESSION))
+        assert bootstrap.aggregates_applied is True
+        assert get_job_bootstrap() is not None
+
+        proc.on_end(entry)
+        assert get_job_bootstrap() is None

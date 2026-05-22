@@ -12,8 +12,11 @@ from parlot.core.attrs import (
     ATTR_PARTICIPANT_DIAR_SOURCE,
     ATTR_SESSION_CONVERSATION_ID,
     ATTR_SESSION_ID,
+    ATTR_TURN_ACTIVE_AGENT_ID,
     ATTR_TURN_INDEX,
     ATTR_TURN_INPUT_MODALITY,
+    ATTR_TURN_INTENT_KEY,
+    ATTR_TURN_INTENT_LABEL,
     ATTR_TURN_PARTICIPANT_ID,
     ATTR_TURN_PARTICIPANT_LABEL,
     ATTR_TURN_PARTICIPANT_ROLE,
@@ -36,6 +39,9 @@ def emit_turn_root_span(
     participant_label: str = "",
     diarization_source: str = "",
     input_modality: str = "",
+    intent_label: str = "",
+    intent_key: str = "",
+    active_agent_id: str = "",
 ) -> tuple[str, str]:
     """
     Start and immediately end a ``parlot.turn`` root span in a **new** trace.
@@ -69,5 +75,11 @@ def emit_turn_root_span(
             span.set_attribute(ATTR_PARTICIPANT_DIAR_SOURCE, diarization_source)
         if input_modality:
             span.set_attribute(ATTR_TURN_INPUT_MODALITY, input_modality)
+        if intent_label:
+            span.set_attribute(ATTR_TURN_INTENT_LABEL, intent_label)
+        if intent_key:
+            span.set_attribute(ATTR_TURN_INTENT_KEY, intent_key)
+        if active_agent_id:
+            span.set_attribute(ATTR_TURN_ACTIVE_AGENT_ID, active_agent_id)
 
     return format(trace_id, "032x"), format(span_id, "016x")

@@ -50,8 +50,10 @@ class _JobBootstrap:
     session_id: str
     session_span: Any
     state: "_LiveKitSessionState"
+    processor: "LiveKitGenAIProcessor"
     attach_task: asyncio.Task | None = None
     ctx_token: Token[Context] | None = None
+    aggregates_applied: bool = False
     session_span_ended: bool = False
 
 
@@ -112,10 +114,10 @@ def bootstrap_job_entrypoint(
     if room_sid:
         initial_attrs[ATTR_LK_ROOM_SID] = room_sid
 
-    parent_ctx = trace.set_span_in_context(entrypoint_span)
+    # Do not parent to job_entrypoint — that span can end while the job still runs,
+    # which would close conversation.session before teardown aggregates run.
     session_span = tracer.start_span(
         SPAN_CONVERSATION_SESSION,
-        context=parent_ctx,
         attributes=initial_attrs,
     )
     stamp_livekit_platform_refs(
@@ -139,10 +141,18 @@ def bootstrap_job_entrypoint(
             session_id=session_id,
             session_span=session_span,
             state=state,
+            processor=processor,
             attach_task=attach_task,
             ctx_token=ctx_token,
         )
     )
+
+
+def _finalize_session_aggregates(bootstrap: _JobBootstrap) -> None:
+    if bootstrap.aggregates_applied:
+        return
+    bootstrap.processor._apply_root_to_live_span(bootstrap.session_span, bootstrap.state)
+    bootstrap.aggregates_applied = True
 
 
 def teardown_job_entrypoint(processor: "LiveKitGenAIProcessor", entrypoint_span: "ReadableSpan") -> None:
@@ -163,7 +173,7 @@ def teardown_job_entrypoint(processor: "LiveKitGenAIProcessor", entrypoint_span:
         if rs:
             state.room_sid = rs
 
-    processor._apply_root_to_live_span(bootstrap.session_span, state)
+    _finalize_session_aggregates(bootstrap)
 
     end_time = getattr(entrypoint_span, "end_time", None)
     if bootstrap.ctx_token is not None:
@@ -193,14 +203,21 @@ def teardown_job_entrypoint(processor: "LiveKitGenAIProcessor", entrypoint_span:
 
 
 def handle_conversation_session_on_end() -> None:
-    """Assert we own ``conversation.session`` lifecycle."""
+    """Apply close-time aggregates if OTel ends the session span before teardown."""
     bootstrap = _parlot_job_bootstrap.get()
     if bootstrap is None:
         return
-    if not bootstrap.session_span_ended:
-        raise AssertionError(
-            "parlot: conversation.session ended before job_entrypoint teardown"
+    if hasattr(bootstrap.session_span, "is_recording"):
+        if not bootstrap.session_span.is_recording():
+            bootstrap.session_span_ended = True
+    else:
+        bootstrap.session_span_ended = True
+    if not bootstrap.aggregates_applied:
+        logger.debug(
+            "parlot: conversation.session ended before job_entrypoint teardown; "
+            "applying session aggregates early"
         )
+        _finalize_session_aggregates(bootstrap)
 
 
 async def refresh_bootstrap_room_from_ctx(ctx) -> None:
