@@ -59,6 +59,7 @@ export const ATTR_SESSION_TOPOLOGY_TOOLS = "session.topology.tools" as const;
 export const ATTR_SESSION_TOPOLOGY_EDGES = "session.topology.edges" as const;
 export const ATTR_SESSION_TOPOLOGY_ORCHESTRATOR_INSTRUCTIONS = "session.topology.orchestrator_instructions" as const;
 export const ATTR_SESSION_RECORDING_ANCHOR_WALL_MS = "session.recording_anchor_wall_ms" as const;
+export const ATTR_SESSION_AUDIO_RECORDING_URI = "session.audio_recording_uri" as const;
 export const ATTR_CONVERSATION_ID = "conversation.id" as const;
 export const ATTR_CONVERSATION_CHANNEL = "conversation.channel" as const;
 export const ATTR_TURN_PREV_TRACE_ID = "turn.prev_trace_id" as const;

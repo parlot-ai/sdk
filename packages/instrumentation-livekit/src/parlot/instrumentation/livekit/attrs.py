@@ -108,6 +108,9 @@ ATTR_INTERRUPTION_DETECTION_DELAY = "lk.interruption.detection_delay"
 # Stamped by Parlot platform refs / job context (not in trace_types.py)
 ATTR_ROOM_SID = "lk.room.sid"
 
+# Stamped by LiveKit Room Composite egress integration
+ATTR_SESSION_EGRESS_ID = "session.egress_id"
+
 # Aliases used by instrumentation-livekit (same strings as above)
 ATTR_LK_SPEECH_ID = ATTR_SPEECH_ID
 ATTR_LK_AGENT_LABEL = ATTR_AGENT_LABEL

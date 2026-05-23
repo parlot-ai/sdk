@@ -12,7 +12,6 @@ from parlot.core.attrs import ATTR_SESSION_ID, ATTR_SESSION_TURN_COUNT
 from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
 from parlot.instrumentation.livekit._session import (
     SPAN_CONVERSATION_SESSION,
-    finalize_deferred_session_end,
     get_job_bootstrap,
     handle_conversation_session_on_end,
 )
@@ -33,6 +32,7 @@ def _make_readable_span(name: str, attributes: dict | None = None) -> MagicMock:
     span.end_time = 2_000_000_000
     span.context.trace_id = 0xDEADBEEF
     span.attributes = span._attributes
+    span.is_recording = MagicMock(return_value=True)
     return span
 
 
@@ -94,10 +94,8 @@ class TestSessionBootstrap:
         )
         proc.on_end(entry)
 
-        session_span.end.assert_not_called()
-        assert get_job_bootstrap() is None
-        finalize_deferred_session_end(job_id="AJ_end")
         session_span.end.assert_called_once()
+        assert get_job_bootstrap() is None
 
     def test_missing_bootstrap_no_session_id_minted(self) -> None:
         proc = LiveKitGenAIProcessor()
@@ -113,11 +111,9 @@ class TestSessionBootstrap:
         proc.on_start(e1)
         s1 = get_job_bootstrap().session_id
         proc.on_end(e1)
-        finalize_deferred_session_end(job_id="J1")
         proc.on_start(e2)
         s2 = get_job_bootstrap().session_id
         proc.on_end(e2)
-        finalize_deferred_session_end(job_id="J2")
         assert s1 != s2
 
     @pytest.mark.asyncio
@@ -166,5 +162,4 @@ class TestSessionBootstrap:
         assert get_job_bootstrap() is not None
 
         proc.on_end(entry)
-        finalize_deferred_session_end(job_id="AJ_early")
         assert get_job_bootstrap() is None

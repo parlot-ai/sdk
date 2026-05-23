@@ -1,6 +1,6 @@
 # parlot-instrumentation-livekit
 
-LiveKit span processor and `platform.ref.*` attributes for Parlot session resolve.
+LiveKit span processor, egress recording to R2, and `platform.ref.*` attributes for Parlot session resolve.
 
 ## Usage
 
@@ -14,15 +14,13 @@ async def entrypoint(ctx: JobContext):
     ...
 ```
 
-`configure()` bootstraps one Parlot `session.id` per job on LiveKit's `job_entrypoint` span and exports a child `conversation.session` root for ingestion. Room metadata is captured when `JobContext.connect()` completes. After recording finishes, Parlot's **`on_session_end`** handler (wired via `AgentServer.run`) builds LiveKit's SessionReport and stamps **`session.recording_anchor_wall_ms`** for timeline alignment.
+`configure()` bootstraps one Parlot `session.id` per job, fetches telemetry bootstrap (org, R2, webhook signing key), and on `JobContext.connect()` may start **Room Composite Egress** to Cloudflare R2 when recording is enabled.
 
-Set `PARLOT_ENDPOINT` (and optionally `PARLOT_API_KEY`) in the environment, or pass `endpoint=` / `api_key=` to `configure()`.
+Set `PARLOT_ENDPOINT` and `PARLOT_API_KEY` in the environment. Configure the org **LiveKit integration** in Parlot (signing key + API secret) before recording works.
 
-**Span processor:** use OpenTelemetry's default synchronous multi-processor layout from `configure()`. Wrapping Parlot's processor in `ConcurrentMultiSpanProcessor` is unsupported.
+Recording policy: `PARLOT_RECORD_AGENTS` (`*`, allowlist, or unset=off) and job metadata `{ "record": true|false }`.
 
 ```bash
 uv sync --extra dev
 uv run pytest -q
 ```
-
-Version and changelog are managed by [release-please](https://github.com/googleapis/release-please) at the repo root (`release-please-config.json` → this package path).

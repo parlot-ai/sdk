@@ -99,6 +99,7 @@ ATTR_SESSION_TOPOLOGY_TOOLS  = "session.topology.tools"
 ATTR_SESSION_TOPOLOGY_EDGES = "session.topology.edges"
 ATTR_SESSION_TOPOLOGY_ORCHESTRATOR_INSTRUCTIONS = "session.topology.orchestrator_instructions"
 ATTR_SESSION_RECORDING_ANCHOR_WALL_MS = "session.recording_anchor_wall_ms"
+ATTR_SESSION_AUDIO_RECORDING_URI = "session.audio_recording_uri"
 
 # -- Conversation ----------------------------------------------------------
 ATTR_CONVERSATION_ID      = "conversation.id"
