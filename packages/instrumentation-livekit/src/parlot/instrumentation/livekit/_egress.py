@@ -83,6 +83,17 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
     filepath = grant.get("filepath") or ""
     audio_uri = grant.get("audio_recording_uri") or ""
 
+    s3_kwargs: dict[str, object] = {
+        "access_key": str(s3.get("access_key") or ""),
+        "secret": str(s3.get("secret") or ""),
+        "bucket": str(s3.get("bucket") or ""),
+        "endpoint": str(s3.get("endpoint") or ""),
+        "force_path_style": bool(s3.get("force_path_style", True)),
+    }
+    session_token = s3.get("session_token")
+    if session_token:
+        s3_kwargs["session_token"] = str(session_token)
+
     try:
         from livekit import api
     except ImportError:
@@ -100,13 +111,7 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
         file_type=api.EncodedFileType.OGG,
         filepath=filepath,
         disable_manifest=True,
-        s3=api.S3Upload(
-            access_key=str(s3.get("access_key") or ""),
-            secret=str(s3.get("secret") or ""),
-            bucket=str(s3.get("bucket") or ""),
-            endpoint=str(s3.get("endpoint") or ""),
-            force_path_style=bool(s3.get("force_path_style", True)),
-        ),
+        s3=api.S3Upload(**s3_kwargs),
     )
 
     webhook = api.WebhookConfig(
