@@ -28,12 +28,14 @@ from parlot.core.attrs import (
     ATTR_SESSION_ID,
     ATTR_SESSION_TURN_COUNT,
     ATTR_TURN_INDEX,
+    ATTR_EXCEPTION_TYPE,
     EVENT_GEN_AI_ASSISTANT_MESSAGE,
     EVENT_GEN_AI_USER_MESSAGE,
 )
 from parlot.instrumentation.livekit.attrs import (
     ATTR_AMD_CATEGORY,
     ATTR_LK_AGENT_LABEL,
+    ATTR_LK_FNC_TOOL_ERROR,
     ATTR_LK_FNC_TOOL_NAME,
     ATTR_LK_FNC_TOOL_OUTPUT,
     ATTR_LK_JOB_ID,
@@ -41,6 +43,7 @@ from parlot.instrumentation.livekit.attrs import (
     ATTR_LK_USER_INPUT,
     ATTR_LK_USER_TRANSCRIPT,
 )
+from opentelemetry.trace import StatusCode
 from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
 from parlot.instrumentation.livekit._session import get_job_bootstrap
 from opentelemetry.sdk.trace import TracerProvider
@@ -124,6 +127,23 @@ class TestLlmRequestEnrichment:
         })
         proc.on_end(span)
         assert ATTR_GEN_AI_COST_USD not in span._attributes
+
+    def test_exception_sets_error_status(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
+        span = _make_span("llm_request_run", {ATTR_EXCEPTION_TYPE: "APIStatusError"})
+        proc.on_end(span)
+        assert span._status.status_code == StatusCode.ERROR
+
+    def test_tool_error_sets_error_status(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
+        span = _make_span("function_tool", {
+            ATTR_LK_FNC_TOOL_NAME: "book_appointment",
+            ATTR_LK_FNC_TOOL_ERROR: True,
+        })
+        proc.on_end(span)
+        assert span._status.status_code == StatusCode.ERROR
 
 
 class TestLlmNodeEnrichment:

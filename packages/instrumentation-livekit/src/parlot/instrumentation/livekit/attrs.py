@@ -5,10 +5,18 @@ Synced with livekit-agents ``telemetry/trace_types.py`` @ 1.5.9.
 On LK upgrade, diff trace_types.py and update this file.
 
 Do not add Parlot-invented keys here — use ``parlot.core.attrs`` for
-``turn.*``, ``session.*``, ``agent.transfer.*``, etc.
+``turn.*``, ``session.*``, ``agent.transfer.*``, etc. Exception recording
+(``exception.*``) is re-exported from core below. LiveKit-only integration
+keys (e.g. ``session.egress_id``) belong in this module.
 """
 
 from __future__ import annotations
+
+from parlot.core.attrs import (
+    ATTR_EXCEPTION_MESSAGE,
+    ATTR_EXCEPTION_TRACE,
+    ATTR_EXCEPTION_TYPE,
+)
 
 # ---------------------------------------------------------------------------
 # Mirrored from livekit-agents telemetry/trace_types.py @ 1.5.9
@@ -87,10 +95,6 @@ EVENT_GEN_AI_ASSISTANT_MESSAGE = "gen_ai.assistant.message"
 EVENT_GEN_AI_TOOL_MESSAGE = "gen_ai.tool.message"
 EVENT_GEN_AI_CHOICE = "gen_ai.choice"
 
-ATTR_EXCEPTION_TRACE = "exception.stacktrace"
-ATTR_EXCEPTION_TYPE = "exception.type"
-ATTR_EXCEPTION_MESSAGE = "exception.message"
-
 ATTR_LANGFUSE_COMPLETION_START_TIME = "langfuse.observation.completion_start_time"
 
 ATTR_AMD_CATEGORY = "lk.amd.category"
@@ -108,7 +112,7 @@ ATTR_INTERRUPTION_DETECTION_DELAY = "lk.interruption.detection_delay"
 # Stamped by Parlot platform refs / job context (not in trace_types.py)
 ATTR_ROOM_SID = "lk.room.sid"
 
-# Stamped by LiveKit Room Composite egress integration
+# LiveKit Room Composite egress (Parlot recording integration)
 ATTR_SESSION_EGRESS_ID = "session.egress_id"
 
 # Aliases used by instrumentation-livekit (same strings as above)

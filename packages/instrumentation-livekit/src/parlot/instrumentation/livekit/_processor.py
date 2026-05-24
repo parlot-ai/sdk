@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from typing import Any, FrozenSet, Optional
 
 from opentelemetry.sdk.trace import ReadableSpan
+from opentelemetry.trace import Status, StatusCode
 from opentelemetry.util.types import AttributeValue
 
 from parlot.core.attrs import (
@@ -67,6 +68,7 @@ from parlot.core.attrs import (
     ATTR_TURN_INDEX,
     ATTR_TURN_INPUT_MODALITY,
     ATTR_TURN_INTERRUPTED,
+    ATTR_EXCEPTION_TYPE,
 )
 from parlot.instrumentation.livekit.attrs import (
     ATTR_AMD_CATEGORY,
@@ -335,6 +337,15 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             self._enrich_amd(span, state)
         elif name == "lk.agent_handoff":
             self._enrich_handoff(span, state)
+
+        if name in _AGENT_PIPELINE_SPANS:
+            self._stamp_error_status_if_needed(span)
+
+    def _stamp_error_status_if_needed(self, span: ReadableSpan) -> None:
+        """Normalize failed pipeline spans to OTel ERROR status for OTLP export."""
+        attrs = span.attributes or {}
+        if attrs.get(ATTR_EXCEPTION_TYPE) or attrs.get(ATTR_LK_FNC_TOOL_ERROR):
+            span._status = Status(StatusCode.ERROR)
 
     def _enrich_llm_request(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}

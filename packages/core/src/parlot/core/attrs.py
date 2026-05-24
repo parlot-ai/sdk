@@ -5,6 +5,7 @@ TypeScript: ``@parlot/core`` (``packages/core-ts/src/attrs.gen.ts``), generated 
 ``uv run python scripts/generate_attrs_ts.py``.
 
 LiveKit vendor keys: ``parlot.instrumentation.livekit.attrs`` → ``@parlot/core/livekit``.
+OTel-standard keys (e.g. ``exception.*``) live here, not in the LiveKit vendor module.
 
 Three-layer strategy (system-design.md §3.6):
   Layer 1 — gen_ai.*          OTel GenAI SemConv (never deviate)
@@ -58,6 +59,14 @@ EVENT_GEN_AI_TOOL_MESSAGE       = "gen_ai.tool.message"
 
 ATTR_OI_SPAN_KIND = "openinference.span.kind"
 # Values: AGENT | CHAIN | TOOL | RETRIEVER | LLM | EMBEDDING | EVAL
+
+# ---------------------------------------------------------------------------
+# OTel exception recording (exception.* — all frameworks, not vendor-specific)
+# ---------------------------------------------------------------------------
+
+ATTR_EXCEPTION_TYPE     = "exception.type"
+ATTR_EXCEPTION_MESSAGE  = "exception.message"
+ATTR_EXCEPTION_TRACE    = "exception.stacktrace"
 
 # ---------------------------------------------------------------------------
 # Layer 3 — Parlot extensions
