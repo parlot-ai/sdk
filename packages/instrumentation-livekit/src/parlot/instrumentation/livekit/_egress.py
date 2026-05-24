@@ -160,3 +160,9 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
         egress_id,
         audio_uri,
     )
+    webhook_url = runtime.egress_webhook_url or ""
+    if "localhost" in webhook_url or "127.0.0.1" in webhook_url:
+        logger.warning(
+            "parlot: egress webhook URL is %s — LiveKit Cloud cannot POST to localhost; ",
+            webhook_url,
+        )
