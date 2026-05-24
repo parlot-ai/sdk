@@ -54,7 +54,14 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
     runtime = get_runtime()
     lk_runtime = get_livekit_runtime()
     if runtime is None or lk_runtime is None:
-        logger.error("parlot: egress skipped — bootstrap not loaded")
+        if runtime is not None and lk_runtime is None:
+            logger.error(
+                "parlot: egress skipped — LiveKit integration not configured "
+                "(missing livekit_webhook_signing_key; "
+                "configure this in Parlot settings/integrations/livekit for your org)"
+            )
+        else:
+            logger.error("parlot: egress skipped — bootstrap not loaded")
         return
 
     if not lk_runtime.webhook_signing_key or not runtime.egress_webhook_url:
