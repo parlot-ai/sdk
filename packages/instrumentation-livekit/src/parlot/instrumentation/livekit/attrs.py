@@ -115,6 +115,10 @@ ATTR_ROOM_SID = "lk.room.sid"
 # LiveKit Room Composite egress (Parlot recording integration)
 ATTR_SESSION_EGRESS_ID = "session.egress_id"
 
+# participant.diarization_source values (LiveKit Agents instrumentation only)
+ATTR_DIAR_SOURCE_VAD = "livekit_vad"
+ATTR_DIAR_SOURCE_TEXT_INPUT = "livekit_text_input"
+
 # Aliases used by instrumentation-livekit (same strings as above)
 ATTR_LK_SPEECH_ID = ATTR_SPEECH_ID
 ATTR_LK_AGENT_LABEL = ATTR_AGENT_LABEL

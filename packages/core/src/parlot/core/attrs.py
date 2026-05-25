@@ -109,6 +109,7 @@ ATTR_SESSION_TOPOLOGY_EDGES = "session.topology.edges"
 ATTR_SESSION_TOPOLOGY_ORCHESTRATOR_INSTRUCTIONS = "session.topology.orchestrator_instructions"
 ATTR_SESSION_RECORDING_ANCHOR_WALL_MS = "session.recording_anchor_wall_ms"
 ATTR_SESSION_AUDIO_RECORDING_URI = "session.audio_recording_uri"
+ATTR_SESSION_LANGUAGES = "session.languages"
 
 # -- Conversation ----------------------------------------------------------
 ATTR_CONVERSATION_ID      = "conversation.id"
@@ -137,6 +138,16 @@ ATTR_PARTICIPANT_ROLE         = "participant.role"
 ATTR_PARTICIPANT_LABEL        = "participant.label"
 ATTR_PARTICIPANT_FIRST_TURN   = "participant.first_turn_index"
 ATTR_PARTICIPANT_DIAR_SOURCE  = "participant.diarization_source"
+ATTR_STT_SPEAKER_ID           = "stt.speaker_id"
+
+# participant.diarization_source values (framework-agnostic; not LiveKit-specific)
+ATTR_DIAR_SOURCE_STT_SPEAKER_ID    = "stt_speaker_id"
+ATTR_DIAR_SOURCE_AGENT_ID          = "agent_id"
+ATTR_DIAR_SOURCE_POST_SESSION      = "post_session"
+ATTR_DIAR_SOURCE_CHANNEL_METADATA  = "channel_metadata"
+
+# Default turn.participant_id before STT speaker_id is known
+ATTR_TURN_PARTICIPANT_ID_CALLER    = "caller"
 
 # -- Voice -----------------------------------------------------------------
 ATTR_VOICE_STT_LATENCY_MS    = "voice.stt.latency_ms"

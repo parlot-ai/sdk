@@ -14,8 +14,16 @@ GENERATE = ROOT / "scripts/generate_attrs_ts.py"
 
 
 def _python_constants() -> list[tuple[str, str]]:
+    """Mirror scripts/generate_attrs_ts.py _collect_assignments for core attrs."""
     tree = ast.parse(ATTRS_PY.read_text(encoding="utf-8"), filename=str(ATTRS_PY))
-    out: list[tuple[str, str]] = []
+    values: dict[str, str] = {}
+    order: list[str] = []
+
+    def _record(name: str, value: str) -> None:
+        if name not in values:
+            order.append(name)
+        values[name] = value
+
     for node in tree.body:
         if not isinstance(node, ast.Assign) or len(node.targets) != 1:
             continue
@@ -25,10 +33,11 @@ def _python_constants() -> list[tuple[str, str]]:
         name = target.id
         if not (name.startswith("ATTR_") or name.startswith("EVENT_")):
             continue
-        assert isinstance(node.value, ast.Constant)
-        assert isinstance(node.value.value, str)
-        out.append((name, node.value.value))
-    return out
+        if isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+            _record(name, node.value.value)
+        elif isinstance(node.value, ast.Name):
+            _record(name, values[node.value.id])
+    return [(name, values[name]) for name in order]
 
 
 def _typescript_constants(text: str) -> list[tuple[str, str]]:

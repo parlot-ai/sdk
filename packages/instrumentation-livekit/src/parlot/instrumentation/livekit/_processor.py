@@ -62,8 +62,13 @@ from parlot.core.attrs import (
     ATTR_SESSION_TOTAL_COST_USD,
     ATTR_SESSION_TOTAL_INPUT_TOKENS,
     ATTR_SESSION_TOTAL_OUTPUT_TOKENS,
+    ATTR_SESSION_LANGUAGES,
     ATTR_SESSION_RECORDING_ANCHOR_WALL_MS,
     ATTR_SESSION_TURN_COUNT,
+    ATTR_STT_SPEAKER_ID,
+    ATTR_DIAR_SOURCE_AGENT_ID,
+    ATTR_DIAR_SOURCE_STT_SPEAKER_ID,
+    ATTR_TURN_PARTICIPANT_ID_CALLER,
     ATTR_TURN_E2E_LATENCY_S,
     ATTR_TURN_INDEX,
     ATTR_TURN_INPUT_MODALITY,
@@ -72,6 +77,9 @@ from parlot.core.attrs import (
 )
 from parlot.instrumentation.livekit.attrs import (
     ATTR_AMD_CATEGORY,
+    ATTR_DIAR_SOURCE_TEXT_INPUT,
+    ATTR_DIAR_SOURCE_VAD,
+    ATTR_EOU_LANGUAGE,
     ATTR_LK_AGENT_LABEL,
     ATTR_LK_AGENT_NAME,
     ATTR_LK_CHAT_CTX,
@@ -163,6 +171,7 @@ class _LiveKitSessionState(_BaseSessionState):
     open_agent_turn_index: Optional[int] = None
     contact_type: str = ""
     recording_anchor_wall_ms: Optional[int] = None
+    languages_seen: set[str] = field(default_factory=set)
     topology: SessionTopology = field(
         default_factory=lambda: SessionTopology(default_framework="livekit")
     )
@@ -583,12 +592,15 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         agent_hint = str(
             attrs.get(ATTR_LK_AGENT_LABEL) or attrs.get(ATTR_LK_AGENT_NAME) or ""
         )
+        participant_id, diarization_source = self._resolve_user_participant(
+            attrs, modality
+        )
         self._emit_turn_trace(
             state,
             turn_index=state.turn_count,
             role="user",
-            participant_id="caller",
-            diarization_source=self._user_turn_diarization_source(modality),
+            participant_id=participant_id,
+            diarization_source=diarization_source,
             input_modality=modality,
             agent_hint=agent_hint,
             source_span=span,
@@ -650,7 +662,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             role="agent",
             participant_id=agent_id,
             label=agent_id,
-            diarization_source="agent_id",
+            diarization_source=ATTR_DIAR_SOURCE_AGENT_ID,
             input_modality=agent_modality,
             agent_hint=agent_id,
             source_span=span if agent_modality == "voice" else None,
@@ -696,6 +708,9 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         attrs = span.attributes or {}
         if not attrs.get(ATTR_GEN_AI_OP_NAME):
             self._set(span, ATTR_GEN_AI_OP_NAME, "end_of_utterance_detection")
+        lang = str(attrs.get(ATTR_EOU_LANGUAGE, "")).strip()
+        if lang:
+            state.languages_seen.add(lang)
 
     def _enrich_amd(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
@@ -776,7 +791,20 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
     @staticmethod
     def _user_turn_diarization_source(modality: str) -> str:
-        return "livekit_vad" if modality == "voice" else "livekit_text_input"
+        return ATTR_DIAR_SOURCE_VAD if modality == "voice" else ATTR_DIAR_SOURCE_TEXT_INPUT
+
+    @staticmethod
+    def _resolve_user_participant(
+        attrs: Mapping[str, AttributeValue], modality: str
+    ) -> tuple[str, str]:
+        for key in (ATTR_STT_SPEAKER_ID, "lk.speaker_id", "speaker_id"):
+            speaker = str(attrs.get(key, "")).strip()
+            if speaker:
+                return speaker, ATTR_DIAR_SOURCE_STT_SPEAKER_ID
+        return (
+            ATTR_TURN_PARTICIPANT_ID_CALLER,
+            LiveKitGenAIProcessor._user_turn_diarization_source(modality),
+        )
 
     @staticmethod
     def _speech_wall_ms_from_span(span: ReadableSpan) -> tuple[int, int] | None:
@@ -946,6 +974,11 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             session_span.set_attribute(
                 ATTR_SESSION_RECORDING_ANCHOR_WALL_MS,
                 state.recording_anchor_wall_ms,
+            )
+        if state.languages_seen:
+            session_span.set_attribute(
+                ATTR_SESSION_LANGUAGES,
+                json.dumps(sorted(state.languages_seen)),
             )
         if state.session_id:
             stamp_livekit_platform_refs(
