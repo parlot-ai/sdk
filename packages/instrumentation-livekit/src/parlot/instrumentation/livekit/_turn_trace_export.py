@@ -14,7 +14,9 @@ from parlot.core.attrs import ATTR_SESSION_ID, ATTR_TURN_INDEX
 if TYPE_CHECKING:
     from ._processor import LiveKitGenAIProcessor
 
-_SKIP_SPAN_NAMES = frozenset({"job_entrypoint", "conversation.session", "parlot.turn"})
+_SKIP_SPAN_NAMES = frozenset(
+    {"job_entrypoint", "conversation.session", "parlot.turn", "parlot.session.close"}
+)
 
 
 def _attr_int(attrs: Attributes, key: str) -> int | None:

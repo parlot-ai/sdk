@@ -110,6 +110,11 @@ ATTR_SESSION_TOPOLOGY_ORCHESTRATOR_INSTRUCTIONS = "session.topology.orchestrator
 ATTR_SESSION_RECORDING_ANCHOR_WALL_MS = "session.recording_anchor_wall_ms"
 ATTR_SESSION_AUDIO_RECORDING_URI = "session.audio_recording_uri"
 ATTR_SESSION_LANGUAGES = "session.languages"
+ATTR_SESSION_CLOSE_REASON = "session.close_reason"
+
+# -- Framework-agnostic Parlot span names -----------------------------------
+SPAN_PARLOT_TURN = "parlot.turn"
+SPAN_PARLOT_SESSION_CLOSE = "parlot.session.close"
 
 # -- Conversation ----------------------------------------------------------
 ATTR_CONVERSATION_ID      = "conversation.id"

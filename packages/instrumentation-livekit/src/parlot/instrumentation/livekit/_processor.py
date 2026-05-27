@@ -65,6 +65,7 @@ from parlot.core.attrs import (
     ATTR_SESSION_LANGUAGES,
     ATTR_SESSION_RECORDING_ANCHOR_WALL_MS,
     ATTR_SESSION_TURN_COUNT,
+    SPAN_PARLOT_SESSION_CLOSE,
     ATTR_STT_SPEAKER_ID,
     ATTR_DIAR_SOURCE_AGENT_ID,
     ATTR_DIAR_SOURCE_STT_SPEAKER_ID,
@@ -286,7 +287,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
     def _enrich(self, span: ReadableSpan) -> None:
         name = span.name
-        if name in ("parlot.turn", SPAN_CONVERSATION_SESSION):
+        if name in ("parlot.turn", SPAN_PARLOT_SESSION_CLOSE, SPAN_CONVERSATION_SESSION):
             return
         attrs = span.attributes or {}
         state = self._resolve_session_state(span, attrs)

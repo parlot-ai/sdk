@@ -12,7 +12,14 @@ from opentelemetry import context as otel_context
 from opentelemetry import trace
 from opentelemetry.context import Context
 
-from parlot.core.attrs import ATTR_GEN_AI_CONVERSATION_ID, ATTR_SESSION_CONVERSATION_ID, ATTR_SESSION_ID
+from parlot.core.attrs import (
+    ATTR_AGENT_FRAMEWORK,
+    ATTR_GEN_AI_CONVERSATION_ID,
+    ATTR_SESSION_CLOSE_REASON,
+    ATTR_SESSION_CONVERSATION_ID,
+    ATTR_SESSION_ID,
+    SPAN_PARLOT_SESSION_CLOSE,
+)
 from parlot.core.ids import new_session_id
 from parlot.instrumentation.livekit.attrs import (
     ATTR_LK_JOB_ID,
@@ -162,6 +169,31 @@ def _end_session_span(bootstrap: _JobBootstrap, end_time: int | None = None) -> 
     bootstrap.session_span_ended = True
 
 
+def emit_parlot_session_close_span(
+    bootstrap: _JobBootstrap,
+    *,
+    end_time: int | None = None,
+    close_reason: str = "clean_close",
+) -> None:
+    """Framework-specific hook: emit ``parlot.session.close`` for collector finalize."""
+    tracer = bootstrap.processor._tracer
+    if tracer is None:
+        return
+    state = bootstrap.state
+    attrs = {
+        ATTR_SESSION_ID: bootstrap.session_id,
+        ATTR_SESSION_CONVERSATION_ID: state.conversation_id,
+        ATTR_GEN_AI_CONVERSATION_ID: state.conversation_id,
+        ATTR_AGENT_FRAMEWORK: "livekit",
+        ATTR_SESSION_CLOSE_REASON: close_reason,
+    }
+    span = tracer.start_span(SPAN_PARLOT_SESSION_CLOSE, attributes=attrs)
+    if end_time is not None and hasattr(span, "end"):
+        span.end(end_time=end_time)
+    else:
+        span.end()
+
+
 def teardown_job_entrypoint(processor: "LiveKitGenAIProcessor", entrypoint_span: "ReadableSpan") -> None:
     """End ``conversation.session`` at job teardown (egress anchor stamped at connect)."""
     bootstrap = _parlot_job_bootstrap.get()
@@ -195,6 +227,7 @@ def teardown_job_entrypoint(processor: "LiveKitGenAIProcessor", entrypoint_span:
         otel_context.detach(bootstrap.ctx_token)
 
     _end_session_span(bootstrap, end_time=end_time)
+    emit_parlot_session_close_span(bootstrap, end_time=end_time)
 
     from parlot.instrumentation.livekit._platform_refs import clear_livekit_job_context
 

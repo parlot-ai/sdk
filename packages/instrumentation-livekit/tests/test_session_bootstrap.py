@@ -73,7 +73,9 @@ class TestSessionBootstrap:
 
         entry = _make_readable_span("job_entrypoint", {ATTR_LK_JOB_ID: "AJ_task"})
         proc.on_start(entry)
-        parent_sid = get_job_bootstrap().session_id
+        parent_bootstrap = get_job_bootstrap()
+        assert parent_bootstrap is not None
+        parent_sid = parent_bootstrap.session_id
         await asyncio.create_task(run_agent_work())
         assert seen == [parent_sid]
 
@@ -97,6 +99,38 @@ class TestSessionBootstrap:
         session_span.end.assert_called_once()
         assert get_job_bootstrap() is None
 
+    def test_teardown_emits_parlot_session_close_span(self) -> None:
+        from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+        from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+            InMemorySpanExporter,
+        )
+
+        from parlot.core.attrs import ATTR_SESSION_ID, SPAN_PARLOT_SESSION_CLOSE
+
+        exporter = InMemorySpanExporter()
+        provider = TracerProvider()
+        provider.add_span_processor(SimpleSpanProcessor(exporter))
+        proc = LiveKitGenAIProcessor()
+        provider.add_span_processor(proc)
+        assert_sync_span_processors(provider)
+        proc.set_tracer(provider.get_tracer("test"))
+        entry = _make_readable_span("job_entrypoint", {ATTR_LK_JOB_ID: "AJ_close_sig"})
+        proc.on_start(entry)
+        bootstrap = get_job_bootstrap()
+        assert bootstrap is not None
+        session_id = bootstrap.session_id
+        proc.on_end(entry)
+
+        close = [
+            s
+            for s in exporter.get_finished_spans()
+            if s.name == SPAN_PARLOT_SESSION_CLOSE
+        ]
+        assert len(close) == 1
+        close_attrs = close[0].attributes
+        assert close_attrs is not None
+        assert close_attrs[ATTR_SESSION_ID] == session_id
+
     def test_missing_bootstrap_no_session_id_minted(self) -> None:
         proc = LiveKitGenAIProcessor()
         span = _make_readable_span("llm_node")
@@ -109,10 +143,14 @@ class TestSessionBootstrap:
         e1 = _make_readable_span("job_entrypoint", {ATTR_LK_JOB_ID: "J1"})
         e2 = _make_readable_span("job_entrypoint", {ATTR_LK_JOB_ID: "J2"})
         proc.on_start(e1)
-        s1 = get_job_bootstrap().session_id
+        b1 = get_job_bootstrap()
+        assert b1 is not None
+        s1 = b1.session_id
         proc.on_end(e1)
         proc.on_start(e2)
-        s2 = get_job_bootstrap().session_id
+        b2 = get_job_bootstrap()
+        assert b2 is not None
+        s2 = b2.session_id
         proc.on_end(e2)
         assert s1 != s2
 

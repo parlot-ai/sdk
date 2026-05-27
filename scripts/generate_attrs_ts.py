@@ -33,7 +33,11 @@ def _collect_assignments(tree: ast.Module) -> list[tuple[str, str]]:
         if not isinstance(target, ast.Name):
             continue
         name = target.id
-        if not (name.startswith("ATTR_") or name.startswith("EVENT_")):
+        if not (
+            name.startswith("ATTR_")
+            or name.startswith("EVENT_")
+            or name.startswith("SPAN_")
+        ):
             continue
         if isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
             _record(name, node.value.value)
@@ -70,7 +74,7 @@ def main() -> None:
         ast.parse(LK_ATTRS_PY.read_text(encoding="utf-8"), filename=str(LK_ATTRS_PY))
     )
     if not core_entries:
-        raise SystemExit(f"No ATTR_/EVENT_ constants found in {CORE_ATTRS_PY}")
+        raise SystemExit(f"No ATTR_/EVENT_/SPAN_ constants found in {CORE_ATTRS_PY}")
     if not lk_entries:
         raise SystemExit(f"No ATTR_/EVENT_ constants found in {LK_ATTRS_PY}")
 
