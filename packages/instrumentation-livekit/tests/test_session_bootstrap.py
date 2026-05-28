@@ -8,7 +8,11 @@ from unittest.mock import MagicMock
 import pytest
 from opentelemetry.sdk.trace import TracerProvider
 
-from parlot.core.attrs import ATTR_SESSION_ID, ATTR_SESSION_TURN_COUNT
+from parlot.core.attrs import (
+    ATTR_SESSION_CLOSE_REASON,
+    ATTR_SESSION_ID,
+    ATTR_SESSION_TURN_COUNT,
+)
 from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
 from parlot.instrumentation.livekit._session import (
     SPAN_CONVERSATION_SESSION,
@@ -130,6 +134,65 @@ class TestSessionBootstrap:
         close_attrs = close[0].attributes
         assert close_attrs is not None
         assert close_attrs[ATTR_SESSION_ID] == session_id
+
+    def test_close_span_carries_turn_count_after_user_turn(self) -> None:
+        from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+        from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+            InMemorySpanExporter,
+        )
+
+        from parlot.core.attrs import SPAN_PARLOT_SESSION_CLOSE
+
+        exporter = InMemorySpanExporter()
+        provider = TracerProvider()
+        provider.add_span_processor(SimpleSpanProcessor(exporter))
+        proc = LiveKitGenAIProcessor()
+        provider.add_span_processor(proc)
+        assert_sync_span_processors(provider)
+        proc.set_tracer(provider.get_tracer("test"))
+        entry = _make_readable_span("job_entrypoint", {ATTR_LK_JOB_ID: "AJ_turn_ct"})
+        proc.on_start(entry)
+        proc.on_end(
+            _make_readable_span(
+                "user_turn",
+                {ATTR_LK_USER_TRANSCRIPT: "hello"},
+            )
+        )
+        proc.on_end(entry)
+
+        close = [
+            s
+            for s in exporter.get_finished_spans()
+            if s.name == SPAN_PARLOT_SESSION_CLOSE
+        ]
+        assert len(close) == 1
+        assert close[0].attributes[ATTR_SESSION_TURN_COUNT] == 1
+
+    def test_close_span_includes_close_reason(self) -> None:
+        from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+        from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+            InMemorySpanExporter,
+        )
+
+        from parlot.core.attrs import SPAN_PARLOT_SESSION_CLOSE
+
+        exporter = InMemorySpanExporter()
+        provider = TracerProvider()
+        provider.add_span_processor(SimpleSpanProcessor(exporter))
+        proc = LiveKitGenAIProcessor()
+        provider.add_span_processor(proc)
+        assert_sync_span_processors(provider)
+        proc.set_tracer(provider.get_tracer("test"))
+        entry = _make_readable_span("job_entrypoint", {ATTR_LK_JOB_ID: "AJ_reason"})
+        proc.on_start(entry)
+        proc.on_end(entry)
+
+        close = [
+            s
+            for s in exporter.get_finished_spans()
+            if s.name == SPAN_PARLOT_SESSION_CLOSE
+        ]
+        assert close[0].attributes[ATTR_SESSION_CLOSE_REASON] == "clean_close"
 
     def test_missing_bootstrap_no_session_id_minted(self) -> None:
         proc = LiveKitGenAIProcessor()

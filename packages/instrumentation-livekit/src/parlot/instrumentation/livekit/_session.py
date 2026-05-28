@@ -18,6 +18,7 @@ from parlot.core.attrs import (
     ATTR_SESSION_CLOSE_REASON,
     ATTR_SESSION_CONVERSATION_ID,
     ATTR_SESSION_ID,
+    ATTR_SESSION_TURN_COUNT,
     SPAN_PARLOT_SESSION_CLOSE,
 )
 from parlot.core.ids import new_session_id
@@ -169,6 +170,36 @@ def _end_session_span(bootstrap: _JobBootstrap, end_time: int | None = None) -> 
     bootstrap.session_span_ended = True
 
 
+def _flush_otlp_before_session_close(_bootstrap: _JobBootstrap) -> None:
+    """Export pending spans before the close signal span."""
+    from opentelemetry import trace
+
+    provider = trace.get_tracer_provider()
+    if provider is None:
+        return
+    force_flush = getattr(provider, "force_flush", None)
+    if not callable(force_flush):
+        return
+    timeout_ms = 5_000
+    try:
+        force_flush(timeout_millis=timeout_ms)
+    except TypeError:
+        force_flush()
+
+
+def _detect_session_close_reason(entrypoint_span: "ReadableSpan") -> str:
+    """Best-effort close reason from entrypoint span status."""
+    status = getattr(entrypoint_span, "status", None)
+    if status is not None:
+        code = getattr(status, "status_code", None)
+        if code is not None and str(code).endswith("ERROR"):
+            message = getattr(status, "description", None) or ""
+            if message:
+                return "session_span_error"
+            return "error"
+    return "clean_close"
+
+
 def emit_parlot_session_close_span(
     bootstrap: _JobBootstrap,
     *,
@@ -180,13 +211,27 @@ def emit_parlot_session_close_span(
     if tracer is None:
         return
     state = bootstrap.state
-    attrs = {
+    attrs: dict[str, object] = {
         ATTR_SESSION_ID: bootstrap.session_id,
         ATTR_SESSION_CONVERSATION_ID: state.conversation_id,
         ATTR_GEN_AI_CONVERSATION_ID: state.conversation_id,
         ATTR_AGENT_FRAMEWORK: "livekit",
         ATTR_SESSION_CLOSE_REASON: close_reason,
     }
+    session_attrs = getattr(bootstrap.session_span, "attributes", None)
+    if session_attrs is not None:
+        items = (
+            session_attrs.items()
+            if hasattr(session_attrs, "items")
+            else getattr(session_attrs, "__iter__", lambda: [])()
+        )
+        for key, value in items:
+            if not isinstance(key, str) or key in attrs:
+                continue
+            if isinstance(value, (str, bool, int, float)):
+                attrs[key] = value
+    # Stale snapshot on conversation.session can under-report; state is authoritative.
+    attrs[ATTR_SESSION_TURN_COUNT] = state.turn_count
     span = tracer.start_span(SPAN_PARLOT_SESSION_CLOSE, attributes=attrs)
     if end_time is not None and hasattr(span, "end"):
         span.end(end_time=end_time)
@@ -227,7 +272,13 @@ def teardown_job_entrypoint(processor: "LiveKitGenAIProcessor", entrypoint_span:
         otel_context.detach(bootstrap.ctx_token)
 
     _end_session_span(bootstrap, end_time=end_time)
-    emit_parlot_session_close_span(bootstrap, end_time=end_time)
+    _flush_otlp_before_session_close(bootstrap)
+    close_reason = _detect_session_close_reason(entrypoint_span)
+    emit_parlot_session_close_span(
+        bootstrap,
+        end_time=end_time,
+        close_reason=close_reason,
+    )
 
     from parlot.instrumentation.livekit._platform_refs import clear_livekit_job_context
 
