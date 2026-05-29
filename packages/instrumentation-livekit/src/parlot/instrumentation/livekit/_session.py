@@ -14,6 +14,7 @@ from opentelemetry.context import Context
 
 from parlot.core.attrs import (
     ATTR_AGENT_FRAMEWORK,
+    ATTR_CONVERSATION_CHANNEL,
     ATTR_GEN_AI_CONVERSATION_ID,
     ATTR_SESSION_CLOSE_REASON,
     ATTR_SESSION_CONVERSATION_ID,
@@ -113,6 +114,7 @@ def bootstrap_job_entrypoint(
         ATTR_SESSION_ID: session_id,
         ATTR_SESSION_CONVERSATION_ID: session_id,
         ATTR_GEN_AI_CONVERSATION_ID: session_id,
+        ATTR_CONVERSATION_CHANNEL: "voice",
     }
     if vendor_job_id:
         initial_attrs[ATTR_LK_JOB_ID] = vendor_job_id
