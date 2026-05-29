@@ -111,6 +111,8 @@ ATTR_SESSION_RECORDING_ANCHOR_WALL_MS = "session.recording_anchor_wall_ms"
 ATTR_SESSION_AUDIO_RECORDING_URI = "session.audio_recording_uri"
 ATTR_SESSION_LANGUAGES = "session.languages"
 ATTR_SESSION_CLOSE_REASON = "session.close_reason"
+ATTR_SESSION_USER_ID = "session.user_id"
+ATTR_SESSION_CLOSE_ERROR = "session.close_error"
 
 # -- Framework-agnostic Parlot span names -----------------------------------
 SPAN_PARLOT_TURN = "parlot.turn"

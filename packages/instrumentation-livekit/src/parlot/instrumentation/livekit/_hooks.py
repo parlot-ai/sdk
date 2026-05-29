@@ -1,5 +1,5 @@
 """
-Handoff hook and AgentSession auto-patcher for LiveKit instrumentation.
+Handoff and close hooks and AgentSession auto-patcher for LiveKit instrumentation.
 
 Because livekit-agents 1.5.x does not emit a dedicated handoff span (the source
 has a TODO for it), the correct approach is to hook into AgentSession's
@@ -51,6 +51,26 @@ def install_handoff_hook(session, tracer) -> None:
             # when it sees the next llm_request_run span.
 
 
+def install_close_hook(session) -> None:
+    """Emit ``parlot.session.close`` from the LiveKit session close event."""
+
+    @session.on("close")
+    def _on_close(ev) -> None:
+        from ._session import emit_parlot_session_close_span, get_job_bootstrap
+
+        bootstrap = get_job_bootstrap()
+        if bootstrap is None or bootstrap.close_span_done:
+            return
+        reason = str(getattr(ev, "reason", "unknown"))
+        error = getattr(ev, "error", None)
+        emit_parlot_session_close_span(
+            bootstrap,
+            close_reason=reason,
+            close_error=str(error) if error else None,
+        )
+        bootstrap.close_span_done = True
+
+
 def _patch_agent_session(tracer) -> None:
     """Monkey-patch ``AgentSession.__init__`` to auto-install the handoff hook.
 
@@ -76,9 +96,10 @@ def _patch_agent_session(tracer) -> None:
         _original_init(self, *args, **kwargs)
         try:
             install_handoff_hook(self, tracer)
+            install_close_hook(self)
         except Exception:
-            logger.debug("Could not auto-install handoff hook", exc_info=True)
+            logger.debug("Could not auto-install session hooks", exc_info=True)
 
     AgentSession.__init__ = _patched_init
     AgentSession._parlot_patched = True
-    logger.debug("Patched AgentSession.__init__ for auto handoff hook")
+    logger.debug("Patched AgentSession.__init__ for auto handoff + close hooks")

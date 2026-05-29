@@ -14,7 +14,6 @@ from parlot.core.attrs import (
     ATTR_GEN_AI_CACHE_HIT_RATE,
     ATTR_GEN_AI_CACHED_TOKENS,
     ATTR_GEN_AI_CONVERSATION_ID,
-    ATTR_GEN_AI_COST_USD,
     ATTR_GEN_AI_IN_TOKENS,
     ATTR_GEN_AI_MODEL,
     ATTR_GEN_AI_OP_NAME,
@@ -82,7 +81,7 @@ def _bootstrap_proc(proc: LiveKitGenAIProcessor, job_id: str = "job-test") -> Ma
 # ---------------------------------------------------------------------------
 
 class TestLlmRequestEnrichment:
-    def test_cost_computed(self) -> None:
+    def test_token_counts_accumulated(self) -> None:
         proc = LiveKitGenAIProcessor()
         _bootstrap_proc(proc)
         span = _make_span("llm_request_run", {
@@ -91,8 +90,9 @@ class TestLlmRequestEnrichment:
             ATTR_GEN_AI_OUT_TOKENS: 500,
         })
         proc.on_end(span)
-        assert ATTR_GEN_AI_COST_USD in span._attributes
-        assert span._attributes[ATTR_GEN_AI_COST_USD] > 0
+        state = get_job_bootstrap().state
+        assert state.total_input_tokens == 1000
+        assert state.total_output_tokens == 500
 
     def test_system_inferred_from_provider(self) -> None:
         proc = LiveKitGenAIProcessor()
@@ -116,17 +116,6 @@ class TestLlmRequestEnrichment:
         })
         proc.on_end(span)
         assert span._attributes.get(ATTR_GEN_AI_CACHE_HIT_RATE) == pytest.approx(0.4)
-
-    def test_unknown_model_no_cost(self) -> None:
-        proc = LiveKitGenAIProcessor()
-        _bootstrap_proc(proc)
-        span = _make_span("llm_request_run", {
-            ATTR_GEN_AI_MODEL: "completely-unknown-model",
-            ATTR_GEN_AI_IN_TOKENS: 100,
-            ATTR_GEN_AI_OUT_TOKENS: 50,
-        })
-        proc.on_end(span)
-        assert ATTR_GEN_AI_COST_USD not in span._attributes
 
     def test_exception_sets_error_status(self) -> None:
         proc = LiveKitGenAIProcessor()

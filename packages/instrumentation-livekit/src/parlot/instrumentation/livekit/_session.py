@@ -16,6 +16,7 @@ from parlot.core.attrs import (
     ATTR_AGENT_FRAMEWORK,
     ATTR_CONVERSATION_CHANNEL,
     ATTR_GEN_AI_CONVERSATION_ID,
+    ATTR_SESSION_CLOSE_ERROR,
     ATTR_SESSION_CLOSE_REASON,
     ATTR_SESSION_CONVERSATION_ID,
     ATTR_SESSION_ID,
@@ -63,6 +64,7 @@ class _JobBootstrap:
     ctx_token: Token[Context] | None = None
     aggregates_applied: bool = False
     session_span_ended: bool = False
+    close_span_done: bool = False
 
 
 def set_span_context_attach_enabled(enabled: bool) -> None:
@@ -207,6 +209,7 @@ def emit_parlot_session_close_span(
     *,
     end_time: int | None = None,
     close_reason: str = "clean_close",
+    close_error: str | None = None,
 ) -> None:
     """Framework-specific hook: emit ``parlot.session.close`` for collector finalize."""
     tracer = bootstrap.processor._tracer
@@ -220,6 +223,8 @@ def emit_parlot_session_close_span(
         ATTR_AGENT_FRAMEWORK: "livekit",
         ATTR_SESSION_CLOSE_REASON: close_reason,
     }
+    if close_error:
+        attrs[ATTR_SESSION_CLOSE_ERROR] = close_error
     session_attrs = getattr(bootstrap.session_span, "attributes", None)
     if session_attrs is not None:
         items = (
@@ -275,12 +280,14 @@ def teardown_job_entrypoint(processor: "LiveKitGenAIProcessor", entrypoint_span:
 
     _end_session_span(bootstrap, end_time=end_time)
     _flush_otlp_before_session_close(bootstrap)
-    close_reason = _detect_session_close_reason(entrypoint_span)
-    emit_parlot_session_close_span(
-        bootstrap,
-        end_time=end_time,
-        close_reason=close_reason,
-    )
+    if not bootstrap.close_span_done:
+        close_reason = _detect_session_close_reason(entrypoint_span)
+        emit_parlot_session_close_span(
+            bootstrap,
+            end_time=end_time,
+            close_reason=close_reason,
+        )
+        bootstrap.close_span_done = True
 
     from parlot.instrumentation.livekit._platform_refs import clear_livekit_job_context
 

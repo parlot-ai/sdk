@@ -27,12 +27,9 @@ from parlot.core.attrs import (
     ATTR_AGENT_TRANSFER_SEQUENCE,
     ATTR_AGENT_TRANSFER_TO,
     ATTR_GEN_AI_AGENT_NAME,
-    ATTR_GEN_AI_AUDIO_IN,
-    ATTR_GEN_AI_AUDIO_OUT,
     ATTR_GEN_AI_CACHE_HIT_RATE,
     ATTR_GEN_AI_CACHED_TOKENS,
     ATTR_GEN_AI_CONVERSATION_ID,
-    ATTR_GEN_AI_COST_USD,
     ATTR_GEN_AI_IN_TOKENS,
     ATTR_GEN_AI_MODEL,
     ATTR_GEN_AI_OP_NAME,
@@ -47,24 +44,16 @@ from parlot.core.attrs import (
     EVENT_GEN_AI_USER_MESSAGE,
     ATTR_SESSION_AGENT_CHAIN,
     ATTR_SESSION_CONTACT_TYPE,
-    ATTR_SESSION_INTENT_SEQUENCE,
-    ATTR_SESSION_TOPOLOGY_AGENTS,
-    ATTR_SESSION_TOPOLOGY_EDGES,
-    ATTR_SESSION_TOPOLOGY_ORCHESTRATOR_INSTRUCTIONS,
-    ATTR_SESSION_TOPOLOGY_TOOLS,
-    ATTR_TOOL_INPUT_PAYLOAD,
-    ATTR_TOOL_INPUT_PAYLOAD_PREVIEW,
-    ATTR_TOOL_OUTPUT_PAYLOAD_PREVIEW,
     ATTR_SESSION_CONVERSATION_ID,
     ATTR_SESSION_HANDOFF_COUNT,
     ATTR_SESSION_ID,
-    ATTR_SESSION_TOOL_CALL_COUNT,
-    ATTR_SESSION_TOTAL_COST_USD,
-    ATTR_SESSION_TOTAL_INPUT_TOKENS,
-    ATTR_SESSION_TOTAL_OUTPUT_TOKENS,
     ATTR_SESSION_LANGUAGES,
     ATTR_SESSION_RECORDING_ANCHOR_WALL_MS,
+    ATTR_SESSION_TOOL_CALL_COUNT,
+    ATTR_SESSION_TOTAL_INPUT_TOKENS,
+    ATTR_SESSION_TOTAL_OUTPUT_TOKENS,
     ATTR_SESSION_TURN_COUNT,
+    ATTR_SESSION_USER_ID,
     SPAN_PARLOT_SESSION_CLOSE,
     ATTR_STT_SPEAKER_ID,
     ATTR_DIAR_SOURCE_AGENT_ID,
@@ -75,19 +64,20 @@ from parlot.core.attrs import (
     ATTR_TURN_INPUT_MODALITY,
     ATTR_TURN_INTERRUPTED,
     ATTR_EXCEPTION_TYPE,
+    ATTR_TOOL_INPUT_PAYLOAD,
+    ATTR_TOOL_INPUT_PAYLOAD_PREVIEW,
+    ATTR_TOOL_OUTPUT_PAYLOAD_PREVIEW,
 )
 from parlot.instrumentation.livekit.attrs import (
     ATTR_AMD_CATEGORY,
     ATTR_DIAR_SOURCE_TEXT_INPUT,
     ATTR_DIAR_SOURCE_VAD,
     ATTR_EOU_LANGUAGE,
+    ATTR_END_OF_TURN_DELAY,
     ATTR_LK_AGENT_LABEL,
     ATTR_LK_AGENT_NAME,
     ATTR_LK_CHAT_CTX,
-    ATTR_LK_FUNCTION_TOOLS,
     ATTR_LK_E2E_LATENCY,
-    ATTR_LK_PROVIDER_TOOLS,
-    ATTR_LK_TOOL_SETS,
     ATTR_LK_FNC_TOOL_ARGS,
     ATTR_LK_FNC_TOOL_ERROR,
     ATTR_LK_FNC_TOOL_NAME,
@@ -97,15 +87,19 @@ from parlot.instrumentation.livekit.attrs import (
     ATTR_LK_JOB_ID,
     ATTR_LK_RESPONSE_TEXT,
     ATTR_LK_RESPONSE_TTFB,
+    ATTR_LK_RESPONSE_TTFT,
     ATTR_LK_ROOM_NAME,
     ATTR_LK_ROOM_SID,
     ATTR_LK_TTS_INPUT_TEXT,
     ATTR_LK_USER_INPUT,
     ATTR_LK_USER_TRANSCRIPT,
+    ATTR_PARTICIPANT_IDENTITY,
+    ATTR_TRANSCRIPTION_DELAY,
     METADATA_JOB_ID,
     METADATA_ROOM_ID,
 )
 from ._platform_refs import lookup_room_context, stamp_livekit_platform_refs
+from ._span_debug_log import log_span_event
 from ._session import (
     SPAN_CONVERSATION_SESSION,
     bootstrap_job_entrypoint,
@@ -113,12 +107,8 @@ from ._session import (
     handle_conversation_session_on_end,
     teardown_job_entrypoint,
 )
-from parlot.core.pricing import DEFAULT_PRICES, compute_cost
 from parlot.core.processor import ParlotBaseProcessor
 from parlot.core.session import SessionState as _BaseSessionState
-from parlot.core.topology import SessionTopology
-
-from ._topology import parse_chat_ctx_agent_config_updates
 from ._turn_traces import emit_turn_root_span
 
 logger = logging.getLogger("parlot.instrumentation.livekit")
@@ -173,9 +163,8 @@ class _LiveKitSessionState(_BaseSessionState):
     contact_type: str = ""
     recording_anchor_wall_ms: Optional[int] = None
     languages_seen: set[str] = field(default_factory=set)
-    topology: SessionTopology = field(
-        default_factory=lambda: SessionTopology(default_framework="livekit")
-    )
+    user_id: str = ""
+    pending_tts_ttfb_s: Optional[float] = None
 
 
 class LiveKitGenAIProcessor(ParlotBaseProcessor):
@@ -183,11 +172,9 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
     def __init__(
         self,
-        prices: Optional[dict[str, tuple[float, float]]] = None,
         capture_content: bool = True,
         handoff_tool_names: Optional[set[str]] = None,
     ) -> None:
-        self._prices = {**DEFAULT_PRICES, **(prices or {})}
         self._capture_content = capture_content
         self._handoff_tools = handoff_tool_names or set()
         self._sessions: dict[str, _LiveKitSessionState] = {}
@@ -196,16 +183,18 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         self._metrics = None
 
     def on_start(self, span, parent_context=None) -> None:
+        log_span_event("on_start", span)
         if span.name == "job_entrypoint":
             bootstrap_job_entrypoint(self, span)
 
     def on_end(self, span: ReadableSpan) -> None:
+        log_span_event("on_end", span)
         try:
             logger.debug("on_end: %s attrs: %s", span.name, span.attributes)
             name = span.name
             if name == SPAN_CONVERSATION_SESSION:
                 handle_conversation_session_on_end()
-                return  # lifecycle owned by teardown_job_entrypoint
+                return
             if name == "job_entrypoint":
                 teardown_job_entrypoint(self, span)
                 return
@@ -252,7 +241,6 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if label:
             label_str = str(label)
             self._maybe_update(state, "agent_label", label_str)
-            state.topology.upsert_agent(label_str)
 
     def _active_agent_id(
         self, state: _LiveKitSessionState, attrs: Mapping[str, AttributeValue]
@@ -265,11 +253,6 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if state.agent_chain:
             return state.agent_chain[-1]
         return "unknown"
-
-    def _topology_turn_index(self, state: _LiveKitSessionState) -> int:
-        if state.open_agent_turn_index is not None:
-            return state.open_agent_turn_index
-        return state.turn_count or 0
 
     def _active_turn_index(
         self, state: _LiveKitSessionState, span_name: str
@@ -365,15 +348,9 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             if system:
                 self._set(span, ATTR_GEN_AI_SYSTEM, system)
 
-        model = str(attrs.get(ATTR_GEN_AI_MODEL, ""))
         input_tokens = _attr_int(attrs, ATTR_GEN_AI_IN_TOKENS)
         output_tokens = _attr_int(attrs, ATTR_GEN_AI_OUT_TOKENS)
         cached_tokens = _attr_int(attrs, ATTR_GEN_AI_CACHED_TOKENS)
-
-        cost = compute_cost(model, input_tokens, output_tokens, self._prices)
-        if cost is not None:
-            self._set(span, ATTR_GEN_AI_COST_USD, round(cost, 8))
-            state.total_cost_usd += cost
 
         state.total_input_tokens += input_tokens
         state.total_output_tokens += output_tokens
@@ -402,21 +379,8 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if not attrs.get(ATTR_GEN_AI_OP_NAME):
             self._set(span, ATTR_GEN_AI_OP_NAME, "chat")
 
-        agent_id = self._active_agent_id(state, attrs)
-        state.topology.upsert_agent(agent_id)
-        for tool_name in _coerce_str_sequence(attrs.get(ATTR_LK_FUNCTION_TOOLS)):
-            state.topology.upsert_tool(tool_name)
-        provider = _first_str_sequence(attrs.get(ATTR_LK_PROVIDER_TOOLS))
-        tool_set = _first_str_sequence(attrs.get(ATTR_LK_TOOL_SETS))
-        chat_raw = str(attrs.get(ATTR_LK_CHAT_CTX, ""))
-        for item in parse_chat_ctx_agent_config_updates(chat_raw):
-            instructions = item.get("instructions")
-            if isinstance(instructions, str) and instructions:
-                state.topology.record_instructions(agent_id, instructions)
-            for added in _coerce_str_sequence(item.get("tools_added")):
-                state.topology.upsert_tool(added, provider=provider, tool_set=tool_set)
-
         if self._capture_content:
+            chat_raw = str(attrs.get(ATTR_LK_CHAT_CTX, ""))
             user_text, assistant_text = _preview_from_chat_ctx(chat_raw)
             if user_text:
                 self._add_event(
@@ -443,7 +407,9 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
         ttfb = attrs.get(ATTR_LK_RESPONSE_TTFB)
         if ttfb is not None:
-            self._set(span, ATTR_GEN_AI_TTS_TTFB_S, float(ttfb))
+            ttfb_s = float(ttfb)
+            self._set(span, ATTR_GEN_AI_TTS_TTFB_S, ttfb_s)
+            state.pending_tts_ttfb_s = ttfb_s
 
     def _enrich_tts_request(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
@@ -490,13 +456,10 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         tool_name = str(attrs.get(ATTR_LK_FNC_TOOL_NAME, ""))
         tool_output = str(attrs.get(ATTR_LK_FNC_TOOL_OUTPUT, ""))
         is_error = bool(attrs.get(ATTR_LK_FNC_TOOL_ERROR, False))
-        from_agent = self._active_agent_id(state, attrs)
         duration_ms = 0.0
         if span.end_time is not None and span.start_time is not None:
             duration_ms = round((span.end_time - span.start_time) / 1_000_000, 2)
 
-        if tool_name:
-            state.topology.upsert_tool(tool_name)
         tool_args_raw = attrs.get(ATTR_LK_FNC_TOOL_ARGS, "")
         tool_args = str(tool_args_raw) if tool_args_raw else ""
 
@@ -518,17 +481,6 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         is_handoff = tool_name in self._handoff_tools or "AgentHandoff" in tool_output
         new_agent = _extract_new_agent(tool_output) if is_handoff else ""
 
-        if tool_name and not is_handoff:
-            state.topology.append_edge(
-                from_agent,
-                tool_name,
-                "tool",
-                latency_ms=duration_ms,
-                error=is_error,
-                turn_index=self._topology_turn_index(state),
-                arguments=tool_args,
-            )
-
         if is_handoff:
             state.handoff_count += 1
             self._set(span, ATTR_GEN_AI_TOOL_IS_HANDOFF, True)
@@ -536,20 +488,8 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
             if new_agent:
                 self._set(span, ATTR_AGENT_TRANSFER_TO, new_agent)
-                state.topology.upsert_agent(new_agent)
-                state.topology.append_edge(
-                    from_agent,
-                    new_agent,
-                    "agent",
-                    latency_ms=duration_ms,
-                    error=is_error,
-                    turn_index=self._topology_turn_index(state),
-                )
                 if not state.agent_chain or state.agent_chain[-1] != new_agent:
                     state.agent_chain.append(new_agent)
-                state.topology.open_segment_after_handoff(
-                    new_agent, state.handoff_count, state.turn_count
-                )
 
             state.pending_handoff_end_ns = span.end_time or time.time_ns()
 
@@ -578,6 +518,13 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
                     },
                 )
 
+    def _capture_user_id(
+        self, state: _LiveKitSessionState, attrs: Mapping[str, AttributeValue]
+    ) -> None:
+        identity = str(attrs.get(ATTR_PARTICIPANT_IDENTITY, "")).strip()
+        if identity:
+            state.user_id = identity
+
     def _record_user_turn(
         self,
         span: ReadableSpan,
@@ -587,6 +534,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         transcript: str,
         modality: str,
     ) -> None:
+        self._capture_user_id(state, attrs)
         state.turn_count += 1
         self._set(span, ATTR_TURN_INDEX, state.turn_count)
         self._set(span, ATTR_TURN_INPUT_MODALITY, modality)
@@ -682,8 +630,16 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             self._metrics.record_turn(
                 state,
                 e2e_latency_s=float(e2e) if e2e is not None else None,
+                llm_ttft_s=_optional_float(attrs.get(ATTR_LK_RESPONSE_TTFT)),
+                tts_ttfb_s=state.pending_tts_ttfb_s,
+                transcription_delay_s=_optional_float(
+                    attrs.get(ATTR_TRANSCRIPTION_DELAY)
+                ),
+                eou_delay_s=_optional_float(attrs.get(ATTR_END_OF_TURN_DELAY)),
                 interrupted=bool(attrs.get(ATTR_LK_INTERRUPTED)),
+                participant_role="agent",
             )
+            state.pending_tts_ttfb_s = None
 
         if self._capture_content:
             user_input = attrs.get(ATTR_LK_USER_INPUT, "")
@@ -746,29 +702,6 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if source is not None or target is not None:
             state.handoff_count += 1
             self._set(span, ATTR_AGENT_TRANSFER_SEQUENCE, state.handoff_count)
-            src = str(source) if source is not None else self._active_agent_id(state, attrs)
-            tgt = str(target) if target is not None else ""
-            if src:
-                state.topology.upsert_agent(src)
-            if tgt:
-                state.topology.upsert_agent(tgt)
-            if src and tgt:
-                latency_ms = 0.0
-                if span.end_time is not None and span.start_time is not None:
-                    latency_ms = round(
-                        (span.end_time - span.start_time) / 1_000_000, 2
-                    )
-                state.topology.append_edge(
-                    src,
-                    tgt,
-                    "agent",
-                    latency_ms=latency_ms,
-                    turn_index=self._topology_turn_index(state),
-                )
-            if tgt:
-                state.topology.open_segment_after_handoff(
-                    tgt, state.handoff_count, state.turn_count
-                )
 
         state.pending_handoff_end_ns = span.end_time or time.time_ns()
 
@@ -840,29 +773,6 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             return
         state.recording_anchor_wall_ms = anchor_wall_ms
 
-    def _intent_agent_for_turn(
-        self, state: _LiveKitSessionState, agent_hint: str = ""
-    ) -> str:
-        if agent_hint:
-            return agent_hint
-        if state.agent_label:
-            return state.agent_label
-        if state.topology.first_agent_label:
-            return state.topology.first_agent_label
-        if state.agent_chain:
-            return state.agent_chain[-1]
-        return "unknown"
-
-    def _prepare_intent_for_turn_emit(
-        self, state: _LiveKitSessionState, turn_index: int, agent_hint: str = ""
-    ) -> tuple[str, str, str]:
-        agent_id = self._intent_agent_for_turn(state, agent_hint)
-        topo = state.topology
-        if topo.active_segment is None:
-            topo.open_bootstrap_segment(agent_id, from_turn=turn_index)
-        topo.apply_pending_from_turn_on_emit(turn_index)
-        return topo.active_intent_snapshot()
-
     def _emit_turn_trace(
         self,
         state: _LiveKitSessionState,
@@ -878,9 +788,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
     ) -> None:
         if not self._tracer or not state.parlot_session_id:
             return
-        intent_label, intent_key, active_agent_id = self._prepare_intent_for_turn_emit(
-            state, turn_index, agent_hint=agent_hint
-        )
+        active_agent_id = agent_hint or state.agent_label or "unknown"
         prev = state.last_turn_trace_id
 
         speech_wall: tuple[int, int] | None = None
@@ -913,8 +821,6 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             participant_label=label,
             diarization_source=diarization_source,
             input_modality=input_modality,
-            intent_label=intent_label,
-            intent_key=intent_key,
             active_agent_id=active_agent_id,
             speech_start_wall_ms=speech_start_wall_ms,
             speech_end_wall_ms=speech_end_wall_ms,
@@ -945,30 +851,11 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         session_span.set_attribute(
             ATTR_SESSION_TOTAL_OUTPUT_TOKENS, state.total_output_tokens
         )
-        if state.total_cost_usd:
-            session_span.set_attribute(
-                ATTR_SESSION_TOTAL_COST_USD, round(state.total_cost_usd, 6)
-            )
+        if state.user_id:
+            session_span.set_attribute(ATTR_SESSION_USER_ID, state.user_id)
         if state.agent_chain:
             chain = " → ".join(state.agent_chain)
             session_span.set_attribute(ATTR_SESSION_AGENT_CHAIN, chain)
-        topo = state.topology
-        topo.finalize_intent_sequence(state.turn_count)
-        seq = topo.intent_sequence_json()
-        if seq and seq != "[]":
-            session_span.set_attribute(ATTR_SESSION_INTENT_SEQUENCE, seq)
-        if topo.agents_seen:
-            session_span.set_attribute(ATTR_SESSION_TOPOLOGY_AGENTS, topo.agents_json())
-        if topo.tools_seen:
-            session_span.set_attribute(ATTR_SESSION_TOPOLOGY_TOOLS, topo.tools_json())
-        if topo.edges:
-            session_span.set_attribute(ATTR_SESSION_TOPOLOGY_EDGES, topo.edges_json())
-        orch_instructions = topo.orchestrator_instructions()
-        if orch_instructions:
-            session_span.set_attribute(
-                ATTR_SESSION_TOPOLOGY_ORCHESTRATOR_INSTRUCTIONS,
-                orch_instructions,
-            )
         if state.contact_type:
             session_span.set_attribute(ATTR_SESSION_CONTACT_TYPE, state.contact_type)
         if state.recording_anchor_wall_ms is not None:
@@ -1010,6 +897,15 @@ def _attr_int(
     return default
 
 
+def _optional_float(value: AttributeValue | None) -> Optional[float]:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def _provider_to_system(provider: str) -> str:
     mapping = {
         "openai": "openai",
@@ -1035,19 +931,6 @@ def _extract_new_agent(tool_output: str) -> str:
 
     m = re.search(r"AgentHandoff\(agent=<(\w+)", tool_output)
     return m.group(1) if m else ""
-
-
-def _coerce_str_sequence(value: AttributeValue | None) -> list[str]:
-    if value is None:
-        return []
-    if isinstance(value, (tuple, list)):
-        return [str(v) for v in value if v is not None and str(v)]
-    return [str(value)]
-
-
-def _first_str_sequence(value: AttributeValue | None) -> str:
-    items = _coerce_str_sequence(value)
-    return items[0] if items else ""
 
 
 def _preview_from_chat_ctx(raw: str) -> tuple[str, str]:

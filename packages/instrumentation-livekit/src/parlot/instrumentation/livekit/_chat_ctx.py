@@ -1,18 +1,9 @@
-"""LiveKit-specific topology helpers (chat context parsing)."""
+"""LiveKit chat context parsing helpers."""
 
 from __future__ import annotations
 
 import json
 from typing import Any
-
-# Re-export framework-agnostic topology from core for backward-compatible imports.
-from parlot.core.topology import (  # noqa: F401
-    AgentNode,
-    EdgeEvent,
-    IntentSegmentRecord,
-    SessionTopology,
-    ToolNode,
-)
 
 
 def parse_chat_ctx_agent_config_updates(raw: str) -> list[dict[str, Any]]:

@@ -15,7 +15,7 @@ def configure(
     endpoint: Optional[str] = None,
     api_key: Optional[str] = None,
     capture_content: Optional[bool] = None,
-    prices: Optional[dict] = None,
+    service_name: Optional[str] = None,
     tracer_provider=None,
 ) -> None:
     global _configured
@@ -40,7 +40,7 @@ def configure(
             endpoint=resolved_endpoint,
             api_key=resolved_api_key,
             capture_content=capture_content,
-            prices=prices,
+            service_name=service_name,
         )
 
     from parlot.core.processor import assert_sync_span_processors
@@ -93,15 +93,18 @@ def _build_provider(
     endpoint: str,
     api_key: str,
     capture_content: bool,
-    prices: Optional[dict],
+    service_name: Optional[str],
 ):
     from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+    from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    from opentelemetry.semconv.attributes import service_attributes
 
     from opentelemetry import metrics as otel_metrics
 
     from ._export import QuietOTLPSpanExporter
+    from ._export_filter import ExportFilterSpanExporter
     from ._metrics import ParlotMetricsRecorder, build_meter_provider
     from ._processor import LiveKitGenAIProcessor
     from ._turn_trace_export import TurnTraceRemappingExporter
@@ -110,21 +113,25 @@ def _build_provider(
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
 
+    resource = Resource.create(
+        {service_attributes.SERVICE_NAME: service_name or "unknown"}
+    )
+
     trace_endpoint = endpoint.rstrip("/") + "/v1/traces"
     otlp_exporter = OTLPSpanExporter(endpoint=trace_endpoint, headers=headers)
 
     processor = LiveKitGenAIProcessor(
         capture_content=capture_content,
-        prices=prices,
     )
 
     remapping_exporter = TurnTraceRemappingExporter(otlp_exporter, processor)
+    filtered_exporter = ExportFilterSpanExporter(remapping_exporter)
     exporter = QuietOTLPSpanExporter(
-        remapping_exporter,
+        filtered_exporter,
         endpoint_label=trace_endpoint,
     )
 
-    provider = TracerProvider()
+    provider = TracerProvider(resource=resource)
     provider.add_span_processor(processor)
     provider.add_span_processor(BatchSpanProcessor(exporter))
 
@@ -135,7 +142,7 @@ def _build_provider(
     attach_ok = assert_sync_span_processors(provider)
     set_span_context_attach_enabled(attach_ok)
 
-    meter_provider = build_meter_provider(endpoint, headers)
+    meter_provider = build_meter_provider(endpoint, headers, resource)
     otel_metrics.set_meter_provider(meter_provider)
     processor.set_tracer(provider.get_tracer("parlot.instrumentation.livekit"))
     processor.set_metrics(ParlotMetricsRecorder(meter_provider))

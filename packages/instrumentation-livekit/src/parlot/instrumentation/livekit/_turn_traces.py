@@ -15,8 +15,6 @@ from parlot.core.attrs import (
     ATTR_TURN_ACTIVE_AGENT_ID,
     ATTR_TURN_INDEX,
     ATTR_TURN_INPUT_MODALITY,
-    ATTR_TURN_INTENT_KEY,
-    ATTR_TURN_INTENT_LABEL,
     ATTR_TURN_MEDIA_END_MS,
     ATTR_TURN_MEDIA_START_MS,
     ATTR_TURN_PARTICIPANT_ID,
@@ -43,8 +41,6 @@ def emit_turn_root_span(
     participant_label: str = "",
     diarization_source: str = "",
     input_modality: str = "",
-    intent_label: str = "",
-    intent_key: str = "",
     active_agent_id: str = "",
     speech_start_wall_ms: int | None = None,
     speech_end_wall_ms: int | None = None,
@@ -92,10 +88,6 @@ def emit_turn_root_span(
             span.set_attribute(ATTR_PARTICIPANT_DIAR_SOURCE, diarization_source)
         if input_modality:
             span.set_attribute(ATTR_TURN_INPUT_MODALITY, input_modality)
-        if intent_label:
-            span.set_attribute(ATTR_TURN_INTENT_LABEL, intent_label)
-        if intent_key:
-            span.set_attribute(ATTR_TURN_INTENT_KEY, intent_key)
         if active_agent_id:
             span.set_attribute(ATTR_TURN_ACTIVE_AGENT_ID, active_agent_id)
         if speech_start_wall_ms is not None:
