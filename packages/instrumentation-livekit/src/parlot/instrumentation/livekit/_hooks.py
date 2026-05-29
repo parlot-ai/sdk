@@ -64,12 +64,13 @@ def install_close_hook(session) -> None:
             return
         reason = str(getattr(ev, "reason", "unknown"))
         error = getattr(ev, "error", None)
-        emit_parlot_session_close_span(
+        from ._session import finalize_session_close_from_hook
+
+        finalize_session_close_from_hook(
             bootstrap,
             close_reason=reason,
             close_error=str(error) if error else None,
         )
-        bootstrap.close_span_done = True
 
 
 def _patch_agent_session(tracer) -> None:

@@ -44,7 +44,7 @@ class SanitizeVendorAttrsSpanExporter(SpanExporter):
     def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
         if not spans:
             return SpanExportResult.SUCCESS
-        cleaned = _SanitizedReadableSpan(span) for span in spans]
+        cleaned = [_SanitizedReadableSpan(span) for span in spans]
         return self._exporter.export(cleaned)
 
     def shutdown(self) -> None:

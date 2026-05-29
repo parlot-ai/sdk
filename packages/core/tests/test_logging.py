@@ -38,3 +38,12 @@ def test_log_span_event_logs_when_debug():
         assert mock_debug.call_args[0][0] == "%s"
         assert "on_start" in mock_debug.call_args[0][1]
         assert "test_span" in mock_debug.call_args[0][1]
+
+
+def test_format_attrs_for_log_trims_long_strings():
+    long_ctx = "x" * 500
+    formatted = parlot_logging.format_attrs_for_log({"lk.chat_ctx": long_ctx})
+    assert "(+468)" in formatted
+    assert long_ctx not in formatted
+    assert len(formatted) < len(long_ctx)
+    assert formatted.startswith('{"lk.chat_ctx": "')

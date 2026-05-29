@@ -18,6 +18,7 @@ from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.trace import Status, StatusCode
 from opentelemetry.util.types import AttributeValue
 
+from parlot.core.logging import format_attrs_for_log
 from parlot.core.attrs import (
     ATTR_AGENT_FRAMEWORK,
     ATTR_AGENT_INSTRUCTIONS_EXCERPT,
@@ -207,7 +208,11 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
     def on_end(self, span: ReadableSpan) -> None:
         super().on_end(span)
         try:
-            logger.debug("on_end: %s attrs: %s", span.name, span.attributes)
+            logger.debug(
+                "on_end: %s attrs: %s",
+                span.name,
+                format_attrs_for_log(span.attributes),
+            )
             name = span.name
             if name == SPAN_CONVERSATION_SESSION:
                 handle_conversation_session_on_end()

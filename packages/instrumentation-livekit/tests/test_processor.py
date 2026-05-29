@@ -211,9 +211,13 @@ class TestRootSpanAggregates:
         proc.on_end(entry)
 
     def test_state_cleaned_up_after_root(self) -> None:
+        from parlot.instrumentation.livekit._session import finalize_session_close_from_hook
+
         proc = LiveKitGenAIProcessor()
         entry = _bootstrap_proc(proc, "j1")
-        sid = get_job_bootstrap().session_id
+        bootstrap = get_job_bootstrap()
+        sid = bootstrap.session_id
+        finalize_session_close_from_hook(bootstrap, close_reason="clean_close")
         proc.on_end(entry)
         assert sid not in proc._sessions
         assert get_job_bootstrap() is None

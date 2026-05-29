@@ -73,7 +73,10 @@ def set_span_context_attach_enabled(enabled: bool) -> None:
 
 
 def get_job_bootstrap() -> _JobBootstrap | None:
-    return _parlot_job_bootstrap.get()
+    bootstrap = _parlot_job_bootstrap.get()
+    if bootstrap is None or bootstrap.close_span_done:
+        return None
+    return bootstrap
 
 
 def bootstrap_job_entrypoint(
@@ -246,11 +249,101 @@ def emit_parlot_session_close_span(
         span.end()
 
 
+def _detach_otel_context(bootstrap: _JobBootstrap) -> None:
+    """Detach only on the task that attached; otherwise drop the token reference."""
+    token = bootstrap.ctx_token
+    if token is None:
+        return
+    attach_task = bootstrap.attach_task
+    try:
+        current = asyncio.current_task()
+    except RuntimeError:
+        current = None
+
+    if attach_task is not None and current is not attach_task:
+        # AgentSession "close" often fires on a different task than job_entrypoint.
+        # Detaching here would corrupt that task's context stack; the attach task
+        # drops its context vars when the job ends.
+        logger.debug(
+            "parlot: otel context detach skipped (close on task %s, attach on %s)",
+            current,
+            attach_task,
+        )
+        return
+
+    otel_context.detach(token)
+    bootstrap.ctx_token = None
+
+
+def _cleanup_job_bootstrap(
+    processor: "LiveKitGenAIProcessor",
+    bootstrap: _JobBootstrap,
+    *,
+    end_time: int | None = None,
+) -> None:
+    """Detach OTel context and drop in-memory session state after close is exported."""
+    state = bootstrap.state
+    vendor_job_id = state.session_id
+
+    try:
+        current = asyncio.current_task()
+    except RuntimeError:
+        current = None
+    attach_task = bootstrap.attach_task
+    on_attach_task = attach_task is None or attach_task is current
+
+    if on_attach_task:
+        _detach_otel_context(bootstrap)
+
+    if not bootstrap.session_span_ended:
+        _end_session_span(bootstrap, end_time=end_time)
+
+    from parlot.instrumentation.livekit._platform_refs import clear_livekit_job_context
+
+    if vendor_job_id:
+        clear_livekit_job_context(vendor_job_id)
+    processor._sessions.pop(bootstrap.session_id, None)
+    if on_attach_task:
+        _parlot_job_bootstrap.set(None)
+
+
+def finalize_session_close_from_hook(
+    bootstrap: _JobBootstrap,
+    *,
+    close_reason: str,
+    close_error: str | None = None,
+    end_time: int | None = None,
+) -> None:
+    """Emit ``parlot.session.close`` once when AgentSession actually closes."""
+    if bootstrap.close_span_done:
+        return
+    _finalize_session_aggregates(bootstrap)
+    _end_session_span(bootstrap, end_time=end_time)
+    _flush_otlp_before_session_close(bootstrap)
+    emit_parlot_session_close_span(
+        bootstrap,
+        end_time=end_time,
+        close_reason=close_reason,
+        close_error=close_error,
+    )
+    # Mark closed before cleanup so other tasks still holding this ContextVar
+    # value stop resolving session attributes (close hook != attach task).
+    bootstrap.close_span_done = True
+    _cleanup_job_bootstrap(bootstrap.processor, bootstrap, end_time=end_time)
+
+
 def teardown_job_entrypoint(processor: "LiveKitGenAIProcessor", entrypoint_span: "ReadableSpan") -> None:
-    """End ``conversation.session`` at job teardown (egress anchor stamped at connect)."""
+    """Job span ended — only tear down if session close already ran via AgentSession hook."""
     bootstrap = _parlot_job_bootstrap.get()
     if bootstrap is None:
-        logger.error("parlot: job_entrypoint on_end without active bootstrap")
+        return
+
+    if not bootstrap.close_span_done:
+        # LiveKit may end the job_entrypoint span before the voice session finishes.
+        # Keep bootstrap alive so turns keep resolving and the close hook can fire once.
+        logger.debug(
+            "parlot: job_entrypoint span ended before AgentSession close; deferring teardown"
+        )
         return
 
     state = bootstrap.state
@@ -264,37 +357,11 @@ def teardown_job_entrypoint(processor: "LiveKitGenAIProcessor", entrypoint_span:
         if rs:
             state.room_sid = rs
 
-    _finalize_session_aggregates(bootstrap)
-
-    end_time = getattr(entrypoint_span, "end_time", None)
-    if bootstrap.ctx_token is not None:
-        if bootstrap.attach_task is not None:
-            try:
-                if bootstrap.attach_task is not asyncio.current_task():
-                    raise AssertionError(
-                        "parlot: ctx detach must run on the same asyncio Task as attach"
-                    )
-            except RuntimeError:
-                pass
-        otel_context.detach(bootstrap.ctx_token)
-
-    _end_session_span(bootstrap, end_time=end_time)
-    _flush_otlp_before_session_close(bootstrap)
-    if not bootstrap.close_span_done:
-        close_reason = _detect_session_close_reason(entrypoint_span)
-        emit_parlot_session_close_span(
-            bootstrap,
-            end_time=end_time,
-            close_reason=close_reason,
-        )
-        bootstrap.close_span_done = True
-
-    from parlot.instrumentation.livekit._platform_refs import clear_livekit_job_context
-
-    if vendor_job_id:
-        clear_livekit_job_context(vendor_job_id)
-    processor._sessions.pop(bootstrap.session_id, None)
-    _parlot_job_bootstrap.set(None)
+    _cleanup_job_bootstrap(
+        processor,
+        bootstrap,
+        end_time=getattr(entrypoint_span, "end_time", None),
+    )
 
 
 def handle_conversation_session_on_end() -> None:

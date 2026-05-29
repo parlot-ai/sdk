@@ -17,6 +17,9 @@ logger = logging.getLogger(__name__)
 _level = os.getenv("PARLOT_DEBUG_LEVEL", "INFO").upper()
 logger.setLevel(getattr(logging, _level, logging.INFO))
 
+# Max characters per attribute value in debug logs (full values still export).
+_LOG_VALUE_MAX_LEN = 32
+
 
 def is_parlot_debug() -> bool:
     return logger.isEnabledFor(logging.DEBUG)
@@ -36,19 +39,39 @@ def _trace_id_hex(span: Any) -> str:
     return format(ctx.trace_id, "032x")
 
 
+def _trim_for_log(value: str, *, max_len: int = _LOG_VALUE_MAX_LEN) -> str:
+    if len(value) <= max_len:
+        return value
+    omitted = len(value) - max_len
+    return f"{value[:max_len]}…(+{omitted})"
+
+
+def _json_safe(value: Any) -> Any:
+    if isinstance(value, str):
+        return _trim_for_log(value)
+    if isinstance(value, (int, float, bool)) or value is None:
+        return value
+    if isinstance(value, bytes):
+        return _trim_for_log(value.hex())
+    return _trim_for_log(str(value))
+
+
+def format_attrs_for_log(attrs: Any) -> str:
+    """JSON-format span attributes for debug logs with long values truncated."""
+    if not attrs:
+        return "{}"
+    if hasattr(attrs, "items"):
+        safe = {str(k): _json_safe(v) for k, v in attrs.items()}
+    else:
+        safe = {}
+    return json.dumps(safe, default=str)
+
+
 def _span_attrs(span: Any) -> dict[str, Any]:
     attrs = getattr(span, "attributes", None) or {}
     if hasattr(attrs, "items"):
         return {str(k): _json_safe(v) for k, v in attrs.items()}
     return {}
-
-
-def _json_safe(value: Any) -> Any:
-    if isinstance(value, (str, int, float, bool)) or value is None:
-        return value
-    if isinstance(value, bytes):
-        return value.hex()
-    return str(value)
 
 
 def _format_message(event: str, span: Any) -> str:
