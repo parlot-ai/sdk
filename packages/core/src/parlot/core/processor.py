@@ -13,6 +13,7 @@ import time
 
 from opentelemetry.sdk.trace import ReadableSpan, SpanProcessor
 
+from .logging import log_span_event
 from .session import SessionState
 
 logger = logging.getLogger("parlot.processor")
@@ -22,7 +23,8 @@ logger.setLevel(logging.DEBUG)
 class ParlotBaseProcessor(SpanProcessor):
     """
     Subclass and override ``on_end`` (or the ``_enrich`` dispatch method) to
-    add framework-specific span enrichment.
+    add framework-specific span enrichment. Call ``super().on_start()`` /
+    ``super().on_end()`` so shared debug logging runs.
 
     Do NOT wrap a downstream processor — add alongside BatchSpanProcessor:
 
@@ -31,10 +33,10 @@ class ParlotBaseProcessor(SpanProcessor):
     """
 
     def on_start(self, span, parent_context=None) -> None:
-        pass
+        log_span_event("on_start", span)
 
     def on_end(self, span: ReadableSpan) -> None:
-        pass
+        log_span_event("on_end", span)
 
     def shutdown(self) -> None:
         pass

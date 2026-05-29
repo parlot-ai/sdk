@@ -1,24 +1,25 @@
-"""Append-only debug log for span processor on_start/on_end (local dev)."""
+"""Debug logging for span processor events.
+
+Set ``PARLOT_DEBUG_LEVEL=DEBUG`` to emit span lifecycle lines. Ensure the root
+logger is configured in your app entry point (``logging.basicConfig``) so
+messages reach stdout.
+"""
 
 from __future__ import annotations
 
 import json
+import logging
 import os
-import threading
-from datetime import datetime, timezone
 from typing import Any
 
-_LOG_DIR = os.path.expanduser("~/dev/parlot.ai/logs/sdk")
-_LOG_FILE = os.path.join(_LOG_DIR, "span-events.log")
-_lock = threading.Lock()
-_initialized = False
+logger = logging.getLogger(__name__)
+
+_level = os.getenv("PARLOT_DEBUG_LEVEL", "INFO").upper()
+logger.setLevel(getattr(logging, _level, logging.INFO))
 
 
-def _ensure_dir() -> None:
-    global _initialized
-    if not _initialized:
-        os.makedirs(_LOG_DIR, exist_ok=True)
-        _initialized = True
+def is_parlot_debug() -> bool:
+    return logger.isEnabledFor(logging.DEBUG)
 
 
 def _span_id_hex(span: Any) -> str:
@@ -50,10 +51,9 @@ def _json_safe(value: Any) -> Any:
     return str(value)
 
 
-def _format_line(event: str, span: Any) -> str:
+def _format_message(event: str, span: Any) -> str:
     name = getattr(span, "name", "") or ""
     parts = [
-        datetime.now(timezone.utc).isoformat(),
         event,
         f"name={name!r}",
         f"trace_id={_trace_id_hex(span)}",
@@ -68,15 +68,9 @@ def _format_line(event: str, span: Any) -> str:
             code = getattr(status, "status_code", None)
             name_attr = getattr(code, "name", None)
             parts.append(f"status={name_attr if name_attr is not None else code}")
-    return " ".join(parts) + "\n"
+    return " ".join(parts)
 
 
 def log_span_event(event: str, span: Any) -> None:
-    try:
-        _ensure_dir()
-        line = _format_line(event, span)
-        with _lock:
-            with open(_LOG_FILE, "a", encoding="utf-8") as f:
-                f.write(line)
-    except Exception:
-        pass
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug("%s", _format_message(event, span))

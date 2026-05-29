@@ -11,6 +11,13 @@ logger = logging.getLogger("parlot.instrumentation.livekit")
 _configured = False
 
 
+def _configure_parlot_logging() -> None:
+    level_name = os.getenv("PARLOT_DEBUG_LEVEL", "INFO").upper()
+    level = getattr(logging, level_name, logging.INFO)
+    if not logging.root.handlers:
+        logging.basicConfig(level=level)
+
+
 def configure(
     endpoint: Optional[str] = None,
     api_key: Optional[str] = None,
@@ -22,6 +29,8 @@ def configure(
     if _configured:
         logger.debug("parlot-instrumentation.livekit already configured — skipping")
         return
+
+    _configure_parlot_logging()
 
     resolved_endpoint = endpoint or os.environ.get("PARLOT_ENDPOINT", "")
     resolved_api_key = api_key or os.environ.get("PARLOT_API_KEY", "")

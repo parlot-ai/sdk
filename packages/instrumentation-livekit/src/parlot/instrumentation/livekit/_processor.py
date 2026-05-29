@@ -99,7 +99,6 @@ from parlot.instrumentation.livekit.attrs import (
     METADATA_ROOM_ID,
 )
 from ._platform_refs import lookup_room_context, stamp_livekit_platform_refs
-from ._span_debug_log import log_span_event
 from ._session import (
     SPAN_CONVERSATION_SESSION,
     bootstrap_job_entrypoint,
@@ -183,12 +182,12 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         self._metrics = None
 
     def on_start(self, span, parent_context=None) -> None:
-        log_span_event("on_start", span)
+        super().on_start(span, parent_context)
         if span.name == "job_entrypoint":
             bootstrap_job_entrypoint(self, span)
 
     def on_end(self, span: ReadableSpan) -> None:
-        log_span_event("on_end", span)
+        super().on_end(span)
         try:
             logger.debug("on_end: %s attrs: %s", span.name, span.attributes)
             name = span.name
