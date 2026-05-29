@@ -67,6 +67,7 @@ export const ATTR_SESSION_TOPOLOGY_EDGES = "session.topology.edges" as const;
 export const ATTR_SESSION_TOPOLOGY_ORCHESTRATOR_INSTRUCTIONS = "session.topology.orchestrator_instructions" as const;
 export const ATTR_SESSION_RECORDING_ANCHOR_WALL_MS = "session.recording_anchor_wall_ms" as const;
 export const ATTR_SESSION_AUDIO_RECORDING_URI = "session.audio_recording_uri" as const;
+export const ATTR_SESSION_EGRESS_ID = "session.egress_id" as const;
 export const ATTR_SESSION_LANGUAGES = "session.languages" as const;
 export const ATTR_SESSION_CLOSE_REASON = "session.close_reason" as const;
 export const ATTR_SESSION_USER_ID = "session.user_id" as const;

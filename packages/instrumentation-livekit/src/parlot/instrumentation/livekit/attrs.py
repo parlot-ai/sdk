@@ -6,8 +6,7 @@ On LK upgrade, diff trace_types.py and update this file.
 
 Do not add Parlot-invented keys here — use ``parlot.core.attrs`` for
 ``turn.*``, ``session.*``, ``agent.transfer.*``, etc. Exception recording
-(``exception.*``) is re-exported from core below. LiveKit-only integration
-keys (e.g. ``session.egress_id``) belong in this module.
+(``exception.*``) and cross-cutting session keys are re-exported from core below.
 """
 
 from __future__ import annotations
@@ -16,6 +15,7 @@ from parlot.core.attrs import (
     ATTR_EXCEPTION_MESSAGE,
     ATTR_EXCEPTION_TRACE,
     ATTR_EXCEPTION_TYPE,
+    ATTR_SESSION_EGRESS_ID,
 )
 
 # ---------------------------------------------------------------------------
@@ -112,8 +112,7 @@ ATTR_INTERRUPTION_DETECTION_DELAY = "lk.interruption.detection_delay"
 # Stamped by Parlot platform refs / job context (not in trace_types.py)
 ATTR_ROOM_SID = "lk.room.sid"
 
-# LiveKit Room Composite egress (Parlot recording integration)
-ATTR_SESSION_EGRESS_ID = "session.egress_id"
+from parlot.core.attrs import ATTR_SESSION_EGRESS_ID
 
 # participant.diarization_source values (LiveKit Agents instrumentation only)
 ATTR_DIAR_SOURCE_VAD = "livekit_vad"

@@ -2,8 +2,7 @@
 LiveKit-specific platform.ref.* registry and span stamping.
 
 Delegates generic ``platform.ref.*`` attribute writes to
-``parlot.core.platform_refs.stamp_platform_refs`` and adds ``lk.*`` legacy
-keys expected by Parlot ingestion.
+``parlot.core.platform_refs.stamp_platform_refs``.
 """
 
 from __future__ import annotations
@@ -11,11 +10,6 @@ from __future__ import annotations
 import inspect
 import logging
 
-from parlot.instrumentation.livekit.attrs import (
-    ATTR_LK_JOB_ID,
-    ATTR_LK_ROOM_NAME,
-    ATTR_LK_ROOM_SID,
-)
 from parlot.core.platform_refs import stamp_platform_refs as _stamp_platform_refs
 
 logger = logging.getLogger("parlot.instrumentation.livekit")
@@ -72,24 +66,13 @@ def stamp_livekit_platform_refs(
     room_name: str = "",
     room_sid: str = "",
 ) -> None:
-    """Stamp primary ``platform.ref.*`` triple plus ``lk.*`` legacy keys on a span."""
+    """Stamp ``platform.ref.*`` triples on a span for LiveKit session resolve."""
     triples = _livekit_platform_ref_triples(
         job_id=job_id, room_name=room_name, room_sid=room_sid
     )
     if not triples:
         return
     _stamp_platform_refs(span, triples)
-
-    if span._attributes is None:
-        span._attributes = {}
-
-    for _fw, kind, val in triples:
-        if kind == "room_sid":
-            span._attributes[ATTR_LK_ROOM_SID] = val
-        elif kind == "job_id":
-            span._attributes[ATTR_LK_JOB_ID] = val
-        elif kind == "room_name":
-            span._attributes[ATTR_LK_ROOM_NAME] = val
 
 
 def _str_field(obj, *attr_names: str) -> str:
@@ -153,5 +136,3 @@ def _job_room_fields(ctx) -> tuple[str, str, str]:
     if not room_name:
         room_name = _str_field(getattr(ctx, "room", None), "name")
     return job_id, room_name, room_sid
-
-

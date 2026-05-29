@@ -76,7 +76,6 @@ export const ATTR_INTERRUPTION_TOTAL_DURATION = "lk.interruption.total_duration"
 export const ATTR_INTERRUPTION_PREDICTION_DURATION = "lk.interruption.prediction_duration" as const;
 export const ATTR_INTERRUPTION_DETECTION_DELAY = "lk.interruption.detection_delay" as const;
 export const ATTR_ROOM_SID = "lk.room.sid" as const;
-export const ATTR_SESSION_EGRESS_ID = "session.egress_id" as const;
 export const ATTR_DIAR_SOURCE_VAD = "livekit_vad" as const;
 export const ATTR_DIAR_SOURCE_TEXT_INPUT = "livekit_text_input" as const;
 export const ATTR_LK_SPEECH_ID = "lk.speech_id" as const;

@@ -12,10 +12,6 @@ from parlot.core.attrs import (
     ATTR_PLATFORM_KIND,
     ATTR_PLATFORM_VALUE,
 )
-from parlot.instrumentation.livekit.attrs import (
-    ATTR_LK_JOB_ID,
-    ATTR_LK_ROOM_SID,
-)
 from parlot.core.platform_refs import platform_ref_flat_key
 from parlot.instrumentation.livekit._platform_refs import (
     _job_room_context,
@@ -61,8 +57,8 @@ def test_stamp_livekit_platform_refs() -> None:
     assert span._attributes[ATTR_PLATFORM_FRAMEWORK] == "livekit"
     assert span._attributes[ATTR_PLATFORM_KIND] == "room_sid"
     assert span._attributes[ATTR_PLATFORM_VALUE] == "RM_test"
-    assert span._attributes[ATTR_LK_ROOM_SID] == "RM_test"
-    assert span._attributes[ATTR_LK_JOB_ID] == "job-1"
+    assert span._attributes[platform_ref_flat_key("room_sid")] == "RM_test"
+    assert span._attributes[platform_ref_flat_key("job_id")] == "job-1"
     assert span._attributes[platform_ref_flat_key("room_name")] == "demo"
 
 

@@ -808,7 +808,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
     def _resolve_user_participant(
         attrs: Mapping[str, AttributeValue], modality: str
     ) -> tuple[str, str]:
-        for key in (ATTR_STT_SPEAKER_ID, "lk.speaker_id", "speaker_id"):
+        for key in (ATTR_STT_SPEAKER_ID,):
             speaker = str(attrs.get(key, "")).strip()
             if speaker:
                 return speaker, ATTR_DIAR_SOURCE_STT_SPEAKER_ID
