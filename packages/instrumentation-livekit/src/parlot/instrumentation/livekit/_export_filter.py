@@ -7,7 +7,7 @@ from typing import Sequence
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter, SpanExportResult
 
-from parlot.core.attrs import SPAN_PARLOT_SESSION_CLOSE
+from parlot.core.attrs import SPAN_AGENT_HANDOFF, SPAN_PARLOT_SESSION_CLOSE
 
 SPAN_CONVERSATION_SESSION = "conversation.session"
 SPAN_PARLOT_TURN = "parlot.turn"
@@ -29,7 +29,7 @@ EXPORTABLE_SPAN_NAMES = frozenset({
     SPAN_CONVERSATION_SESSION,
     SPAN_PARLOT_TURN,
     SPAN_PARLOT_SESSION_CLOSE,
-    "lk.agent_handoff",
+    SPAN_AGENT_HANDOFF,
     *_EXPORTABLE_OPERATIONAL_SPANS,
 })
 

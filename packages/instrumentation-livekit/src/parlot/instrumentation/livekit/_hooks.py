@@ -16,14 +16,15 @@ from parlot.core.attrs import (
     ATTR_AGENT_TRANSFER_ITEM_ID,
     ATTR_AGENT_TRANSFER_TO,
     ATTR_GEN_AI_OP_NAME,
+    SPAN_AGENT_HANDOFF,
 )
 
 logger = logging.getLogger("parlot.instrumentation.livekit")
 
 
 def install_handoff_hook(session, tracer) -> None:
-    """Subscribe to AgentSession conversation events and emit a
-    ``lk.agent_handoff`` span for each AgentHandoff item.
+    """Subscribe to AgentSession conversation events and emit an
+    ``agent.handoff`` span for each AgentHandoff item.
 
     This is called automatically by ``configure()`` when AgentSession is
     constructed. You only need to call it manually if you are managing the
@@ -40,7 +41,7 @@ def install_handoff_hook(session, tracer) -> None:
         if item.type != "agent_handoff":
             return
 
-        with tracer.start_as_current_span("lk.agent_handoff") as span:
+        with tracer.start_as_current_span(SPAN_AGENT_HANDOFF) as span:
             if item.old_agent_id:
                 span.set_attribute(ATTR_AGENT_TRANSFER_FROM, str(item.old_agent_id))
             span.set_attribute(ATTR_AGENT_TRANSFER_TO, str(item.new_agent_id))

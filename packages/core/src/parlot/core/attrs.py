@@ -75,6 +75,10 @@ ATTR_EXCEPTION_TRACE    = "exception.stacktrace"
 # -- Agent identity (gaps the OTel spec does not cover) --------------------
 ATTR_AGENT_ROLE      = "agent.role"       # orchestrator | task | tool | guardrail | stt | tts | llm | amd
 ATTR_AGENT_FRAMEWORK = "agent.framework"  # livekit | crewai | langgraph | adk | custom
+ATTR_AGENT_INSTRUCTIONS_EXCERPT = "agent.instructions_excerpt"
+ATTR_AGENT_TOOL_NAMES = "agent.tool.names"  # JSON array of tool name strings
+ATTR_AGENT_TOOL_NAME = "agent.tool.name"
+ATTR_AGENT_TOOL_IS_ERROR = "agent.tool.is_error"
 
 # -- Agent coordination ----------------------------------------------------
 ATTR_AGENT_TRANSFER_FROM    = "agent.transfer.from_agent_id"
@@ -95,7 +99,7 @@ ATTR_SESSION_MODALITY       = "session.modality"         # voice | text | multim
 ATTR_SESSION_PARTICIPANT_COUNT = "session.participant_count"
 ATTR_SESSION_INTENT_LABEL   = "session.intent_label"  # legacy scalar; leave empty for new sessions
 ATTR_SESSION_INTENT_SEQUENCE = "session.intent.sequence"
-ATTR_SESSION_CONTACT_TYPE   = "session.contact_type"     # human | voicemail | ivr | unavailable | unknown
+ATTR_SESSION_AMD            = "session.amd"              # human | voicemail | ivr | unavailable | unknown
 ATTR_SESSION_TURN_COUNT     = "session.turn_count"
 ATTR_SESSION_TOOL_CALL_COUNT = "session.tool_call_count"
 ATTR_SESSION_HANDOFF_COUNT  = "session.handoff_count"
@@ -117,6 +121,7 @@ ATTR_SESSION_CLOSE_ERROR = "session.close_error"
 # -- Framework-agnostic Parlot span names -----------------------------------
 SPAN_PARLOT_TURN = "parlot.turn"
 SPAN_PARLOT_SESSION_CLOSE = "parlot.session.close"
+SPAN_AGENT_HANDOFF = "agent.handoff"
 
 # -- Conversation ----------------------------------------------------------
 ATTR_CONVERSATION_ID      = "conversation.id"
@@ -135,6 +140,11 @@ ATTR_TURN_SPEECH_WALL_START_MS = "turn.speech_wall_start_ms"
 ATTR_TURN_SPEECH_WALL_END_MS   = "turn.speech_wall_end_ms"
 ATTR_TURN_INTERRUPTED       = "turn.interrupted"
 ATTR_TURN_E2E_LATENCY_S     = "turn.e2e_latency_s"
+ATTR_TURN_LLM_TTFT_S        = "turn.llm_ttft_s"
+ATTR_TURN_TRANSCRIPTION_DELAY_S = "turn.transcription_delay_s"
+ATTR_TURN_EOU_DELAY_S       = "turn.eou_delay_s"
+ATTR_TURN_USER_TEXT         = "turn.user_text"
+ATTR_TURN_AGENT_TEXT        = "turn.agent_text"
 ATTR_TURN_INTENT_LABEL      = "turn.intent_label"
 ATTR_TURN_INTENT_KEY        = "turn.intent_key"
 ATTR_TURN_ACTIVE_AGENT_ID   = "turn.active_agent_id"
@@ -145,6 +155,7 @@ ATTR_PARTICIPANT_ROLE         = "participant.role"
 ATTR_PARTICIPANT_LABEL        = "participant.label"
 ATTR_PARTICIPANT_FIRST_TURN   = "participant.first_turn_index"
 ATTR_PARTICIPANT_DIAR_SOURCE  = "participant.diarization_source"
+ATTR_PARTICIPANT_CHANNEL_IDENTITY = "participant.channel_identity"
 ATTR_STT_SPEAKER_ID           = "stt.speaker_id"
 
 # participant.diarization_source values (framework-agnostic; not LiveKit-specific)
@@ -160,6 +171,8 @@ ATTR_TURN_PARTICIPANT_ID_CALLER    = "caller"
 ATTR_VOICE_STT_LATENCY_MS    = "voice.stt.latency_ms"
 ATTR_VOICE_STT_CONFIDENCE    = "voice.stt.confidence"
 ATTR_VOICE_TTS_LATENCY_MS    = "voice.tts.latency_ms"
+ATTR_VOICE_EOU_LANGUAGE      = "voice.eou.language"
+ATTR_VOICE_AMD_CATEGORY      = "voice.amd.category"
 ATTR_VOICE_AUDIO_PACKET_LOSS = "voice.audio.packet_loss"
 ATTR_VOICE_AUDIO_JITTER_MS   = "voice.audio.jitter_ms"
 ATTR_VOICE_DEAD_AIR_MS       = "voice.interaction.dead_air_ms"

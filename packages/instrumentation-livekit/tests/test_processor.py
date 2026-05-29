@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from parlot.core.attrs import (
+    SPAN_AGENT_HANDOFF,
     ATTR_AGENT_ROLE,
     ATTR_AGENT_TRANSFER_FROM,
     ATTR_AGENT_TRANSFER_TO,
@@ -22,7 +23,7 @@ from parlot.core.attrs import (
     ATTR_GEN_AI_SYSTEM,
     ATTR_GEN_AI_TOOL_DURATION_MS,
     ATTR_GEN_AI_TOOL_IS_HANDOFF,
-    ATTR_SESSION_CONTACT_TYPE,
+    ATTR_SESSION_AMD,
     ATTR_SESSION_CONVERSATION_ID,
     ATTR_SESSION_ID,
     ATTR_SESSION_TURN_COUNT,
@@ -287,23 +288,23 @@ class TestAmdEnrichment:
         proc.on_end(span)
         assert span._attributes[ATTR_AGENT_ROLE] == "amd"
         assert span._attributes[ATTR_GEN_AI_OP_NAME] == "classify_contact"
-        assert span._attributes[ATTR_SESSION_CONTACT_TYPE] == "voicemail"
+        assert span._attributes[ATTR_SESSION_AMD] == "voicemail"
         assert span._attributes[ATTR_TURN_INDEX] == 0
 
-    def test_amd_contact_type_on_root(self) -> None:
+    def test_amd_on_root(self) -> None:
         proc = LiveKitGenAIProcessor()
         job_id = "job-amd-root"
         entry = _bootstrap_proc(proc, job_id)
         proc.on_end(_make_span("amd", {ATTR_AMD_CATEGORY: "human"}))
-        assert get_job_bootstrap().state.contact_type == "human"
+        assert get_job_bootstrap().state.amd == "human"
         proc.on_end(entry)
 
 
 class TestHandoffSpanEnrichment:
-    def test_lk_agent_handoff_transfer_and_conversation_id(self) -> None:
+    def test_agent_handoff_transfer_and_conversation_id(self) -> None:
         proc = LiveKitGenAIProcessor()
         _bootstrap_proc(proc)
-        span = _make_span("lk.agent_handoff", {
+        span = _make_span(SPAN_AGENT_HANDOFF, {
             ATTR_AGENT_TRANSFER_FROM: "agent-old",
             ATTR_AGENT_TRANSFER_TO: "agent-new",
         })

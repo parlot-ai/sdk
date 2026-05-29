@@ -20,8 +20,12 @@ from opentelemetry.util.types import AttributeValue
 
 from parlot.core.attrs import (
     ATTR_AGENT_FRAMEWORK,
+    ATTR_AGENT_INSTRUCTIONS_EXCERPT,
     ATTR_AGENT_ROLE,
     ATTR_AGENT_TOOL_CALL_INDEX,
+    ATTR_AGENT_TOOL_IS_ERROR,
+    ATTR_AGENT_TOOL_NAME,
+    ATTR_AGENT_TOOL_NAMES,
     ATTR_AGENT_TRANSFER_FROM,
     ATTR_AGENT_TRANSFER_LATENCY_MS,
     ATTR_AGENT_TRANSFER_SEQUENCE,
@@ -43,7 +47,7 @@ from parlot.core.attrs import (
     EVENT_GEN_AI_TOOL_MESSAGE,
     EVENT_GEN_AI_USER_MESSAGE,
     ATTR_SESSION_AGENT_CHAIN,
-    ATTR_SESSION_CONTACT_TYPE,
+    ATTR_SESSION_AMD,
     ATTR_SESSION_CONVERSATION_ID,
     ATTR_SESSION_HANDOFF_COUNT,
     ATTR_SESSION_ID,
@@ -59,14 +63,23 @@ from parlot.core.attrs import (
     ATTR_DIAR_SOURCE_AGENT_ID,
     ATTR_DIAR_SOURCE_STT_SPEAKER_ID,
     ATTR_TURN_PARTICIPANT_ID_CALLER,
+    ATTR_TURN_AGENT_TEXT,
     ATTR_TURN_E2E_LATENCY_S,
+    ATTR_TURN_EOU_DELAY_S,
     ATTR_TURN_INDEX,
+    ATTR_TURN_LLM_TTFT_S,
+    ATTR_TURN_TRANSCRIPTION_DELAY_S,
+    ATTR_TURN_USER_TEXT,
     ATTR_TURN_INPUT_MODALITY,
     ATTR_TURN_INTERRUPTED,
     ATTR_EXCEPTION_TYPE,
     ATTR_TOOL_INPUT_PAYLOAD,
     ATTR_TOOL_INPUT_PAYLOAD_PREVIEW,
     ATTR_TOOL_OUTPUT_PAYLOAD_PREVIEW,
+    ATTR_PARTICIPANT_CHANNEL_IDENTITY,
+    ATTR_VOICE_AMD_CATEGORY,
+    ATTR_VOICE_EOU_LANGUAGE,
+    SPAN_AGENT_HANDOFF,
 )
 from parlot.instrumentation.livekit.attrs import (
     ATTR_AMD_CATEGORY,
@@ -78,6 +91,8 @@ from parlot.instrumentation.livekit.attrs import (
     ATTR_LK_AGENT_NAME,
     ATTR_LK_CHAT_CTX,
     ATTR_LK_E2E_LATENCY,
+    ATTR_LK_FUNCTION_TOOLS,
+    ATTR_LK_INSTRUCTIONS,
     ATTR_LK_FNC_TOOL_ARGS,
     ATTR_LK_FNC_TOOL_ERROR,
     ATTR_LK_FNC_TOOL_NAME,
@@ -98,6 +113,7 @@ from parlot.instrumentation.livekit.attrs import (
     METADATA_JOB_ID,
     METADATA_ROOM_ID,
 )
+from ._chat_ctx import instructions_excerpt_from_chat_ctx
 from ._platform_refs import lookup_room_context, stamp_livekit_platform_refs
 from ._session import (
     SPAN_CONVERSATION_SESSION,
@@ -114,6 +130,8 @@ logger = logging.getLogger("parlot.instrumentation.livekit")
 
 _MAX_TOOL_PAYLOAD_CHARS = 8192
 _TOOL_PREVIEW_CHARS = 512
+_INSTRUCTIONS_EXCERPT_CHARS = 2000
+_TURN_TEXT_PREVIEW_CHARS = 512
 
 _AGENT_PIPELINE_SPANS: FrozenSet[str] = frozenset({
     "user_turn",
@@ -137,7 +155,7 @@ _AGENT_LABEL_SPANS: FrozenSet[str] = frozenset({
     "resume_agent_activity",
     "agent_turn",
     "drain_agent_activity",
-    "lk.agent_handoff",
+    SPAN_AGENT_HANDOFF,
 })
 
 _AMD_CATEGORY_TO_CONTACT_TYPE: dict[str, str] = {
@@ -159,7 +177,7 @@ class _LiveKitSessionState(_BaseSessionState):
     turn_trace_by_index: dict[int, str] = field(default_factory=dict)
     turn_root_span_by_index: dict[int, str] = field(default_factory=dict)
     open_agent_turn_index: Optional[int] = None
-    contact_type: str = ""
+    amd: str = ""
     recording_anchor_wall_ms: Optional[int] = None
     languages_seen: set[str] = field(default_factory=set)
     user_id: str = ""
@@ -327,7 +345,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             self._enrich_eou(span, state)
         elif name == "amd":
             self._enrich_amd(span, state)
-        elif name == "lk.agent_handoff":
+        elif name == SPAN_AGENT_HANDOFF:
             self._enrich_handoff(span, state)
 
         if name in _AGENT_PIPELINE_SPANS:
@@ -378,9 +396,34 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if not attrs.get(ATTR_GEN_AI_OP_NAME):
             self._set(span, ATTR_GEN_AI_OP_NAME, "chat")
 
+        chat_raw = str(attrs.get(ATTR_LK_CHAT_CTX, ""))
+        instructions = str(attrs.get(ATTR_LK_INSTRUCTIONS, "")).strip()
+        if not instructions and chat_raw:
+            instructions = instructions_excerpt_from_chat_ctx(
+                chat_raw, max_chars=_INSTRUCTIONS_EXCERPT_CHARS
+            )
+        if instructions:
+            self._set(span, ATTR_AGENT_INSTRUCTIONS_EXCERPT, instructions)
+
+        tools = _coerce_str_sequence(attrs.get(ATTR_LK_FUNCTION_TOOLS))
+        if tools:
+            self._set(span, ATTR_AGENT_TOOL_NAMES, json.dumps(tools))
+
+        user_text, assistant_text = _preview_from_chat_ctx(chat_raw)
+        if user_text:
+            self._set(
+                span,
+                ATTR_TURN_USER_TEXT,
+                user_text[:_TURN_TEXT_PREVIEW_CHARS],
+            )
+        if assistant_text:
+            self._set(
+                span,
+                ATTR_TURN_AGENT_TEXT,
+                assistant_text[:_TURN_TEXT_PREVIEW_CHARS],
+            )
+
         if self._capture_content:
-            chat_raw = str(attrs.get(ATTR_LK_CHAT_CTX, ""))
-            user_text, assistant_text = _preview_from_chat_ctx(chat_raw)
             if user_text:
                 self._add_event(
                     span,
@@ -455,6 +498,9 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         tool_name = str(attrs.get(ATTR_LK_FNC_TOOL_NAME, ""))
         tool_output = str(attrs.get(ATTR_LK_FNC_TOOL_OUTPUT, ""))
         is_error = bool(attrs.get(ATTR_LK_FNC_TOOL_ERROR, False))
+        if tool_name:
+            self._set(span, ATTR_AGENT_TOOL_NAME, tool_name)
+        self._set(span, ATTR_AGENT_TOOL_IS_ERROR, is_error)
         duration_ms = 0.0
         if span.end_time is not None and span.start_time is not None:
             duration_ms = round((span.end_time - span.start_time) / 1_000_000, 2)
@@ -518,11 +564,18 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
                 )
 
     def _capture_user_id(
-        self, state: _LiveKitSessionState, attrs: Mapping[str, AttributeValue]
+        self,
+        state: _LiveKitSessionState,
+        attrs: Mapping[str, AttributeValue],
+        *,
+        span: ReadableSpan | None = None,
     ) -> None:
         identity = str(attrs.get(ATTR_PARTICIPANT_IDENTITY, "")).strip()
         if identity:
             state.user_id = identity
+            if span is not None:
+                self._set(span, ATTR_PARTICIPANT_CHANNEL_IDENTITY, identity)
+                self._set(span, ATTR_SESSION_USER_ID, identity)
 
     def _record_user_turn(
         self,
@@ -533,8 +586,10 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         transcript: str,
         modality: str,
     ) -> None:
-        self._capture_user_id(state, attrs)
+        self._capture_user_id(state, attrs, span=span)
         state.turn_count += 1
+        preview = transcript[:_TURN_TEXT_PREVIEW_CHARS]
+        self._set(span, ATTR_TURN_USER_TEXT, preview)
         self._set(span, ATTR_TURN_INDEX, state.turn_count)
         self._set(span, ATTR_TURN_INPUT_MODALITY, modality)
         agent_hint = str(
@@ -622,8 +677,28 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if e2e is not None:
             self._set(span, ATTR_TURN_E2E_LATENCY_S, float(e2e))
 
+        ttft = attrs.get(ATTR_LK_RESPONSE_TTFT)
+        if ttft is not None:
+            self._set(span, ATTR_TURN_LLM_TTFT_S, float(ttft))
+
+        transcription_delay = attrs.get(ATTR_TRANSCRIPTION_DELAY)
+        if transcription_delay is not None:
+            self._set(span, ATTR_TURN_TRANSCRIPTION_DELAY_S, float(transcription_delay))
+
+        eou_delay = attrs.get(ATTR_END_OF_TURN_DELAY)
+        if eou_delay is not None:
+            self._set(span, ATTR_TURN_EOU_DELAY_S, float(eou_delay))
+
         if attrs.get(ATTR_LK_INTERRUPTED):
             self._set(span, ATTR_TURN_INTERRUPTED, True)
+
+        response_text = str(attrs.get(ATTR_LK_RESPONSE_TEXT, "")).strip()
+        if response_text:
+            self._set(
+                span,
+                ATTR_TURN_AGENT_TEXT,
+                response_text[:_TURN_TEXT_PREVIEW_CHARS],
+            )
 
         if self._metrics and state.parlot_session_id:
             self._metrics.record_turn(
@@ -667,6 +742,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         lang = str(attrs.get(ATTR_EOU_LANGUAGE, "")).strip()
         if lang:
             state.languages_seen.add(lang)
+            self._set(span, ATTR_VOICE_EOU_LANGUAGE, lang)
 
     def _enrich_amd(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
@@ -676,9 +752,11 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             self._set(span, ATTR_GEN_AI_OP_NAME, "classify_contact")
 
         category = str(attrs.get(ATTR_AMD_CATEGORY, "")).strip().lower()
-        contact_type = _AMD_CATEGORY_TO_CONTACT_TYPE.get(category, "unknown")
-        self._set(span, ATTR_SESSION_CONTACT_TYPE, contact_type)
-        state.contact_type = contact_type
+        if category:
+            self._set(span, ATTR_VOICE_AMD_CATEGORY, category)
+        amd = _AMD_CATEGORY_TO_CONTACT_TYPE.get(category, "unknown")
+        self._set(span, ATTR_SESSION_AMD, amd)
+        state.amd = amd
 
         self._stamp_agent_identity(span, state, attrs)
 
@@ -855,8 +933,8 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if state.agent_chain:
             chain = " → ".join(state.agent_chain)
             session_span.set_attribute(ATTR_SESSION_AGENT_CHAIN, chain)
-        if state.contact_type:
-            session_span.set_attribute(ATTR_SESSION_CONTACT_TYPE, state.contact_type)
+        if state.amd:
+            session_span.set_attribute(ATTR_SESSION_AMD, state.amd)
         if state.recording_anchor_wall_ms is not None:
             session_span.set_attribute(
                 ATTR_SESSION_RECORDING_ANCHOR_WALL_MS,
@@ -930,6 +1008,26 @@ def _extract_new_agent(tool_output: str) -> str:
 
     m = re.search(r"AgentHandoff\(agent=<(\w+)", tool_output)
     return m.group(1) if m else ""
+
+
+def _coerce_str_sequence(value: AttributeValue | None) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, (list, tuple)):
+        return [str(v) for v in value if v is not None and str(v).strip()]
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return []
+        if text.startswith("["):
+            try:
+                parsed = json.loads(text)
+            except json.JSONDecodeError:
+                return [text]
+            if isinstance(parsed, list):
+                return [str(v) for v in parsed if v is not None and str(v).strip()]
+        return [text]
+    return [str(value)]
 
 
 def _preview_from_chat_ctx(raw: str) -> tuple[str, str]:

@@ -114,6 +114,7 @@ def _build_provider(
 
     from ._export import QuietOTLPSpanExporter
     from ._export_filter import ExportFilterSpanExporter
+    from ._export_sanitize import SanitizeVendorAttrsSpanExporter
     from ._metrics import ParlotMetricsRecorder, build_meter_provider
     from ._processor import LiveKitGenAIProcessor
     from ._turn_trace_export import TurnTraceRemappingExporter
@@ -135,8 +136,9 @@ def _build_provider(
 
     remapping_exporter = TurnTraceRemappingExporter(otlp_exporter, processor)
     filtered_exporter = ExportFilterSpanExporter(remapping_exporter)
+    sanitized_exporter = SanitizeVendorAttrsSpanExporter(filtered_exporter)
     exporter = QuietOTLPSpanExporter(
-        filtered_exporter,
+        sanitized_exporter,
         endpoint_label=trace_endpoint,
     )
 
