@@ -171,6 +171,7 @@ _AMD_CATEGORY_TO_CONTACT_TYPE: dict[str, str] = {
 @dataclass
 class _LiveKitSessionState(_BaseSessionState):
     agent_chain: list[str] = field(default_factory=list)
+    worker_agent_name: str = ""
     pending_handoff_end_ns: int = 0
     parlot_session_id: str = ""
     conversation_id: str = ""
@@ -265,13 +266,21 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             self._maybe_update(state, "agent_label", label_str)
 
     def _active_agent_id(
-        self, state: _LiveKitSessionState, attrs: Mapping[str, AttributeValue]
+        self,
+        state: _LiveKitSessionState,
+        attrs: Mapping[str, AttributeValue],
+        *,
+        label_override: str | None = None,
     ) -> str:
+        if label_override:
+            return str(label_override)
         label = attrs.get(ATTR_LK_AGENT_LABEL) or attrs.get(ATTR_LK_AGENT_NAME)
         if label:
             return str(label)
         if state.agent_label:
             return state.agent_label
+        if state.worker_agent_name:
+            return state.worker_agent_name
         if state.agent_chain:
             return state.agent_chain[-1]
         return "unknown"
@@ -485,9 +494,11 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         )
         if resolved.get(ATTR_GEN_AI_AGENT_NAME):
             return
-        label = label_override or resolved.get(ATTR_LK_AGENT_LABEL) or state.agent_label
-        if label:
-            self._set(span, ATTR_GEN_AI_AGENT_NAME, str(label))
+        agent_id = self._active_agent_id(
+            state, resolved, label_override=label_override
+        )
+        if agent_id != "unknown":
+            self._set(span, ATTR_GEN_AI_AGENT_NAME, agent_id)
 
     def _enrich_function_tool(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
@@ -662,7 +673,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
         turn_index = state.open_agent_turn_index or (state.turn_count + 1)
         self._set(span, ATTR_TURN_INDEX, turn_index)
-        agent_id = str(state.agent_label or "agent")
+        agent_id = self._active_agent_id(state, attrs)
         agent_modality = self._user_turn_modality(attrs)
         self._emit_turn_trace(
             state,

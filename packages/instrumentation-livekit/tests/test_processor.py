@@ -281,6 +281,17 @@ class TestAgentIdentity:
         proc.on_end(span)
         assert span._attributes[ATTR_GEN_AI_AGENT_NAME] == "BillingAgent"
 
+    def test_agent_turn_uses_worker_agent_name_when_no_label(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc, "job-worker-name")
+        state = get_job_bootstrap().state
+        state.worker_agent_name = "calcom-receptionist"
+        state.open_agent_turn_index = 1
+
+        span = _make_span("agent_turn", {ATTR_LK_RESPONSE_TEXT: "Hello"})
+        proc.on_end(span)
+        assert span._attributes[ATTR_GEN_AI_AGENT_NAME] == "calcom-receptionist"
+
 
 class TestAmdEnrichment:
     def test_amd_maps_category_and_role(self) -> None:

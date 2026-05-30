@@ -9,17 +9,37 @@ from typing import Any, Optional
 import httpx
 
 from parlot.core.attrs import (
-    ATTR_SESSION_AUDIO_RECORDING_URI,
     ATTR_SESSION_RECORDING_ANCHOR_WALL_MS,
+    ATTR_SESSION_RECORDING_AUDIO_URI,
+    ATTR_SESSION_RECORDING_EGRESS_ID,
+    ATTR_SESSION_RECORDING_WEBHOOK_ERROR,
 )
 from parlot.core.runtime import get_runtime
-
-from parlot.instrumentation.livekit.attrs import ATTR_SESSION_EGRESS_ID
 
 from ._recording_guard import should_record
 from ._runtime_context import get_livekit_runtime
 
 logger = logging.getLogger("parlot.instrumentation.livekit")
+
+
+def _format_egress_error(exc: BaseException) -> str:
+    """Normalize LiveKit Twirp/API errors for session.recording.webhook_error."""
+    code = getattr(exc, "code", None)
+    message = getattr(exc, "message", None) or str(exc)
+    if code and message:
+        return f"{code}: {message}"[:500]
+    if code:
+        return str(code)[:500]
+    return message[:500] if message else "egress_start_failed"
+
+
+def _stamp_recording_webhook_error(bootstrap: Any, error: str) -> None:
+    """Surface recording failure on conversation.session (copied to parlot.session.close)."""
+    session_span = bootstrap.session_span
+    if session_span is not None and hasattr(session_span, "is_recording"):
+        if session_span.is_recording():
+            session_span.set_attribute(ATTR_SESSION_RECORDING_WEBHOOK_ERROR, error)
+    logger.warning("parlot: recording failed — %s", error)
 
 
 async def _fetch_upload_grant(session_id: str, room_name: str) -> Optional[dict]:
@@ -51,23 +71,6 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
     if not should_record(ctx):
         return
 
-    runtime = get_runtime()
-    lk_runtime = get_livekit_runtime()
-    if runtime is None or lk_runtime is None:
-        if runtime is not None and lk_runtime is None:
-            logger.error(
-                "parlot: egress skipped — LiveKit integration not configured "
-                "(missing livekit_webhook_signing_key; "
-                "configure this in Parlot settings/integrations/livekit for your org)"
-            )
-        else:
-            logger.error("parlot: egress skipped — bootstrap not loaded")
-        return
-
-    if not lk_runtime.webhook_signing_key or not runtime.egress_webhook_url:
-        logger.error("parlot: egress skipped — webhook config missing from bootstrap")
-        return
-
     from parlot.instrumentation.livekit._session import get_job_bootstrap
 
     bootstrap = get_job_bootstrap()
@@ -75,15 +78,43 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
         logger.warning("parlot: egress skipped — no active job bootstrap")
         return
 
+    runtime = get_runtime()
+    lk_runtime = get_livekit_runtime()
+    if runtime is None or lk_runtime is None:
+        if runtime is not None and lk_runtime is None:
+            _stamp_recording_webhook_error(
+                bootstrap,
+                "egress_config_missing: livekit_webhook_signing_key",
+            )
+            logger.error(
+                "parlot: egress skipped — LiveKit integration not configured "
+                "(missing livekit_webhook_signing_key; "
+                "configure this in Parlot settings/integrations/livekit for your org)"
+            )
+        else:
+            _stamp_recording_webhook_error(bootstrap, "egress_config_missing: bootstrap")
+            logger.error("parlot: egress skipped — bootstrap not loaded")
+        return
+
+    if not lk_runtime.webhook_signing_key or not runtime.egress_webhook_url:
+        _stamp_recording_webhook_error(
+            bootstrap,
+            "egress_config_missing: webhook_url_or_signing_key",
+        )
+        logger.error("parlot: egress skipped — webhook config missing from bootstrap")
+        return
+
     room = getattr(ctx, "room", None)
     room_name = getattr(room, "name", None) or getattr(ctx, "room_name", None)
     if not room_name:
+        _stamp_recording_webhook_error(bootstrap, "egress_no_room_name")
         logger.warning("parlot: egress skipped — room name unavailable")
         return
 
     session_id = bootstrap.session_id
     grant = await _fetch_upload_grant(session_id, str(room_name))
     if grant is None:
+        _stamp_recording_webhook_error(bootstrap, "upload_grant_failed")
         return
 
     s3 = grant.get("s3") or {}
@@ -104,6 +135,7 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
     try:
         from livekit import api
     except ImportError:
+        _stamp_recording_webhook_error(bootstrap, "livekit_api_unavailable")
         logger.error("parlot: livekit-api not available for egress")
         return
 
@@ -111,6 +143,7 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
     lk_key = __import__("os").environ.get("LIVEKIT_API_KEY", "")
     lk_secret = __import__("os").environ.get("LIVEKIT_API_SECRET", "")
     if not (lk_url and lk_key and lk_secret):
+        _stamp_recording_webhook_error(bootstrap, "livekit_credentials_missing")
         logger.error("parlot: LIVEKIT_* env required to start egress")
         return
 
@@ -136,7 +169,8 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
     lkapi = api.LiveKitAPI(lk_url, lk_key, lk_secret)
     try:
         info = await lkapi.egress.start_room_composite_egress(req)
-    except Exception:
+    except Exception as exc:
+        _stamp_recording_webhook_error(bootstrap, _format_egress_error(exc))
         logger.exception("parlot: StartRoomCompositeEgress failed")
         return
     finally:
@@ -149,10 +183,10 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
     if session_span is not None and hasattr(session_span, "is_recording"):
         if session_span.is_recording():
             if audio_uri:
-                session_span.set_attribute(ATTR_SESSION_AUDIO_RECORDING_URI, audio_uri)
+                session_span.set_attribute(ATTR_SESSION_RECORDING_AUDIO_URI, audio_uri)
             session_span.set_attribute(ATTR_SESSION_RECORDING_ANCHOR_WALL_MS, anchor_ms)
             if egress_id:
-                session_span.set_attribute(ATTR_SESSION_EGRESS_ID, str(egress_id))
+                session_span.set_attribute(ATTR_SESSION_RECORDING_EGRESS_ID, str(egress_id))
 
     bootstrap.processor.set_recording_anchor_wall_ms(bootstrap.state, anchor_ms)
     logger.info(

@@ -25,11 +25,13 @@ from parlot.core.attrs import (
 )
 from parlot.core.ids import new_session_id
 from parlot.instrumentation.livekit.attrs import (
+    ATTR_LK_AGENT_NAME,
     ATTR_LK_JOB_ID,
     ATTR_LK_ROOM_NAME,
     ATTR_LK_ROOM_SID,
     METADATA_JOB_ID,
 )
+from parlot.instrumentation.livekit._recording_guard import agent_name_from_ctx
 from parlot.instrumentation.livekit._platform_refs import (
     _coerce_livekit_field,
     _job_room_fields,
@@ -90,6 +92,7 @@ def bootstrap_job_entrypoint(
     vendor_job_id = str(attrs.get(ATTR_LK_JOB_ID) or attrs.get(METADATA_JOB_ID) or "")
     room_name = str(attrs.get(ATTR_LK_ROOM_NAME) or "")
     room_sid = str(attrs.get(ATTR_LK_ROOM_SID) or "")
+    worker_agent_name = str(attrs.get(ATTR_LK_AGENT_NAME) or "").strip()
 
     from ._processor import _LiveKitSessionState
 
@@ -100,6 +103,7 @@ def bootstrap_job_entrypoint(
         session_id=vendor_job_id,
         room_name=room_name,
         room_sid=room_sid,
+        worker_agent_name=worker_agent_name,
     )
     processor._sessions[session_id] = state
 
@@ -127,6 +131,8 @@ def bootstrap_job_entrypoint(
         initial_attrs[ATTR_LK_ROOM_NAME] = room_name
     if room_sid:
         initial_attrs[ATTR_LK_ROOM_SID] = room_sid
+    if worker_agent_name:
+        initial_attrs[ATTR_LK_AGENT_NAME] = worker_agent_name
 
     session_span = tracer.start_span(
         SPAN_CONVERSATION_SESSION,
@@ -389,13 +395,16 @@ async def refresh_bootstrap_room_from_ctx(ctx) -> None:
         return
 
     job_id, room_name, room_sid = _job_room_fields(ctx)
+    state = bootstrap.state
+    worker_agent_name = agent_name_from_ctx(ctx)
+    if worker_agent_name:
+        state.worker_agent_name = worker_agent_name
     if not room_sid and getattr(ctx, "_connected", False):
         room = getattr(ctx, "room", None)
         room_sid = await _coerce_livekit_field(room, "sid", "id")
         if not room_name:
             room_name = await _coerce_livekit_field(room, "name")
 
-    state = bootstrap.state
     if room_name:
         state.room_name = room_name
     if room_sid:
@@ -417,6 +426,8 @@ async def refresh_bootstrap_room_from_ctx(ctx) -> None:
             session_span.set_attribute(ATTR_LK_ROOM_SID, room_sid)
         if room_name:
             session_span.set_attribute(ATTR_LK_ROOM_NAME, room_name)
+        if worker_agent_name:
+            session_span.set_attribute(ATTR_LK_AGENT_NAME, worker_agent_name)
         stamp_livekit_platform_refs(
             session_span,
             job_id=vendor_job_id,

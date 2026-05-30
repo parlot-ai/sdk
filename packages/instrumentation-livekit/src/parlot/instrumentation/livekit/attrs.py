@@ -15,7 +15,7 @@ from parlot.core.attrs import (
     ATTR_EXCEPTION_MESSAGE,
     ATTR_EXCEPTION_TRACE,
     ATTR_EXCEPTION_TYPE,
-    ATTR_SESSION_EGRESS_ID,
+    ATTR_SESSION_RECORDING_EGRESS_ID,
 )
 
 # ---------------------------------------------------------------------------
@@ -111,8 +111,6 @@ ATTR_INTERRUPTION_DETECTION_DELAY = "lk.interruption.detection_delay"
 
 # Stamped by Parlot platform refs / job context (not in trace_types.py)
 ATTR_ROOM_SID = "lk.room.sid"
-
-from parlot.core.attrs import ATTR_SESSION_EGRESS_ID
 
 # participant.diarization_source values (LiveKit Agents instrumentation only)
 ATTR_DIAR_SOURCE_VAD = "livekit_vad"
