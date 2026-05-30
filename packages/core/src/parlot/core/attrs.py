@@ -73,7 +73,7 @@ ATTR_EXCEPTION_TRACE    = "exception.stacktrace"
 # ---------------------------------------------------------------------------
 
 # -- Agent identity (gaps the OTel spec does not cover) --------------------
-ATTR_AGENT_ROLE      = "agent.role"       # orchestrator | task | tool | guardrail | stt | tts | llm | amd
+ATTR_AGENT_ROLE      = "agent.role"       # pipeline/component role: stt | tts | llm | tool | amd | pipeline | handoff | guardrail (not agent id/name)
 ATTR_AGENT_FRAMEWORK = "agent.framework"  # livekit | crewai | langgraph | adk | custom
 ATTR_AGENT_INSTRUCTIONS_EXCERPT = "agent.instructions_excerpt"
 ATTR_AGENT_TOOL_NAMES = "agent.tool.names"  # JSON array of tool name strings
@@ -110,7 +110,7 @@ ATTR_SESSION_AGENT_CHAIN    = "session.agent_chain"
 ATTR_SESSION_TOPOLOGY_AGENTS = "session.topology.agents"
 ATTR_SESSION_TOPOLOGY_TOOLS  = "session.topology.tools"
 ATTR_SESSION_TOPOLOGY_EDGES = "session.topology.edges"
-ATTR_SESSION_TOPOLOGY_ORCHESTRATOR_INSTRUCTIONS = "session.topology.orchestrator_instructions"
+ATTR_SESSION_TOPOLOGY_BOOTSTRAP_INSTRUCTIONS = "session.topology.bootstrap_instructions"
 ATTR_SESSION_RECORDING_ANCHOR_WALL_MS = "session.recording.anchor_wall_ms"
 ATTR_SESSION_RECORDING_AUDIO_URI = "session.recording.audio_uri"
 ATTR_SESSION_RECORDING_EGRESS_ID = "session.recording.egress_id"
