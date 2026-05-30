@@ -249,9 +249,26 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             state = self._sessions.get(str(sid))
             if state is not None:
                 return state
+        job_id = attrs.get(ATTR_LK_JOB_ID) or attrs.get(METADATA_JOB_ID)
+        if job_id:
+            state = self._sessions.get(str(job_id))
+            if state is not None:
+                return state
+        name = span.name or ""
+        if (
+            name in _AGENT_PIPELINE_SPANS
+            or name in _AGENT_LABEL_SPANS
+            or job_id is not None
+        ):
+            logger.debug(
+                "parlot: no session bootstrap for span %s (trace=%s); skipping enrich",
+                name,
+                self._trace_id_hex(span),
+            )
+            return None
         logger.error(
             "parlot: no session bootstrap for span %s (trace=%s)",
-            span.name,
+            name,
             self._trace_id_hex(span),
         )
         return None

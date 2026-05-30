@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from unittest.mock import MagicMock
 
 import pytest
@@ -47,7 +48,10 @@ from parlot.instrumentation.livekit.attrs import (
 )
 from opentelemetry.trace import StatusCode
 from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
-from parlot.instrumentation.livekit._session import get_job_bootstrap
+from parlot.instrumentation.livekit._session import (
+    finalize_session_close_from_hook,
+    get_job_bootstrap,
+)
 from opentelemetry.sdk.trace import TracerProvider
 
 
@@ -65,6 +69,7 @@ def _make_span(name: str, attributes: dict | None = None,
     span.start_time = start_time
     span.end_time   = end_time
     span.context.trace_id = 0xDEADBEEF
+    span.context.span_id = 0xBEEF
     span.attributes = span._attributes
     return span
 
@@ -213,8 +218,6 @@ class TestRootSpanAggregates:
         proc.on_end(entry)
 
     def test_state_cleaned_up_after_root(self) -> None:
-        from parlot.instrumentation.livekit._session import finalize_session_close_from_hook
-
         proc = LiveKitGenAIProcessor()
         entry = _bootstrap_proc(proc, "j1")
         bootstrap = get_job_bootstrap()
@@ -223,6 +226,32 @@ class TestRootSpanAggregates:
         proc.on_end(entry)
         assert sid not in proc._sessions
         assert get_job_bootstrap() is None
+
+    def test_late_agent_turn_after_close_logs_debug_not_error(self, caplog: pytest.LogCaptureFixture) -> None:
+        proc = LiveKitGenAIProcessor()
+        job_id = "AJ_late"
+        _bootstrap_proc(proc, job_id)
+        bootstrap = get_job_bootstrap()
+        assert bootstrap is not None
+        finalize_session_close_from_hook(
+            bootstrap,
+            close_reason="participant_disconnected",
+        )
+        caplog.clear()
+        with caplog.at_level(logging.DEBUG, logger="parlot.instrumentation.livekit"):
+            proc.on_end(
+                _make_span(
+                    "agent_turn",
+                    {
+                        ATTR_LK_JOB_ID: job_id,
+                        ATTR_LK_USER_INPUT: "Hello?",
+                    },
+                ),
+            )
+        bootstrap_msgs = [r for r in caplog.records if "no session bootstrap" in r.message]
+        assert bootstrap_msgs
+        assert all(r.levelno == logging.DEBUG for r in bootstrap_msgs)
+        assert not any(r.levelno >= logging.ERROR for r in bootstrap_msgs)
 
 
 class TestContentCapture:
