@@ -132,7 +132,6 @@ logger = logging.getLogger("parlot.instrumentation.livekit")
 _MAX_TOOL_PAYLOAD_CHARS = 8192
 _TOOL_PREVIEW_CHARS = 512
 _INSTRUCTIONS_EXCERPT_CHARS = 2000
-_TURN_TEXT_PREVIEW_CHARS = 512
 
 _AGENT_PIPELINE_SPANS: FrozenSet[str] = frozenset({
     "user_turn",
@@ -425,17 +424,9 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
         user_text, assistant_text = _preview_from_chat_ctx(chat_raw)
         if user_text:
-            self._set(
-                span,
-                ATTR_TURN_USER_TEXT,
-                user_text[:_TURN_TEXT_PREVIEW_CHARS],
-            )
+            self._set(span, ATTR_TURN_USER_TEXT, user_text)
         if assistant_text:
-            self._set(
-                span,
-                ATTR_TURN_AGENT_TEXT,
-                assistant_text[:_TURN_TEXT_PREVIEW_CHARS],
-            )
+            self._set(span, ATTR_TURN_AGENT_TEXT, assistant_text)
 
         if self._capture_content:
             if user_text:
@@ -604,8 +595,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
     ) -> None:
         self._capture_user_id(state, attrs, span=span)
         state.turn_count += 1
-        preview = transcript[:_TURN_TEXT_PREVIEW_CHARS]
-        self._set(span, ATTR_TURN_USER_TEXT, preview)
+        self._set(span, ATTR_TURN_USER_TEXT, transcript)
         self._set(span, ATTR_TURN_INDEX, state.turn_count)
         self._set(span, ATTR_TURN_INPUT_MODALITY, modality)
         agent_hint = str(
@@ -710,11 +700,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
         response_text = str(attrs.get(ATTR_LK_RESPONSE_TEXT, "")).strip()
         if response_text:
-            self._set(
-                span,
-                ATTR_TURN_AGENT_TEXT,
-                response_text[:_TURN_TEXT_PREVIEW_CHARS],
-            )
+            self._set(span, ATTR_TURN_AGENT_TEXT, response_text)
 
         if self._metrics and state.parlot_session_id:
             self._metrics.record_turn(

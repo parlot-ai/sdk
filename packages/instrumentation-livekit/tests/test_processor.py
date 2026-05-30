@@ -27,7 +27,9 @@ from parlot.core.attrs import (
     ATTR_SESSION_CONVERSATION_ID,
     ATTR_SESSION_ID,
     ATTR_SESSION_TURN_COUNT,
+    ATTR_TURN_AGENT_TEXT,
     ATTR_TURN_INDEX,
+    ATTR_TURN_USER_TEXT,
     ATTR_EXCEPTION_TYPE,
     EVENT_GEN_AI_ASSISTANT_MESSAGE,
     EVENT_GEN_AI_USER_MESSAGE,
@@ -245,6 +247,31 @@ class TestContentCapture:
         })
         proc.on_end(span)
         assert span._events == []
+
+
+class TestTurnTextExport:
+    def test_user_turn_exports_full_transcript_without_sdk_cap(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc, "job-long-text")
+        long_text = "word " * 300
+        span = _make_span("user_turn", {ATTR_LK_USER_TRANSCRIPT: long_text})
+        proc.on_end(span)
+        exported = span._attributes.get(ATTR_TURN_USER_TEXT)
+        assert exported == long_text.strip()
+        assert len(exported) > 512
+
+    def test_agent_turn_exports_full_response_text(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc, "job-long-response")
+        long_response = "reply " * 300
+        span = _make_span("agent_turn", {
+            ATTR_LK_USER_INPUT: "short prompt",
+            ATTR_LK_RESPONSE_TEXT: long_response,
+        })
+        proc.on_end(span)
+        exported = span._attributes.get(ATTR_TURN_AGENT_TEXT)
+        assert exported == long_response.strip()
+        assert len(exported) > 512
 
 
 class TestConversationId:
