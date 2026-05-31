@@ -36,6 +36,14 @@ def _patch_agent_session(processor: "LiveKitGenAIProcessor", tracer) -> None:
     def _patched_init(self, *args, **kwargs):
         _original_init(self, *args, **kwargs)
         try:
+            from livekit.agents.job import get_job_context
+
+            self._parlot_job_ctx = get_job_context()
+        except Exception:
+            self._parlot_job_ctx = None
+        self._parlot_shutdown_reset = False
+        self._parlot_bootstrapped = False
+        try:
             from ._events import install_session_hooks
 
             install_session_hooks(self, processor, tracer)

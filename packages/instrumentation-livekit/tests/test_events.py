@@ -23,12 +23,12 @@ from parlot.core.attrs import (
 )
 from parlot.instrumentation.livekit.attrs import (
     ATTR_DIAR_SOURCE_STT_EVENT,
-    ATTR_LK_JOB_ID,
     ATTR_LK_USER_TRANSCRIPT,
     ATTR_TRANSCRIPT_CONFIDENCE,
 )
 from parlot.instrumentation.livekit._events import LiveKitEventBridge, install_session_hooks
 from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
+from bootstrap_helpers import bootstrap_via_agent_state
 
 def _make_span(name: str, attributes: dict | None = None) -> MagicMock:
     span = MagicMock()
@@ -53,12 +53,7 @@ def _proc_with_exporter() -> tuple[LiveKitGenAIProcessor, InMemorySpanExporter]:
 
 
 def _bootstrap(proc: LiveKitGenAIProcessor, job_id: str = "job-ev") -> None:
-    entry = _make_span("job_entrypoint", {ATTR_LK_JOB_ID: job_id})
-    proc.on_start(entry)
-    from parlot.instrumentation.livekit._session import get_job_bootstrap
-
-    bootstrap = get_job_bootstrap()
-    assert bootstrap is not None
+    _session, bootstrap = bootstrap_via_agent_state(proc, job_id)
     bootstrap.state.parlot_session_id = "sess-1"
     bootstrap.state.conversation_id = "conv-1"
 
@@ -237,3 +232,4 @@ class TestInstallSessionHooks:
         assert proc.turn_source == "events"
         assert "conversation_item_added" in handlers
         assert "close" in handlers
+        assert "agent_state_changed" in handlers

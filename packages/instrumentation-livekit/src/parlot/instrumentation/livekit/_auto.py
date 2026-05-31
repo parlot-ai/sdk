@@ -201,12 +201,11 @@ def _patch_job_context_connect() -> None:
 
     async def _parlot_connect(self, *args, **kwargs):
         await _orig_connect(self, *args, **kwargs)
-        from ._session import refresh_bootstrap_room_from_ctx
+        from ._session import _run_post_bootstrap_connect, get_job_bootstrap
 
-        await refresh_bootstrap_room_from_ctx(self)
-        from ._egress import maybe_start_room_composite_egress
-
-        await maybe_start_room_composite_egress(self)
+        if get_job_bootstrap() is None:
+            return
+        await _run_post_bootstrap_connect(self)
 
     _parlot_connect._parlot_connect_patched = True
     JobContext.connect = _parlot_connect

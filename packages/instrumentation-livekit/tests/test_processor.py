@@ -47,12 +47,14 @@ from parlot.instrumentation.livekit.attrs import (
     ATTR_LK_USER_TRANSCRIPT,
 )
 from opentelemetry.trace import StatusCode
+from parlot.core.processor import assert_sync_span_processors
 from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
 from parlot.instrumentation.livekit._session import (
     finalize_session_close_from_hook,
     get_job_bootstrap,
 )
 from opentelemetry.sdk.trace import TracerProvider
+from bootstrap_helpers import bootstrap_via_agent_state
 
 
 # ---------------------------------------------------------------------------
@@ -74,14 +76,13 @@ def _make_span(name: str, attributes: dict | None = None,
     return span
 
 
-def _bootstrap_proc(proc: LiveKitGenAIProcessor, job_id: str = "job-test") -> MagicMock:
-    """Start ``job_entrypoint`` so child spans resolve session via ContextVar."""
+def _bootstrap_proc(proc: LiveKitGenAIProcessor, job_id: str = "job-test") -> None:
+    """Bootstrap via agent_state_changed so child spans resolve session via ContextVar."""
     provider = TracerProvider()
     provider.add_span_processor(proc)
+    assert_sync_span_processors(provider)
     proc.set_tracer(provider.get_tracer("test"))
-    entry = _make_span("job_entrypoint", {ATTR_LK_JOB_ID: job_id})
-    proc.on_start(entry)
-    return entry
+    bootstrap_via_agent_state(proc, job_id)
 
 
 # ---------------------------------------------------------------------------
@@ -206,7 +207,7 @@ class TestRootSpanAggregates:
     def test_session_aggregates_on_conversation_session(self) -> None:
         proc = LiveKitGenAIProcessor()
         job_id = "job-root"
-        entry = _bootstrap_proc(proc, job_id)
+        _bootstrap_proc(proc, job_id)
 
         proc.on_end(
             _make_span("user_turn", {ATTR_LK_USER_TRANSCRIPT: "hello"}),
@@ -215,15 +216,13 @@ class TestRootSpanAggregates:
             _make_span("agent_turn", {ATTR_LK_AGENT_LABEL: "agent"}),
         )
         assert get_job_bootstrap().state.turn_count == 2
-        proc.on_end(entry)
 
     def test_state_cleaned_up_after_root(self) -> None:
         proc = LiveKitGenAIProcessor()
-        entry = _bootstrap_proc(proc, "j1")
+        _bootstrap_proc(proc, "j1")
         bootstrap = get_job_bootstrap()
         sid = bootstrap.session_id
         finalize_session_close_from_hook(bootstrap, close_reason="clean_close")
-        proc.on_end(entry)
         assert sid not in proc._sessions
         assert get_job_bootstrap() is None
 
@@ -365,10 +364,9 @@ class TestAmdEnrichment:
     def test_amd_on_root(self) -> None:
         proc = LiveKitGenAIProcessor()
         job_id = "job-amd-root"
-        entry = _bootstrap_proc(proc, job_id)
+        _bootstrap_proc(proc, job_id)
         proc.on_end(_make_span("amd", {ATTR_AMD_CATEGORY: "human"}))
         assert get_job_bootstrap().state.amd == "human"
-        proc.on_end(entry)
 
 
 class TestHandoffSpanEnrichment:

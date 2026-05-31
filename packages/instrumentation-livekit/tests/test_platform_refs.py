@@ -22,6 +22,7 @@ from parlot.instrumentation.livekit._platform_refs import (
 )
 from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
 from parlot.instrumentation.livekit._session import refresh_bootstrap_room_from_ctx
+from bootstrap_helpers import bootstrap_via_agent_state
 
 
 class _FakeSpan:
@@ -89,14 +90,7 @@ async def test_refresh_bootstrap_room_from_job_assignment() -> None:
     provider = TracerProvider()
     provider.add_span_processor(proc)
     proc.set_tracer(provider.get_tracer("test"))
-    from unittest.mock import MagicMock
-
-    from parlot.instrumentation.livekit.attrs import ATTR_LK_JOB_ID as LK_JOB
-
-    entry = MagicMock()
-    entry.name = "job_entrypoint"
-    entry.attributes = {LK_JOB: "job-pre"}
-    proc.on_start(entry)
+    bootstrap_via_agent_state(proc, "job-pre")
 
     await refresh_bootstrap_room_from_ctx(_FakeCtx())
     assert lookup_room_context("job-pre") == ("pre-connect-room", "RM_pre")
@@ -135,14 +129,7 @@ async def test_refresh_bootstrap_prefers_job_room_sid_over_rtc() -> None:
     provider = TracerProvider()
     provider.add_span_processor(proc)
     proc.set_tracer(provider.get_tracer("test"))
-    from unittest.mock import MagicMock
-
-    from parlot.instrumentation.livekit.attrs import ATTR_LK_JOB_ID as LK_JOB
-
-    entry = MagicMock()
-    entry.name = "job_entrypoint"
-    entry.attributes = {LK_JOB: "job-1"}
-    proc.on_start(entry)
+    bootstrap_via_agent_state(proc, "job-1")
 
     await refresh_bootstrap_room_from_ctx(_FakeCtx())
     assert lookup_room_context("job-1") == ("demo-room", "RM_from_job")
@@ -180,14 +167,7 @@ async def test_refresh_bootstrap_rtc_fallback_when_connected() -> None:
     provider = TracerProvider()
     provider.add_span_processor(proc)
     proc.set_tracer(provider.get_tracer("test"))
-    from unittest.mock import MagicMock
-
-    from parlot.instrumentation.livekit.attrs import ATTR_LK_JOB_ID as LK_JOB
-
-    entry = MagicMock()
-    entry.name = "job_entrypoint"
-    entry.attributes = {LK_JOB: "job-fallback"}
-    proc.on_start(entry)
+    bootstrap_via_agent_state(proc, "job-fallback")
 
     await refresh_bootstrap_room_from_ctx(_FakeCtx())
     assert lookup_room_context("job-fallback") == ("rtc-name", "RM_rtc123")

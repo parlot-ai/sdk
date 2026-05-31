@@ -33,6 +33,7 @@ from parlot.instrumentation.livekit.attrs import (
 )
 from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor, _LiveKitSessionState
 from parlot.instrumentation.livekit._turn_trace_export import TurnTraceRemappingExporter
+from bootstrap_helpers import bootstrap_via_agent_state
 
 
 def _make_span(
@@ -62,10 +63,8 @@ def _proc_with_exporter() -> tuple[LiveKitGenAIProcessor, InMemorySpanExporter]:
     return proc, exporter
 
 
-def _bootstrap_job(proc: LiveKitGenAIProcessor, job_id: str = "job-1") -> MagicMock:
-    entry = _make_span("job_entrypoint", {ATTR_LK_JOB_ID: job_id})
-    proc.on_start(entry)
-    return entry
+def _bootstrap_job(proc: LiveKitGenAIProcessor, job_id: str = "job-1") -> None:
+    bootstrap_via_agent_state(proc, job_id)
 
 
 def _parlot_turns(exporter: InMemorySpanExporter) -> list:

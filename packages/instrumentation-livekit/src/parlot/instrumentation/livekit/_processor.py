@@ -121,10 +121,8 @@ from ._chat_ctx import instructions_excerpt_from_chat_ctx
 from ._platform_refs import lookup_room_context, stamp_livekit_platform_refs
 from ._session import (
     SPAN_CONVERSATION_SESSION,
-    bootstrap_job_entrypoint,
     get_job_bootstrap,
     handle_conversation_session_on_end,
-    teardown_job_entrypoint,
 )
 from parlot.core.processor import ParlotBaseProcessor
 from parlot.core.session import SessionState as _BaseSessionState
@@ -214,8 +212,6 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
     def on_start(self, span, parent_context=None) -> None:
         super().on_start(span, parent_context)
-        if span.name == "job_entrypoint":
-            bootstrap_job_entrypoint(self, span)
 
     def on_end(self, span: ReadableSpan) -> None:
         super().on_end(span)
@@ -228,9 +224,6 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             name = span.name
             if name == SPAN_CONVERSATION_SESSION:
                 handle_conversation_session_on_end()
-                return
-            if name == "job_entrypoint":
-                teardown_job_entrypoint(self, span)
                 return
             self._enrich(span)
         except Exception:

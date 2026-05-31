@@ -29,7 +29,6 @@ from parlot.instrumentation.livekit.attrs import (
     ATTR_LK_JOB_ID,
     ATTR_LK_ROOM_NAME,
     ATTR_LK_ROOM_SID,
-    METADATA_JOB_ID,
 )
 from parlot.instrumentation.livekit._recording_guard import agent_name_from_ctx
 from parlot.instrumentation.livekit._platform_refs import (
@@ -40,8 +39,6 @@ from parlot.instrumentation.livekit._platform_refs import (
 )
 
 if TYPE_CHECKING:
-    from opentelemetry.sdk.trace import ReadableSpan
-
     from ._processor import LiveKitGenAIProcessor, _LiveKitSessionState
 
 logger = logging.getLogger("parlot.instrumentation.livekit")
@@ -54,6 +51,9 @@ _parlot_job_bootstrap: ContextVar["_JobBootstrap | None"] = ContextVar(
     "parlot_job_bootstrap",
     default=None,
 )
+
+# Job-scoped fallback when ContextVar is not visible (async task / OTEL context isolation).
+_vendor_job_bootstraps: dict[str, "_JobBootstrap"] = {}
 
 
 @dataclass
@@ -74,25 +74,46 @@ def set_span_context_attach_enabled(enabled: bool) -> None:
     _span_context_attach_enabled = enabled
 
 
-def get_job_bootstrap() -> _JobBootstrap | None:
-    bootstrap = _parlot_job_bootstrap.get()
+def _bootstrap_for_vendor_job_id(vendor_job_id: str) -> _JobBootstrap | None:
+    bootstrap = _vendor_job_bootstraps.get(vendor_job_id)
     if bootstrap is None or bootstrap.close_span_done:
         return None
     return bootstrap
 
 
-def bootstrap_job_entrypoint(
+def get_job_bootstrap() -> _JobBootstrap | None:
+    bootstrap = _parlot_job_bootstrap.get()
+    if bootstrap is not None and not bootstrap.close_span_done:
+        return bootstrap
+    try:
+        from livekit.agents.job import get_job_context
+
+        ctx = get_job_context()
+        if ctx is not None:
+            return _bootstrap_for_vendor_job_id(str(ctx.job.id))
+    except Exception:
+        pass
+    return None
+
+
+def bootstrap_session(
     processor: "LiveKitGenAIProcessor",
-    entrypoint_span: Any,
+    *,
+    vendor_job_id: str = "",
+    room_name: str = "",
+    room_sid: str = "",
+    worker_agent_name: str = "",
 ) -> None:
     """Mint session, start ``conversation.session``, set ContextVar."""
-    if _parlot_job_bootstrap.get() is not None:
-        logger.warning("parlot: job_entrypoint bootstrap while bootstrap already active")
-    attrs = getattr(entrypoint_span, "attributes", None) or {}
-    vendor_job_id = str(attrs.get(ATTR_LK_JOB_ID) or attrs.get(METADATA_JOB_ID) or "")
-    room_name = str(attrs.get(ATTR_LK_ROOM_NAME) or "")
-    room_sid = str(attrs.get(ATTR_LK_ROOM_SID) or "")
-    worker_agent_name = str(attrs.get(ATTR_LK_AGENT_NAME) or "").strip()
+    existing = _parlot_job_bootstrap.get()
+    if existing is not None and not existing.close_span_done:
+        logger.debug("parlot: bootstrap_session skipped — bootstrap already active")
+        return
+
+    vendor_job_id = str(vendor_job_id or "").strip()
+    room_name = str(room_name or "").strip()
+    room_sid = str(room_sid or "").strip()
+    worker_agent_name = str(worker_agent_name or "").strip()
 
     from ._processor import _LiveKitSessionState
 
@@ -106,6 +127,8 @@ def bootstrap_job_entrypoint(
         worker_agent_name=worker_agent_name,
     )
     processor._sessions[session_id] = state
+    if vendor_job_id:
+        processor._sessions[vendor_job_id] = state
 
     if vendor_job_id:
         register_livekit_job_context(
@@ -154,16 +177,17 @@ def bootstrap_job_entrypoint(
             attach_task = None
         ctx_token = otel_context.attach(trace.set_span_in_context(session_span))
 
-    _parlot_job_bootstrap.set(
-        _JobBootstrap(
-            session_id=session_id,
-            session_span=session_span,
-            state=state,
-            processor=processor,
-            attach_task=attach_task,
-            ctx_token=ctx_token,
-        )
+    bootstrap = _JobBootstrap(
+        session_id=session_id,
+        session_span=session_span,
+        state=state,
+        processor=processor,
+        attach_task=attach_task,
+        ctx_token=ctx_token,
     )
+    _parlot_job_bootstrap.set(bootstrap)
+    if vendor_job_id:
+        _vendor_job_bootstraps[vendor_job_id] = bootstrap
 
 
 def _finalize_session_aggregates(bootstrap: _JobBootstrap) -> None:
@@ -198,19 +222,6 @@ def _flush_otlp_before_session_close(_bootstrap: _JobBootstrap) -> None:
         force_flush(timeout_millis=timeout_ms)
     except TypeError:
         force_flush()
-
-
-def _detect_session_close_reason(entrypoint_span: "ReadableSpan") -> str:
-    """Best-effort close reason from entrypoint span status."""
-    status = getattr(entrypoint_span, "status", None)
-    if status is not None:
-        code = getattr(status, "status_code", None)
-        if code is not None and str(code).endswith("ERROR"):
-            message = getattr(status, "description", None) or ""
-            if message:
-                return "session_span_error"
-            return "error"
-    return "clean_close"
 
 
 def emit_parlot_session_close_span(
@@ -267,7 +278,7 @@ def _detach_otel_context(bootstrap: _JobBootstrap) -> None:
         current = None
 
     if attach_task is not None and current is not attach_task:
-        # AgentSession "close" often fires on a different task than job_entrypoint.
+        # AgentSession "close" often fires on a different task than bootstrap attach.
         # Detaching here would corrupt that task's context stack; the attach task
         # drops its context vars when the job ends.
         logger.debug(
@@ -308,6 +319,8 @@ def _cleanup_job_bootstrap(
 
     if vendor_job_id:
         clear_livekit_job_context(vendor_job_id)
+        _vendor_job_bootstraps.pop(vendor_job_id, None)
+        processor._sessions.pop(vendor_job_id, None)
     processor._sessions.pop(bootstrap.session_id, None)
     if on_attach_task:
         _parlot_job_bootstrap.set(None)
@@ -338,38 +351,6 @@ def finalize_session_close_from_hook(
     _cleanup_job_bootstrap(bootstrap.processor, bootstrap, end_time=end_time)
 
 
-def teardown_job_entrypoint(processor: "LiveKitGenAIProcessor", entrypoint_span: "ReadableSpan") -> None:
-    """Job span ended — only tear down if session close already ran via AgentSession hook."""
-    bootstrap = _parlot_job_bootstrap.get()
-    if bootstrap is None:
-        return
-
-    if not bootstrap.close_span_done:
-        # LiveKit may end the job_entrypoint span before the voice session finishes.
-        # Keep bootstrap alive so turns keep resolving and the close hook can fire once.
-        logger.debug(
-            "parlot: job_entrypoint span ended before AgentSession close; deferring teardown"
-        )
-        return
-
-    state = bootstrap.state
-    vendor_job_id = state.session_id
-    if vendor_job_id and not state.room_sid:
-        from parlot.instrumentation.livekit._platform_refs import lookup_room_context
-
-        rn, rs = lookup_room_context(vendor_job_id)
-        if rn:
-            state.room_name = rn
-        if rs:
-            state.room_sid = rs
-
-    _cleanup_job_bootstrap(
-        processor,
-        bootstrap,
-        end_time=getattr(entrypoint_span, "end_time", None),
-    )
-
-
 def handle_conversation_session_on_end() -> None:
     """Apply close-time aggregates if OTel ends the session span before teardown."""
     bootstrap = _parlot_job_bootstrap.get()
@@ -382,10 +363,35 @@ def handle_conversation_session_on_end() -> None:
         bootstrap.session_span_ended = True
     if not bootstrap.aggregates_applied:
         logger.debug(
-            "parlot: conversation.session ended before job_entrypoint teardown; "
+            "parlot: conversation.session ended before AgentSession close; "
             "applying session aggregates early"
         )
         _finalize_session_aggregates(bootstrap)
+
+
+async def _run_post_bootstrap_connect(ctx: Any) -> None:
+    """Refresh room metadata and start egress after session bootstrap."""
+    if get_job_bootstrap() is None:
+        return
+    await refresh_bootstrap_room_from_ctx(ctx)
+    from ._egress import maybe_start_room_composite_egress
+
+    await maybe_start_room_composite_egress(ctx)
+
+
+def schedule_post_bootstrap_connect(ctx: Any) -> None:
+    """Schedule connect side effects after event-based bootstrap."""
+    if ctx is None:
+        logger.warning("parlot: post-bootstrap connect skipped — no JobContext")
+        return
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        logger.warning(
+            "parlot: post-bootstrap connect skipped — no running event loop"
+        )
+        return
+    loop.create_task(_run_post_bootstrap_connect(ctx))
 
 
 async def refresh_bootstrap_room_from_ctx(ctx) -> None:

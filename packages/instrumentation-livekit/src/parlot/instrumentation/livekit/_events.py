@@ -23,6 +23,8 @@ from parlot.core.attrs import (
 )
 
 from parlot.instrumentation.livekit.attrs import ATTR_DIAR_SOURCE_STT_EVENT
+from parlot.instrumentation.livekit._platform_refs import _job_room_fields, _str_field
+from parlot.instrumentation.livekit._recording_guard import agent_name_from_ctx
 
 if TYPE_CHECKING:
     from opentelemetry.trace import Tracer
@@ -97,14 +99,35 @@ def _normalize_close_reason(reason: str) -> str:
     return _CLOSE_REASON_MAP.get(key, key or "unknown")
 
 
+def _agent_state_value(state: Any) -> str:
+    if state is None:
+        return ""
+    val = getattr(state, "value", state)
+    return str(val).lower().split(".")[-1]
+
+
+def _resolve_job_context(session: Any) -> Any | None:
+    try:
+        from livekit.agents.job import get_job_context
+
+        ctx = get_job_context()
+        if ctx is not None:
+            return ctx
+    except Exception:
+        pass
+    return getattr(session, "_parlot_job_ctx", None)
+
+
 class LiveKitEventBridge:
     """Subscribes to AgentSession events and drives Parlot semantic telemetry."""
 
     def __init__(self, processor: "LiveKitGenAIProcessor", tracer: "Tracer") -> None:
         self._processor = processor
         self._tracer = tracer
+        self._session: Any | None = None
 
     def install(self, session: Any) -> None:
+        self._session = session
         self._processor.set_turn_source("events")
 
         @session.on("conversation_item_added")
@@ -142,12 +165,66 @@ class LiveKitEventBridge:
             except Exception:
                 logger.debug("error handler failed", exc_info=True)
 
+        @session.on("agent_state_changed")
+        def _on_agent_state_changed(ev: Any) -> None:
+            try:
+                self._on_agent_state_changed(ev)
+            except Exception:
+                logger.debug("agent_state_changed handler failed", exc_info=True)
+
         @session.on("close")
         def _on_close(ev: Any) -> None:
             try:
                 self._on_close(ev)
             except Exception:
                 logger.debug("close handler failed", exc_info=True)
+
+    def _on_agent_state_changed(self, ev: Any) -> None:
+        session = self._session
+        if session is None:
+            return
+
+        old_state = _agent_state_value(getattr(ev, "old_state", None))
+        new_state = _agent_state_value(getattr(ev, "new_state", None))
+
+        if old_state == "listening" and new_state == "initializing":
+            session._parlot_shutdown_reset = True
+            return
+
+        if old_state != "initializing" or new_state != "listening":
+            return
+
+        if getattr(session, "_parlot_shutdown_reset", False):
+            return
+
+        from ._session import bootstrap_session, get_job_bootstrap, schedule_post_bootstrap_connect
+
+        if get_job_bootstrap() is not None:
+            return
+
+        ctx = _resolve_job_context(session)
+        vendor_job_id = ""
+        room_name = ""
+        room_sid = ""
+        worker_agent_name = ""
+        if ctx is not None:
+            vendor_job_id, room_name, room_sid = _job_room_fields(ctx)
+            worker_agent_name = agent_name_from_ctx(ctx)
+
+        if not room_name:
+            room_name = _str_field(getattr(session, "room", None), "name")
+        if not room_sid:
+            room_sid = _str_field(getattr(session, "room", None), "sid", "id")
+
+        bootstrap_session(
+            self._processor,
+            vendor_job_id=vendor_job_id,
+            room_name=room_name,
+            room_sid=room_sid,
+            worker_agent_name=worker_agent_name,
+        )
+        session._parlot_bootstrapped = True
+        schedule_post_bootstrap_connect(ctx or getattr(session, "_parlot_job_ctx", None))
 
     def _on_conversation_item_added(self, ev: Any) -> None:
         item = getattr(ev, "item", None)
@@ -277,6 +354,12 @@ class LiveKitEventBridge:
             close_reason=reason,
             close_error=close_error,
         )
+
+        session = self._session
+        if session is not None:
+            session._parlot_job_ctx = None
+            session._parlot_shutdown_reset = False
+            session._parlot_bootstrapped = False
 
 
 def install_session_hooks(

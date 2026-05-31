@@ -1,9 +1,9 @@
-"""Session bootstrap: ContextVar, conversation.session, span processor guard."""
+"""Session bootstrap: ContextVar, conversation.session, event-based start."""
 
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from opentelemetry.sdk.trace import TracerProvider
@@ -13,19 +13,20 @@ from parlot.core.attrs import (
     ATTR_SESSION_ID,
     ATTR_SESSION_TURN_COUNT,
 )
+from parlot.core.processor import assert_sync_span_processors
 from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
 from parlot.instrumentation.livekit._session import (
     SPAN_CONVERSATION_SESSION,
+    _parlot_job_bootstrap,
+    bootstrap_session,
     finalize_session_close_from_hook,
     get_job_bootstrap,
     handle_conversation_session_on_end,
 )
-from parlot.core.processor import assert_sync_span_processors
 from parlot.instrumentation.livekit.attrs import (
-    ATTR_LK_JOB_ID,
-    ATTR_LK_ROOM_SID,
     ATTR_LK_USER_TRANSCRIPT,
 )
+from bootstrap_helpers import bootstrap_via_agent_state, fire_agent_state_changed, make_mock_job_context
 
 
 def _make_readable_span(name: str, attributes: dict | None = None) -> MagicMock:
@@ -53,10 +54,7 @@ class TestSessionBootstrap:
     def test_bootstrap_visible_in_entrypoint_task(self) -> None:
         proc = LiveKitGenAIProcessor()
         _provider_with_processor(proc)
-        entry = _make_readable_span("job_entrypoint", {ATTR_LK_JOB_ID: "AJ_one"})
-        proc.on_start(entry)
-        bootstrap = get_job_bootstrap()
-        assert bootstrap is not None
+        _session, bootstrap = bootstrap_via_agent_state(proc, "AJ_one")
         sid = bootstrap.session_id
 
         child = _make_readable_span("llm_node")
@@ -76,20 +74,34 @@ class TestSessionBootstrap:
             proc.on_end(child)
             seen.append(child._attributes[ATTR_SESSION_ID])
 
-        entry = _make_readable_span("job_entrypoint", {ATTR_LK_JOB_ID: "AJ_task"})
-        proc.on_start(entry)
-        parent_bootstrap = get_job_bootstrap()
-        assert parent_bootstrap is not None
+        _session, parent_bootstrap = bootstrap_via_agent_state(proc, "AJ_task")
         parent_sid = parent_bootstrap.session_id
         await asyncio.create_task(run_agent_work())
         assert seen == [parent_sid]
 
-    def test_teardown_ends_conversation_session_once(self) -> None:
+    def test_span_enrichment_via_vendor_job_id_without_contextvar(self) -> None:
+        """Production path: OTEL span callbacks may not inherit bootstrap ContextVar."""
         proc = LiveKitGenAIProcessor()
         _provider_with_processor(proc)
-        entry = _make_readable_span("job_entrypoint", {ATTR_LK_JOB_ID: "AJ_end"})
-        proc.on_start(entry)
-        bootstrap = get_job_bootstrap()
+        vendor_job_id = "AJ_prod"
+        ctx = make_mock_job_context(vendor_job_id)
+        _session, bootstrap = bootstrap_via_agent_state(proc, vendor_job_id, ctx=ctx)
+        sid = bootstrap.session_id
+
+        _parlot_job_bootstrap.set(None)
+
+        child = _make_readable_span(
+            "tts_node",
+            {"job_id": vendor_job_id, "lk.job_id": vendor_job_id},
+        )
+        proc.on_end(child)
+
+        assert child._attributes[ATTR_SESSION_ID] == sid
+
+    def test_close_ends_conversation_session_once(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        _provider_with_processor(proc)
+        _session, bootstrap = bootstrap_via_agent_state(proc, "AJ_end")
         session_span = bootstrap.session_span
         session_span.end = MagicMock(wraps=session_span.end)
 
@@ -100,18 +112,17 @@ class TestSessionBootstrap:
             )
         )
         finalize_session_close_from_hook(bootstrap, close_reason="clean_close")
-        proc.on_end(entry)
 
         session_span.end.assert_called_once()
         assert get_job_bootstrap() is None
 
-    def test_teardown_emits_parlot_session_close_span(self) -> None:
+    def test_close_emits_parlot_session_close_span(self) -> None:
         from opentelemetry.sdk.trace.export import SimpleSpanProcessor
         from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
             InMemorySpanExporter,
         )
 
-        from parlot.core.attrs import ATTR_SESSION_ID, SPAN_PARLOT_SESSION_CLOSE
+        from parlot.core.attrs import SPAN_PARLOT_SESSION_CLOSE
 
         exporter = InMemorySpanExporter()
         provider = TracerProvider()
@@ -120,13 +131,9 @@ class TestSessionBootstrap:
         provider.add_span_processor(proc)
         assert_sync_span_processors(provider)
         proc.set_tracer(provider.get_tracer("test"))
-        entry = _make_readable_span("job_entrypoint", {ATTR_LK_JOB_ID: "AJ_close_sig"})
-        proc.on_start(entry)
-        bootstrap = get_job_bootstrap()
-        assert bootstrap is not None
+        _session, bootstrap = bootstrap_via_agent_state(proc, "AJ_close_sig")
         session_id = bootstrap.session_id
         finalize_session_close_from_hook(bootstrap, close_reason="clean_close")
-        proc.on_end(entry)
 
         close = [
             s
@@ -153,18 +160,14 @@ class TestSessionBootstrap:
         provider.add_span_processor(proc)
         assert_sync_span_processors(provider)
         proc.set_tracer(provider.get_tracer("test"))
-        entry = _make_readable_span("job_entrypoint", {ATTR_LK_JOB_ID: "AJ_turn_ct"})
-        proc.on_start(entry)
+        _session, bootstrap = bootstrap_via_agent_state(proc, "AJ_turn_ct")
         proc.on_end(
             _make_readable_span(
                 "user_turn",
                 {ATTR_LK_USER_TRANSCRIPT: "hello"},
             )
         )
-        bootstrap = get_job_bootstrap()
-        assert bootstrap is not None
         finalize_session_close_from_hook(bootstrap, close_reason="clean_close")
-        proc.on_end(entry)
 
         close = [
             s
@@ -189,12 +192,8 @@ class TestSessionBootstrap:
         provider.add_span_processor(proc)
         assert_sync_span_processors(provider)
         proc.set_tracer(provider.get_tracer("test"))
-        entry = _make_readable_span("job_entrypoint", {ATTR_LK_JOB_ID: "AJ_reason"})
-        proc.on_start(entry)
-        bootstrap = get_job_bootstrap()
-        assert bootstrap is not None
+        _session, bootstrap = bootstrap_via_agent_state(proc, "AJ_reason")
         finalize_session_close_from_hook(bootstrap, close_reason="user_hangup")
-        proc.on_end(entry)
 
         close = [
             s
@@ -212,20 +211,12 @@ class TestSessionBootstrap:
     def test_two_jobs_two_session_ids(self) -> None:
         proc = LiveKitGenAIProcessor()
         _provider_with_processor(proc)
-        e1 = _make_readable_span("job_entrypoint", {ATTR_LK_JOB_ID: "J1"})
-        e2 = _make_readable_span("job_entrypoint", {ATTR_LK_JOB_ID: "J2"})
-        proc.on_start(e1)
-        b1 = get_job_bootstrap()
-        assert b1 is not None
+        _s1, b1 = bootstrap_via_agent_state(proc, "J1")
         s1 = b1.session_id
         finalize_session_close_from_hook(b1, close_reason="clean_close")
-        proc.on_end(e1)
-        proc.on_start(e2)
-        b2 = get_job_bootstrap()
-        assert b2 is not None
+        _s2, b2 = bootstrap_via_agent_state(proc, "J2")
         s2 = b2.session_id
         finalize_session_close_from_hook(b2, close_reason="clean_close")
-        proc.on_end(e2)
         assert s1 != s2
 
     @pytest.mark.asyncio
@@ -234,9 +225,8 @@ class TestSessionBootstrap:
 
         proc = LiveKitGenAIProcessor()
         _provider_with_processor(proc)
-        entry = _make_readable_span("job_entrypoint", {ATTR_LK_JOB_ID: "AJ_room"})
-        proc.on_start(entry)
-        bootstrap = get_job_bootstrap()
+        ctx = make_mock_job_context("AJ_room")
+        _session, bootstrap = bootstrap_via_agent_state(proc, "AJ_room", ctx=ctx)
 
         class _Room:
             async def sid(self) -> str:
@@ -244,28 +234,21 @@ class TestSessionBootstrap:
 
         class _Ctx:
             _connected = True
-            job = MagicMock(id="AJ_room", room=None)
+            job = ctx.job
             room = _Room()
 
         await refresh_bootstrap_room_from_ctx(_Ctx())
-        assert bootstrap.state.room_sid == "RM_connect"
-        attrs = getattr(bootstrap.session_span, "_attributes", {}) or {}
-        if hasattr(bootstrap.session_span, "attributes"):
-            attrs = bootstrap.session_span.attributes or attrs
         assert bootstrap.state.room_sid == "RM_connect"
 
     @pytest.mark.asyncio
     async def test_finalize_close_from_different_task_skips_detach(self) -> None:
         proc = LiveKitGenAIProcessor()
         _provider_with_processor(proc)
-        entry = _make_readable_span("job_entrypoint", {ATTR_LK_JOB_ID: "AJ_x_task"})
 
-        async def run_entrypoint():
-            proc.on_start(entry)
-            return get_job_bootstrap()
+        async def run_bootstrap():
+            return bootstrap_via_agent_state(proc, "AJ_x_task")
 
-        bootstrap = await asyncio.create_task(run_entrypoint())
-        assert bootstrap is not None
+        _session, bootstrap = await asyncio.create_task(run_bootstrap())
         attach_task = bootstrap.attach_task
         assert attach_task is not None
 
@@ -277,65 +260,63 @@ class TestSessionBootstrap:
         assert get_job_bootstrap() is None
         assert asyncio.current_task() is not attach_task
 
-    def test_early_job_entrypoint_end_defers_close_until_hook(self) -> None:
-        from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-        from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
-            InMemorySpanExporter,
-        )
-
-        from parlot.core.attrs import SPAN_PARLOT_SESSION_CLOSE
-
-        exporter = InMemorySpanExporter()
-        provider = TracerProvider()
-        provider.add_span_processor(SimpleSpanProcessor(exporter))
+    def test_shutdown_reset_does_not_rebootstrap(self) -> None:
         proc = LiveKitGenAIProcessor()
-        provider.add_span_processor(proc)
-        assert_sync_span_processors(provider)
-        proc.set_tracer(provider.get_tracer("test"))
-        entry = _make_readable_span("job_entrypoint", {ATTR_LK_JOB_ID: "AJ_defer"})
-        proc.on_start(entry)
-        bootstrap = get_job_bootstrap()
-        assert bootstrap is not None
-        proc.on_end(entry)
+        _provider_with_processor(proc)
+        from parlot.instrumentation.livekit._events import LiveKitEventBridge
 
-        close = [
-            s
-            for s in exporter.get_finished_spans()
-            if s.name == SPAN_PARLOT_SESSION_CLOSE
-        ]
-        assert close == []
+        ctx = make_mock_job_context("AJ_shutdown")
+        session, bootstrap = bootstrap_via_agent_state(proc, "AJ_shutdown", ctx=ctx)
+        first_sid = bootstrap.session_id
+
+        bridge = LiveKitEventBridge(proc, proc._tracer)
+        bridge._session = session
+        fire_agent_state_changed(bridge, "listening", "initializing")
+        fire_agent_state_changed(bridge, "initializing", "listening")
+
         assert get_job_bootstrap() is not None
+        assert get_job_bootstrap().session_id == first_sid
 
-        finalize_session_close_from_hook(bootstrap, close_reason="clean_close")
-        close = [
-            s
-            for s in exporter.get_finished_spans()
-            if s.name == SPAN_PARLOT_SESSION_CLOSE
-        ]
-        assert len(close) == 1
+    def test_bootstrap_session_idempotent(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        _provider_with_processor(proc)
+        bootstrap_session(proc, vendor_job_id="AJ_dup")
+        first = get_job_bootstrap()
+        assert first is not None
+        bootstrap_session(proc, vendor_job_id="AJ_other")
+        assert get_job_bootstrap() is first
 
     def test_early_conversation_session_end_applies_aggregates(self) -> None:
         proc = LiveKitGenAIProcessor()
         _provider_with_processor(proc)
-        entry = _make_readable_span("job_entrypoint", {ATTR_LK_JOB_ID: "AJ_early"})
-        proc.on_start(entry)
+        _session, bootstrap = bootstrap_via_agent_state(proc, "AJ_early")
         proc.on_end(
             _make_readable_span(
                 "user_turn",
                 {ATTR_LK_USER_TRANSCRIPT: "cancel please"},
             )
         )
-        bootstrap = get_job_bootstrap()
-        assert bootstrap is not None
         assert bootstrap.aggregates_applied is False
 
         proc.on_end(_make_readable_span(SPAN_CONVERSATION_SESSION))
         assert bootstrap.aggregates_applied is True
         assert get_job_bootstrap() is not None
 
-        proc.on_end(entry)
-        assert get_job_bootstrap() is not None
-
         finalize_session_close_from_hook(bootstrap, close_reason="clean_close")
-        proc.on_end(entry)
         assert get_job_bootstrap() is None
+
+    @pytest.mark.asyncio
+    async def test_post_bootstrap_connect_scheduled_after_event_start(self) -> None:
+        from unittest.mock import AsyncMock
+
+        proc = LiveKitGenAIProcessor()
+        _provider_with_processor(proc)
+        ctx = make_mock_job_context("AJ_egress")
+
+        with patch(
+            "parlot.instrumentation.livekit._session._run_post_bootstrap_connect",
+            new_callable=AsyncMock,
+        ) as mock_run:
+            bootstrap_via_agent_state(proc, "AJ_egress", ctx=ctx)
+            await asyncio.sleep(0)
+            mock_run.assert_awaited_once_with(ctx)

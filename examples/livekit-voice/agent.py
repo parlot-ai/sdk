@@ -1,9 +1,9 @@
 """
 Minimal Parlot-instrumented LiveKit voice agent.
 
-This file shows the complete integration — configure() at import and
-configure() at import (session bootstrap is automatic on job_entrypoint).
-Everything else is unchanged LiveKit code.
+This file shows the complete integration — configure() at import. Parlot
+binds the session when AgentSession reaches the listening state
+(initializing→listening), not via OTEL spans.
 
 Environment variables required:
     LIVEKIT_URL         wss://your-project.livekit.cloud
