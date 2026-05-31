@@ -158,6 +158,7 @@ def _build_provider(
     processor.set_tracer(provider.get_tracer("parlot.instrumentation.livekit"))
     processor.set_metrics(ParlotMetricsRecorder(meter_provider))
 
+    provider._parlot_processor = processor  # type: ignore[attr-defined]
     return provider
 
 
@@ -175,11 +176,15 @@ def _register_with_livekit(provider) -> None:
 
 
 def _patch_agent_session_with_tracer(provider) -> None:
+    processor = getattr(provider, "_parlot_processor", None)
+    if processor is None:
+        logger.debug("No Parlot processor on provider; skipping AgentSession patch")
+        return
     tracer = provider.get_tracer("parlot.instrumentation.livekit")
 
     from ._hooks import _patch_agent_session
 
-    _patch_agent_session(tracer)
+    _patch_agent_session(processor, tracer)
 
 
 def _patch_job_context_connect() -> None:

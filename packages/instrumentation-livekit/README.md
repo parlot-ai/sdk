@@ -21,6 +21,6 @@ Set `PARLOT_ENDPOINT` and `PARLOT_API_KEY` in the environment. Configure the org
 Recording policy: `PARLOT_RECORD_AGENTS` (`*`, allowlist, or unset=off) and job metadata `{ "record": true|false }`.
 
 ```bash
-uv sync --extra dev
+uv sync --group dev
 uv run pytest -q
 ```

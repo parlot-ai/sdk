@@ -73,6 +73,7 @@ from parlot.core.attrs import (
     ATTR_TURN_USER_TEXT,
     ATTR_TURN_INPUT_MODALITY,
     ATTR_TURN_INTERRUPTED,
+    ATTR_VOICE_STT_CONFIDENCE,
     ATTR_EXCEPTION_TYPE,
     ATTR_TOOL_INPUT_PAYLOAD,
     ATTR_TOOL_INPUT_PAYLOAD_PREVIEW,
@@ -109,7 +110,9 @@ from parlot.instrumentation.livekit.attrs import (
     ATTR_LK_TTS_INPUT_TEXT,
     ATTR_LK_USER_INPUT,
     ATTR_LK_USER_TRANSCRIPT,
+    ATTR_DIAR_SOURCE_STT_EVENT,
     ATTR_PARTICIPANT_IDENTITY,
+    ATTR_TRANSCRIPT_CONFIDENCE,
     ATTR_TRANSCRIPTION_DELAY,
     METADATA_JOB_ID,
     METADATA_ROOM_ID,
@@ -183,6 +186,14 @@ class _LiveKitSessionState(_BaseSessionState):
     languages_seen: set[str] = field(default_factory=set)
     user_id: str = ""
     pending_tts_ttfb_s: Optional[float] = None
+    committed_item_ids: set[str] = field(default_factory=set)
+    committed_handoff_ids: set[str] = field(default_factory=set)
+    pending_user_speaker_id: str = ""
+    pending_user_language: str = ""
+    last_user_input_modality: str = ""
+    usage_from_events: bool = False
+    metrics_recorded_turns: set[int] = field(default_factory=set)
+    pending_close_error: str = ""
 
 
 class LiveKitGenAIProcessor(ParlotBaseProcessor):
@@ -199,6 +210,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         self._turn_trace_registry: dict[str, dict[int, tuple[str, str]]] = {}
         self._tracer = None
         self._metrics = None
+        self._turn_source: str = "spans"
 
     def on_start(self, span, parent_context=None) -> None:
         super().on_start(span, parent_context)
@@ -229,6 +241,202 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
     def set_metrics(self, metrics) -> None:
         self._metrics = metrics
+
+    def set_turn_source(self, source: str) -> None:
+        if source in ("spans", "events"):
+            self._turn_source = source
+
+    @property
+    def turn_source(self) -> str:
+        return self._turn_source
+
+    def mark_conversation_item_committed(self, item_id: str) -> bool:
+        """Return False if this conversation item was already processed."""
+        bootstrap = get_job_bootstrap()
+        if bootstrap is None:
+            return False
+        state = bootstrap.state
+        if item_id in state.committed_item_ids:
+            return False
+        state.committed_item_ids.add(item_id)
+        return True
+
+    def mark_handoff_item_committed(self, item_id: str) -> None:
+        bootstrap = get_job_bootstrap()
+        if bootstrap is None:
+            return
+        bootstrap.state.committed_handoff_ids.add(item_id)
+
+    def committed_handoff_item_ids(self) -> set[str]:
+        bootstrap = get_job_bootstrap()
+        if bootstrap is None:
+            return set()
+        return bootstrap.state.committed_handoff_ids
+
+    def record_handoff_from_event(
+        self, *, from_agent: str = "", to_agent: str = ""
+    ) -> None:
+        bootstrap = get_job_bootstrap()
+        if bootstrap is None:
+            return
+        state = bootstrap.state
+        state.handoff_count += 1
+        if to_agent and (not state.agent_chain or state.agent_chain[-1] != to_agent):
+            state.agent_chain.append(to_agent)
+
+    def note_user_transcription_meta(
+        self, *, speaker_id: str = "", language: str = ""
+    ) -> None:
+        bootstrap = get_job_bootstrap()
+        if bootstrap is None:
+            return
+        state = bootstrap.state
+        if speaker_id:
+            state.pending_user_speaker_id = speaker_id
+        if language:
+            state.pending_user_language = language
+            state.languages_seen.add(language)
+
+    def note_function_tools_executed(self, count: int) -> None:
+        if count <= 0:
+            return
+        bootstrap = get_job_bootstrap()
+        if bootstrap is None:
+            return
+        bootstrap.state.tool_call_count += count
+
+    def apply_session_usage(self, total_in: int, total_out: int) -> None:
+        bootstrap = get_job_bootstrap()
+        if bootstrap is None:
+            return
+        state = bootstrap.state
+        state.total_input_tokens = max(total_in, 0)
+        state.total_output_tokens = max(total_out, 0)
+        state.usage_from_events = True
+
+    def note_session_error(self, message: str, *, recoverable: bool) -> None:
+        if not recoverable and message:
+            bootstrap = get_job_bootstrap()
+            if bootstrap is not None:
+                bootstrap.state.pending_close_error = message
+
+    def pop_pending_close_error(self) -> str | None:
+        bootstrap = get_job_bootstrap()
+        if bootstrap is None:
+            return None
+        err = bootstrap.state.pending_close_error.strip()
+        bootstrap.state.pending_close_error = ""
+        return err or None
+
+    def commit_user_message(
+        self,
+        text: str,
+        *,
+        interrupted: bool = False,
+        metrics: dict[str, float] | None = None,
+    ) -> None:
+        bootstrap = get_job_bootstrap()
+        if bootstrap is None or not text.strip():
+            return
+        state = bootstrap.state
+        state.turn_count += 1
+        participant_id, diarization_source = self._resolve_user_participant_from_state(
+            state
+        )
+        agent_hint = state.agent_label or state.worker_agent_name
+        modality = self._modality_for_user_text(text, state)
+        state.last_user_input_modality = modality
+        self._emit_turn_trace(
+            state,
+            turn_index=state.turn_count,
+            role="user",
+            participant_id=participant_id,
+            diarization_source=diarization_source,
+            input_modality=modality,
+            agent_hint=agent_hint,
+        )
+        state.open_agent_turn_index = state.turn_count + 1
+        state.pending_user_speaker_id = ""
+        state.pending_user_language = ""
+        self._record_turn_metrics_from_event(
+            state,
+            turn_index=state.turn_count,
+            metrics=metrics or {},
+            interrupted=interrupted,
+            participant_role="user",
+        )
+
+    def commit_agent_message(
+        self,
+        text: str,
+        *,
+        interrupted: bool = False,
+        metrics: dict[str, float] | None = None,
+    ) -> None:
+        bootstrap = get_job_bootstrap()
+        if bootstrap is None or not text.strip():
+            return
+        state = bootstrap.state
+        turn_index = state.open_agent_turn_index or (state.turn_count + 1)
+        agent_id = self._active_agent_id(state, {})
+        self._emit_turn_trace(
+            state,
+            turn_index=turn_index,
+            role="agent",
+            participant_id=agent_id,
+            label=agent_id,
+            diarization_source=ATTR_DIAR_SOURCE_AGENT_ID,
+            input_modality=state.last_user_input_modality or "voice",
+            agent_hint=agent_id,
+        )
+        state.turn_count = turn_index
+        state.open_agent_turn_index = None
+        self._record_turn_metrics_from_event(
+            state,
+            turn_index=turn_index,
+            metrics=metrics or {},
+            interrupted=interrupted,
+            participant_role="agent",
+        )
+
+    def _modality_for_user_text(self, text: str, state: _LiveKitSessionState) -> str:
+        if state.pending_user_speaker_id or state.pending_user_language:
+            return "voice"
+        return "text"
+
+    def _resolve_user_participant_from_state(
+        self, state: _LiveKitSessionState
+    ) -> tuple[str, str]:
+        if state.pending_user_speaker_id:
+            return state.pending_user_speaker_id, ATTR_DIAR_SOURCE_STT_EVENT
+        return (
+            ATTR_TURN_PARTICIPANT_ID_CALLER,
+            self._user_turn_diarization_source("voice" if state.pending_user_language else "text"),
+        )
+
+    def _record_turn_metrics_from_event(
+        self,
+        state: _LiveKitSessionState,
+        *,
+        turn_index: int,
+        metrics: dict[str, float],
+        interrupted: bool,
+        participant_role: str,
+    ) -> None:
+        if turn_index in state.metrics_recorded_turns:
+            return
+        if self._metrics and state.parlot_session_id and metrics:
+            self._metrics.record_turn(
+                state,
+                e2e_latency_s=metrics.get("e2e_latency"),
+                llm_ttft_s=metrics.get("llm_ttft"),
+                tts_ttfb_s=metrics.get("tts_ttfb"),
+                transcription_delay_s=metrics.get("transcription_delay"),
+                eou_delay_s=metrics.get("eou_delay"),
+                interrupted=interrupted,
+                participant_role=participant_role,
+            )
+            state.metrics_recorded_turns.add(turn_index)
 
     def lookup_turn_trace(
         self, session_id: str, turn_index: int
@@ -399,8 +607,9 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         output_tokens = _attr_int(attrs, ATTR_GEN_AI_OUT_TOKENS)
         cached_tokens = _attr_int(attrs, ATTR_GEN_AI_CACHED_TOKENS)
 
-        state.total_input_tokens += input_tokens
-        state.total_output_tokens += output_tokens
+        if not state.usage_from_events:
+            state.total_input_tokens += input_tokens
+            state.total_output_tokens += output_tokens
 
         if input_tokens and cached_tokens:
             self._set(
@@ -513,8 +722,11 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
         self._stamp_agent_identity(span, state, attrs)
 
-        state.tool_call_count += 1
-        self._set(span, ATTR_AGENT_TOOL_CALL_INDEX, state.tool_call_count)
+        if self._turn_source != "events":
+            state.tool_call_count += 1
+            self._set(span, ATTR_AGENT_TOOL_CALL_INDEX, state.tool_call_count)
+        elif state.tool_call_count:
+            self._set(span, ATTR_AGENT_TOOL_CALL_INDEX, state.tool_call_count)
 
         if not attrs.get(ATTR_GEN_AI_OP_NAME):
             self._set(span, ATTR_GEN_AI_OP_NAME, "execute_tool")
@@ -642,6 +854,13 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
     def _enrich_user_turn(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
+        confidence = _optional_float(attrs.get(ATTR_TRANSCRIPT_CONFIDENCE))
+        if confidence is not None:
+            self._set(span, ATTR_VOICE_STT_CONFIDENCE, confidence)
+
+        if self._turn_source == "events":
+            return
+
         if attrs.get(ATTR_LK_IS_INTERRUPTION):
             return
 
@@ -662,6 +881,15 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
     def _enrich_agent_turn(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
         self._stamp_agent_identity(span, state, attrs)
+
+        if self._turn_source == "events":
+            self._stamp_agent_turn_timing_attrs(span, attrs)
+            if attrs.get(ATTR_LK_INTERRUPTED):
+                self._set(span, ATTR_TURN_INTERRUPTED, True)
+            response_text = str(attrs.get(ATTR_LK_RESPONSE_TEXT, "")).strip()
+            if response_text:
+                self._set(span, ATTR_TURN_AGENT_TEXT, response_text)
+            return
 
         if state.open_agent_turn_index is None:
             transcript = str(
@@ -696,21 +924,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         state.turn_count = turn_index
         state.open_agent_turn_index = None
 
-        e2e = attrs.get(ATTR_LK_E2E_LATENCY)
-        if e2e is not None:
-            self._set(span, ATTR_TURN_E2E_LATENCY_S, float(e2e))
-
-        ttft = attrs.get(ATTR_LK_RESPONSE_TTFT)
-        if ttft is not None:
-            self._set(span, ATTR_TURN_LLM_TTFT_S, float(ttft))
-
-        transcription_delay = attrs.get(ATTR_TRANSCRIPTION_DELAY)
-        if transcription_delay is not None:
-            self._set(span, ATTR_TURN_TRANSCRIPTION_DELAY_S, float(transcription_delay))
-
-        eou_delay = attrs.get(ATTR_END_OF_TURN_DELAY)
-        if eou_delay is not None:
-            self._set(span, ATTR_TURN_EOU_DELAY_S, float(eou_delay))
+        self._stamp_agent_turn_timing_attrs(span, attrs)
 
         if attrs.get(ATTR_LK_INTERRUPTED):
             self._set(span, ATTR_TURN_INTERRUPTED, True)
@@ -722,7 +936,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if self._metrics and state.parlot_session_id:
             self._metrics.record_turn(
                 state,
-                e2e_latency_s=float(e2e) if e2e is not None else None,
+                e2e_latency_s=_optional_float(attrs.get(ATTR_LK_E2E_LATENCY)),
                 llm_ttft_s=_optional_float(attrs.get(ATTR_LK_RESPONSE_TTFT)),
                 tts_ttfb_s=state.pending_tts_ttfb_s,
                 transcription_delay_s=_optional_float(
@@ -749,6 +963,22 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
                     EVENT_GEN_AI_ASSISTANT_MESSAGE,
                     {"content": str(response)},
                 )
+
+    def _stamp_agent_turn_timing_attrs(
+        self, span: ReadableSpan, attrs: Mapping[str, AttributeValue]
+    ) -> None:
+        e2e = _optional_float(attrs.get(ATTR_LK_E2E_LATENCY))
+        if e2e is not None:
+            self._set(span, ATTR_TURN_E2E_LATENCY_S, e2e)
+        ttft = _optional_float(attrs.get(ATTR_LK_RESPONSE_TTFT))
+        if ttft is not None:
+            self._set(span, ATTR_TURN_LLM_TTFT_S, ttft)
+        transcription_delay = _optional_float(attrs.get(ATTR_TRANSCRIPTION_DELAY))
+        if transcription_delay is not None:
+            self._set(span, ATTR_TURN_TRANSCRIPTION_DELAY_S, transcription_delay)
+        eou_delay = _optional_float(attrs.get(ATTR_END_OF_TURN_DELAY))
+        if eou_delay is not None:
+            self._set(span, ATTR_TURN_EOU_DELAY_S, eou_delay)
 
     def _enrich_drain(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         """Lifecycle drain only — not a conversational turn boundary."""
@@ -796,8 +1026,11 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             self._stamp_agent_identity(span, state, attrs)
 
         if source is not None or target is not None:
-            state.handoff_count += 1
-            self._set(span, ATTR_AGENT_TRANSFER_SEQUENCE, state.handoff_count)
+            if self._turn_source != "events":
+                state.handoff_count += 1
+                self._set(span, ATTR_AGENT_TRANSFER_SEQUENCE, state.handoff_count)
+            elif state.handoff_count:
+                self._set(span, ATTR_AGENT_TRANSFER_SEQUENCE, state.handoff_count)
 
         state.pending_handoff_end_ns = span.end_time or time.time_ns()
 
@@ -996,10 +1229,16 @@ def _attr_int(
 def _optional_float(value: AttributeValue | None) -> Optional[float]:
     if value is None:
         return None
-    try:
+    if isinstance(value, bool):
         return float(value)
-    except (TypeError, ValueError):
-        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            return None
+    return None
 
 
 def _provider_to_system(provider: str) -> str:

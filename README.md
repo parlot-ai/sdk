@@ -7,6 +7,18 @@ Open-source SDK and instrumentation libraries for the Parlot.ai multi-agent obse
 - `packages/core/` — semantic conventions, base processor, UUID v7 session ids
 - `packages/instrumentation-livekit/` — LiveKit Agents OTel instrumentation (own `pyproject.toml`, `CHANGELOG.md`)
 
+## Local dev
+
+From the SDK workspace root:
+
+```bash
+cd sdk
+uv sync --group dev
+uv run pytest -q
+```
+
+Individual packages (e.g. `packages/instrumentation-livekit`) are workspace members — use `uv run` from the repo root rather than `pip install` / bare `python -m pytest`.
+
 ## Local dev with platform collector
 
 Point the agent at the platform OTLP receiver (no path suffix — the SDK appends `/v1/traces` and `/v1/metrics`):
