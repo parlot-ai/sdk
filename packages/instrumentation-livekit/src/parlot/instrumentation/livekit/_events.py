@@ -57,8 +57,15 @@ def _message_text(item: Any) -> str:
         for part in content:
             if isinstance(part, str):
                 parts.append(part)
-            elif hasattr(part, "text"):
-                parts.append(str(getattr(part, "text", "")))
+                continue
+            if hasattr(part, "text"):
+                text_part = str(getattr(part, "text", "")).strip()
+                if text_part:
+                    parts.append(text_part)
+                continue
+            transcript = getattr(part, "transcript", None)
+            if transcript:
+                parts.append(str(transcript).strip())
         return " ".join(p for p in parts if p).strip()
     return ""
 

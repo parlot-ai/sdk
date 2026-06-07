@@ -224,6 +224,44 @@ class TestLlmNodeEnrichment:
         assert span._attributes.get(ATTR_TURN_USER_TEXT) == "lookup tomorrow"
 
 
+class TestEventsModeTurnText:
+    def test_llm_node_skips_user_text_in_events_mode(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
+        proc.set_turn_source("events")
+        chat_ctx = json.dumps({
+            "items": [
+                {
+                    "type": "message",
+                    "role": "user",
+                    "content": "book me tomorrow",
+                },
+            ],
+        })
+        span = _make_span("llm_node", {ATTR_LK_CHAT_CTX: chat_ctx})
+        proc.on_end(span)
+        assert ATTR_TURN_USER_TEXT not in span._attributes
+
+    def test_user_turn_stamps_committed_text_in_events_mode(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
+        proc.set_turn_source("events")
+        bootstrap = get_job_bootstrap()
+        assert bootstrap is not None
+        bootstrap.state.turn_count = 1
+        bootstrap.state.user_text_by_turn[1] = "Committed user line"
+
+        span = _make_span(
+            "user_turn",
+            {
+                ATTR_LK_JOB_ID: "job-test",
+                ATTR_LK_USER_TRANSCRIPT: "stale transcript",
+            },
+        )
+        proc.on_end(span)
+        assert span._attributes.get(ATTR_TURN_USER_TEXT) == "Committed user line"
+
+
 class TestFunctionToolEnrichment:
     def test_handoff_auto_detected(self) -> None:
         proc = LiveKitGenAIProcessor()

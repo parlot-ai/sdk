@@ -18,15 +18,18 @@ from parlot.core.attrs import (
     ATTR_TURN_INPUT_MODALITY,
     ATTR_TURN_PARTICIPANT_ID,
     ATTR_TURN_PARTICIPANT_ROLE,
+    ATTR_TURN_USER_TEXT,
     ATTR_VOICE_STT_CONFIDENCE,
     SPAN_AGENT_HANDOFF,
 )
 from parlot.instrumentation.livekit.attrs import (
     ATTR_DIAR_SOURCE_STT_EVENT,
+    ATTR_LK_CHAT_CTX,
+    ATTR_LK_JOB_ID,
     ATTR_LK_USER_TRANSCRIPT,
     ATTR_TRANSCRIPT_CONFIDENCE,
 )
-from parlot.instrumentation.livekit._events import LiveKitEventBridge, install_session_hooks
+from parlot.instrumentation.livekit._events import LiveKitEventBridge, _message_text, install_session_hooks
 from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
 from bootstrap_helpers import bootstrap_via_agent_state
 
@@ -211,6 +214,54 @@ class TestEventBridgeTurns:
         )
         proc.on_end(span)
         assert span._attributes[ATTR_VOICE_STT_CONFIDENCE] == 0.91
+
+    def test_message_text_extracts_audio_content_transcript(self) -> None:
+        audio = SimpleNamespace(transcript="voice transcript")
+        item = SimpleNamespace(
+            text_content=None,
+            content=[audio],
+        )
+        assert _message_text(item) == "voice transcript"
+
+    def test_events_mode_stamps_user_turn_from_committed_message(self) -> None:
+        proc, _exporter = _proc_with_exporter()
+        _bootstrap(proc)
+        proc.set_turn_source("events")
+        bridge = LiveKitEventBridge(proc, proc._tracer)
+
+        bridge._on_conversation_item_added(
+            SimpleNamespace(
+                item=SimpleNamespace(
+                    id="msg-u3",
+                    type="message",
+                    role="user",
+                    text_content="Book tomorrow please",
+                    interrupted=False,
+                    metrics=None,
+                )
+            )
+        )
+
+        span = _make_span(
+            "user_turn",
+            {
+                ATTR_LK_USER_TRANSCRIPT: "wrong fallback transcript",
+                ATTR_LK_JOB_ID: "job-ev",
+            },
+        )
+        proc.on_end(span)
+        assert span._attributes[ATTR_TURN_USER_TEXT] == "Book tomorrow please"
+
+    def test_events_mode_llm_node_does_not_stamp_turn_user_text(self) -> None:
+        proc, _exporter = _proc_with_exporter()
+        _bootstrap(proc)
+        proc.set_turn_source("events")
+        span = _make_span(
+            "llm_node",
+            {ATTR_LK_CHAT_CTX: '{"items":[{"type":"message","role":"user","content":"polluted"}]}'},
+        )
+        proc.on_end(span)
+        assert ATTR_TURN_USER_TEXT not in span._attributes
 
 
 class TestInstallSessionHooks:

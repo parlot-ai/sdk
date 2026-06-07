@@ -146,6 +146,11 @@ _AGENT_PIPELINE_SPANS: FrozenSet[str] = frozenset({
     "amd",
 })
 
+_USER_TURN_SPAN_NAMES: FrozenSet[str] = frozenset({
+    "user_turn",
+    "eou_detection",
+})
+
 _AGENT_LABEL_SPANS: FrozenSet[str] = frozenset({
     "job_entrypoint",
     "agent_session",
@@ -192,6 +197,8 @@ class _LiveKitSessionState(_BaseSessionState):
     usage_from_events: bool = False
     metrics_recorded_turns: set[int] = field(default_factory=set)
     pending_close_error: str = ""
+    user_text_by_turn: dict[int, str] = field(default_factory=dict)
+    agent_text_by_turn: dict[int, str] = field(default_factory=dict)
 
 
 class LiveKitGenAIProcessor(ParlotBaseProcessor):
@@ -333,6 +340,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             return
         state = bootstrap.state
         state.turn_count += 1
+        state.user_text_by_turn[state.turn_count] = text.strip()
         participant_id, diarization_source = self._resolve_user_participant_from_state(
             state
         )
@@ -371,6 +379,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             return
         state = bootstrap.state
         turn_index = state.open_agent_turn_index or (state.turn_count + 1)
+        state.agent_text_by_turn[turn_index] = text.strip()
         agent_id = self._active_agent_id(state, {})
         self._emit_turn_trace(
             state,
@@ -510,6 +519,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if (
             state.open_agent_turn_index is not None
             and span_name in _AGENT_PIPELINE_SPANS
+            and span_name not in _USER_TURN_SPAN_NAMES
         ):
             return state.open_agent_turn_index
         if state.turn_count:
@@ -642,7 +652,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             self._set(span, ATTR_AGENT_TOOL_NAMES, json.dumps(tools))
 
         user_text, assistant_text = _preview_from_chat_ctx(chat_raw)
-        if user_text:
+        if user_text and self._turn_source != "events":
             self._set(span, ATTR_TURN_USER_TEXT, user_text)
         if assistant_text:
             self._set(span, ATTR_TURN_AGENT_TEXT, assistant_text)
@@ -845,6 +855,32 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
                 {"content": transcript},
             )
 
+    def _stamp_events_user_text(
+        self, span: ReadableSpan, state: _LiveKitSessionState
+    ) -> None:
+        if self._turn_source != "events":
+            return
+        attrs = span.attributes or {}
+        turn_index_raw = attrs.get(ATTR_TURN_INDEX)
+        if turn_index_raw is None:
+            active = self._active_turn_index(state, span.name)
+            if active is None:
+                return
+            resolved_turn_index = active
+            self._set(span, ATTR_TURN_INDEX, active)
+        else:
+            resolved_turn_index = _attr_int(attrs, ATTR_TURN_INDEX)
+        text = state.user_text_by_turn.get(resolved_turn_index, "")
+        if not text:
+            return
+        self._set(span, ATTR_TURN_USER_TEXT, text)
+        if self._capture_content:
+            self._add_event(
+                span,
+                EVENT_GEN_AI_USER_MESSAGE,
+                {"content": text},
+            )
+
     def _enrich_user_turn(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
         confidence = _optional_float(attrs.get(ATTR_TRANSCRIPT_CONFIDENCE))
@@ -852,6 +888,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             self._set(span, ATTR_VOICE_STT_CONFIDENCE, confidence)
 
         if self._turn_source == "events":
+            self._stamp_events_user_text(span, state)
             return
 
         if attrs.get(ATTR_LK_IS_INTERRUPTION):
@@ -879,9 +916,14 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             self._stamp_agent_turn_timing_attrs(span, attrs)
             if attrs.get(ATTR_LK_INTERRUPTED):
                 self._set(span, ATTR_TURN_INTERRUPTED, True)
-            response_text = str(attrs.get(ATTR_LK_RESPONSE_TEXT, "")).strip()
-            if response_text:
-                self._set(span, ATTR_TURN_AGENT_TEXT, response_text)
+            turn_index_raw = (span.attributes or {}).get(ATTR_TURN_INDEX)
+            if turn_index_raw is None:
+                resolved_turn_index = state.open_agent_turn_index or (state.turn_count + 1)
+            else:
+                resolved_turn_index = _attr_int(span.attributes or {}, ATTR_TURN_INDEX)
+            agent_text = state.agent_text_by_turn.get(resolved_turn_index, "")
+            if agent_text:
+                self._set(span, ATTR_TURN_AGENT_TEXT, agent_text)
             return
 
         if state.open_agent_turn_index is None:
@@ -985,6 +1027,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if lang:
             state.languages_seen.add(lang)
             self._set(span, ATTR_VOICE_EOU_LANGUAGE, lang)
+        self._stamp_events_user_text(span, state)
 
     def _enrich_amd(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
