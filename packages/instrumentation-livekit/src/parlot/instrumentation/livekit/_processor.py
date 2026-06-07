@@ -1311,10 +1311,6 @@ def _preview_from_chat_ctx(raw: str) -> tuple[str, str]:
                 last_user = text
             elif role == "assistant" and text:
                 last_out = text
-        elif kind == "function_call":
-            name = item.get("name", "")
-            args = item.get("arguments", "")
-            last_user = f"{name}({args})" if name else last_user
         elif kind == "function_call_output":
             out = item.get("output", "")
             if out:

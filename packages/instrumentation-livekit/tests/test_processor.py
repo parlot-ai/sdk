@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from unittest.mock import MagicMock
 
@@ -38,6 +39,7 @@ from parlot.core.attrs import (
 from parlot.instrumentation.livekit.attrs import (
     ATTR_AMD_CATEGORY,
     ATTR_LK_AGENT_LABEL,
+    ATTR_LK_CHAT_CTX,
     ATTR_LK_FNC_TOOL_ERROR,
     ATTR_LK_FNC_TOOL_NAME,
     ATTR_LK_FNC_TOOL_OUTPUT,
@@ -162,6 +164,64 @@ class TestLlmNodeEnrichment:
         span = _make_span("llm_node")
         proc.on_end(span)
         assert span._attributes.get(ATTR_GEN_AI_OP_NAME) == "chat"
+
+    def test_chat_ctx_user_message_preserved_after_function_call(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
+        chat_ctx = json.dumps({
+            "items": [
+                {
+                    "type": "message",
+                    "role": "user",
+                    "content": "book me tomorrow",
+                },
+                {
+                    "type": "function_call",
+                    "name": "book_appointment",
+                    "arguments": '{"date": "tomorrow"}',
+                },
+            ],
+        })
+        span = _make_span("llm_node", {ATTR_LK_CHAT_CTX: chat_ctx})
+        proc.on_end(span)
+        assert span._attributes.get(ATTR_TURN_USER_TEXT) == "book me tomorrow"
+
+    def test_chat_ctx_function_call_only_does_not_set_user_text(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
+        chat_ctx = json.dumps({
+            "items": [
+                {
+                    "type": "function_call",
+                    "name": "book_appointment",
+                    "arguments": '{"date": "tomorrow"}',
+                },
+            ],
+        })
+        span = _make_span("llm_node", {ATTR_LK_CHAT_CTX: chat_ctx})
+        proc.on_end(span)
+        assert ATTR_TURN_USER_TEXT not in span._attributes
+
+    def test_chat_ctx_string_arg_function_call_preserves_user_message(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
+        chat_ctx = json.dumps({
+            "items": [
+                {
+                    "type": "message",
+                    "role": "user",
+                    "content": "lookup tomorrow",
+                },
+                {
+                    "type": "function_call",
+                    "name": "lookup",
+                    "arguments": '"tomorrow"',
+                },
+            ],
+        })
+        span = _make_span("llm_node", {ATTR_LK_CHAT_CTX: chat_ctx})
+        proc.on_end(span)
+        assert span._attributes.get(ATTR_TURN_USER_TEXT) == "lookup tomorrow"
 
 
 class TestFunctionToolEnrichment:
