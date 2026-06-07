@@ -184,6 +184,13 @@ class LiveKitEventBridge:
             except Exception:
                 logger.debug("agent_state_changed handler failed", exc_info=True)
 
+        @session.on("metrics_collected")
+        def _on_metrics_collected(ev: Any) -> None:
+            try:
+                self._on_metrics_collected(ev)
+            except Exception:
+                logger.debug("metrics_collected handler failed", exc_info=True)
+
         @session.on("close")
         def _on_close(ev: Any) -> None:
             try:
@@ -337,6 +344,19 @@ class LiveKitEventBridge:
             total_in += int(getattr(entry, "input_tokens", 0) or 0)
             total_out += int(getattr(entry, "output_tokens", 0) or 0)
         self._processor.apply_session_usage(total_in, total_out)
+
+    def _on_metrics_collected(self, ev: Any) -> None:
+        metrics_obj = getattr(ev, "metrics", None)
+        if metrics_obj is None:
+            return
+        from ._session import get_job_bootstrap
+
+        bootstrap = get_job_bootstrap()
+        if bootstrap is None or not bootstrap.state.parlot_session_id:
+            return
+        metrics = self._processor._metrics
+        if metrics is not None:
+            metrics.record_usage_collected(bootstrap.state, metrics_obj)
 
     def _on_error(self, ev: Any) -> None:
         err = getattr(ev, "error", None)

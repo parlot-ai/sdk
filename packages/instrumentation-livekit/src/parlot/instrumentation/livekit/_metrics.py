@@ -2,21 +2,29 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from opentelemetry import metrics
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+from opentelemetry.util.types import AttributeValue
 
 from ._export import QuietOTLPMetricExporter
 from parlot.core.attrs import (
     ATTR_AGENT_FRAMEWORK,
+    ATTR_GEN_AI_MODEL,
+    ATTR_GEN_AI_PROVIDER,
     ATTR_SESSION_ID,
     ATTR_TURN_INDEX,
     ATTR_TURN_INTERRUPTED,
     ATTR_TURN_PARTICIPANT_ROLE,
+    METRIC_USAGE_LLM_INPUT_TOKENS,
+    METRIC_USAGE_LLM_OUTPUT_TOKENS,
+    METRIC_USAGE_STT_AUDIO_DURATION,
+    METRIC_USAGE_TTS_AUDIO_DURATION,
+    METRIC_USAGE_TTS_CHARACTERS,
 )
 from parlot.core.runtime import get_runtime
 
@@ -40,8 +48,20 @@ def build_meter_provider(
     return MeterProvider(metric_readers=[reader], resource=resource)
 
 
+def _usage_metadata(metrics_obj: Any) -> tuple[str, str]:
+    metadata = getattr(metrics_obj, "metadata", None)
+    if metadata is None:
+        return "", ""
+    model_name = getattr(metadata, "model_name", None)
+    model_provider = getattr(metadata, "model_provider", None)
+    return (
+        str(model_name).strip() if model_name else "",
+        str(model_provider).strip() if model_provider else "",
+    )
+
+
 class ParlotMetricsRecorder:
-    """Records turn.* and session.* metrics mapped to Parlot metric names."""
+    """Records turn.*, session.*, and usage.* metrics mapped to Parlot metric names."""
 
     def __init__(self, meter_provider: MeterProvider) -> None:
         self._meter = meter_provider.get_meter("parlot.instrumentation.livekit")
@@ -82,14 +102,36 @@ class ParlotMetricsRecorder:
             "session.total_output_tokens",
             description="Total output tokens in session",
         )
+        self._usage_llm_input = self._meter.create_counter(
+            METRIC_USAGE_LLM_INPUT_TOKENS,
+            description="LLM input tokens per usage event",
+        )
+        self._usage_llm_output = self._meter.create_counter(
+            METRIC_USAGE_LLM_OUTPUT_TOKENS,
+            description="LLM output tokens per usage event",
+        )
+        self._usage_stt_audio = self._meter.create_counter(
+            METRIC_USAGE_STT_AUDIO_DURATION,
+            unit="s",
+            description="STT audio duration per usage event",
+        )
+        self._usage_tts_audio = self._meter.create_counter(
+            METRIC_USAGE_TTS_AUDIO_DURATION,
+            unit="s",
+            description="TTS audio duration per usage event",
+        )
+        self._usage_tts_characters = self._meter.create_counter(
+            METRIC_USAGE_TTS_CHARACTERS,
+            description="TTS characters synthesized per usage event",
+        )
 
     def _base_attrs(
         self,
         state: "_LiveKitSessionState",
         *,
         participant_role: str = "",
-    ) -> dict[str, object]:
-        attrs: dict[str, object] = {
+    ) -> dict[str, AttributeValue]:
+        attrs: dict[str, AttributeValue] = {
             ATTR_SESSION_ID: state.parlot_session_id,
             ATTR_AGENT_FRAMEWORK: "livekit",
         }
@@ -99,6 +141,55 @@ class ParlotMetricsRecorder:
         if participant_role:
             attrs[ATTR_TURN_PARTICIPANT_ROLE] = participant_role
         return attrs
+
+    def _usage_attrs(
+        self,
+        state: "_LiveKitSessionState",
+        model_name: str,
+        model_provider: str,
+    ) -> dict[str, AttributeValue]:
+        attrs = self._base_attrs(state)
+        if model_name:
+            attrs[ATTR_GEN_AI_MODEL] = model_name
+        if model_provider:
+            attrs[ATTR_GEN_AI_PROVIDER] = model_provider
+        return attrs
+
+    def record_usage_collected(
+        self,
+        state: "_LiveKitSessionState",
+        metrics_obj: Any,
+    ) -> None:
+        """Map LiveKit AgentMetrics to Parlot usage.* counters."""
+        if not state.parlot_session_id:
+            return
+
+        metric_type = str(getattr(metrics_obj, "type", "") or "")
+        model_name, model_provider = _usage_metadata(metrics_obj)
+        attrs = self._usage_attrs(state, model_name, model_provider)
+
+        if metric_type == "llm_metrics":
+            prompt = int(getattr(metrics_obj, "prompt_tokens", 0) or 0)
+            completion = int(getattr(metrics_obj, "completion_tokens", 0) or 0)
+            if prompt:
+                self._usage_llm_input.add(prompt, attributes=attrs)
+            if completion:
+                self._usage_llm_output.add(completion, attributes=attrs)
+            return
+
+        if metric_type == "stt_metrics":
+            audio_duration = float(getattr(metrics_obj, "audio_duration", 0) or 0)
+            if audio_duration > 0:
+                self._usage_stt_audio.add(audio_duration, attributes=attrs)
+            return
+
+        if metric_type == "tts_metrics":
+            audio_duration = float(getattr(metrics_obj, "audio_duration", 0) or 0)
+            characters = int(getattr(metrics_obj, "characters_count", 0) or 0)
+            if audio_duration > 0:
+                self._usage_tts_audio.add(audio_duration, attributes=attrs)
+            if characters:
+                self._usage_tts_characters.add(characters, attributes=attrs)
 
     def record_turn(
         self,
@@ -112,7 +203,7 @@ class ParlotMetricsRecorder:
         interrupted: bool = False,
         participant_role: str = "agent",
     ) -> None:
-        attrs = {
+        attrs: dict[str, AttributeValue] = {
             **self._base_attrs(state, participant_role=participant_role),
             ATTR_TURN_INDEX: state.turn_count,
         }
