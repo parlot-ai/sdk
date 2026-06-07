@@ -101,8 +101,13 @@ def _item_metrics(item: Any) -> dict[str, float]:
     return out
 
 
-def _normalize_close_reason(reason: str) -> str:
-    key = str(reason or "").strip().lower()
+def _normalize_close_reason(reason: Any) -> str:
+    raw = reason
+    if hasattr(reason, "value"):
+        raw = getattr(reason, "value", reason)
+    key = str(raw or "").strip().lower()
+    if "." in key:
+        key = key.split(".")[-1]
     return _CLOSE_REASON_MAP.get(key, key or "unknown")
 
 
@@ -348,7 +353,7 @@ class LiveKitEventBridge:
         if bootstrap is None or bootstrap.close_span_done:
             return
 
-        reason = _normalize_close_reason(str(getattr(ev, "reason", "unknown")))
+        reason = _normalize_close_reason(getattr(ev, "reason", "unknown"))
         error = getattr(ev, "error", None)
         close_error = str(error) if error else None
         if close_error is None:

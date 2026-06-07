@@ -15,6 +15,8 @@ from parlot.core.attrs import (
     ATTR_PARTICIPANT_DIAR_SOURCE,
     ATTR_SESSION_TOTAL_INPUT_TOKENS,
     ATTR_SESSION_TOTAL_OUTPUT_TOKENS,
+    ATTR_SESSION_USER_ID,
+    ATTR_TURN_INDEX,
     ATTR_TURN_INPUT_MODALITY,
     ATTR_TURN_PARTICIPANT_ID,
     ATTR_TURN_PARTICIPANT_ROLE,
@@ -27,9 +29,15 @@ from parlot.instrumentation.livekit.attrs import (
     ATTR_LK_CHAT_CTX,
     ATTR_LK_JOB_ID,
     ATTR_LK_USER_TRANSCRIPT,
+    ATTR_PARTICIPANT_IDENTITY,
     ATTR_TRANSCRIPT_CONFIDENCE,
 )
-from parlot.instrumentation.livekit._events import LiveKitEventBridge, _message_text, install_session_hooks
+from parlot.instrumentation.livekit._events import (
+    LiveKitEventBridge,
+    _message_text,
+    _normalize_close_reason,
+    install_session_hooks,
+)
 from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
 from bootstrap_helpers import bootstrap_via_agent_state
 
@@ -262,6 +270,128 @@ class TestEventBridgeTurns:
         )
         proc.on_end(span)
         assert ATTR_TURN_USER_TEXT not in span._attributes
+
+    def test_events_mode_user_turn_before_commit_still_gets_text(self) -> None:
+        proc, exporter = _proc_with_exporter()
+        _bootstrap(proc)
+        proc.set_turn_source("events")
+        bridge = LiveKitEventBridge(proc, proc._tracer)
+
+        early_span = _make_span(
+            "user_turn",
+            {ATTR_LK_USER_TRANSCRIPT: "early transcript", ATTR_LK_JOB_ID: "job-ev"},
+        )
+        proc.on_end(early_span)
+        assert ATTR_TURN_USER_TEXT not in early_span._attributes
+
+        bridge._on_conversation_item_added(
+            SimpleNamespace(
+                item=SimpleNamespace(
+                    id="msg-u4",
+                    type="message",
+                    role="user",
+                    text_content="Committed after pipeline span",
+                    interrupted=False,
+                    metrics=None,
+                )
+            )
+        )
+
+        user_spans = [
+            s
+            for s in exporter.get_finished_spans()
+            if s.name == "user_turn"
+            and s.attributes.get(ATTR_TURN_USER_TEXT) == "Committed after pipeline span"
+        ]
+        assert len(user_spans) == 1
+        assert user_spans[0].attributes[ATTR_TURN_INDEX] == 1
+
+    def test_agent_greets_first_user_utterance_at_user_turn_index(self) -> None:
+        proc, exporter = _proc_with_exporter()
+        _bootstrap(proc)
+        proc.set_turn_source("events")
+        bridge = LiveKitEventBridge(proc, proc._tracer)
+
+        bridge._on_conversation_item_added(
+            SimpleNamespace(
+                item=SimpleNamespace(
+                    id="msg-a0",
+                    type="message",
+                    role="assistant",
+                    text_content="Hello!",
+                    interrupted=False,
+                    metrics=None,
+                )
+            )
+        )
+        bridge._on_conversation_item_added(
+            SimpleNamespace(
+                item=SimpleNamespace(
+                    id="msg-u5",
+                    type="message",
+                    role="user",
+                    text_content="I need help",
+                    interrupted=False,
+                    metrics=None,
+                )
+            )
+        )
+
+        turns = _parlot_turns(exporter)
+        assert len(turns) == 2
+        assert turns[0].attributes[ATTR_TURN_PARTICIPANT_ROLE] == "agent"
+        assert turns[0].attributes[ATTR_TURN_INDEX] == 1
+        assert turns[1].attributes[ATTR_TURN_PARTICIPANT_ROLE] == "user"
+        assert turns[1].attributes[ATTR_TURN_INDEX] == 2
+
+        user_spans = [
+            s
+            for s in exporter.get_finished_spans()
+            if s.name == "user_turn"
+            and s.attributes.get(ATTR_TURN_USER_TEXT) == "I need help"
+        ]
+        assert len(user_spans) == 1
+        assert user_spans[0].attributes[ATTR_TURN_INDEX] == 2
+
+        late_pipeline = _make_span(
+            "user_turn",
+            {ATTR_LK_USER_TRANSCRIPT: "stale", ATTR_LK_JOB_ID: "job-ev"},
+        )
+        proc.on_end(late_pipeline)
+        assert late_pipeline._attributes.get(ATTR_TURN_USER_TEXT) == "I need help"
+        assert late_pipeline._attributes.get(ATTR_TURN_INDEX) == 2
+
+    def test_user_turn_captures_participant_identity_on_session(self) -> None:
+        proc, exporter = _proc_with_exporter()
+        _bootstrap(proc)
+        proc.set_turn_source("events")
+
+        span = _make_span(
+            "user_turn",
+            {
+                ATTR_PARTICIPANT_IDENTITY: "caller-123",
+                ATTR_LK_JOB_ID: "job-ev",
+            },
+        )
+        proc.on_end(span)
+
+        from parlot.instrumentation.livekit._session import get_job_bootstrap
+
+        bootstrap = get_job_bootstrap()
+        assert bootstrap.state.user_id == "caller-123"
+        assert bootstrap.session_span._attributes.get(ATTR_SESSION_USER_ID) == "caller-123"
+
+
+class TestNormalizeCloseReason:
+    def test_enum_like_reason_string(self) -> None:
+        assert _normalize_close_reason("CloseReason.PARTICIPANT_DISCONNECTED") == (
+            "participant_disconnected"
+        )
+
+    def test_lowercase_enum_value(self) -> None:
+        assert _normalize_close_reason("participant_disconnected") == (
+            "participant_disconnected"
+        )
 
 
 class TestInstallSessionHooks:

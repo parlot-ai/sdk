@@ -69,6 +69,7 @@ from parlot.core.attrs import (
     ATTR_TURN_EOU_DELAY_S,
     ATTR_TURN_INDEX,
     ATTR_TURN_LLM_TTFT_S,
+    ATTR_TURN_PARTICIPANT_ID,
     ATTR_TURN_TRANSCRIPTION_DELAY_S,
     ATTR_TURN_USER_TEXT,
     ATTR_TURN_INPUT_MODALITY,
@@ -79,6 +80,7 @@ from parlot.core.attrs import (
     ATTR_TOOL_INPUT_PAYLOAD_PREVIEW,
     ATTR_TOOL_OUTPUT_PAYLOAD_PREVIEW,
     ATTR_PARTICIPANT_CHANNEL_IDENTITY,
+    ATTR_PARTICIPANT_DIAR_SOURCE,
     ATTR_VOICE_AMD_CATEGORY,
     ATTR_VOICE_EOU_LANGUAGE,
     SPAN_AGENT_HANDOFF,
@@ -199,6 +201,7 @@ class _LiveKitSessionState(_BaseSessionState):
     pending_close_error: str = ""
     user_text_by_turn: dict[int, str] = field(default_factory=dict)
     agent_text_by_turn: dict[int, str] = field(default_factory=dict)
+    last_user_turn_index: int = 0
 
 
 class LiveKitGenAIProcessor(ParlotBaseProcessor):
@@ -340,7 +343,10 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             return
         state = bootstrap.state
         state.turn_count += 1
-        state.user_text_by_turn[state.turn_count] = text.strip()
+        user_turn_index = state.turn_count
+        committed_text = text.strip()
+        state.user_text_by_turn[user_turn_index] = committed_text
+        state.last_user_turn_index = user_turn_index
         participant_id, diarization_source = self._resolve_user_participant_from_state(
             state
         )
@@ -349,14 +355,22 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         state.last_user_input_modality = modality
         self._emit_turn_trace(
             state,
-            turn_index=state.turn_count,
+            turn_index=user_turn_index,
             role="user",
             participant_id=participant_id,
             diarization_source=diarization_source,
             input_modality=modality,
             agent_hint=agent_hint,
         )
-        state.open_agent_turn_index = state.turn_count + 1
+        self._emit_committed_user_utterance_span(
+            state,
+            turn_index=user_turn_index,
+            text=committed_text,
+            modality=modality,
+            participant_id=participant_id,
+            diarization_source=diarization_source,
+        )
+        state.open_agent_turn_index = user_turn_index + 1
         state.pending_user_speaker_id = ""
         state.pending_user_language = ""
         self._record_turn_metrics_from_event(
@@ -511,11 +525,25 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             return state.agent_chain[-1]
         return "unknown"
 
+    def _user_turn_index_for_events(
+        self, state: _LiveKitSessionState, span_name: str
+    ) -> Optional[int]:
+        if span_name not in _USER_TURN_SPAN_NAMES:
+            return None
+        if state.last_user_turn_index:
+            return state.last_user_turn_index
+        if state.open_agent_turn_index is not None and state.open_agent_turn_index > 1:
+            return state.open_agent_turn_index - 1
+        return state.turn_count if state.turn_count else None
+
     def _active_turn_index(
         self, state: _LiveKitSessionState, span_name: str
     ) -> Optional[int]:
         if span_name == "job_entrypoint":
             return None
+        user_turn_index = self._user_turn_index_for_events(state, span_name)
+        if user_turn_index is not None:
+            return user_turn_index
         if (
             state.open_agent_turn_index is not None
             and span_name in _AGENT_PIPELINE_SPANS
@@ -802,6 +830,16 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
                     },
                 )
 
+    def _sync_user_id_to_session(self, state: _LiveKitSessionState) -> None:
+        if not state.user_id:
+            return
+        bootstrap = get_job_bootstrap()
+        if bootstrap is None:
+            return
+        session_span = bootstrap.session_span
+        if session_span is not None and hasattr(session_span, "set_attribute"):
+            session_span.set_attribute(ATTR_SESSION_USER_ID, state.user_id)
+
     def _capture_user_id(
         self,
         state: _LiveKitSessionState,
@@ -815,6 +853,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             if span is not None:
                 self._set(span, ATTR_PARTICIPANT_CHANNEL_IDENTITY, identity)
                 self._set(span, ATTR_SESSION_USER_ID, identity)
+            self._sync_user_id_to_session(state)
 
     def _record_user_turn(
         self,
@@ -888,6 +927,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             self._set(span, ATTR_VOICE_STT_CONFIDENCE, confidence)
 
         if self._turn_source == "events":
+            self._capture_user_id(state, attrs, span=span)
             self._stamp_events_user_text(span, state)
             return
 
@@ -1137,6 +1177,52 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if anchor_wall_ms <= 0:
             return
         state.recording_anchor_wall_ms = anchor_wall_ms
+
+    def _emit_committed_user_utterance_span(
+        self,
+        state: _LiveKitSessionState,
+        *,
+        turn_index: int,
+        text: str,
+        modality: str,
+        participant_id: str,
+        diarization_source: str,
+    ) -> None:
+        """Events mode: export user utterance on session_agents at the user turn index."""
+        if self._turn_source != "events" or not self._tracer or not state.parlot_session_id:
+            return
+        attrs: dict[str, AttributeValue] = {
+            ATTR_SESSION_ID: state.parlot_session_id,
+            ATTR_SESSION_CONVERSATION_ID: state.conversation_id,
+            ATTR_GEN_AI_CONVERSATION_ID: state.conversation_id,
+            ATTR_TURN_INDEX: turn_index,
+            ATTR_TURN_USER_TEXT: text,
+            ATTR_TURN_INPUT_MODALITY: modality,
+            ATTR_AGENT_FRAMEWORK: "livekit",
+            ATTR_TURN_PARTICIPANT_ID: participant_id,
+            ATTR_PARTICIPANT_DIAR_SOURCE: diarization_source,
+        }
+        if modality == "text":
+            attrs[ATTR_AGENT_ROLE] = "pipeline"
+        if participant_id and participant_id != ATTR_TURN_PARTICIPANT_ID_CALLER:
+            attrs[ATTR_PARTICIPANT_CHANNEL_IDENTITY] = participant_id
+        if state.session_id:
+            attrs[ATTR_LK_JOB_ID] = state.session_id
+        if state.room_name:
+            attrs[ATTR_LK_ROOM_NAME] = state.room_name
+        if state.room_sid:
+            attrs[ATTR_LK_ROOM_SID] = state.room_sid
+
+        span = self._tracer.start_span("user_turn", attributes=attrs)
+        stamp_livekit_platform_refs(
+            span,
+            job_id=state.session_id,
+            room_name=state.room_name,
+            room_sid=state.room_sid,
+        )
+        if self._capture_content:
+            self._add_event(span, EVENT_GEN_AI_USER_MESSAGE, {"content": text})
+        span.end()
 
     def _emit_turn_trace(
         self,
