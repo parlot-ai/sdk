@@ -33,7 +33,6 @@ export const ATTR_EXCEPTION_MESSAGE = "exception.message" as const;
 export const ATTR_EXCEPTION_TRACE = "exception.stacktrace" as const;
 export const ATTR_AGENT_ROLE = "agent.role" as const;
 export const ATTR_AGENT_STAGE = "agent.stage" as const;
-export const ATTR_AGENT_SOURCE_SPAN_NAME = "agent.source_span_name" as const;
 export const ATTR_AGENT_FRAMEWORK = "agent.framework" as const;
 export const ATTR_AGENT_INSTRUCTIONS_EXCERPT = "agent.instructions_excerpt" as const;
 export const ATTR_AGENT_TOOL_NAMES = "agent.tool.names" as const;

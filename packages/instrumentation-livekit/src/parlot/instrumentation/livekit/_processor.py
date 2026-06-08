@@ -23,7 +23,6 @@ from parlot.core.attrs import (
     ATTR_AGENT_FRAMEWORK,
     ATTR_AGENT_INSTRUCTIONS_EXCERPT,
     ATTR_AGENT_ROLE,
-    ATTR_AGENT_SOURCE_SPAN_NAME,
     ATTR_AGENT_STAGE,
     ATTR_AGENT_TOOL_CALL_INDEX,
     ATTR_AGENT_TOOL_IS_ERROR,
@@ -596,7 +595,6 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
         self._stamp_session_turn_attrs(span, state)
         self._set(span, ATTR_AGENT_FRAMEWORK, "livekit")
-        self._set(span, ATTR_AGENT_SOURCE_SPAN_NAME, name)
         stage = livekit_agent_stage_for_span(name)
         if stage:
             self._set(span, ATTR_AGENT_STAGE, stage)
