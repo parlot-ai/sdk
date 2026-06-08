@@ -242,6 +242,23 @@ class TestEventsModeTurnText:
         proc.on_end(span)
         assert ATTR_TURN_USER_TEXT not in span._attributes
 
+    def test_llm_node_skips_agent_text_in_events_mode(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
+        proc.set_turn_source("events")
+        chat_ctx = json.dumps({
+            "items": [
+                {
+                    "type": "message",
+                    "role": "assistant",
+                    "content": "stale prior turn reply",
+                },
+            ],
+        })
+        span = _make_span("llm_node", {ATTR_LK_CHAT_CTX: chat_ctx})
+        proc.on_end(span)
+        assert ATTR_TURN_AGENT_TEXT not in span._attributes
+
     def test_user_turn_stamps_committed_text_in_events_mode(self) -> None:
         proc = LiveKitGenAIProcessor()
         _bootstrap_proc(proc)

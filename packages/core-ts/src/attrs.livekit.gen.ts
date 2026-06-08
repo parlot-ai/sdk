@@ -78,6 +78,7 @@ export const ATTR_INTERRUPTION_DETECTION_DELAY = "lk.interruption.detection_dela
 export const ATTR_ROOM_SID = "lk.room.sid" as const;
 export const ATTR_DIAR_SOURCE_VAD = "livekit_vad" as const;
 export const ATTR_DIAR_SOURCE_TEXT_INPUT = "livekit_text_input" as const;
+export const ATTR_DIAR_SOURCE_STT_EVENT = "livekit_stt_event" as const;
 export const ATTR_LK_SPEECH_ID = "lk.speech_id" as const;
 export const ATTR_LK_AGENT_LABEL = "lk.agent_label" as const;
 export const ATTR_LK_JOB_ID = "lk.job_id" as const;

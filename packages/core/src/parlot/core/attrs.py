@@ -74,6 +74,8 @@ ATTR_EXCEPTION_TRACE    = "exception.stacktrace"
 
 # -- Agent identity (gaps the OTel spec does not cover) --------------------
 ATTR_AGENT_ROLE      = "agent.role"       # pipeline/component role: stt | tts | llm | tool | amd | pipeline | handoff | guardrail (not agent id/name)
+ATTR_AGENT_STAGE     = "agent.stage"      # lifecycle stage within role: node | request | run | turn | eou | drain | call | transfer | classify
+ATTR_AGENT_SOURCE_SPAN_NAME = "agent.source_span_name"  # OTLP span name at ingest (vendor pipeline label; for read-time stage backfill)
 ATTR_AGENT_FRAMEWORK = "agent.framework"  # livekit | crewai | langgraph | adk | custom
 ATTR_AGENT_INSTRUCTIONS_EXCERPT = "agent.instructions_excerpt"
 ATTR_AGENT_TOOL_NAMES = "agent.tool.names"  # JSON array of tool name strings
