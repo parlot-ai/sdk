@@ -357,6 +357,7 @@ class LiveKitEventBridge:
         metrics = self._processor._metrics
         if metrics is not None:
             metrics.record_usage_collected(bootstrap.state, metrics_obj)
+            setattr(ev, "_parlot_usage_recorded", True)
 
     def _on_error(self, ev: Any) -> None:
         err = getattr(ev, "error", None)

@@ -110,8 +110,6 @@ def _build_provider(
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
     from opentelemetry.semconv.attributes import service_attributes
 
-    from opentelemetry import metrics as otel_metrics
-
     from ._export import QuietOTLPSpanExporter
     from ._export_filter import ExportFilterSpanExporter
     from ._export_sanitize import SanitizeVendorAttrsSpanExporter
@@ -154,7 +152,9 @@ def _build_provider(
     set_span_context_attach_enabled(attach_ok)
 
     meter_provider = build_meter_provider(endpoint, headers, resource)
-    otel_metrics.set_meter_provider(meter_provider)
+    # Parlot metrics use a dedicated MeterProvider — do not call
+    # otel_metrics.set_meter_provider() so LiveKit's lk.agents.usage.* counters
+    # stay on the process default and are not exported to Parlot's pipeline.
     processor.set_tracer(provider.get_tracer("parlot.instrumentation.livekit"))
     processor.set_metrics(ParlotMetricsRecorder(meter_provider))
 
