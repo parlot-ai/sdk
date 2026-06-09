@@ -33,6 +33,14 @@ _COMPARE_SESSION_019EAE86 = (
     / "019eae86d1847079a0e34f57aa48f01b"
 )
 
+_COMPARE_SESSION_019EAE9C = (
+    Path(__file__).resolve().parents[4]
+    / "calcom-receptionist"
+    / "lk-agent"
+    / "compare"
+    / "019eae9cdc9272509518343eb989c60e"
+)
+
 
 class _FakeMetrics:
     def record_usage_collected(self, state, metrics_obj) -> None:
@@ -209,22 +217,19 @@ def test_agent_turn_does_not_consume_plugin_tokens() -> None:
     assert agent_span._attributes.get(ATTR_GEN_AI_IN_TOKENS) is None
 
 
-@pytest.mark.skipif(
-    not _COMPARE_SESSION_019EAE86.is_dir(),
-    reason="compare session fixture not present",
-)
-def test_compare_session_token_totals_match_plugins() -> None:
-    """Replay 019eae86: span token sum should match plugin llm_metrics totals."""
+def _replay_compare_session_token_totals(
+    compare_dir: Path,
+    session_id: str,
+) -> None:
+    """Replay compare fixture: llm_node span token sum should match plugin llm_metrics."""
     processor = LiveKitGenAIProcessor()
     processor._metrics = _FakeMetrics()
-    state = _replay_state("019eae86d1847079a0e34f57aa48f01b")
+    state = _replay_state(session_id)
     bootstrap = SimpleNamespace(state=state)
 
     plugin_in = 0
     plugin_out = 0
-    for line in (_COMPARE_SESSION_019EAE86 / "plugins.jsonl").read_text(
-        encoding="utf-8"
-    ).splitlines():
+    for line in (compare_dir / "plugins.jsonl").read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         row = json.loads(line)
@@ -246,9 +251,7 @@ def test_compare_session_token_totals_match_plugins() -> None:
 
     llm_spans: list[_ReplaySpan] = []
     agent_spans: list[_ReplaySpan] = []
-    for line in (_COMPARE_SESSION_019EAE86 / "spans.jsonl").read_text(
-        encoding="utf-8"
-    ).splitlines():
+    for line in (compare_dir / "spans.jsonl").read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         row = json.loads(line)
@@ -277,3 +280,27 @@ def test_compare_session_token_totals_match_plugins() -> None:
     assert span_in == plugin_in
     assert span_out == plugin_out
     assert agent_in == 0
+
+
+@pytest.mark.skipif(
+    not _COMPARE_SESSION_019EAE86.is_dir(),
+    reason="compare session fixture not present",
+)
+def test_compare_session_token_totals_match_plugins_019eae86() -> None:
+    """Replay 019eae86: span token sum should match plugin llm_metrics totals."""
+    _replay_compare_session_token_totals(
+        _COMPARE_SESSION_019EAE86,
+        "019eae86d1847079a0e34f57aa48f01b",
+    )
+
+
+@pytest.mark.skipif(
+    not _COMPARE_SESSION_019EAE9C.is_dir(),
+    reason="compare session fixture not present",
+)
+def test_compare_session_token_totals_match_plugins_019eae9c() -> None:
+    """Replay 019eae9c: recording + histogram session; tokens deduped on llm_node."""
+    _replay_compare_session_token_totals(
+        _COMPARE_SESSION_019EAE9C,
+        "019eae9cdc9272509518343eb989c60e",
+    )
