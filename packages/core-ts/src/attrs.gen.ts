@@ -92,6 +92,7 @@ export const ATTR_TURN_SPEECH_WALL_END_MS = "turn.speech_wall_end_ms" as const;
 export const ATTR_TURN_INTERRUPTED = "turn.interrupted" as const;
 export const ATTR_TURN_E2E_LATENCY_S = "turn.e2e_latency_s" as const;
 export const ATTR_TURN_LLM_TTFT_S = "turn.llm_ttft_s" as const;
+export const ATTR_TURN_TTS_TTFB_S = "turn.tts_ttfb_s" as const;
 export const ATTR_TURN_TRANSCRIPTION_DELAY_S = "turn.transcription_delay_s" as const;
 export const ATTR_TURN_EOU_DELAY_S = "turn.eou_delay_s" as const;
 export const ATTR_TURN_USER_TEXT = "turn.user_text" as const;

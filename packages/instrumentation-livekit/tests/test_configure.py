@@ -15,6 +15,7 @@ def _install_livekit_stub():
 
     class _AgentSession:
         _parlot_patched = False
+        _parlot_emit_metrics_patched = False
 
         def __init__(self, *a, **kw):
             pass
@@ -24,6 +25,9 @@ def _install_livekit_stub():
                 return fn
 
             return decorator
+
+        def emit(self, *a, **kw):
+            pass
 
     class _Telemetry:
         _provider = None
@@ -53,6 +57,8 @@ def _reset_configure():
 
     if hasattr(lk.AgentSession, "_parlot_patched"):
         lk.AgentSession._parlot_patched = False
+    if hasattr(lk.AgentSession, "_parlot_emit_metrics_patched"):
+        lk.AgentSession._parlot_emit_metrics_patched = False
 
 
 class TestConfigureProviderSetup:
@@ -94,3 +100,58 @@ class TestAgentSessionPatch:
         import livekit.agents as lk
 
         assert lk.AgentSession._parlot_patched is True
+
+
+class TestDevWatchParentSkip:
+    def setup_method(self):
+        _install_livekit_stub()
+        _reset_configure()
+
+    def test_skips_configure_in_dev_watch_parent(self, monkeypatch):
+        monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
+        monkeypatch.setattr(sys, "argv", ["agent.py", "dev"])
+        monkeypatch.setattr(
+            "parlot.instrumentation.livekit._auto.multiprocessing.parent_process",
+            lambda: None,
+        )
+
+        from parlot.instrumentation.livekit import configure
+        import parlot.instrumentation.livekit._auto as _auto
+
+        configure()
+
+        assert _auto._configured is False
+
+        import livekit.agents as lk
+
+        assert lk.AgentSession._parlot_patched is False
+
+    def test_configures_in_dev_worker_child(self, monkeypatch):
+        monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
+        monkeypatch.setattr(sys, "argv", ["agent.py", "dev"])
+        monkeypatch.setattr(
+            "parlot.instrumentation.livekit._auto.multiprocessing.parent_process",
+            lambda: object(),
+        )
+
+        from parlot.instrumentation.livekit import configure
+        import parlot.instrumentation.livekit._auto as _auto
+
+        configure()
+
+        assert _auto._configured is True
+
+    def test_configures_in_dev_no_reload(self, monkeypatch):
+        monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
+        monkeypatch.setattr(sys, "argv", ["agent.py", "dev", "--no-reload"])
+        monkeypatch.setattr(
+            "parlot.instrumentation.livekit._auto.multiprocessing.parent_process",
+            lambda: None,
+        )
+
+        from parlot.instrumentation.livekit import configure
+        import parlot.instrumentation.livekit._auto as _auto
+
+        configure()
+
+        assert _auto._configured is True

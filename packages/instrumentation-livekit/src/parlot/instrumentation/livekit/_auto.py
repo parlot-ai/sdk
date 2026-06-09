@@ -3,12 +3,34 @@
 from __future__ import annotations
 
 import logging
+import multiprocessing
 import os
+import sys
 from typing import Optional
 
 logger = logging.getLogger("parlot.instrumentation.livekit")
 
 _configured = False
+
+
+def _is_livekit_dev_watch_parent() -> bool:
+    """True when this process is LiveKit's dev-mode file-watcher parent.
+
+    ``lk-agents dev`` (reload on by default) imports the agent in a parent
+    process that only watches files, then spawns a child worker that
+    re-imports ``__main__`` and runs jobs. Instrumentation belongs in the child.
+    """
+    if multiprocessing.parent_process() is not None:
+        return False
+
+    argv = sys.argv
+    if "dev" not in argv:
+        return False
+
+    if "--no-reload" in argv:
+        return False
+
+    return True
 
 
 def _configure_parlot_logging() -> None:
@@ -28,6 +50,13 @@ def configure(
     global _configured
     if _configured:
         logger.debug("parlot-instrumentation.livekit already configured — skipping")
+        return
+
+    if _is_livekit_dev_watch_parent():
+        logger.debug(
+            "Skipping parlot-instrumentation.livekit configure in LiveKit dev "
+            "watcher parent (worker child will configure)"
+        )
         return
 
     _configure_parlot_logging()
@@ -184,14 +213,18 @@ def _patch_agent_session_with_tracer(provider) -> None:
     tracer = provider.get_tracer("parlot.instrumentation.livekit")
 
     from ._hooks import _patch_agent_session
+    from ._plugin_metrics import install_emit_metrics_intercept
 
     _patch_agent_session(processor, tracer)
+    install_emit_metrics_intercept(processor)
 
 
 def _install_telemetry_compare() -> None:
-    from ._telemetry_compare import install_emit_compare_intercept
+    """Compare JSONL is wired through the production metrics emit intercept."""
+    from ._telemetry_compare import compare_enabled
 
-    install_emit_compare_intercept()
+    if compare_enabled():
+        logger.debug("PARLOT_TELEMETRY_COMPARE enabled (events/spans via processor hooks)")
 
 
 def _patch_job_context_connect() -> None:

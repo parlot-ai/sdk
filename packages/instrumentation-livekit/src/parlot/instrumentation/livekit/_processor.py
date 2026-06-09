@@ -108,6 +108,7 @@ from parlot.instrumentation.livekit.attrs import (
     ATTR_LK_RESPONSE_TEXT,
     ATTR_LK_RESPONSE_TTFB,
     ATTR_LK_RESPONSE_TTFT,
+    ATTR_LK_SPEECH_ID,
     ATTR_LK_ROOM_NAME,
     ATTR_LK_ROOM_SID,
     ATTR_LK_TTS_INPUT_TEXT,
@@ -378,6 +379,8 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             diarization_source=diarization_source,
             input_modality=modality,
             agent_hint=agent_hint,
+            turn_metrics=metrics,
+            interrupted=interrupted,
         )
         self._emit_committed_user_utterance_span(
             state,
@@ -392,7 +395,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         state.pending_user_language = ""
         self._record_turn_metrics_from_event(
             state,
-            turn_index=state.turn_count,
+            turn_index=user_turn_index,
             metrics=metrics or {},
             interrupted=interrupted,
             participant_role="user",
@@ -421,6 +424,8 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             diarization_source=ATTR_DIAR_SOURCE_AGENT_ID,
             input_modality=state.last_user_input_modality or "voice",
             agent_hint=agent_id,
+            turn_metrics=metrics,
+            interrupted=interrupted,
         )
         state.turn_count = turn_index
         state.open_agent_turn_index = None
@@ -466,6 +471,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
                 tts_ttfb_s=metrics.get("tts_ttfb"),
                 transcription_delay_s=metrics.get("transcription_delay"),
                 eou_delay_s=metrics.get("eou_delay"),
+                playback_latency_s=metrics.get("playback_latency"),
                 interrupted=interrupted,
                 participant_role=participant_role,
             )
@@ -718,6 +724,30 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
                     EVENT_GEN_AI_ASSISTANT_MESSAGE,
                     {"content": assistant_text},
                 )
+
+        self._apply_plugin_llm_usage_to_span(span, attrs)
+
+    def _apply_plugin_llm_usage_to_span(
+        self,
+        span: ReadableSpan,
+        attrs: Mapping[str, AttributeValue],
+    ) -> None:
+        if attrs.get(ATTR_GEN_AI_IN_TOKENS) or attrs.get(ATTR_GEN_AI_OUT_TOKENS):
+            return
+        from ._plugin_metrics import resolve_llm_usage_for_span
+
+        speech_id = str(attrs.get(ATTR_LK_SPEECH_ID, "") or "")
+        usage = resolve_llm_usage_for_span(self, speech_id=speech_id)
+        if usage is None:
+            return
+        if usage.prompt_tokens > 0:
+            self._set(span, ATTR_GEN_AI_IN_TOKENS, usage.prompt_tokens)
+        if usage.completion_tokens > 0:
+            self._set(span, ATTR_GEN_AI_OUT_TOKENS, usage.completion_tokens)
+        if usage.model_name and not attrs.get(ATTR_GEN_AI_MODEL):
+            self._set(span, ATTR_GEN_AI_MODEL, usage.model_name)
+        if usage.model_provider and not attrs.get(ATTR_GEN_AI_PROVIDER):
+            self._set(span, ATTR_GEN_AI_PROVIDER, usage.model_provider)
 
     def _enrich_tts_node(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
@@ -1059,6 +1089,8 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
                     {"content": str(response)},
                 )
 
+        self._apply_plugin_llm_usage_to_span(span, attrs)
+
     def _stamp_agent_turn_timing_attrs(
         self, span: ReadableSpan, attrs: Mapping[str, AttributeValue]
     ) -> None:
@@ -1256,6 +1288,8 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         input_modality: str = "",
         agent_hint: str = "",
         source_span: ReadableSpan | None = None,
+        turn_metrics: dict[str, float] | None = None,
+        interrupted: bool = False,
     ) -> None:
         if not self._tracer or not state.parlot_session_id:
             return
@@ -1281,6 +1315,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
                 state, speech_start_wall_ms, speech_end_wall_ms
             )
 
+        metrics = turn_metrics or {}
         trace_id, root_span_id = emit_turn_root_span(
             self._tracer,
             session_id=state.parlot_session_id,
@@ -1299,6 +1334,12 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             media_segment_end_ms=media_end_ms,
             start_time_unix_ns=start_time_unix_ns,
             end_time_unix_ns=end_time_unix_ns,
+            e2e_latency_s=metrics.get("e2e_latency"),
+            llm_ttft_s=metrics.get("llm_ttft"),
+            tts_ttfb_s=metrics.get("tts_ttfb"),
+            transcription_delay_s=metrics.get("transcription_delay"),
+            eou_delay_s=metrics.get("eou_delay"),
+            interrupted=interrupted,
         )
         state.last_turn_trace_id = trace_id
         state.turn_trace_by_index[turn_index] = trace_id

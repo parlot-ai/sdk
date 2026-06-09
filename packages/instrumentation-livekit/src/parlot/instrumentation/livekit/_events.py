@@ -17,7 +17,10 @@ from parlot.core.attrs import (
     ATTR_AGENT_TRANSFER_ITEM_ID,
     ATTR_AGENT_TRANSFER_TO,
     ATTR_GEN_AI_OP_NAME,
+    ATTR_SESSION_CONVERSATION_ID,
+    ATTR_SESSION_ID,
     ATTR_STT_SPEAKER_ID,
+    ATTR_TURN_INDEX,
     ATTR_TURN_INTERRUPTED,
     SPAN_AGENT_HANDOFF,
 )
@@ -80,6 +83,7 @@ _ITEM_METRIC_SOURCE_KEYS = (
     "eou_delay",
     "end_of_turn_delay",
     "on_user_turn_completed_delay",
+    "playback_latency",
 )
 
 _ITEM_METRIC_ALIASES: dict[str, str] = {
@@ -92,6 +96,7 @@ _ITEM_METRIC_ALIASES: dict[str, str] = {
     "e2e_latency": "e2e_latency",
     "transcription_delay": "transcription_delay",
     "on_user_turn_completed_delay": "on_user_turn_completed_delay",
+    "playback_latency": "playback_latency",
 }
 
 
@@ -323,7 +328,17 @@ class LiveKitEventBridge:
         old_id = getattr(item, "old_agent_id", None)
         new_id = getattr(item, "new_agent_id", None)
 
+        from ._session import get_job_bootstrap
+
+        bootstrap = get_job_bootstrap()
         with self._tracer.start_as_current_span(SPAN_AGENT_HANDOFF) as span:
+            if bootstrap is not None and bootstrap.state.parlot_session_id:
+                span.set_attribute(ATTR_SESSION_ID, bootstrap.state.parlot_session_id)
+                span.set_attribute(
+                    ATTR_SESSION_CONVERSATION_ID, bootstrap.state.conversation_id
+                )
+                if bootstrap.state.turn_count:
+                    span.set_attribute(ATTR_TURN_INDEX, bootstrap.state.turn_count)
             if old_id:
                 span.set_attribute(ATTR_AGENT_TRANSFER_FROM, str(old_id))
             new_id = getattr(item, "new_agent_id", None)

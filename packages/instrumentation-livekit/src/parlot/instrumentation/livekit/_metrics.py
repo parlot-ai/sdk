@@ -90,6 +90,11 @@ class ParlotMetricsRecorder:
             unit="ms",
             description="End-of-utterance detection delay for one agent turn",
         )
+        self._turn_playback_latency = self._meter.create_histogram(
+            "turn.playback_latency_ms",
+            unit="ms",
+            description="Playback latency for one agent turn",
+        )
         self._session_turns = self._meter.create_counter(
             "session.turn_count",
             description="Total turns in a session",
@@ -200,6 +205,7 @@ class ParlotMetricsRecorder:
         tts_ttfb_s: Optional[float] = None,
         transcription_delay_s: Optional[float] = None,
         eou_delay_s: Optional[float] = None,
+        playback_latency_s: Optional[float] = None,
         interrupted: bool = False,
         participant_role: str = "agent",
     ) -> None:
@@ -221,6 +227,10 @@ class ParlotMetricsRecorder:
             )
         if eou_delay_s is not None:
             self._turn_eou_delay.record(float(eou_delay_s) * 1000.0, attributes=attrs)
+        if playback_latency_s is not None:
+            self._turn_playback_latency.record(
+                float(playback_latency_s) * 1000.0, attributes=attrs
+            )
 
     def record_session_close(self, state: "_LiveKitSessionState") -> None:
         attrs = self._base_attrs(state)

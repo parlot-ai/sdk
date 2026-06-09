@@ -13,8 +13,13 @@ from parlot.core.attrs import (
     ATTR_SESSION_CONVERSATION_ID,
     ATTR_SESSION_ID,
     ATTR_TURN_ACTIVE_AGENT_ID,
+    ATTR_TURN_E2E_LATENCY_S,
+    ATTR_TURN_EOU_DELAY_S,
     ATTR_TURN_INDEX,
     ATTR_TURN_INPUT_MODALITY,
+    ATTR_TURN_INTERRUPTED,
+    ATTR_TURN_LLM_TTFT_S,
+    ATTR_TURN_TTS_TTFB_S,
     ATTR_TURN_MEDIA_END_MS,
     ATTR_TURN_MEDIA_START_MS,
     ATTR_TURN_PARTICIPANT_ID,
@@ -23,6 +28,7 @@ from parlot.core.attrs import (
     ATTR_TURN_PREV_TRACE_ID,
     ATTR_TURN_SPEECH_WALL_END_MS,
     ATTR_TURN_SPEECH_WALL_START_MS,
+    ATTR_TURN_TRANSCRIPTION_DELAY_S,
 )
 
 if TYPE_CHECKING:
@@ -48,6 +54,12 @@ def emit_turn_root_span(
     media_segment_end_ms: int = 0,
     start_time_unix_ns: int | None = None,
     end_time_unix_ns: int | None = None,
+    e2e_latency_s: float | None = None,
+    llm_ttft_s: float | None = None,
+    tts_ttfb_s: float | None = None,
+    transcription_delay_s: float | None = None,
+    eou_delay_s: float | None = None,
+    interrupted: bool = False,
 ) -> tuple[str, str]:
     """
     Start and end a ``parlot.turn`` root span in a **new** trace.
@@ -97,6 +109,18 @@ def emit_turn_root_span(
         if media_segment_start_ms > 0 or media_segment_end_ms > 0:
             span.set_attribute(ATTR_TURN_MEDIA_START_MS, media_segment_start_ms)
             span.set_attribute(ATTR_TURN_MEDIA_END_MS, media_segment_end_ms)
+        if e2e_latency_s is not None:
+            span.set_attribute(ATTR_TURN_E2E_LATENCY_S, e2e_latency_s)
+        if llm_ttft_s is not None:
+            span.set_attribute(ATTR_TURN_LLM_TTFT_S, llm_ttft_s)
+        if tts_ttfb_s is not None:
+            span.set_attribute(ATTR_TURN_TTS_TTFB_S, tts_ttfb_s)
+        if transcription_delay_s is not None:
+            span.set_attribute(ATTR_TURN_TRANSCRIPTION_DELAY_S, transcription_delay_s)
+        if eou_delay_s is not None:
+            span.set_attribute(ATTR_TURN_EOU_DELAY_S, eou_delay_s)
+        if interrupted:
+            span.set_attribute(ATTR_TURN_INTERRUPTED, True)
     finally:
         span.end(end_time=end_ns)
 

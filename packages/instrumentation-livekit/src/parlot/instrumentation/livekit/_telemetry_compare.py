@@ -13,6 +13,9 @@ from typing import Any
 logger = logging.getLogger("parlot.instrumentation.livekit")
 
 _COMPARE_SPAN_NAMES = frozenset({
+    "parlot.turn",
+    "agent.handoff",
+    "conversation.session",
     "user_turn",
     "agent_turn",
     "llm_node",
