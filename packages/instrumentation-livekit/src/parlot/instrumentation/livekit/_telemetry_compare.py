@@ -86,6 +86,8 @@ class _SessionCompareState:
     event_tokens_out: int | None = None
     span_tokens_in: int = 0
     span_tokens_out: int = 0
+    export_tokens_in: int = 0
+    export_tokens_out: int = 0
     event_latency_fields: set[str] = field(default_factory=set)
     span_latency_fields: set[str] = field(default_factory=set)
     _files: dict[str, Any] = field(default_factory=dict)
@@ -169,6 +171,11 @@ class TelemetryCompareLogger:
             "lk.tts_ttfb",
             "lk.transcription_delay",
             "lk.end_of_turn_delay",
+            "turn.e2e_latency_s",
+            "turn.llm_ttft_s",
+            "turn.tts_ttfb_s",
+            "turn.transcription_delay_s",
+            "turn.eou_delay_s",
             "gen_ai.usage.input_tokens",
             "gen_ai.usage.output_tokens",
         ):
@@ -191,6 +198,39 @@ class TelemetryCompareLogger:
             data={"attributes": attrs, "latency_keys": latency_keys},
         )
 
+    def accumulate_export_tokens(
+        self,
+        session_id: str,
+        *,
+        span_name: str,
+        attrs: dict[str, Any],
+    ) -> None:
+        """Update span token totals from export-time enrichment (no duplicate JSONL row)."""
+        if span_name not in ("llm_node", "agent_turn"):
+            return
+        state = self._state(session_id)
+        if state is None:
+            return
+        if "gen_ai.usage.input_tokens" in attrs:
+            try:
+                state.export_tokens_in += int(attrs["gen_ai.usage.input_tokens"])
+            except (TypeError, ValueError):
+                pass
+        if "gen_ai.usage.output_tokens" in attrs:
+            try:
+                state.export_tokens_out += int(attrs["gen_ai.usage.output_tokens"])
+            except (TypeError, ValueError):
+                pass
+        latency_keys = [
+            k
+            for k in (
+                "gen_ai.usage.input_tokens",
+                "gen_ai.usage.output_tokens",
+            )
+            if k in attrs
+        ]
+        state.span_latency_fields.update(latency_keys)
+
     def log_plugin_metrics(self, session_id: str, *, metrics_obj: Any) -> None:
         state = self._state(session_id)
         if state is None:
@@ -208,6 +248,8 @@ class TelemetryCompareLogger:
         state = self._sessions.pop(session_id, None)
         if state is None:
             return
+        span_tokens_in = state.span_tokens_in + state.export_tokens_in
+        span_tokens_out = state.span_tokens_out + state.export_tokens_out
         summary = {
             "session_id": session_id,
             "event_turns": state.event_turns,
@@ -215,8 +257,12 @@ class TelemetryCompareLogger:
             "plugin_events": state.plugin_events,
             "event_tokens_in": state.event_tokens_in,
             "event_tokens_out": state.event_tokens_out,
-            "span_tokens_in": state.span_tokens_in,
-            "span_tokens_out": state.span_tokens_out,
+            "span_tokens_in": span_tokens_in,
+            "span_tokens_out": span_tokens_out,
+            "span_tokens_in_on_end": state.span_tokens_in,
+            "span_tokens_out_on_end": state.span_tokens_out,
+            "span_tokens_in_export": state.export_tokens_in,
+            "span_tokens_out_export": state.export_tokens_out,
             "event_latency_fields": sorted(state.event_latency_fields),
             "span_latency_fields": sorted(state.span_latency_fields),
         }

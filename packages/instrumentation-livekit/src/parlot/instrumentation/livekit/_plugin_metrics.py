@@ -81,6 +81,7 @@ def handle_plugin_metrics_collected(
     speech_id = str(getattr(metrics_obj, "speech_id", "") or "").strip()
     if speech_id:
         plugin_state.by_speech_id[speech_id] = llm_usage
+        state.active_speech_id = speech_id
     plugin_state.llm_queue.append(llm_usage)
 
 
@@ -88,8 +89,16 @@ def resolve_llm_usage_for_span(
     processor: "LiveKitGenAIProcessor",
     *,
     speech_id: str = "",
+    prefer_fifo: bool = False,
 ) -> Optional[_PluginLlmUsage]:
+    """Resolve plugin LLM token usage for a span.
+
+    ``prefer_fifo=True`` (export-time) consumes the FIFO queue in arrival order so
+    multiple ``llm_node`` spans per speech each get the correct metrics row.
+    """
     plugin_state = _plugin_state(processor)
+    if prefer_fifo and plugin_state.llm_queue:
+        return plugin_state.llm_queue.pop(0)
     sid = speech_id.strip()
     if sid and sid in plugin_state.by_speech_id:
         return plugin_state.by_speech_id.pop(sid)

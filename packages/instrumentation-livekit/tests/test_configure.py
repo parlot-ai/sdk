@@ -110,10 +110,6 @@ class TestDevWatchParentSkip:
     def test_skips_configure_in_dev_watch_parent(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
         monkeypatch.setattr(sys, "argv", ["agent.py", "dev"])
-        monkeypatch.setattr(
-            "parlot.instrumentation.livekit._auto.multiprocessing.parent_process",
-            lambda: None,
-        )
 
         from parlot.instrumentation.livekit import configure
         import parlot.instrumentation.livekit._auto as _auto
@@ -129,9 +125,15 @@ class TestDevWatchParentSkip:
     def test_configures_in_dev_worker_child(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
         monkeypatch.setattr(sys, "argv", ["agent.py", "dev"])
+
+        import multiprocessing
+
+        class _SpawnProcess:
+            name = "SpawnProcess-1"
+
         monkeypatch.setattr(
-            "parlot.instrumentation.livekit._auto.multiprocessing.parent_process",
-            lambda: object(),
+            "parlot.instrumentation.livekit._auto.multiprocessing.current_process",
+            lambda: _SpawnProcess(),
         )
 
         from parlot.instrumentation.livekit import configure
@@ -144,10 +146,6 @@ class TestDevWatchParentSkip:
     def test_configures_in_dev_no_reload(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
         monkeypatch.setattr(sys, "argv", ["agent.py", "dev", "--no-reload"])
-        monkeypatch.setattr(
-            "parlot.instrumentation.livekit._auto.multiprocessing.parent_process",
-            lambda: None,
-        )
 
         from parlot.instrumentation.livekit import configure
         import parlot.instrumentation.livekit._auto as _auto

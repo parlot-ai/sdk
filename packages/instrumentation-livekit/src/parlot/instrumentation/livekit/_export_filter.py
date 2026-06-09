@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Sequence
+from typing import TYPE_CHECKING, Sequence
 
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter, SpanExportResult
 
 from parlot.core.attrs import SPAN_AGENT_HANDOFF, SPAN_PARLOT_SESSION_CLOSE
+
+if TYPE_CHECKING:
+    from ._processor import LiveKitGenAIProcessor
 
 SPAN_CONVERSATION_SESSION = "conversation.session"
 SPAN_PARLOT_TURN = "parlot.turn"
@@ -32,6 +35,29 @@ EXPORTABLE_SPAN_NAMES = frozenset({
     SPAN_AGENT_HANDOFF,
     *_EXPORTABLE_OPERATIONAL_SPANS,
 })
+
+
+class EnrichingExportSpanExporter(SpanExporter):
+    """Apply deferred plugin token enrichment before downstream export."""
+
+    def __init__(
+        self,
+        exporter: SpanExporter,
+        processor: "LiveKitGenAIProcessor",
+    ) -> None:
+        self._exporter = exporter
+        self._processor = processor
+
+    def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
+        batch = list(spans)
+        self._processor.enrich_spans_for_export(batch)
+        return self._exporter.export(batch)
+
+    def shutdown(self) -> None:
+        self._exporter.shutdown()
+
+    def force_flush(self, timeout_millis: int = 30000) -> bool:
+        return self._exporter.force_flush(timeout_millis)
 
 
 class ExportFilterSpanExporter(SpanExporter):

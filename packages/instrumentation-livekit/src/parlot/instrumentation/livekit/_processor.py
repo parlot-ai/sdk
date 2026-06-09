@@ -198,6 +198,7 @@ class _LiveKitSessionState(_BaseSessionState):
     committed_handoff_ids: set[str] = field(default_factory=set)
     pending_user_speaker_id: str = ""
     pending_user_language: str = ""
+    active_speech_id: str = ""
     last_user_input_modality: str = ""
     usage_from_events: bool = False
     metrics_recorded_turns: set[int] = field(default_factory=set)
@@ -238,8 +239,8 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             if name == SPAN_CONVERSATION_SESSION:
                 handle_conversation_session_on_end()
                 return
-            self._log_compare_span(span)
             self._enrich(span)
+            self._log_compare_span(span)
         except Exception:
             logger.exception("LiveKitGenAIProcessor failed on span %r", span.name)
 
@@ -256,6 +257,47 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
     @property
     def turn_source(self) -> str:
         return self._turn_source
+
+    def enrich_spans_for_export(self, spans: list[ReadableSpan]) -> None:
+        """Deferred enrichment after plugin metrics_collected (export-time)."""
+        llm_spans = sorted(
+            (s for s in spans if s.name == "llm_node"),
+            key=lambda s: s.end_time or 0,
+        )
+        for span in llm_spans:
+            attrs = span.attributes or {}
+            if not attrs.get(ATTR_LK_SPEECH_ID):
+                bootstrap = get_job_bootstrap()
+                speech_id = ""
+                if bootstrap is not None:
+                    speech_id = bootstrap.state.active_speech_id.strip()
+                if speech_id:
+                    self._set(span, ATTR_LK_SPEECH_ID, speech_id)
+            self._apply_plugin_llm_usage_to_span(
+                span, span.attributes or {}, prefer_fifo=True
+            )
+
+        for span in spans:
+            if span.name == "agent_turn":
+                self._apply_plugin_llm_usage_to_span(
+                    span, span.attributes or {}, prefer_fifo=True
+                )
+
+        from ._telemetry_compare import compare_enabled, get_compare_logger
+
+        if not compare_enabled():
+            return
+        bootstrap = get_job_bootstrap()
+        if bootstrap is None or not bootstrap.state.parlot_session_id:
+            return
+        session_id = bootstrap.state.parlot_session_id
+        for span in spans:
+            if span.name in ("llm_node", "agent_turn"):
+                get_compare_logger().accumulate_export_tokens(
+                    session_id,
+                    span_name=span.name or "",
+                    attrs=dict(span.attributes or {}),
+                )
 
     def _log_compare_span(self, span: ReadableSpan) -> None:
         from ._session import get_job_bootstrap
@@ -692,6 +734,9 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if not attrs.get(ATTR_GEN_AI_OP_NAME):
             self._set(span, ATTR_GEN_AI_OP_NAME, "chat")
 
+        if not attrs.get(ATTR_LK_SPEECH_ID) and state.active_speech_id:
+            self._set(span, ATTR_LK_SPEECH_ID, state.active_speech_id)
+
         chat_raw = str(attrs.get(ATTR_LK_CHAT_CTX, ""))
         instructions = str(attrs.get(ATTR_LK_INSTRUCTIONS, "")).strip()
         if not instructions and chat_raw:
@@ -731,13 +776,17 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         self,
         span: ReadableSpan,
         attrs: Mapping[str, AttributeValue],
+        *,
+        prefer_fifo: bool = False,
     ) -> None:
         if attrs.get(ATTR_GEN_AI_IN_TOKENS) or attrs.get(ATTR_GEN_AI_OUT_TOKENS):
             return
         from ._plugin_metrics import resolve_llm_usage_for_span
 
         speech_id = str(attrs.get(ATTR_LK_SPEECH_ID, "") or "")
-        usage = resolve_llm_usage_for_span(self, speech_id=speech_id)
+        usage = resolve_llm_usage_for_span(
+            self, speech_id=speech_id, prefer_fifo=prefer_fifo
+        )
         if usage is None:
             return
         if usage.prompt_tokens > 0:
@@ -1033,6 +1082,9 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
         turn_index = state.open_agent_turn_index or (state.turn_count + 1)
         self._set(span, ATTR_TURN_INDEX, turn_index)
+        speech_id = str(attrs.get(ATTR_LK_SPEECH_ID, "") or "").strip()
+        if speech_id:
+            state.active_speech_id = speech_id
         agent_id = self._active_agent_id(state, attrs)
         agent_modality = self._user_turn_modality(attrs)
         self._emit_turn_trace(
@@ -1316,6 +1368,23 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             )
 
         metrics = turn_metrics or {}
+        if speech_wall is None and input_modality == "voice":
+            started = metrics.get("started_speaking_at")
+            stopped = metrics.get("stopped_speaking_at")
+            if started is not None and stopped is not None:
+                try:
+                    speech_start_wall_ms = int(float(started) * 1000)
+                    speech_end_wall_ms = int(float(stopped) * 1000)
+                    if speech_end_wall_ms > speech_start_wall_ms:
+                        speech_wall = (speech_start_wall_ms, speech_end_wall_ms)
+                        start_time_unix_ns = speech_start_wall_ms * 1_000_000
+                        end_time_unix_ns = speech_end_wall_ms * 1_000_000
+                        media_start_ms, media_end_ms = self._media_segments_from_speech(
+                            state, speech_start_wall_ms, speech_end_wall_ms
+                        )
+                except (TypeError, ValueError):
+                    pass
+
         trace_id, root_span_id = emit_turn_root_span(
             self._tracer,
             session_id=state.parlot_session_id,

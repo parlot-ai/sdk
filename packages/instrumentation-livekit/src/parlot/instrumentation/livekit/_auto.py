@@ -19,8 +19,13 @@ def _is_livekit_dev_watch_parent() -> bool:
     ``lk-agents dev`` (reload on by default) imports the agent in a parent
     process that only watches files, then spawns a child worker that
     re-imports ``__main__`` and runs jobs. Instrumentation belongs in the child.
+
+    The spawned child inherits ``sys.argv`` (including ``dev``) and, while
+    ``agent.py`` is re-imported during ``multiprocessing`` spawn setup,
+    ``parent_process()`` is still ``None``. Use the process name instead:
+    only the top-level watcher is ``MainProcess``.
     """
-    if multiprocessing.parent_process() is not None:
+    if multiprocessing.current_process().name != "MainProcess":
         return False
 
     argv = sys.argv
@@ -141,7 +146,7 @@ def _build_provider(
     from opentelemetry.semconv.attributes import service_attributes
 
     from ._export import QuietOTLPSpanExporter
-    from ._export_filter import ExportFilterSpanExporter
+    from ._export_filter import EnrichingExportSpanExporter, ExportFilterSpanExporter
     from ._export_sanitize import SanitizeVendorAttrsSpanExporter
     from ._metrics import ParlotMetricsRecorder, build_meter_provider
     from ._processor import LiveKitGenAIProcessor
@@ -163,7 +168,8 @@ def _build_provider(
     )
 
     remapping_exporter = TurnTraceRemappingExporter(otlp_exporter, processor)
-    filtered_exporter = ExportFilterSpanExporter(remapping_exporter)
+    enriching_exporter = EnrichingExportSpanExporter(remapping_exporter, processor)
+    filtered_exporter = ExportFilterSpanExporter(enriching_exporter)
     sanitized_exporter = SanitizeVendorAttrsSpanExporter(filtered_exporter)
     exporter = QuietOTLPSpanExporter(
         sanitized_exporter,

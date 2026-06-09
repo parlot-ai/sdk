@@ -84,6 +84,8 @@ _ITEM_METRIC_SOURCE_KEYS = (
     "end_of_turn_delay",
     "on_user_turn_completed_delay",
     "playback_latency",
+    "started_speaking_at",
+    "stopped_speaking_at",
 )
 
 _ITEM_METRIC_ALIASES: dict[str, str] = {
