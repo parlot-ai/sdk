@@ -70,6 +70,31 @@ def _message_text(item: Any) -> str:
     return ""
 
 
+_ITEM_METRIC_SOURCE_KEYS = (
+    "e2e_latency",
+    "llm_node_ttft",
+    "llm_ttft",
+    "tts_node_ttfb",
+    "tts_ttfb",
+    "transcription_delay",
+    "eou_delay",
+    "end_of_turn_delay",
+    "on_user_turn_completed_delay",
+)
+
+_ITEM_METRIC_ALIASES: dict[str, str] = {
+    "llm_node_ttft": "llm_ttft",
+    "llm_ttft": "llm_ttft",
+    "tts_node_ttfb": "tts_ttfb",
+    "tts_ttfb": "tts_ttfb",
+    "end_of_turn_delay": "eou_delay",
+    "eou_delay": "eou_delay",
+    "e2e_latency": "e2e_latency",
+    "transcription_delay": "transcription_delay",
+    "on_user_turn_completed_delay": "on_user_turn_completed_delay",
+}
+
+
 def _item_metrics(item: Any) -> dict[str, float]:
     metrics = getattr(item, "metrics", None)
     if metrics is None:
@@ -78,26 +103,20 @@ def _item_metrics(item: Any) -> dict[str, float]:
         raw = metrics
     else:
         raw = {}
-        for key in (
-            "e2e_latency",
-            "llm_ttft",
-            "tts_ttfb",
-            "transcription_delay",
-            "eou_delay",
-            "end_of_turn_delay",
-        ):
+        for key in _ITEM_METRIC_SOURCE_KEYS:
             val = getattr(metrics, key, None)
             if val is not None:
                 raw[key] = val
 
     out: dict[str, float] = {}
     for key, val in raw.items():
+        if not isinstance(key, str):
+            continue
+        canonical = _ITEM_METRIC_ALIASES.get(key, key)
         try:
-            out[key] = float(val)
+            out[canonical] = float(val)
         except (TypeError, ValueError):
             continue
-    if "end_of_turn_delay" in out and "eou_delay" not in out:
-        out["eou_delay"] = out["end_of_turn_delay"]
     return out
 
 
@@ -184,13 +203,6 @@ class LiveKitEventBridge:
             except Exception:
                 logger.debug("agent_state_changed handler failed", exc_info=True)
 
-        @session.on("metrics_collected")
-        def _on_metrics_collected(ev: Any) -> None:
-            try:
-                self._on_metrics_collected(ev)
-            except Exception:
-                logger.debug("metrics_collected handler failed", exc_info=True)
-
         @session.on("close")
         def _on_close(ev: Any) -> None:
             try:
@@ -270,6 +282,24 @@ class LiveKitEventBridge:
         interrupted = bool(getattr(item, "interrupted", False))
         metrics = _item_metrics(item)
 
+        from ._session import get_job_bootstrap
+        from ._telemetry_compare import get_compare_logger
+
+        bootstrap = get_job_bootstrap()
+        if bootstrap is not None and bootstrap.state.parlot_session_id:
+            get_compare_logger().log_event(
+                bootstrap.state.parlot_session_id,
+                category="conversation_item_added",
+                data={
+                    "role": role,
+                    "item_id": item_id,
+                    "interrupted": interrupted,
+                    "metrics": metrics,
+                    "text_len": len(text),
+                },
+                turn_index=bootstrap.state.turn_count + (0 if role == "user" else 1),
+            )
+
         if role == "user":
             self._processor.commit_user_message(
                 text,
@@ -312,6 +342,21 @@ class LiveKitEventBridge:
                 to_agent=str(new_id) if new_id else "",
             )
 
+        from ._session import get_job_bootstrap
+        from ._telemetry_compare import get_compare_logger
+
+        bootstrap = get_job_bootstrap()
+        if bootstrap is not None and bootstrap.state.parlot_session_id:
+            get_compare_logger().log_event(
+                bootstrap.state.parlot_session_id,
+                category="agent_handoff",
+                data={
+                    "from_agent": str(old_id) if old_id else "",
+                    "to_agent": str(new_id) if new_id else "",
+                    "item_id": item_id,
+                },
+            )
+
     def _on_user_input_transcribed(self, ev: Any) -> None:
         if not getattr(ev, "is_final", True):
             return
@@ -345,19 +390,20 @@ class LiveKitEventBridge:
             total_out += int(getattr(entry, "output_tokens", 0) or 0)
         self._processor.apply_session_usage(total_in, total_out)
 
-    def _on_metrics_collected(self, ev: Any) -> None:
-        metrics_obj = getattr(ev, "metrics", None)
-        if metrics_obj is None:
-            return
         from ._session import get_job_bootstrap
+        from ._telemetry_compare import get_compare_logger
 
         bootstrap = get_job_bootstrap()
-        if bootstrap is None or not bootstrap.state.parlot_session_id:
-            return
-        metrics = self._processor._metrics
-        if metrics is not None:
-            metrics.record_usage_collected(bootstrap.state, metrics_obj)
-            setattr(ev, "_parlot_usage_recorded", True)
+        if bootstrap is not None and bootstrap.state.parlot_session_id:
+            get_compare_logger().log_event(
+                bootstrap.state.parlot_session_id,
+                category="session_usage_updated",
+                data={
+                    "total_input_tokens": total_in,
+                    "total_output_tokens": total_out,
+                    "model_usage_count": len(model_usage),
+                },
+            )
 
     def _on_error(self, ev: Any) -> None:
         err = getattr(ev, "error", None)
@@ -367,8 +413,19 @@ class LiveKitEventBridge:
         message = str(err)
         self._processor.note_session_error(message, recoverable=recoverable)
 
+        from ._session import get_job_bootstrap
+        from ._telemetry_compare import get_compare_logger
+
+        bootstrap = get_job_bootstrap()
+        if bootstrap is not None and bootstrap.state.parlot_session_id:
+            get_compare_logger().log_event(
+                bootstrap.state.parlot_session_id,
+                category="error",
+                data={"message": message, "recoverable": recoverable},
+            )
+
     def _on_close(self, ev: Any) -> None:
-        from ._session import emit_parlot_session_close_span, get_job_bootstrap
+        from ._session import get_job_bootstrap
 
         bootstrap = get_job_bootstrap()
         if bootstrap is None or bootstrap.close_span_done:
@@ -379,6 +436,15 @@ class LiveKitEventBridge:
         close_error = str(error) if error else None
         if close_error is None:
             close_error = self._processor.pop_pending_close_error()
+
+        if bootstrap is not None and bootstrap.state.parlot_session_id:
+            from ._telemetry_compare import get_compare_logger
+
+            get_compare_logger().log_event(
+                bootstrap.state.parlot_session_id,
+                category="close",
+                data={"reason": reason, "close_error": close_error},
+            )
 
         from ._session import finalize_session_close_from_hook
 

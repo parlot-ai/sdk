@@ -1,4 +1,8 @@
-"""Tests for Parlot usage.* metric emission from LiveKit MetricsCollected."""
+"""Tests for Parlot usage.* metric recorder (direct API).
+
+Per-call usage via deprecated session metrics_collected is deferred; these tests
+cover record_usage_collected for a future plugin-metrics follow-up.
+"""
 
 from __future__ import annotations
 

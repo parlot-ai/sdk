@@ -62,6 +62,7 @@ def configure(
     _register_with_livekit(tracer_provider)
     _patch_agent_session_with_tracer(tracer_provider)
     _patch_job_context_connect()
+    _install_telemetry_compare()
 
     if resolved_api_key:
         _fetch_and_cache_bootstrap(resolved_endpoint, resolved_api_key)
@@ -185,6 +186,12 @@ def _patch_agent_session_with_tracer(provider) -> None:
     from ._hooks import _patch_agent_session
 
     _patch_agent_session(processor, tracer)
+
+
+def _install_telemetry_compare() -> None:
+    from ._telemetry_compare import install_emit_compare_intercept
+
+    install_emit_compare_intercept()
 
 
 def _patch_job_context_connect() -> None:

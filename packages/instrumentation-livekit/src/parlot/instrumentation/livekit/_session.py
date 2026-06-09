@@ -348,6 +348,10 @@ def finalize_session_close_from_hook(
     # Mark closed before cleanup so other tasks still holding this ContextVar
     # value stop resolving session attributes (close hook != attach task).
     bootstrap.close_span_done = True
+    if bootstrap.state.parlot_session_id:
+        from ._telemetry_compare import get_compare_logger
+
+        get_compare_logger().finalize_session(bootstrap.state.parlot_session_id)
     _cleanup_job_bootstrap(bootstrap.processor, bootstrap, end_time=end_time)
 
 

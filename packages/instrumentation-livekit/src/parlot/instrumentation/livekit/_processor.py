@@ -237,6 +237,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             if name == SPAN_CONVERSATION_SESSION:
                 handle_conversation_session_on_end()
                 return
+            self._log_compare_span(span)
             self._enrich(span)
         except Exception:
             logger.exception("LiveKitGenAIProcessor failed on span %r", span.name)
@@ -254,6 +255,20 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
     @property
     def turn_source(self) -> str:
         return self._turn_source
+
+    def _log_compare_span(self, span: ReadableSpan) -> None:
+        from ._session import get_job_bootstrap
+        from ._telemetry_compare import get_compare_logger
+
+        bootstrap = get_job_bootstrap()
+        if bootstrap is None or not bootstrap.state.parlot_session_id:
+            return
+        attrs = span.attributes or {}
+        get_compare_logger().log_span(
+            bootstrap.state.parlot_session_id,
+            span_name=span.name or "",
+            attrs=dict(attrs),
+        )
 
     def mark_conversation_item_committed(self, item_id: str) -> bool:
         """Return False if this conversation item was already processed."""

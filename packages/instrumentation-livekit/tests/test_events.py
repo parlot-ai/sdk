@@ -414,3 +414,4 @@ class TestInstallSessionHooks:
         assert "conversation_item_added" in handlers
         assert "close" in handlers
         assert "agent_state_changed" in handlers
+        assert "metrics_collected" not in handlers
