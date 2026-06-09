@@ -9,6 +9,7 @@ import pytest
 
 from parlot.core.attrs import ATTR_GEN_AI_IN_TOKENS, ATTR_GEN_AI_OUT_TOKENS
 from parlot.instrumentation.livekit._plugin_metrics import (
+    _plugin_state,
     handle_plugin_metrics_collected,
     install_emit_metrics_intercept,
     resolve_llm_usage_for_span,
@@ -63,6 +64,74 @@ def test_handle_plugin_metrics_llm_accumulator() -> None:
     assert usage is not None
     assert usage.prompt_tokens == 100
     assert usage.completion_tokens == 20
+    plugin_state = _plugin_state(processor)
+    assert plugin_state.llm_queue == []
+
+
+def test_speech_id_metrics_not_duplicated_in_fifo_queue() -> None:
+    processor = LiveKitGenAIProcessor()
+    processor._metrics = _FakeMetrics()
+    state = SimpleNamespace(parlot_session_id="sess-1", active_speech_id="")
+    bootstrap = SimpleNamespace(state=state)
+
+    with patch(
+        "parlot.instrumentation.livekit._session.get_job_bootstrap",
+        return_value=bootstrap,
+    ):
+        llm = SimpleNamespace(
+            type="llm_metrics",
+            speech_id="sp-dup",
+            prompt_tokens=10,
+            completion_tokens=2,
+            metadata=None,
+        )
+        handle_plugin_metrics_collected(processor, llm)
+
+    plugin_state = _plugin_state(processor)
+    assert "sp-dup" in plugin_state.by_speech_id
+    assert plugin_state.llm_queue == []
+
+    usage = resolve_llm_usage_for_span(processor, speech_id="sp-dup")
+    assert usage is not None
+    assert usage.prompt_tokens == 10
+    assert resolve_llm_usage_for_span(processor, speech_id="sp-dup") is None
+
+
+def test_multiple_metrics_per_speech_id_fifo() -> None:
+    processor = LiveKitGenAIProcessor()
+    processor._metrics = _FakeMetrics()
+    state = SimpleNamespace(parlot_session_id="sess-1", active_speech_id="")
+    bootstrap = SimpleNamespace(state=state)
+
+    with patch(
+        "parlot.instrumentation.livekit._session.get_job_bootstrap",
+        return_value=bootstrap,
+    ):
+        for prompt in (10, 20, 30):
+            handle_plugin_metrics_collected(
+                processor,
+                SimpleNamespace(
+                    type="llm_metrics",
+                    speech_id="sp-multi",
+                    prompt_tokens=prompt,
+                    completion_tokens=1,
+                    metadata=None,
+                ),
+            )
+
+    plugin_state = _plugin_state(processor)
+    assert plugin_state.llm_queue == []
+    assert [u.prompt_tokens for u in plugin_state.by_speech_id["sp-multi"]] == [
+        10,
+        20,
+        30,
+    ]
+
+    first = resolve_llm_usage_for_span(processor, speech_id="sp-multi")
+    second = resolve_llm_usage_for_span(processor, speech_id="sp-multi")
+    assert first is not None and first.prompt_tokens == 10
+    assert second is not None and second.prompt_tokens == 20
+    assert "sp-multi" in plugin_state.by_speech_id
 
 
 def test_enrich_llm_node_applies_plugin_tokens() -> None:

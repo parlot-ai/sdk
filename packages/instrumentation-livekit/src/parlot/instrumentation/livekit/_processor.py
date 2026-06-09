@@ -277,12 +277,6 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
                 span, span.attributes or {}, prefer_fifo=True
             )
 
-        for span in spans:
-            if span.name == "agent_turn":
-                self._apply_plugin_llm_usage_to_span(
-                    span, span.attributes or {}, prefer_fifo=True
-                )
-
         from ._telemetry_compare import compare_enabled, get_compare_logger
 
         if not compare_enabled():
@@ -292,7 +286,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             return
         session_id = bootstrap.state.parlot_session_id
         for span in spans:
-            if span.name in ("llm_node", "agent_turn"):
+            if span.name == "llm_node":
                 get_compare_logger().accumulate_export_tokens(
                     session_id,
                     span_name=span.name or "",
@@ -1140,8 +1134,6 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
                     EVENT_GEN_AI_ASSISTANT_MESSAGE,
                     {"content": str(response)},
                 )
-
-        self._apply_plugin_llm_usage_to_span(span, attrs)
 
     def _stamp_agent_turn_timing_attrs(
         self, span: ReadableSpan, attrs: Mapping[str, AttributeValue]
