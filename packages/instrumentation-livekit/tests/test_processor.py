@@ -498,3 +498,15 @@ class TestHandoffSpanEnrichment:
         assert span._attributes[ATTR_GEN_AI_AGENT_NAME] == "agent-new"
         assert ATTR_GEN_AI_CONVERSATION_ID in span._attributes
         assert ATTR_SESSION_ID in span._attributes
+
+    def test_handoff_updates_agent_label_for_subsequent_turns(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
+        state = get_job_bootstrap().state
+        state.agent_label = "calcom-receptionist"
+        span = _make_span(SPAN_AGENT_HANDOFF, {
+            ATTR_AGENT_TRANSFER_FROM: "calcom-receptionist",
+            ATTR_AGENT_TRANSFER_TO: "get_email_task",
+        })
+        proc.on_end(span)
+        assert state.agent_label == "get_email_task"

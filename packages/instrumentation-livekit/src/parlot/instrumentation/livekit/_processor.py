@@ -893,6 +893,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
             if new_agent:
                 self._set(span, ATTR_AGENT_TRANSFER_TO, new_agent)
+                state.agent_label = new_agent
                 if not state.agent_chain or state.agent_chain[-1] != new_agent:
                     state.agent_chain.append(new_agent)
 
@@ -1192,6 +1193,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if target is not None:
             self._stamp_agent_identity(span, state, attrs, label_override=str(target))
             target_str = str(target)
+            state.agent_label = target_str
             if not state.agent_chain or state.agent_chain[-1] != target_str:
                 state.agent_chain.append(target_str)
         else:
