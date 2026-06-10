@@ -876,7 +876,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
                 ATTR_TOOL_INPUT_PAYLOAD_PREVIEW,
                 payload[:_TOOL_PREVIEW_CHARS],
             )
-        if self._capture_content and tool_output and not is_error:
+        if self._capture_content and tool_output:
             out_preview = str(tool_output)[:_TOOL_PREVIEW_CHARS]
             self._set(span, ATTR_TOOL_OUTPUT_PAYLOAD_PREVIEW, out_preview)
 

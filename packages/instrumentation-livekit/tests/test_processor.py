@@ -33,6 +33,7 @@ from parlot.core.attrs import (
     ATTR_TURN_INDEX,
     ATTR_TURN_USER_TEXT,
     ATTR_EXCEPTION_TYPE,
+    ATTR_TOOL_OUTPUT_PAYLOAD_PREVIEW,
     EVENT_GEN_AI_ASSISTANT_MESSAGE,
     EVENT_GEN_AI_USER_MESSAGE,
 )
@@ -141,9 +142,13 @@ class TestLlmRequestEnrichment:
         span = _make_span("function_tool", {
             ATTR_LK_FNC_TOOL_NAME: "book_appointment",
             ATTR_LK_FNC_TOOL_ERROR: True,
+            ATTR_LK_FNC_TOOL_OUTPUT: "AgentTask get_email_task is cancelled",
         })
         proc.on_end(span)
         assert span._status.status_code == StatusCode.ERROR
+        assert span._attributes.get(ATTR_TOOL_OUTPUT_PAYLOAD_PREVIEW) == (
+            "AgentTask get_email_task is cancelled"
+        )
 
 
 class TestLlmNodeEnrichment:
