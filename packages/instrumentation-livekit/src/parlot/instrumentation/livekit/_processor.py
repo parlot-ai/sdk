@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from typing import Any, FrozenSet, Optional
 
 from opentelemetry.sdk.trace import ReadableSpan
-from opentelemetry.trace import Status, StatusCode
+from opentelemetry.trace import Status, StatusCode, Tracer
 from opentelemetry.util.types import AttributeValue
 
 from parlot.core.logging import format_attrs_for_log
@@ -28,6 +28,7 @@ from parlot.core.attrs import (
     ATTR_AGENT_TOOL_IS_ERROR,
     ATTR_AGENT_TOOL_NAME,
     ATTR_AGENT_TOOL_NAMES,
+    ATTR_AGENT_TOOL_TIMING_CORRECTED,
     ATTR_AGENT_TRANSFER_FROM,
     ATTR_AGENT_TRANSFER_LATENCY_MS,
     ATTR_AGENT_TRANSFER_SEQUENCE,
@@ -136,6 +137,8 @@ from ._turn_traces import emit_turn_root_span
 logger = logging.getLogger("parlot.instrumentation.livekit")
 
 _MAX_TOOL_PAYLOAD_CHARS = 8192
+_ASYNC_TOOL_MIN_DURATION_NS = 30_000_000_000
+_EXECUTION_START_GAP_NS = 5_000_000_000
 _TOOL_PREVIEW_CHARS = 512
 _INSTRUCTIONS_EXCERPT_CHARS = 2000
 
@@ -206,6 +209,7 @@ class _LiveKitSessionState(_BaseSessionState):
     user_text_by_turn: dict[int, str] = field(default_factory=dict)
     agent_text_by_turn: dict[int, str] = field(default_factory=dict)
     last_user_turn_index: int = 0
+    tool_execution_ns_queue: list[int] = field(default_factory=list)
 
 
 class LiveKitGenAIProcessor(ParlotBaseProcessor):
@@ -220,7 +224,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         self._handoff_tools = handoff_tool_names or set()
         self._sessions: dict[str, _LiveKitSessionState] = {}
         self._turn_trace_registry: dict[str, dict[int, tuple[str, str]]] = {}
-        self._tracer = None
+        self._tracer: Tracer | None = None
         self._metrics = None
         self._turn_source: str = "spans"
 
@@ -244,7 +248,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         except Exception:
             logger.exception("LiveKitGenAIProcessor failed on span %r", span.name)
 
-    def set_tracer(self, tracer) -> None:
+    def set_tracer(self, tracer: Tracer) -> None:
         self._tracer = tracer
 
     def set_metrics(self, metrics) -> None:
@@ -260,6 +264,8 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
     def enrich_spans_for_export(self, spans: list[ReadableSpan]) -> None:
         """Deferred enrichment after plugin metrics_collected (export-time)."""
+        self._correct_function_tool_timing(spans)
+
         llm_spans = sorted(
             (s for s in spans if s.name == "llm_node"),
             key=lambda s: s.end_time or 0,
@@ -360,7 +366,42 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         bootstrap = get_job_bootstrap()
         if bootstrap is None:
             return
-        bootstrap.state.tool_call_count += count
+        state = bootstrap.state
+        executed_ns = time.time_ns()
+        for _ in range(count):
+            state.tool_execution_ns_queue.append(executed_ns)
+        state.tool_call_count += count
+
+    def _correct_function_tool_timing(self, spans: list[ReadableSpan]) -> None:
+        bootstrap = get_job_bootstrap()
+        if bootstrap is None:
+            return
+        queue = list(bootstrap.state.tool_execution_ns_queue)
+        if not queue:
+            return
+
+        tool_spans = sorted(
+            (s for s in spans if s.name == "function_tool"),
+            key=lambda s: s.end_time or 0,
+        )
+        for span in tool_spans:
+            if not queue:
+                break
+            executed_ns = queue.pop(0)
+            if span.start_time is None or span.end_time is None:
+                continue
+            duration_ns = span.end_time - span.start_time
+            start_gap_ns = executed_ns - span.start_time
+            should_correct = (
+                duration_ns >= _ASYNC_TOOL_MIN_DURATION_NS
+                or start_gap_ns >= _EXECUTION_START_GAP_NS
+            )
+            if not should_correct or executed_ns >= span.end_time:
+                continue
+            span._start_time = executed_ns
+            new_duration_ms = round((span.end_time - executed_ns) / 1_000_000, 2)
+            self._set(span, ATTR_GEN_AI_TOOL_DURATION_MS, new_duration_ms)
+            self._set(span, ATTR_AGENT_TOOL_TIMING_CORRECTED, True)
 
     def apply_session_usage(self, total_in: int, total_out: int) -> None:
         bootstrap = get_job_bootstrap()

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
@@ -13,6 +14,7 @@ from parlot.core.attrs import (
     ATTR_AGENT_ROLE,
     ATTR_AGENT_TRANSFER_FROM,
     ATTR_AGENT_TRANSFER_TO,
+    ATTR_AGENT_TOOL_TIMING_CORRECTED,
     ATTR_GEN_AI_AGENT_NAME,
     ATTR_GEN_AI_CACHE_HIT_RATE,
     ATTR_GEN_AI_CACHED_TOKENS,
@@ -64,19 +66,49 @@ from bootstrap_helpers import bootstrap_via_agent_state
 # Minimal ReadableSpan stub
 # ---------------------------------------------------------------------------
 
-def _make_span(name: str, attributes: dict | None = None,
-               start_time: int = 1_000_000_000,
-               end_time: int   = 2_000_000_000) -> MagicMock:
-    span = MagicMock()
-    span.name = name
-    span._attributes = dict(attributes or {})
-    span._events = []
-    span.start_time = start_time
-    span.end_time   = end_time
-    span.context.trace_id = 0xDEADBEEF
-    span.context.span_id = 0xBEEF
-    span.attributes = span._attributes
-    return span
+class _SpanStub:
+    """ReadableSpan stand-in; mirrors OTel's private _start_time/_end_time fields."""
+
+    def __init__(
+        self,
+        name: str,
+        attributes: dict | None = None,
+        *,
+        start_time: int = 1_000_000_000,
+        end_time: int = 2_000_000_000,
+    ) -> None:
+        self.name = name
+        self._attributes = dict(attributes or {})
+        self._events: list = []
+        self._start_time = start_time
+        self._end_time = end_time
+        self.context = SimpleNamespace(trace_id=0xDEADBEEF, span_id=0xBEEF)
+
+    @property
+    def attributes(self):
+        return self._attributes
+
+    @property
+    def start_time(self) -> int:
+        return self._start_time
+
+    @property
+    def end_time(self) -> int:
+        return self._end_time
+
+
+def _make_span(
+    name: str,
+    attributes: dict | None = None,
+    start_time: int = 1_000_000_000,
+    end_time: int = 2_000_000_000,
+) -> _SpanStub:
+    return _SpanStub(
+        name,
+        attributes,
+        start_time=start_time,
+        end_time=end_time,
+    )
 
 
 def _bootstrap_proc(proc: LiveKitGenAIProcessor, job_id: str = "job-test") -> None:
@@ -321,6 +353,46 @@ class TestFunctionToolEnrichment:
         span = _make_span("function_tool", start_time=0, end_time=500_000_000)
         proc.on_end(span)
         assert span._attributes.get(ATTR_GEN_AI_TOOL_DURATION_MS) == pytest.approx(500.0)
+
+
+class TestFunctionToolExportTiming:
+    def test_corrects_async_tool_span_start_at_export(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
+        executed_ns = 120_000_000_000
+        get_job_bootstrap().state.tool_execution_ns_queue.append(executed_ns)
+
+        span = _make_span(
+            "function_tool",
+            {
+                ATTR_LK_FNC_TOOL_NAME: "book_appointment",
+                ATTR_LK_FNC_TOOL_ERROR: True,
+            },
+            start_time=8_000_000_000,
+            end_time=125_000_000_000,
+        )
+        proc.enrich_spans_for_export([span])
+        assert span.start_time == executed_ns
+        assert span._attributes.get(ATTR_AGENT_TOOL_TIMING_CORRECTED) is True
+        assert span._attributes.get(ATTR_GEN_AI_TOOL_DURATION_MS) == pytest.approx(
+            5000.0,
+        )
+
+    def test_leaves_short_tool_spans_unchanged(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
+        get_job_bootstrap().state.tool_execution_ns_queue.append(1_050_000_000)
+
+        span = _make_span(
+            "function_tool",
+            {ATTR_LK_FNC_TOOL_NAME: "check_slots"},
+            start_time=1_000_000_000,
+            end_time=2_000_000_000,
+        )
+        original_start = span.start_time
+        proc.enrich_spans_for_export([span])
+        assert span.start_time == original_start
+        assert ATTR_AGENT_TOOL_TIMING_CORRECTED not in span._attributes
 
 
 class TestRootSpanAggregates:

@@ -47,7 +47,9 @@ def bootstrap_via_agent_state(
         room=None,
         on=lambda *_a, **_k: (lambda fn: fn),
     )
-    bridge = LiveKitEventBridge(proc, proc._tracer)
+    tracer = proc._tracer
+    assert tracer is not None
+    bridge = LiveKitEventBridge(proc, tracer)
     bridge._session = session
     bridge._on_agent_state_changed(
         SimpleNamespace(old_state="initializing", new_state="listening")

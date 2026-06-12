@@ -92,6 +92,7 @@ ATTR_AGENT_TRANSFER_CREATED_AT = "agent.transfer.created_at"
 ATTR_AGENT_TRANSFER_LATENCY_MS = "agent.transfer.transition_latency_ms"
 ATTR_AGENT_COORD_OVERHEAD   = "agent.coordination.overhead_ms"
 ATTR_AGENT_TOOL_CALL_INDEX  = "agent.tool_call.index"
+ATTR_AGENT_TOOL_TIMING_CORRECTED = "agent.tool.timing_corrected"
 
 # -- Session ---------------------------------------------------------------
 ATTR_SESSION_ID             = "session.id"

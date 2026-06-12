@@ -69,6 +69,12 @@ def _bootstrap(proc: LiveKitGenAIProcessor, job_id: str = "job-ev") -> None:
     bootstrap.state.conversation_id = "conv-1"
 
 
+def _event_bridge(proc: LiveKitGenAIProcessor) -> LiveKitEventBridge:
+    tracer = proc._tracer
+    assert tracer is not None
+    return LiveKitEventBridge(proc, tracer)
+
+
 def _parlot_turns(exporter: InMemorySpanExporter) -> list:
     return [s for s in exporter.get_finished_spans() if s.name == "parlot.turn"]
 
@@ -77,7 +83,7 @@ class TestEventBridgeTurns:
     def test_conversation_items_emit_turns_not_spans(self) -> None:
         proc, exporter = _proc_with_exporter()
         _bootstrap(proc)
-        bridge = LiveKitEventBridge(proc, proc._tracer)
+        bridge = _event_bridge(proc)
         bridge.install(SimpleNamespace(on=lambda *_a, **_k: (lambda fn: fn)))
 
         user_item = SimpleNamespace(
@@ -122,7 +128,7 @@ class TestEventBridgeTurns:
     def test_user_transcription_meta_applied_to_turn(self) -> None:
         proc, exporter = _proc_with_exporter()
         _bootstrap(proc)
-        bridge = LiveKitEventBridge(proc, proc._tracer)
+        bridge = _event_bridge(proc)
 
         bridge._on_user_input_transcribed(
             SimpleNamespace(is_final=True, speaker_id="spk-2", language="en")
@@ -148,7 +154,7 @@ class TestEventBridgeTurns:
     def test_session_usage_overrides_span_token_accumulation(self) -> None:
         proc, exporter = _proc_with_exporter()
         _bootstrap(proc)
-        bridge = LiveKitEventBridge(proc, proc._tracer)
+        bridge = _event_bridge(proc)
 
         usage = SimpleNamespace(
             model_usage=[
@@ -174,7 +180,7 @@ class TestEventBridgeTurns:
     def test_function_tools_executed_increments_count(self) -> None:
         proc, _exporter = _proc_with_exporter()
         _bootstrap(proc)
-        bridge = LiveKitEventBridge(proc, proc._tracer)
+        bridge = _event_bridge(proc)
 
         bridge._on_function_tools_executed(
             SimpleNamespace(function_calls=[1, 2], function_call_outputs=[1, 2])
@@ -182,13 +188,15 @@ class TestEventBridgeTurns:
 
         from parlot.instrumentation.livekit._session import get_job_bootstrap
 
-        assert get_job_bootstrap().state.tool_call_count == 2
+        state = get_job_bootstrap().state
+        assert state.tool_call_count == 2
+        assert len(state.tool_execution_ns_queue) == 2
 
     def test_agent_handoff_deduped_and_recorded(self) -> None:
         proc, exporter = _proc_with_exporter()
         _bootstrap(proc)
         proc.set_turn_source("events")
-        bridge = LiveKitEventBridge(proc, proc._tracer)
+        bridge = _event_bridge(proc)
 
         item = SimpleNamespace(
             id="ho-1",
@@ -235,7 +243,7 @@ class TestEventBridgeTurns:
         proc, _exporter = _proc_with_exporter()
         _bootstrap(proc)
         proc.set_turn_source("events")
-        bridge = LiveKitEventBridge(proc, proc._tracer)
+        bridge = _event_bridge(proc)
 
         bridge._on_conversation_item_added(
             SimpleNamespace(
@@ -275,7 +283,7 @@ class TestEventBridgeTurns:
         proc, exporter = _proc_with_exporter()
         _bootstrap(proc)
         proc.set_turn_source("events")
-        bridge = LiveKitEventBridge(proc, proc._tracer)
+        bridge = _event_bridge(proc)
 
         early_span = _make_span(
             "user_turn",
@@ -310,7 +318,7 @@ class TestEventBridgeTurns:
         proc, exporter = _proc_with_exporter()
         _bootstrap(proc)
         proc.set_turn_source("events")
-        bridge = LiveKitEventBridge(proc, proc._tracer)
+        bridge = _event_bridge(proc)
 
         bridge._on_conversation_item_added(
             SimpleNamespace(
