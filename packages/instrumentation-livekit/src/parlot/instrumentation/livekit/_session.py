@@ -186,9 +186,6 @@ def bootstrap_session(
         ctx_token=ctx_token,
     )
     _parlot_job_bootstrap.set(bootstrap)
-    import time
-
-    processor.set_recording_anchor_wall_ms(state, int(time.time() * 1000))
     if vendor_job_id:
         _vendor_job_bootstraps[vendor_job_id] = bootstrap
 
