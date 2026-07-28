@@ -1,0 +1,28 @@
+{
+  "name": "@parlot/core",
+  "version": "0.1.0",
+  "description": "Parlot semantic convention constants (generated from parlot-core attrs.py)",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./livekit": {
+      "types": "./dist/livekit.d.ts",
+      "import": "./dist/livekit.js"
+    }
+  },
+  "files": ["dist", "src/attrs.gen.ts", "src/attrs.livekit.gen.ts"],
+  "scripts": {
+    "generate": "cd ../.. && uv run python scripts/generate_attrs_ts.py && bun run build",
+    "build": "tsc",
+    "prepare": "bun run build",
+    "prepublishOnly": "bun run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

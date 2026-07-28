@@ -1,0 +1,17 @@
+[project]
+name = "parlot-example-livekit-voice"
+version = "0.0.0"
+description = "Parlot + LiveKit voice agent example"
+requires-python = ">=3.11"
+dependencies = [
+    "parlot-core",
+    "parlot-instrumentation-livekit",
+    "livekit-agents[openai,silero]",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+parlot-core = { path = "../../packages/core", editable = true }
+parlot-instrumentation-livekit = { path = "../../packages/instrumentation-livekit", editable = true }

@@ -1,0 +1,197 @@
+"""LiveKit Room Composite egress → Cloudflare R2 via Parlot upload grant."""
+
+from __future__ import annotations
+
+import logging
+import time
+from typing import Any, Optional
+
+import httpx
+
+from parlot.core.attrs import (
+    ATTR_SESSION_RECORDING_ANCHOR_WALL_MS,
+    ATTR_SESSION_RECORDING_AUDIO_URI,
+    ATTR_SESSION_RECORDING_EGRESS_ID,
+    ATTR_SESSION_RECORDING_WEBHOOK_ERROR,
+)
+from parlot.core.runtime import get_runtime
+
+from ._recording_guard import should_record
+from ._runtime_context import get_livekit_runtime
+
+logger = logging.getLogger("parlot.instrumentation.livekit")
+
+
+def _format_egress_error(exc: BaseException) -> str:
+    """Normalize LiveKit Twirp/API errors for session.recording.webhook_error."""
+    code = getattr(exc, "code", None)
+    message = getattr(exc, "message", None) or str(exc)
+    if code and message:
+        return f"{code}: {message}"[:500]
+    if code:
+        return str(code)[:500]
+    return message[:500] if message else "egress_start_failed"
+
+
+def _stamp_recording_webhook_error(bootstrap: Any, error: str) -> None:
+    """Surface recording failure on parlot.session (copied to parlot.session.close)."""
+    session_span = bootstrap.session_span
+    if session_span is not None and hasattr(session_span, "is_recording"):
+        if session_span.is_recording():
+            session_span.set_attribute(ATTR_SESSION_RECORDING_WEBHOOK_ERROR, error)
+    logger.warning("parlot: recording failed — %s", error)
+
+
+async def _fetch_upload_grant(session_id: str, room_name: str) -> Optional[dict]:
+    runtime = get_runtime()
+    if runtime is None:
+        logger.error("parlot: upload grant requested without runtime bootstrap")
+        return None
+    url = f"{runtime.endpoint}/v1/recordings/upload-grant"
+    headers = {"Authorization": f"Bearer {runtime.api_key}"}
+    payload = {"session_id": session_id, "room_name": room_name}
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(url, json=payload, headers=headers)
+        if resp.status_code >= 400:
+            logger.error(
+                "parlot: upload grant failed status=%s body=%s",
+                resp.status_code,
+                resp.text[:500],
+            )
+            return None
+        return resp.json()
+    except Exception:
+        logger.exception("parlot: upload grant request failed")
+        return None
+
+
+async def maybe_start_room_composite_egress(ctx: Any) -> None:
+    """Start OGG room composite egress to R2 when recording policy allows."""
+    if not should_record(ctx):
+        return
+
+    from parlot.instrumentation.livekit._session import get_job_bootstrap
+
+    bootstrap = get_job_bootstrap()
+    if bootstrap is None:
+        logger.warning("parlot: egress skipped — no active job bootstrap")
+        return
+
+    runtime = get_runtime()
+    if runtime is None:
+        _stamp_recording_webhook_error(bootstrap, "egress_config_missing: bootstrap")
+        logger.error("parlot: egress skipped — bootstrap not loaded")
+        return
+
+    lk_runtime = get_livekit_runtime()
+    signing_key = (lk_runtime.webhook_signing_key if lk_runtime else "") or ""
+
+    room = getattr(ctx, "room", None)
+    room_name = getattr(room, "name", None) or getattr(ctx, "room_name", None)
+    if not room_name:
+        _stamp_recording_webhook_error(bootstrap, "egress_no_room_name")
+        logger.warning("parlot: egress skipped — room name unavailable")
+        return
+
+    session_id = bootstrap.session_id
+    grant = await _fetch_upload_grant(session_id, str(room_name))
+    if grant is None:
+        _stamp_recording_webhook_error(bootstrap, "upload_grant_failed")
+        return
+
+    s3 = grant.get("s3") or {}
+    filepath = grant.get("filepath") or ""
+    audio_uri = grant.get("audio_recording_uri") or ""
+
+    s3_kwargs: dict[str, object] = {
+        "access_key": str(s3.get("access_key") or ""),
+        "secret": str(s3.get("secret") or ""),
+        "bucket": str(s3.get("bucket") or ""),
+        "endpoint": str(s3.get("endpoint") or ""),
+        "force_path_style": bool(s3.get("force_path_style", True)),
+    }
+    session_token = s3.get("session_token")
+    if session_token:
+        s3_kwargs["session_token"] = str(session_token)
+
+    try:
+        from livekit import api
+    except ImportError:
+        _stamp_recording_webhook_error(bootstrap, "livekit_api_unavailable")
+        logger.error("parlot: livekit-api not available for egress")
+        return
+
+    lk_url = __import__("os").environ.get("LIVEKIT_URL", "")
+    lk_key = __import__("os").environ.get("LIVEKIT_API_KEY", "")
+    lk_secret = __import__("os").environ.get("LIVEKIT_API_SECRET", "")
+    if not (lk_url and lk_key and lk_secret):
+        _stamp_recording_webhook_error(bootstrap, "livekit_credentials_missing")
+        logger.error("parlot: LIVEKIT_* env required to start egress")
+        return
+
+    file_output = api.EncodedFileOutput(
+        file_type=api.EncodedFileType.OGG,
+        filepath=filepath,
+        disable_manifest=True,
+        s3=api.S3Upload(**s3_kwargs),
+    )
+
+    webhook_url = (runtime.egress_webhook_url or "").strip()
+    webhooks: list[Any] = []
+    if signing_key and webhook_url:
+        webhooks = [
+            api.WebhookConfig(
+                url=webhook_url,
+                signing_key=signing_key,
+            )
+        ]
+    elif not signing_key:
+        logger.info(
+            "parlot: starting egress without LiveKit webhook confirmation "
+            "(audio_available will rely on R2 reconcile when the session is opened)"
+        )
+
+    req_kwargs: dict[str, object] = {
+        "room_name": str(room_name),
+        "audio_only": True,
+        "file_outputs": [file_output],
+    }
+    if webhooks:
+        req_kwargs["webhooks"] = webhooks
+
+    req = api.RoomCompositeEgressRequest(**req_kwargs)
+
+    lkapi = api.LiveKitAPI(lk_url, lk_key, lk_secret)
+    try:
+        info = await lkapi.egress.start_room_composite_egress(req)
+    except Exception as exc:
+        _stamp_recording_webhook_error(bootstrap, _format_egress_error(exc))
+        logger.exception("parlot: StartRoomCompositeEgress failed")
+        return
+    finally:
+        await lkapi.aclose()
+
+    egress_id = getattr(info, "egress_id", None) or getattr(info, "egressId", None) or ""
+    anchor_ms = int(time.time() * 1000)
+
+    session_span = bootstrap.session_span
+    if session_span is not None and hasattr(session_span, "is_recording"):
+        if session_span.is_recording():
+            if audio_uri:
+                session_span.set_attribute(ATTR_SESSION_RECORDING_AUDIO_URI, audio_uri)
+            session_span.set_attribute(ATTR_SESSION_RECORDING_ANCHOR_WALL_MS, anchor_ms)
+            if egress_id:
+                session_span.set_attribute(ATTR_SESSION_RECORDING_EGRESS_ID, str(egress_id))
+
+    bootstrap.processor.set_recording_anchor_wall_ms(bootstrap.state, anchor_ms)
+    logger.info(
+        "parlot: started room composite egress egress_id=%s uri=%s",
+        egress_id,
+        audio_uri,
+    )
+    if webhooks and ("localhost" in webhook_url or "127.0.0.1" in webhook_url):
+        logger.warning(
+            "parlot: egress webhook URL is %s — LiveKit Cloud cannot POST to localhost; ",
+            webhook_url,
+        )

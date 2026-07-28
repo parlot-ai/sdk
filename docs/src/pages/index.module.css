@@ -1,0 +1,9 @@
+.hero {
+  text-align: left;
+}
+
+@media (min-width: 997px) {
+  .hero {
+    padding-top: 3.5rem;
+  }
+}

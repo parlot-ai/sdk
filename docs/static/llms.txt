@@ -1,0 +1,20 @@
+# Parlot SDK docs
+
+> Public documentation for the Parlot open-source SDK — OpenTelemetry instrumentation for multi-agent voice AI (LiveKit today).
+
+Canonical site root: https://parlot.ai/docs/
+Also see the domain-wide index at https://parlot.ai/llms.txt
+
+## Docs
+
+- [Overview](https://parlot.ai/docs/): SDK docs home.
+- [Quick Start](https://parlot.ai/docs/quick-start): Install, configure(), and export OTLP.
+- [Concepts](https://parlot.ai/docs/concepts): Sessions, turns, handoffs, agent identity.
+- [Guides](https://parlot.ai/docs/guides/): Integration guide index.
+- [LiveKit instrumentation](https://parlot.ai/docs/guides/livekit): Step-by-step LiveKit agent checklist.
+- [LiveKit integration](https://parlot.ai/docs/guides/livekit-integration): Recording, egress, webhooks (faster confirmation), and OTLP patterns.
+
+## Optional
+
+- [Changelog](https://parlot.ai/docs/changelog): Release notes.
+- [Sitemap](https://parlot.ai/docs/sitemap.xml): All indexed doc URLs.

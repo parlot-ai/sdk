@@ -1,0 +1,60 @@
+{
+  "name": "@parlot/sdk-docs",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "docusaurus": "docusaurus",
+    "prestart": "bash scripts/sync-changelog.sh",
+    "start": "docusaurus start",
+    "prebuild": "bash scripts/sync-changelog.sh",
+    "build": "docusaurus build",
+    "swizzle": "docusaurus swizzle",
+    "deploy": "docusaurus deploy",
+    "clear": "docusaurus clear",
+    "serve": "docusaurus serve",
+    "typecheck": "tsc",
+    "sync-theme": "bash scripts/sync-theme.sh",
+    "sync-changelog": "bash scripts/sync-changelog.sh",
+    "check:leak": "bash scripts/check-public-leak.sh"
+  },
+  "dependencies": {
+    "@docusaurus/core": "3.10.2",
+    "@docusaurus/faster": "3.10.2",
+    "@docusaurus/preset-classic": "3.10.2",
+    "@docusaurus/theme-mermaid": "3.10.2",
+    "@easyops-cn/docusaurus-search-local": "^0.52.1",
+    "@mdx-js/react": "^3.0.0",
+    "@parlot/docs-theme": "file:./vendor/docs-theme",
+    "clsx": "^2.0.0",
+    "prism-react-renderer": "^2.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@docusaurus/module-type-aliases": "3.10.2",
+    "@docusaurus/tsconfig": "3.10.2",
+    "@docusaurus/types": "3.10.2",
+    "typescript": "~5.6.2"
+  },
+  "browserslist": {
+    "production": [
+      ">0.5%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 3 chrome version",
+      "last 3 firefox version",
+      "last 5 safari version"
+    ]
+  },
+  "engines": {
+    "node": ">=18.0",
+    "bun": ">=1.1.0"
+  },
+  "packageManager": "bun@1.3.13",
+  "trustedDependencies": [
+    "@swc/core",
+    "core-js"
+  ]
+}

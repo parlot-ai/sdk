@@ -1,0 +1,161 @@
+# Curated subset of scenarios.yaml for persona-LLM sims.
+# Use --scenarios scenarios.yaml to run from the full set.
+
+name: Parlot hotel receptionist — curated persona sims
+
+scenarios:
+- label: Simple room booking by phone
+  instructions: |
+    PERSONA: Maria Whitfield, a polite leisure traveller. Spell your last name W-H-I-T-F-I-E-L-D only if asked.
+    OPENING LINE: "Hi, I'd like to book a room for next month."
+    FACTS (reveal each only when asked, one per turn):
+    - arriving July 14th, departing July 17th
+    - two adults
+    - a garden-view room is essential. not ocean view or city view.
+    - no special requests; no breakfast or any add-ons
+    - email: maria.whitfield@gmail.com
+    - phone: 123-555-0170
+    - payment is your Visa: card number 4532 0000 0001 4471, expiry 12/29, security code 321. Read the full card number out when the agent asks for it - you are comfortable giving the full number over the phone.
+    DO, IN ORDER:
+    1. Ask to book the room and answer the agent's questions one at a time.
+    2. Somewhere mid-call, ask: "what's included in the price - is breakfast in there?"
+    3. Later, ask: "how much do I have to pay now to hold it?"
+    4. Once the agent reads the booking back correctly, confirm and let them finish.
+  agent_expectations: >
+    Captures the booking details and lets the GUEST choose the room: offers the available
+    types and asks rather than picking one for her. Quotes the nightly rate, answers the
+    breakfast question, and reads the full booking back to confirm before completing the
+    reservation. Takes a card to guarantee the booking, which is expected and correct, and
+    answers her "how much to pay now to hold it?" honestly: nothing is charged now and there
+    is no separate deposit - the stay is settled at checkout. Should not invent an upfront
+    deposit or charge.
+  tags:
+    feature: room_booking
+    channel: phone
+    difficulty: '1'
+  userdata:
+    expected_state:
+    - |
+      INSERT INTO hotel_bookings
+        (code, room_id, first_name, last_name, email, phone,
+         check_in, check_out, guests, extras, total, card_last4)
+      VALUES ('IGNORED', 'RM_205', 'Maria', 'Whitfield',
+              'maria.whitfield@gmail.com', '1235550170',
+              '2026-07-14', '2026-07-17', 2, '', 'IGNORED', '4471')
+
+- label: Rate and meal-plan comparison
+  instructions: |
+    PERSONA: Nadia Brooks, a first-time guest comparing options - a little indecisive, casual. You're gathering info, NOT booking today.
+    OPENING LINE: "hey - trying to figure out the difference between your room rates, they're confusing."
+    FACTS (reveal each only when asked):
+    - your name: Nadia Brooks
+    - travelling as a couple, four nights
+    - out sightseeing most of the day
+    - you want a good breakfast and a nice dinner, but don't care about lunch
+    - budget-conscious but "will pay for value"
+    DO, IN ORDER:
+    1. Get the room rates explained.
+    2. Ask: "so which one would YOU pick for us?"
+    3. Ask: "is the suite worth it over a normal room?"
+    4. Ask about the meal options.
+    5. Do NOT commit to booking on this call, even if offered - you're gathering info; say you'll think about it.
+    6. Do NOT hang up until you have all of the information that you need.
+  agent_expectations: |
+    Explains the room options clearly without dumping everything at once, and grounds the meal answer in what the hotel actually offers if the customer asks: a breakfast buffet, and an on-site restaurant for dinner. Recommends adding breakfast and booking a dinner table given the guest's pattern. Any suite mention is a soft, benefit-led suggestion. Offers to book when the guest is ready.
+  tags:
+    feature: info_and_upsell
+    channel: phone
+    difficulty: '2'
+
+- label: Change of plans, then cancel
+  instructions: |
+    PERSONA: Eleanor Smith, polite, with a confirmed upcoming booking.
+    OPENING LINE: "I have a booking with you and I need to change my dates."
+    FACTS (reveal each only when asked):
+    - last name: Smith
+    - confirmation code: H-T-L-A-B-1-2
+    - the card on file ends 4242 (offer this if the code isn't enough)
+    DO, IN ORDER:
+    1. Verify yourself when asked.
+    2. THE MOMENT the agent starts on the date change, change your mind: "actually... can I just cancel the whole thing instead?" Do NOT go through with any date change.
+    3. Ask: "will I lose my deposit if I cancel?" (you have plenty of notice before the stay)
+    4. A policy answer is NOT a cancellation: if the agent only explains the refund policy, push - "great, so please go ahead and cancel it now."
+    5. Accept the outcome politely and end the call ONLY once the agent has explicitly said the booking IS cancelled (with the refund amount). Never hang up before that.
+  agent_expectations: >
+    Verifies the caller (last name plus confirmation code, or the card on file) and locates
+    the booking, pivots cleanly from amendment to cancellation without first committing a
+    date change, and states the cancellation outcome correctly — well outside the 48-hour
+    window, so there will be a full refund and no penalty. Confirms the cancellation back to
+    the guest. Should not guess the refund outcome or invent a deposit-forfeit.
+  tags:
+    feature: cancellation
+    channel: phone
+    difficulty: '2'
+  userdata:
+    expected_state:
+    - |
+      UPDATE hotel_bookings SET status = 'cancelled' WHERE code = 'HTL-AB12'
+
+  # --- 05b: Booking modification carried to completion (deterministic) ------
+
+- label: Cancel a dinner reservation
+  instructions: |
+    PERSONA: Hannah Kowalski, a polite guest whose evening plans fell through. You booked a table and now need to cancel it.
+    OPENING LINE: "Hi - I need to cancel a dinner reservation I have with you tonight."
+    FACTS (reveal each only when asked):
+    - last name: Kowalski. Spell it K-O-W-A-L-S-K-I only if asked.
+    - the reservation confirmation code: "RES-L-M-1-2" (the code printed when the table was booked - give the whole thing including the RES)
+    - the table was for two, tonight (reveal only if asked)
+    DO, IN ORDER:
+    1. Ask to cancel the table; give your last name and the confirmation code when the agent asks to verify you.
+    2. Once it's looked up, ask: "there's no cancellation fee for the table, is there?"
+    3. Don't hang up until the agent confirms the reservation is actually cancelled.
+  agent_expectations: >
+    Recognizes this as a restaurant-table cancellation, not a room booking, and verifies the
+    caller the way the restaurant does — last name plus the printed RES confirmation code,
+    no card or email — then actually cancels the reservation rather than leaving it as a
+    vague "I'll pass it on," and confirms the cancellation back to the caller. Answers the
+    fee question honestly without inventing a charge or a refund: cancelling a dinner table
+    carries no fee. Does not confuse the request with the caller's (nonexistent) room
+    booking.
+  userdata:
+    expected_state:
+    - |
+      UPDATE restaurant_reservations SET status = 'cancelled' WHERE code = 'RES-LM12'
+  tags:
+    feature: restaurant_cancellation
+    channel: phone
+    difficulty: "2"
+
+  # --- 17: Concierge flight + transport (capability pending) ---------------
+
+- label: Wake-up call request
+  instructions: |
+    PERSONA: Frank Adler, a polite in-house guest with an early flight. You're a heavy sleeper.
+    OPENING LINE: "I need a wake-up call for tomorrow morning, I've got an early flight."
+    FACTS (reveal each only when asked):
+    - your name: Frank Adler
+    - room 304
+    - wake-up time: 4:45 a.m.
+    DO, IN ORDER:
+    1. Get the wake-up call scheduled.
+    2. Then add: "please make sure I'm actually up."
+    3. Stay polite throughout; don't hang up until the call is confirmed as set.
+  agent_expectations: >
+    Actually schedules the wake-up call rather than declining it or handing it off as a
+    generic note for the front desk, and reads the details back — name, room, date, and time
+    — for the guest to confirm before confirming the call is set. Answers the heavy-sleeper
+    worry with the real procedure — a second call is placed about five minutes later if
+    there's no answer, and a total non-response is escalated for a physical room check —
+    rather than a vague "we'll try."
+  userdata:
+    expected_state:
+    - |
+      INSERT INTO wakeup_calls (code, room_id, guest_name, date, time)
+      VALUES ('IGNORED', 'RM_304', 'Frank Adler', '2026-06-09', '04:45:00')
+  tags:
+    feature: wakeup_call
+    channel: phone
+    difficulty: "3"
+
+  # --- 10: Pre-registration / advance booking (NL only) --------------------

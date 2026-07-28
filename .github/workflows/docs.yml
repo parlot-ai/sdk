@@ -1,0 +1,69 @@
+name: Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'packages/instrumentation-livekit/CHANGELOG.md'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'packages/instrumentation-livekit/CHANGELOG.md'
+      - '.github/workflows/docs.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: docs
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install
+        run: bun install --frozen-lockfile
+      - name: Build
+        run: bun run build
+      - name: Assert canonical URLs
+        run: |
+          set -euo pipefail
+          if ! grep -q 'https://parlot.ai/docs' build/sitemap.xml; then
+            echo "error: sitemap missing https://parlot.ai/docs" >&2
+            exit 1
+          fi
+          if grep -q '/docs/search' build/sitemap.xml; then
+            echo "error: sitemap must not include /docs/search" >&2
+            exit 1
+          fi
+          test -f build/llms.txt || { echo "error: missing build/llms.txt (static/llms.txt)" >&2; exit 1; }
+      - name: Leak check
+        run: bash scripts/check-public-leak.sh
+
+      # Cross-repo: platform Deploy website listens for event_type sdk-docs-updated.
+      # Secret: repo PLATFORM_DISPATCH_TOKEN — fine-grained PAT on parlot-ai/platform
+      # with Contents: Read and write (required for repository_dispatch).
+      - name: Dispatch Deploy website
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        working-directory: ${{ github.workspace }}
+        env:
+          GH_TOKEN: ${{ secrets.PLATFORM_DISPATCH_TOKEN }}
+        run: |
+          set +x
+          set -euo pipefail
+          if [[ -z "${GH_TOKEN:-}" ]]; then
+            echo "error: PLATFORM_DISPATCH_TOKEN is required to publish docs to parlot.ai/docs" >&2
+            exit 1
+          fi
+          gh api --method POST /repos/parlot-ai/platform/dispatches \
+            --input - <<EOF
+          {
+            "event_type": "sdk-docs-updated",
+            "client_payload": {
+              "sdk_sha": "${{ github.sha }}"
+            }
+          }
+          EOF

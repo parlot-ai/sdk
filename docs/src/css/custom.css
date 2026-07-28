@@ -1,0 +1,12 @@
+/**
+ * Site-local overrides. Shared tokens come from @parlot/docs-theme.
+ */
+@import '@parlot/docs-theme/css/custom.css';
+
+[data-theme='dark'] .navbar__logo img {
+  box-sizing: border-box;
+  padding: 0.15rem;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 0.45rem;
+  background: #f8fafc;
+}
