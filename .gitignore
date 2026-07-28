@@ -51,8 +51,10 @@ htmlcov/
 logs/
 examples/**/compare/**
 
+# Node
+node_modules/
+
 # Docs site
-docs/node_modules/
 docs/build/
 docs/.docusaurus/
 docs/package-lock.json
