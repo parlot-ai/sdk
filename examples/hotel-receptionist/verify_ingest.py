@@ -117,17 +117,18 @@ def main() -> None:
         print(__doc__, file=sys.stderr)
         raise SystemExit(2)
     here = Path(__file__).resolve().parent
-    for candidate in (
-        Path(os.environ["PLATFORM_ENV_FILE"]) if os.environ.get("PLATFORM_ENV_FILE") else None,
-        here.parents[2] / "platform" / ".env.local",  # …/parlot.ai/platform
-        Path.home() / "dev/parlot.ai/platform/.env.local",
-    ):
-        if candidate is not None:
-            _load_dotenv(candidate)
+    # Optional: PLATFORM_ENV_FILE=/path/to/platform/.env.local when verifying
+    # against a local platform stack. Otherwise use this example's .env.
+    env_file = os.environ.get("PLATFORM_ENV_FILE")
+    if env_file:
+        _load_dotenv(Path(env_file))
     _load_dotenv(here / ".env")
     for key in ("DATABASE_URL", "TINYBIRD_TOKEN"):
         if not os.environ.get(key):
-            print(f"missing {key} (load platform .env.local)", file=sys.stderr)
+            print(
+                f"missing {key} (set in .env or PLATFORM_ENV_FILE)",
+                file=sys.stderr,
+            )
             raise SystemExit(2)
     raise SystemExit(verify(sys.argv[1]))
 

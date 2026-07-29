@@ -18,7 +18,9 @@ workflow dispatches `sdk-docs-updated` to `parlot-ai/platform`, which runs
 repo secret `PLATFORM_DISPATCH_TOKEN` (fine-grained PAT on platform with
 Contents: Read and write). Manual fallback: Actions → Deploy website → Run workflow.
 
-Theme is vendored from platform `@parlot/docs-theme` under `vendor/docs-theme`. When the sibling `platform` repo is available:
+Theme is vendored under `vendor/docs-theme` (copy of platform `@parlot/docs-theme`).
+Standalone clones use the vendored copy as-is. When developing next to a
+`platform` checkout, refresh with:
 
 ```bash
 bun run sync-theme   # also refreshes node_modules copy

@@ -47,7 +47,7 @@ Parlot stamps framework-agnostic session attributes on **`parlot.session`**:
 | `session.agent_id` | `WorkerOptions.agent_name` / job `agent_name`, overridable via `configure(agent_id="…")` |
 | `session.agent_framework` | `"livekit"` |
 | `session.agent_framework_raw_id` | LiveKit job id (`lk.job_id`) |
-| `session.agent_chain` | Deployment id plus runtime routing (`calcom-receptionist → Orchestrator → cancel_task`) |
+| `session.agent_chain` | Deployment id plus runtime routing (`hotel-receptionist → Orchestrator → cancel_task`) |
 | `gen_ai.agent.version` | Agent deployment version — see [SDK README agent version](https://github.com/parlot-ai/sdk/blob/main/README.md#agent-deployment-version) |
 
 The platform registers deployments in Postgres on first ingest and uses `session.agent_id` for the Agents portfolio and session filters. Version history appears on the Agents portfolio and workspace when `gen_ai.agent.version` is stamped.
@@ -356,7 +356,7 @@ Session **bootstrap and close no longer depend on `job_entrypoint`**. Bootstrap 
 
 ### Empirical comparison (same agent, two local sessions)
 
-These sessions exercised the calcom-receptionist agent against the same local stack; only LiveKit pipeline OTEL differed:
+These sessions exercised the hotel-receptionist agent against the same local stack; only LiveKit pipeline OTEL differed:
 
 | | OTEL **on** `019e801e…` | OTEL **off** `019e8020…` |
 |---|---|---|

@@ -102,9 +102,9 @@ class TestLiveKitRecordingGuard:
     def test_agent_name_from_ctx_returns_explicit_name(self) -> None:
         assert (
             agent_name_from_ctx(
-                _ctx(agent_name="calcom-receptionist", dispatch_id="AD_xxx")
+                _ctx(agent_name="hotel-receptionist", dispatch_id="AD_xxx")
             )
-            == "calcom-receptionist"
+            == "hotel-receptionist"
         )
 
     def test_agent_name_from_ctx_rejects_dispatch_shaped_agent_name(self) -> None:

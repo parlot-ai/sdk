@@ -631,12 +631,12 @@ class TestAgentIdentity:
         proc = LiveKitGenAIProcessor()
         _bootstrap_proc(proc, "job-worker-name")
         state = get_job_bootstrap().state
-        state.worker_agent_name = "calcom-receptionist"
+        state.worker_agent_name = "hotel-receptionist"
         state.open_agent_turn_index = 1
 
         span = _make_span("agent_turn", {ATTR_LK_RESPONSE_TEXT: "Hello"})
         proc.on_end(span)
-        assert span._attributes[ATTR_GEN_AI_AGENT_NAME] == "calcom-receptionist"
+        assert span._attributes[ATTR_GEN_AI_AGENT_NAME] == "hotel-receptionist"
 
     def test_function_tool_prefers_label_over_dispatch_id_attr(self) -> None:
         proc = LiveKitGenAIProcessor()
@@ -725,9 +725,9 @@ class TestHandoffSpanEnrichment:
         proc = LiveKitGenAIProcessor()
         _bootstrap_proc(proc)
         state = get_job_bootstrap().state
-        state.agent_label = "calcom-receptionist"
+        state.agent_label = "hotel-receptionist"
         span = _make_span(SPAN_AGENT_HANDOFF, {
-            ATTR_AGENT_TRANSFER_FROM: "calcom-receptionist",
+            ATTR_AGENT_TRANSFER_FROM: "hotel-receptionist",
             ATTR_AGENT_TRANSFER_TO: "get_email_task",
         })
         proc.on_end(span)

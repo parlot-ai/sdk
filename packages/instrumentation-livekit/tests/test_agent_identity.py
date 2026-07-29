@@ -49,8 +49,8 @@ def test_resolve_canonical_agent_id_falls_back_to_worker_name(monkeypatch):
         "parlot.instrumentation.livekit._agent_identity.configured_agent_id",
         lambda: "",
     )
-    state = _State(worker_agent_name="calcom-receptionist")
-    assert resolve_canonical_agent_id(state) == "calcom-receptionist"
+    state = _State(worker_agent_name="hotel-receptionist")
+    assert resolve_canonical_agent_id(state) == "hotel-receptionist"
 
 
 def test_ensure_agent_chain_seeds_canonical_deployment(monkeypatch):
@@ -58,9 +58,9 @@ def test_ensure_agent_chain_seeds_canonical_deployment(monkeypatch):
         "parlot.instrumentation.livekit._agent_identity.configured_agent_id",
         lambda: "",
     )
-    state = _State(worker_agent_name="calcom-receptionist")
+    state = _State(worker_agent_name="hotel-receptionist")
     ensure_agent_chain_seeded(state)
-    assert state.agent_chain == ["calcom-receptionist"]
+    assert state.agent_chain == ["hotel-receptionist"]
 
 
 def test_append_agent_chain_step_builds_routing_path(monkeypatch):
@@ -68,11 +68,11 @@ def test_append_agent_chain_step_builds_routing_path(monkeypatch):
         "parlot.instrumentation.livekit._agent_identity.configured_agent_id",
         lambda: "",
     )
-    state = _State(worker_agent_name="calcom-receptionist")
+    state = _State(worker_agent_name="hotel-receptionist")
     append_agent_chain_step(state, "Orchestrator")
     append_agent_chain_step(state, "cancel_task")
     assert state.agent_chain == [
-        "calcom-receptionist",
+        "hotel-receptionist",
         "Orchestrator",
         "cancel_task",
     ]
@@ -88,9 +88,9 @@ def test_stamp_session_agent_identity(monkeypatch):
         lambda: "1.2.3",
     )
     span = _Span()
-    state = _State(worker_agent_name="calcom-receptionist", session_id="job-123")
+    state = _State(worker_agent_name="hotel-receptionist", session_id="job-123")
     stamp_session_agent_identity(span, state)
-    assert span.attributes[ATTR_SESSION_AGENT_ID] == "calcom-receptionist"
+    assert span.attributes[ATTR_SESSION_AGENT_ID] == "hotel-receptionist"
     assert span.attributes[ATTR_SESSION_AGENT_FRAMEWORK] == "livekit"
     assert span.attributes[ATTR_SESSION_AGENT_FRAMEWORK_RAW_ID] == "job-123"
     assert span.attributes[ATTR_GEN_AI_AGENT_VERSION] == "1.2.3"
@@ -99,7 +99,7 @@ def test_stamp_session_agent_identity(monkeypatch):
 def test_is_livekit_dispatch_id():
     assert is_livekit_dispatch_id("AD_GAJ5UrwGKqsZ") is True
     assert is_livekit_dispatch_id("AD_NrRASAvBPGAx") is True
-    assert is_livekit_dispatch_id("calcom-receptionist") is False
+    assert is_livekit_dispatch_id("hotel-receptionist") is False
     assert is_livekit_dispatch_id("greeter") is False
     assert is_livekit_dispatch_id("") is False
 

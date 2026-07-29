@@ -10,7 +10,7 @@ Parlot is an open-source SDK and instrumentation stack for multi-agent observabi
 
 ## Install
 
-For design partners (private git tag):
+From a release tag:
 
 ```toml
 # Consumer pyproject.toml

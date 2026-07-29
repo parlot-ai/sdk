@@ -20,9 +20,7 @@ Open-source ([MIT](LICENSE)) SDK and instrumentation libraries for the Parlot.ai
 
 Integration requirements for all examples: [instrumentation-livekit README](packages/instrumentation-livekit/README.md#integration-checklist).
 
-### Stealth install (git tag)
-
-PyPI has no unlisted mode. For design partners before public release, install Parlot packages from a private git tag:
+### Install from git
 
 ```toml
 # Consumer pyproject.toml
@@ -31,7 +29,6 @@ parlot-core = { git = "https://github.com/parlot-ai/sdk.git", subdirectory = "pa
 parlot-instrumentation-livekit = { git = "https://github.com/parlot-ai/sdk.git", subdirectory = "packages/instrumentation-livekit", tag = "v0.1.0" }
 ```
 
-- Repo stays private; access via GitHub org or deploy keys.
 - `uv lock` pins the commit SHA.
 - Tag both `parlot-core` and `parlot-instrumentation-livekit` at the same release (instrumentation depends on core).
 
@@ -86,4 +83,4 @@ export PARLOT_ENDPOINT=http://localhost:4318
 export PARLOT_API_KEY=<minted-org-key>
 ```
 
-Full stack (collector, API, agent, resolve): [platform README — Local E2E runbook](../platform/README.md#local-e2e-runbook-dev-onboarding) (§5a mint key).
+Full stack (collector, API, agent, resolve): [platform Local E2E runbook](https://github.com/parlot-ai/platform#local-e2e-runbook-dev-onboarding) (§5a mint key).

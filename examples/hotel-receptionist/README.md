@@ -69,8 +69,9 @@ Each run prints `parlot_session_id=…`. Verify close/ingest before the next sce
 uv run python verify_ingest.py <parlot_session_id>
 ```
 
-Needs `DATABASE_URL` + `TINYBIRD_TOKEN` (e.g. from `platform/.env.local`). Longer
-calls can take ~60–90s for session-close goal/sentiment steps.
+Needs `DATABASE_URL` + `TINYBIRD_TOKEN` in this example's `.env`, or set
+`PLATFORM_ENV_FILE` to a platform `.env.local` when verifying a local stack.
+Longer calls can take ~60–90s for session-close goal/sentiment steps.
 
 Checks:
 
