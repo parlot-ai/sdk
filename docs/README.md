@@ -15,7 +15,7 @@ bun run check:leak # after build — private-content leak guard
 Production publishes automatically: on push to `main` under `docs/**`, the Docs
 workflow dispatches `sdk-docs-updated` to `parlot-ai/platform`, which runs
 **Deploy website** (builds this site into Worker assets at `/docs/`). Requires
-repo secret `PLATFORM_DISPATCH_TOKEN` (fine-grained PAT on platform with
+repo secret `PARLOT_CROSS_REPO_TOKEN` (fine-grained PAT on platform with
 Contents: Read and write). Manual fallback: Actions → Deploy website → Run workflow.
 
 Theme is vendored under `vendor/docs-theme` (copy of platform `@parlot/docs-theme`).
