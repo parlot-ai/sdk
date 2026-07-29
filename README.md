@@ -83,4 +83,4 @@ export PARLOT_ENDPOINT=http://localhost:4318
 export PARLOT_API_KEY=<minted-org-key>
 ```
 
-Full stack (collector, API, agent, resolve): [platform Local E2E runbook](https://github.com/parlot-ai/platform#local-e2e-runbook-dev-onboarding) (§5a mint key).
+Full stack (collector, API, agent, resolve): [platform Local E2E runbook](https://github.com/parlot-ai/platform#local-e2e-runbook-dev-onboarding) (§6a mint key).
