@@ -30,22 +30,7 @@ const config: Config = {
       tagName: 'link',
       attributes: {
         rel: 'apple-touch-icon',
-        sizes: '180x180',
         href: '/docs/img/apple-touch-icon.png',
-      },
-    },
-    {
-      tagName: 'link',
-      attributes: {
-        rel: 'manifest',
-        href: '/docs/img/site.webmanifest',
-      },
-    },
-    {
-      tagName: 'meta',
-      attributes: {
-        name: 'theme-color',
-        content: '#00012f',
       },
     },
   ],
