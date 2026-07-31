@@ -1,0 +1,43 @@
+name: Validate PR title
+
+# Squash-merge uses the PR title as the commit on main. Release Please
+# parses those commits for version bumps and changelogs, so titles must
+# follow Conventional Commits.
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+
+permissions:
+  pull-requests: read
+  statuses: write
+
+jobs:
+  main:
+    name: Validate PR title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            perf
+            deps
+            revert
+            docs
+            style
+            chore
+            refactor
+            test
+            build
+            ci
+            security
+          requireScope: false
+          validateSingleCommit: false
