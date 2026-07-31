@@ -2,6 +2,8 @@
 
 Open-source ([MIT](LICENSE)) SDK and instrumentation libraries for the Parlot.ai multi-agent observability platform.
 
+**Contributing / releases:** see [CONTRIBUTING.md](CONTRIBUTING.md) (PR-only `main`, conventional PR titles, Release Please).
+
 **Docs:** see the [documentation site](./docs/) (`cd docs && bun start`) — Quick Start, concepts, and LiveKit guides.
 
 ## Structure
