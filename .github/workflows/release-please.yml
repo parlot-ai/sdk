@@ -15,5 +15,7 @@ jobs:
     steps:
       - uses: googleapis/release-please-action@v4
         with:
+          # Org policy blocks GITHUB_TOKEN from creating PRs; use the cross-repo PAT.
+          token: ${{ secrets.PARLOT_CROSS_REPO_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
