@@ -20,6 +20,9 @@ class _FakeMetrics:
     def record_usage_collected(self, state, metrics_obj) -> None:
         pass
 
+    def record_turn(self, state, **kwargs) -> None:
+        pass
+
 
 class _FakeTraceContext:
     trace_id = 0
@@ -158,6 +161,8 @@ def test_export_enrichment_token_totals_match_plugins() -> None:
         _patch_bootstrap(mp, bootstrap)
         for span in llm_spans + agent_spans:
             processor.on_end(span)
+        # Multi-node token attach is export-time FIFO (prefer_fifo=True).
+        processor.enrich_spans_for_export(llm_spans + agent_spans)
 
     plugin_in = sum(m.prompt_tokens for m in metrics)
     plugin_out = sum(m.completion_tokens for m in metrics)

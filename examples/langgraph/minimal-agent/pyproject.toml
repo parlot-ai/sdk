@@ -1,0 +1,16 @@
+[project]
+name = "parlot-example-langgraph-minimal"
+version = "0.1.0"
+description = "Minimal LangGraph agent with Parlot configure()"
+requires-python = ">=3.11"
+dependencies = [
+    "parlot-core",
+    "parlot-instrumentation-langgraph",
+    "langgraph>=0.6.0",
+    "langchain-core>=0.3.0",
+    "langchain-openai>=0.3.0",
+]
+
+[tool.uv.sources]
+parlot-core = { path = "../../../packages/core", editable = true }
+parlot-instrumentation-langgraph = { path = "../../../packages/instrumentation-langgraph", editable = true }

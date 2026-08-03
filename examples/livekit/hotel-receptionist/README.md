@@ -14,7 +14,7 @@ Recording is **off** (`configure(..., record=False)`) — telemetry only.
 Requires [uv](https://docs.astral.sh/uv/).
 
 ```bash
-cd sdk/examples/hotel-receptionist
+cd sdk/examples/livekit/hotel-receptionist
 uv sync
 cp .env.example .env
 # edit .env — LIVEKIT_* for Inference; PARLOT_* for the collector

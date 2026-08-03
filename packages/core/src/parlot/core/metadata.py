@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Mapping
 
 from parlot.core.attrs import ATTR_SESSION_METADATA_PREFIX
-from parlot.core.session import _active_session_span, _active_session_state
+from parlot.core.session import get_active_session, get_active_session_span
 
 
 def session_metadata_key(key: str) -> str:
@@ -29,11 +29,11 @@ def set_session_attribute(key: str, value: str | int | float | bool) -> None:
         return
     str_value = value if isinstance(value, str) else str(value)
 
-    state = _active_session_state.get()
+    state = get_active_session()
     if state is not None:
         state.custom_metadata[full_key] = str_value
 
-    span = _active_session_span.get()
+    span = get_active_session_span()
     if span is not None and hasattr(span, "set_attribute"):
         span.set_attribute(full_key, str_value)
 

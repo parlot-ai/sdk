@@ -14,10 +14,21 @@ Parlot treats production voice agents as **event systems** first and traces seco
 
 | Package | Role |
 |---------|------|
-| `parlot-core` | Semantic conventions, base processor, UUID v7 session ids |
+| `parlot-core` | Semantic conventions (GenAI v1.41 + Conversation Contract + voice), base processor, shared provider helpers |
 | `parlot-instrumentation-livekit` | LiveKit Agents OTel instrumentation, egress hooks, platform refs |
+| `parlot-instrumentation-langgraph` | LangGraph / LangChain `configure()` via global callbacks |
 
 Import from instrumentation packages in agent code — not from `parlot-core` directly.
+
+## Shared span vocabulary
+
+All adapters export the same three layers:
+
+1. **Conversation Contract** — `parlot.session`, `parlot.turn`, `parlot.session.close`, `parlot.agent.handoff`
+2. **OTel GenAI** (semconv v1.41.0) — `invoke_agent`, `chat`, `execute_tool {name}`, `invoke_workflow`
+3. **Voice** (LiveKit) — `tts`, `stt`, `eou_detection`, `amd`
+
+See [LangGraph](./guides/langgraph.md) and [LiveKit integration](./guides/livekit-integration.md).
 
 ## Session and agent identity
 
@@ -32,4 +43,11 @@ Under LiveKit `dev` / job workers, prefer explicit `configure(version=...)` or `
 - **Telemetry** (turns, handoffs, close, usage) always goes over OTLP to `PARLOT_ENDPOINT`.
 - **Audio recording** uses LiveKit Room Composite Egress to R2; webhooks confirm upload. Telemetry does not depend on webhooks.
 
-See the [LiveKit guide](./guides/livekit.md) for the full checklist.
+See the [LiveKit guide](./guides/livekit-integration.md) for the full checklist.
+
+## Roadmap adapters
+
+Future packages will use the same GenAI + contract vocabulary (not implemented yet):
+
+- **Google ADK** — lifecycle `before/after_agent|model|tool_callback` → GenAI spans
+- **Vercel AI SDK** — `experimental_telemetry` normalize (TypeScript) → GenAI spans

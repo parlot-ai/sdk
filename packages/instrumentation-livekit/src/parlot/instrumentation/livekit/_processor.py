@@ -66,6 +66,8 @@ from parlot.core.attrs import (
     ATTR_SESSION_TURN_COUNT,
     ATTR_SESSION_USER_ID,
     SPAN_PARLOT_SESSION_CLOSE,
+    SPAN_PARLOT_TURN,
+    SPAN_VOICE_STT,
     ATTR_STT_SPEAKER_ID,
     ATTR_DIAR_SOURCE_AGENT_ID,
     ATTR_DIAR_SOURCE_STT_SPEAKER_ID,
@@ -75,10 +77,15 @@ from parlot.core.attrs import (
     ATTR_TURN_EOU_DELAY_S,
     ATTR_TURN_INDEX,
     ATTR_TURN_LLM_TTFT_S,
+    ATTR_TURN_MEDIA_END_MS,
+    ATTR_TURN_MEDIA_START_MS,
     ATTR_TURN_PARTICIPANT_ID,
+    ATTR_TURN_SPEECH_WALL_END_MS,
+    ATTR_TURN_SPEECH_WALL_START_MS,
     ATTR_TURN_TRANSCRIPTION_DELAY_S,
     ATTR_TURN_LANGUAGE,
     ATTR_TURN_LANGUAGE_SWITCH,
+    ATTR_TURN_TTS_TTFB_S,
     ATTR_TURN_USER_TEXT,
     ATTR_TURN_INPUT_MODALITY,
     ATTR_TURN_INTERRUPTED,
@@ -134,7 +141,13 @@ from ._chat_ctx import (
     full_instructions_excerpt,
     static_instructions_excerpt,
 )
-from ._span_stage import livekit_agent_stage_for_span
+from ._span_rename import (
+    NATIVE_TOOL_SPANS,
+    NATIVE_TURN_SPANS,
+    apply_livekit_span_rename,
+    remap_livekit_span_name,
+)
+from ._span_stage import livekit_agent_role_for_span, livekit_agent_stage_for_span
 from ._platform_refs import lookup_room_context, stamp_livekit_platform_refs
 from ._agent_identity import (
     append_agent_chain_step,
@@ -233,6 +246,10 @@ class _LiveKitSessionState(_BaseSessionState):
     tool_execution_ns_queue: list[int] = field(default_factory=list)
     pending_interrupt_media_end_ms: int = 0
     pending_interrupt_speech_end_wall_ms: int = 0
+    # Attrs observed on native user_turn/agent_turn to stamp onto parlot.turn
+    pending_turn_pipeline_attrs: dict[int, dict[str, AttributeValue]] = field(
+        default_factory=dict
+    )
     topology: SessionTopology = field(default_factory=SessionTopology)
 
 
@@ -282,7 +299,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         return self._turn_source
 
     def enrich_spans_for_export(self, spans: list[ReadableSpan]) -> None:
-        """Deferred enrichment after plugin metrics_collected (export-time)."""
+        """Deferred enrichment, turn-attr copy, then GenAI/voice rename for export."""
         self._correct_function_tool_timing(spans)
 
         llm_spans = sorted(
@@ -290,6 +307,11 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             key=lambda s: s.end_time or 0,
         )
         for span in llm_spans:
+            # FIFO token attach before stamping active_speech_id (which would
+            # pin every span to the latest speech and break multi-node batches).
+            self._apply_plugin_llm_usage_to_span(
+                span, dict(span.attributes or {}), prefer_fifo=True
+            )
             attrs = span.attributes or {}
             if not attrs.get(ATTR_LK_SPEECH_ID):
                 bootstrap = get_job_bootstrap()
@@ -298,25 +320,34 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
                     speech_id = bootstrap.state.active_speech_id.strip()
                 if speech_id:
                     self._set(span, ATTR_LK_SPEECH_ID, speech_id)
-            self._apply_plugin_llm_usage_to_span(
-                span, span.attributes or {}, prefer_fifo=True
-            )
+
+        self._merge_native_turn_attrs_onto_parlot_turns(spans)
 
         from ._telemetry_compare import compare_enabled, get_compare_logger
 
-        if not compare_enabled():
-            return
-        bootstrap = get_job_bootstrap()
-        if bootstrap is None or not bootstrap.state.parlot_session_id:
-            return
-        session_id = bootstrap.state.parlot_session_id
+        if compare_enabled():
+            bootstrap = get_job_bootstrap()
+            if bootstrap is not None and bootstrap.state.parlot_session_id:
+                session_id = bootstrap.state.parlot_session_id
+                for span in spans:
+                    if span.name == "llm_node":
+                        get_compare_logger().accumulate_export_tokens(
+                            session_id,
+                            span_name=span.name or "",
+                            attrs=dict(span.attributes or {}),
+                        )
+
+        # Rename LiveKit-native ops → GenAI/voice names before export filter.
         for span in spans:
-            if span.name == "llm_node":
-                get_compare_logger().accumulate_export_tokens(
-                    session_id,
-                    span_name=span.name or "",
-                    attrs=dict(span.attributes or {}),
-                )
+            native = span.name or ""
+            if native in NATIVE_TURN_SPANS:
+                # Dropped by export filter (remap returns None); attrs already merged.
+                continue
+            if remap_livekit_span_name(native, span.attributes or {}) is not None:
+                apply_livekit_span_rename(span)
+                role = livekit_agent_role_for_span(span.name or "")
+                if role and not (span.attributes or {}).get(ATTR_AGENT_ROLE):
+                    self._set(span, ATTR_AGENT_ROLE, role)
 
     def _log_compare_span(self, span: ReadableSpan) -> None:
         from ._session import get_job_bootstrap
@@ -407,7 +438,12 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             return
 
         tool_spans = sorted(
-            (s for s in spans if s.name == "function_tool"),
+            (
+                s
+                for s in spans
+                if (s.name or "") in NATIVE_TOOL_SPANS
+                or (s.name or "").startswith("execute_tool")
+            ),
             key=lambda s: s.end_time or 0,
         )
         for span in tool_spans:
@@ -881,7 +917,11 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if not attrs.get(ATTR_GEN_AI_OP_NAME):
             self._set(span, ATTR_GEN_AI_OP_NAME, "chat")
 
-        if not attrs.get(ATTR_LK_SPEECH_ID) and state.active_speech_id:
+        # Attach tokens using the span's own speech_id (or FIFO), before we
+        # stamp active_speech_id — otherwise every node inherits the latest id.
+        self._apply_plugin_llm_usage_to_span(span, dict(attrs))
+
+        if not (span.attributes or {}).get(ATTR_LK_SPEECH_ID) and state.active_speech_id:
             self._set(span, ATTR_LK_SPEECH_ID, state.active_speech_id)
 
         chat_raw = str(attrs.get(ATTR_LK_CHAT_CTX, ""))
@@ -929,7 +969,6 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
                     {"content": assistant_text},
                 )
 
-        self._apply_plugin_llm_usage_to_span(span, attrs)
         self._stamp_response_model_if_distinct(span, span.attributes or attrs)
 
     def _apply_plugin_llm_usage_to_span(
@@ -1199,6 +1238,124 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
                 {"content": text},
             )
 
+    def _stash_turn_pipeline_attrs(
+        self,
+        state: _LiveKitSessionState,
+        turn_index: int,
+        attrs: dict[str, AttributeValue],
+    ) -> None:
+        if turn_index <= 0 or not attrs:
+            return
+        bucket = state.pending_turn_pipeline_attrs.setdefault(turn_index, {})
+        for key, value in attrs.items():
+            if value is None:
+                continue
+            if key not in bucket or bucket[key] in ("", 0, 0.0):
+                bucket[key] = value
+
+    def _pipeline_attrs_from_user_turn(
+        self, span: ReadableSpan, state: _LiveKitSessionState
+    ) -> dict[str, AttributeValue]:
+        out: dict[str, AttributeValue] = {}
+        attrs = span.attributes or {}
+        confidence = _optional_float(attrs.get(ATTR_VOICE_STT_CONFIDENCE))
+        if confidence is None:
+            confidence = _optional_float(attrs.get(ATTR_TRANSCRIPT_CONFIDENCE))
+        if confidence is not None:
+            out[ATTR_VOICE_STT_CONFIDENCE] = confidence
+        wall = self._speech_wall_ms_from_span(span)
+        if wall is not None:
+            start_ms, end_ms = wall
+            out[ATTR_TURN_SPEECH_WALL_START_MS] = start_ms
+            out[ATTR_TURN_SPEECH_WALL_END_MS] = end_ms
+            media_start, media_end = self._media_segments_from_speech(
+                state, start_ms, end_ms
+            )
+            if media_end > 0:
+                out[ATTR_TURN_MEDIA_START_MS] = media_start
+                out[ATTR_TURN_MEDIA_END_MS] = media_end
+        return out
+
+    def _pipeline_attrs_from_agent_turn(
+        self, span: ReadableSpan, state: _LiveKitSessionState
+    ) -> dict[str, AttributeValue]:
+        out: dict[str, AttributeValue] = {}
+        attrs = span.attributes or {}
+        for src, dest in (
+            (ATTR_TURN_E2E_LATENCY_S, ATTR_TURN_E2E_LATENCY_S),
+            (ATTR_TURN_LLM_TTFT_S, ATTR_TURN_LLM_TTFT_S),
+            (ATTR_TURN_TRANSCRIPTION_DELAY_S, ATTR_TURN_TRANSCRIPTION_DELAY_S),
+            (ATTR_TURN_EOU_DELAY_S, ATTR_TURN_EOU_DELAY_S),
+            (ATTR_TURN_TTS_TTFB_S, ATTR_TURN_TTS_TTFB_S),
+        ):
+            val = _optional_float(attrs.get(src))
+            if val is None and src == ATTR_TURN_E2E_LATENCY_S:
+                val = _optional_float(attrs.get(ATTR_LK_E2E_LATENCY))
+            if val is None and src == ATTR_TURN_LLM_TTFT_S:
+                val = _optional_float(attrs.get(ATTR_LK_RESPONSE_TTFT))
+            if val is None and src == ATTR_TURN_TRANSCRIPTION_DELAY_S:
+                val = _optional_float(attrs.get(ATTR_TRANSCRIPTION_DELAY))
+            if val is None and src == ATTR_TURN_EOU_DELAY_S:
+                val = _optional_float(attrs.get(ATTR_END_OF_TURN_DELAY))
+            if val is not None:
+                out[dest] = val
+        if state.pending_tts_ttfb_s is not None:
+            out[ATTR_TURN_TTS_TTFB_S] = state.pending_tts_ttfb_s
+        if attrs.get(ATTR_LK_INTERRUPTED) or attrs.get(ATTR_TURN_INTERRUPTED):
+            out[ATTR_TURN_INTERRUPTED] = True
+        wall = self._speech_wall_ms_from_span(span)
+        if wall is not None:
+            start_ms, end_ms = wall
+            out[ATTR_TURN_SPEECH_WALL_START_MS] = start_ms
+            out[ATTR_TURN_SPEECH_WALL_END_MS] = end_ms
+            media_start, media_end = self._media_segments_from_speech(
+                state, start_ms, end_ms
+            )
+            if media_end > 0:
+                out[ATTR_TURN_MEDIA_START_MS] = media_start
+                out[ATTR_TURN_MEDIA_END_MS] = media_end
+        return out
+
+    def _merge_native_turn_attrs_onto_parlot_turns(
+        self, spans: list[ReadableSpan]
+    ) -> None:
+        """Copy pipeline-only attrs from native turn spans onto ``parlot.turn``."""
+        bootstrap = get_job_bootstrap()
+        state = bootstrap.state if bootstrap is not None else None
+
+        for span in spans:
+            name = span.name or ""
+            if name not in NATIVE_TURN_SPANS or state is None:
+                continue
+            attrs = span.attributes or {}
+            turn_index = _attr_int(attrs, ATTR_TURN_INDEX)
+            if not turn_index:
+                turn_index = self._active_turn_index(state, name) or 0
+            if not turn_index:
+                continue
+            if name == "user_turn":
+                self._stash_turn_pipeline_attrs(
+                    state, turn_index, self._pipeline_attrs_from_user_turn(span, state)
+                )
+            else:
+                self._stash_turn_pipeline_attrs(
+                    state, turn_index, self._pipeline_attrs_from_agent_turn(span, state)
+                )
+
+        if state is None:
+            return
+        for span in spans:
+            if span.name != SPAN_PARLOT_TURN:
+                continue
+            attrs = span.attributes or {}
+            turn_index = _attr_int(attrs, ATTR_TURN_INDEX)
+            pending = state.pending_turn_pipeline_attrs.get(turn_index)
+            if not pending:
+                continue
+            for key, value in pending.items():
+                if attrs.get(key) in (None, "", 0, 0.0):
+                    self._set(span, key, value)
+
     def _enrich_user_turn(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
         confidence = _optional_float(attrs.get(ATTR_TRANSCRIPT_CONFIDENCE))
@@ -1208,6 +1365,12 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if self._turn_source == "events":
             self._capture_user_id(state, attrs, span=span)
             self._stamp_events_user_text(span, state)
+            turn_index = _attr_int(span.attributes or {}, ATTR_TURN_INDEX) or (
+                self._active_turn_index(state, "user_turn") or 0
+            )
+            self._stash_turn_pipeline_attrs(
+                state, turn_index, self._pipeline_attrs_from_user_turn(span, state)
+            )
             return
 
         if attrs.get(ATTR_LK_IS_INTERRUPTION):
@@ -1226,6 +1389,11 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             transcript=transcript,
             modality=self._user_turn_modality(attrs),
         )
+        self._stash_turn_pipeline_attrs(
+            state,
+            state.turn_count,
+            self._pipeline_attrs_from_user_turn(span, state),
+        )
 
     def _enrich_agent_turn(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
@@ -1243,6 +1411,11 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             agent_text = state.agent_text_by_turn.get(resolved_turn_index, "")
             if agent_text:
                 self._set(span, ATTR_TURN_AGENT_TEXT, agent_text)
+            self._stash_turn_pipeline_attrs(
+                state,
+                resolved_turn_index,
+                self._pipeline_attrs_from_agent_turn(span, state),
+            )
             return
 
         if state.open_agent_turn_index is None:
@@ -1493,6 +1666,9 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         }
         if modality == "text":
             attrs[ATTR_AGENT_ROLE] = "pipeline"
+        else:
+            attrs[ATTR_AGENT_ROLE] = "stt"
+        attrs[ATTR_AGENT_STAGE] = "turn"
         if participant_id and participant_id != ATTR_TURN_PARTICIPANT_ID_CALLER:
             attrs[ATTR_PARTICIPANT_CHANNEL_IDENTITY] = participant_id
         if state.session_id:
@@ -1502,7 +1678,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if state.room_sid:
             attrs[ATTR_LK_ROOM_SID] = state.room_sid
 
-        span = self._tracer.start_span("user_turn", attributes=attrs)
+        span = self._tracer.start_span(SPAN_VOICE_STT, attributes=attrs)
         stamp_livekit_platform_refs(
             span,
             job_id=state.session_id,

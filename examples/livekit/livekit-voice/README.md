@@ -7,7 +7,7 @@ Demonstrates Parlot instrumentation on a standard LiveKit voice agent.
 Requires [uv](https://docs.astral.sh/uv/).
 
 ```bash
-cd sdk/examples/livekit-voice
+cd sdk/examples/livekit/livekit-voice
 uv sync
 ```
 

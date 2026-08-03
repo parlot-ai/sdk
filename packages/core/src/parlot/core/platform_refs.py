@@ -13,7 +13,7 @@ from .attrs import (
     ATTR_PLATFORM_REF_PREFIX,
     ATTR_PLATFORM_VALUE,
 )
-from .session import _active_session_span
+from .session import get_active_session_span
 
 
 def platform_ref_flat_key(kind: str) -> str:
@@ -90,7 +90,7 @@ def add_platform_ref(
     framework = str(framework or "custom").strip() or "custom"
     if not kind or not value:
         return
-    span = _active_session_span.get()
+    span = get_active_session_span()
     if span is None:
         return
     stamp_platform_refs(span, [(framework, kind, value)])

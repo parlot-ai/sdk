@@ -315,7 +315,7 @@ class TestEventBridgeTurns:
         user_spans = [
             s
             for s in exporter.get_finished_spans()
-            if s.name == "user_turn"
+            if s.name == "stt"
             and s.attributes.get(ATTR_TURN_USER_TEXT) == "Committed after pipeline span"
         ]
         assert len(user_spans) == 1
@@ -362,7 +362,7 @@ class TestEventBridgeTurns:
         user_spans = [
             s
             for s in exporter.get_finished_spans()
-            if s.name == "user_turn"
+            if s.name == "stt"
             and s.attributes.get(ATTR_TURN_USER_TEXT) == "I need help"
         ]
         assert len(user_spans) == 1

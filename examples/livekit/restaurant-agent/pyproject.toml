@@ -15,5 +15,5 @@ dependencies = [
 package = false
 
 [tool.uv.sources]
-parlot-core = { path = "../../packages/core", editable = true }
-parlot-instrumentation-livekit = { path = "../../packages/instrumentation-livekit", editable = true }
+parlot-core = { path = "../../../packages/core", editable = true }
+parlot-instrumentation-livekit = { path = "../../../packages/instrumentation-livekit", editable = true }

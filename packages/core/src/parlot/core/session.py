@@ -41,3 +41,43 @@ class SessionState:
     human_rep_participant_ids: set[str] = field(default_factory=set)
     topology_agents: list[dict[str, Any]] = field(default_factory=list)
     custom_metadata: dict[str, str] = field(default_factory=dict)
+    # Owning instrumentation package, e.g. "livekit" | "langgraph"
+    framework: str = ""
+
+
+def get_active_session() -> SessionState | None:
+    """Return the session state bound to the current context, if any."""
+    return _active_session_state.get()
+
+
+def get_active_session_span() -> Span | None:
+    """Return the active ``parlot.session`` span for the current context, if any."""
+    return _active_session_span.get()
+
+
+def set_active_session(
+    span: Span | None,
+    state: SessionState | None,
+) -> None:
+    """Bind (or clear) the active session span + state for this context."""
+    _active_session_span.set(span)
+    _active_session_state.set(state)
+
+
+def clear_active_session() -> None:
+    """Clear the active session bindings for this context."""
+    set_active_session(None, None)
+
+
+def session_owned(*, framework: str | None = None) -> bool:
+    """True when an active Parlot session with a non-empty session_id is bound.
+
+    When ``framework`` is set, also require ``state.framework`` to match
+    (e.g. ``session_owned(framework="livekit")`` for coexistence checks).
+    """
+    state = get_active_session()
+    if state is None or not state.session_id:
+        return False
+    if framework is not None and state.framework != framework:
+        return False
+    return True

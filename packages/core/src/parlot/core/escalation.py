@@ -8,7 +8,7 @@ from contextvars import ContextVar
 from typing import Iterator
 
 from parlot.core.attrs import ATTR_SESSION_TOPOLOGY_AGENTS
-from parlot.core.session import _active_session_span, _active_session_state
+from parlot.core.session import get_active_session, get_active_session_span
 
 _pending_escalation_label: ContextVar[str | None] = ContextVar(
     "_pending_escalation_label", default=None
@@ -26,7 +26,7 @@ def record_human_rep(participant_id: str, *, label: str | None = None) -> None:
     if not participant_id:
         return
 
-    state = _active_session_state.get()
+    state = get_active_session()
     if state is not None:
         state.human_rep_participant_ids.add(participant_id)
         entry: dict[str, str] = {"id": participant_id, "role": "human_rep"}
@@ -35,7 +35,7 @@ def record_human_rep(participant_id: str, *, label: str | None = None) -> None:
         if not any(a.get("id") == participant_id for a in state.topology_agents):
             state.topology_agents.append(entry)
 
-    span = _active_session_span.get()
+    span = get_active_session_span()
     if span is not None and state is not None and state.topology_agents:
         span.set_attribute(
             ATTR_SESSION_TOPOLOGY_AGENTS, json.dumps(state.topology_agents)
