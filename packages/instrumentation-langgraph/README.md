@@ -14,6 +14,9 @@ graph.invoke(
 )
 ```
 
+If `thread_id` is not provided, Parlot mints one automatically (`anon-…`) so
+contract spans still attach to a session.
+
 Set `PARLOT_ENDPOINT` and `PARLOT_API_KEY`. Optional: `PARLOT_CAPTURE_CONTENT=false`.
 
 When used inside a LiveKit voice agent that already called

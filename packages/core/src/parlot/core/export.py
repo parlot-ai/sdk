@@ -1,4 +1,4 @@
-"""Export filter using the shared Contract ∪ GenAI ∪ voice allowlist."""
+"""Shared OTLP export helpers for instrumentation packages."""
 
 from __future__ import annotations
 
@@ -11,6 +11,8 @@ from parlot.core.attrs import is_exportable_span_name
 
 
 class ExportFilterSpanExporter(SpanExporter):
+    """Pass through only Conversation Contract + GenAI + voice spans."""
+
     def __init__(self, exporter: SpanExporter) -> None:
         self._exporter = exporter
 

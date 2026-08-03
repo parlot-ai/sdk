@@ -20,6 +20,8 @@ from .provider import (
     resolve_capture_content,
     resolve_endpoint,
 )
+from .configure import ConfigureProtocol
+from .export import ExportFilterSpanExporter
 from .intent import derive_intent
 from .sdk_version import resolve_parlot_sdk_version, stamp_session_sdk_version
 from .session import (
@@ -33,6 +35,8 @@ from .session import (
 from .topology import SessionTopology
 
 __all__ = [
+    "ConfigureProtocol",
+    "ExportFilterSpanExporter",
     "ParlotBaseProcessor",
     "assert_sync_span_processors",
     "SessionState",

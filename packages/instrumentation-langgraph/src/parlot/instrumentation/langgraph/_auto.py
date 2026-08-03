@@ -14,6 +14,7 @@ _configured_agent_version: str = ""
 
 
 def configure(
+    *,
     endpoint: Optional[str] = None,
     api_key: Optional[str] = None,
     capture_content: Optional[bool] = None,
@@ -104,9 +105,8 @@ def _build_provider(
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
+    from parlot.core.export import ExportFilterSpanExporter
     from parlot.core.provider import build_otlp_http_exporter, build_resource
-
-    from ._export_filter import ExportFilterSpanExporter
 
     resource = build_resource(
         service_name=service_name or "langgraph-agent",

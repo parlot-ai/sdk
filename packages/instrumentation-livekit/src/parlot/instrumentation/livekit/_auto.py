@@ -51,6 +51,7 @@ def _configure_parlot_logging() -> None:
 
 
 def configure(
+    *,
     endpoint: Optional[str] = None,
     api_key: Optional[str] = None,
     capture_content: Optional[bool] = None,
@@ -188,8 +189,10 @@ def _build_provider(
     from parlot.core.provider import build_otlp_http_exporter, build_resource
     from parlot.core.sdk_version import resolve_parlot_sdk_version
 
+    from parlot.core.export import ExportFilterSpanExporter
+
     from ._export import QuietOTLPSpanExporter
-    from ._export_filter import EnrichingExportSpanExporter, ExportFilterSpanExporter
+    from ._export_filter import EnrichingExportSpanExporter
     from ._export_sanitize import SanitizeVendorAttrsSpanExporter
     from ._metrics import ParlotMetricsRecorder, build_meter_provider
     from ._processor import LiveKitGenAIProcessor

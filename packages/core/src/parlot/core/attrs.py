@@ -12,11 +12,13 @@ Three-layer export vocabulary (do not collapse):
   GenAI    — OTel GenAI SemConv v1.41.0 (invoke_agent / chat / execute_tool / invoke_workflow)
   Voice    — tts / stt / eou_detection / amd (no GenAI equivalent)
 
-Attribute layers (system-design.md §3.6):
+Attribute layers:
   Layer 1 — gen_ai.*          OTel GenAI SemConv (never deviate; pin version below)
   Layer 2 — openinference.*   OpenInference semantic model
   Layer 3 — Parlot extensions  agent.*, voice.*, session.*, turn.*, participant.*,
                                conversation.*, platform.ref.*
+
+Bump ``GENAI_SEMCONV_VERSION`` only with ``packages/core/genai_semconv.lock.json``.
 """
 
 from __future__ import annotations

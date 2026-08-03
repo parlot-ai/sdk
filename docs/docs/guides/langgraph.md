@@ -7,8 +7,9 @@ sidebar_position: 3
 # LangGraph instrumentation
 
 `parlot-instrumentation-langgraph` registers a global LangChain callback handler
-(same seam LangSmith uses) so every `invoke` / `ainvoke` / `astream` emits
-Parlot Conversation Contract spans plus OTel GenAI operational spans.
+via LangChain’s `register_configure_hook` / `CallbackManager.configure` injection
+so every `invoke` / `ainvoke` / `astream` emits Parlot Conversation Contract
+spans plus OTel GenAI operational spans.
 
 ## Quick start
 
@@ -27,7 +28,7 @@ close_session("demo-1")  # optional; also flushed on process exit
 
 Environment: `PARLOT_ENDPOINT`, `PARLOT_API_KEY`. Optional: `PARLOT_CAPTURE_CONTENT=false`.
 
-See [`examples/langgraph/minimal-agent`](../../examples/langgraph/minimal-agent/).
+See [`examples/langgraph/minimal-agent`](https://github.com/parlot-ai/sdk/tree/main/examples/langgraph/minimal-agent).
 
 ## Span vocabulary
 
@@ -36,7 +37,8 @@ See [`examples/langgraph/minimal-agent`](../../examples/langgraph/minimal-agent/
 | Contract | `parlot.session`, `parlot.turn`, `parlot.session.close` |
 | GenAI (semconv v1.41) | `invoke_agent`, `invoke_workflow`, `chat` / `chat {model}`, `execute_tool {name}` |
 
-Session key is LangGraph `thread_id` (`session.modality=text`).
+Session key is LangGraph `thread_id` (`session.modality=text`). If `thread_id`
+is omitted, Parlot mints one automatically (`anon-…`) for the process lifetime.
 
 ## LiveKit + LangGraph
 
