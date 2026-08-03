@@ -11,7 +11,7 @@ Integration requirements (`configure()` + `await ctx.connect()`): see [instrumen
 Requires [uv](https://docs.astral.sh/uv/) and read access to the private `parlot-ai/sdk` repo (git-tag install).
 
 ```bash
-cd sdk/examples/restaurant-agent
+cd sdk/examples/livekit/restaurant-agent
 uv sync
 cp .env.example .env
 # edit .env

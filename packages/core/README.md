@@ -4,12 +4,14 @@ Shared semantic conventions, base span processor, and utilities for all Parlot i
 
 ## Contents
 
-- `parlot.core.attrs` — all semconv string constants (`ATTR_GEN_AI_*`, `ATTR_LK_*`, Parlot extension namespaces); TypeScript mirror in `@parlot/core` (`packages/core-ts`, run `uv run python scripts/generate_attrs_ts.py` after edits)
-- `parlot.core.session` — `SessionState` base dataclass for per-trace accumulators
-- `parlot.core.pricing` — `DEFAULT_PRICES` table and `compute_cost()` helper
+- `parlot.core.attrs` — GenAI semconv v1.41 pin, Conversation Contract / GenAI / voice span names, `ATTR_*` constants; TypeScript mirror in `@parlot/core` (`packages/core-ts`, run `uv run python scripts/generate_attrs_ts.py` after edits). Pin surface: `packages/core/genai_semconv.lock.json` (bump lock with `GENAI_SEMCONV_VERSION`)
+- `parlot.core.export` — shared `ExportFilterSpanExporter` (contract ∪ GenAI ∪ voice allowlist)
+- `parlot.core.configure` — `ConfigureProtocol` (keyword-only shared kwargs)
+- `parlot.core.session` — `SessionState`, `get_active_session()` / `session_owned()` for cross-package coexistence
+- `parlot.core.provider` — shared endpoint/api_key resolve + TracerProvider/OTLP bootstrap helpers
 - `parlot.core.processor` — `ParlotBaseProcessor(SpanProcessor)` with shared span-mutation helpers
-- `parlot.core.platform_refs` — generic `stamp_platform_refs()` for `platform.ref.*` triples (framework-specific registries live in each instrumentation package)
+- `parlot.core.platform_refs` — generic `stamp_platform_refs()` for `platform.ref.*` triples
 
 ## Not for direct use
 
-This package is a dependency of instrumentation packages (`parlot-instrumentation-livekit`, etc.). Import from those packages in your agent code, not from here directly.
+This package is a dependency of instrumentation packages (`parlot-instrumentation-livekit`, `parlot-instrumentation-langgraph`, etc.). Import from those packages in your agent code, not from here directly.

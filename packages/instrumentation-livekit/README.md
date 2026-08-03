@@ -24,7 +24,7 @@ Optional: `agent_id=` for canonical deployment identity and `version=` for deplo
 
 If none resolve, `gen_ai.agent.version` is omitted. The platform Versions tab then stays empty (it filters `agent_version != ''`).
 
-**LiveKit job processes:** with `python agent.py dev` (or spawned `job_proc` workers), `__main__` is LiveKit’s IPC entrypoint, not your agent file. A module-level `__version__` on `agent.py` often does **not** resolve. The parent `dev` watcher also skips `configure()` via `_is_livekit_dev_watch_parent`, so instrumentation runs in the child where `__main__` is not your entrypoint. Example dirs like `examples/restaurant-agent` usually have no `.git`, so the git SHA fallback also fails.
+**LiveKit job processes:** with `python agent.py dev` (or spawned `job_proc` workers), `__main__` is LiveKit’s IPC entrypoint, not your agent file. A module-level `__version__` on `agent.py` often does **not** resolve. The parent `dev` watcher also skips `configure()` via `_is_livekit_dev_watch_parent`, so instrumentation runs in the child where `__main__` is not your entrypoint. Example dirs like `examples/livekit/restaurant-agent` usually have no `.git`, so the git SHA fallback also fails.
 
 **Reliable patterns for LiveKit:**
 
@@ -72,10 +72,10 @@ Optional: `PARLOT_DIAGNOSTICS=off` to disable SDK self-diagnostics (export/handl
 
 ## Examples
 
-- [`examples/livekit-voice`](../../examples/livekit-voice/) — minimal hello-world
-- [`examples/multi-agent`](../../examples/multi-agent/) — storytelling handoffs
-- [`examples/restaurant-agent`](../../examples/restaurant-agent/) — greeter → specialist routing
-- [`examples/hotel-receptionist`](../../examples/hotel-receptionist/) — boutique-hotel receptionist + seed sample sessions
+- [`examples/livekit/livekit-voice`](../../examples/livekit/livekit-voice/) — minimal hello-world
+- [`examples/livekit/multi-agent`](../../examples/livekit/multi-agent/) — storytelling handoffs
+- [`examples/livekit/restaurant-agent`](../../examples/livekit/restaurant-agent/) — greeter → specialist routing
+- [`examples/livekit/hotel-receptionist`](../../examples/livekit/hotel-receptionist/) — boutique-hotel receptionist + seed sample sessions
 
 ## Development
 

@@ -79,11 +79,12 @@ def handle_plugin_metrics_collected(
 
     plugin_state = _plugin_state(processor)
     speech_id = str(getattr(metrics_obj, "speech_id", "") or "").strip()
+    # Always enqueue for export-time FIFO (prefer_fifo=True). Also index by
+    # speech_id for on_end matching when the span already carries lk.speech_id.
+    plugin_state.llm_queue.append(llm_usage)
     if speech_id:
         plugin_state.by_speech_id.setdefault(speech_id, []).append(llm_usage)
         state.active_speech_id = speech_id
-    else:
-        plugin_state.llm_queue.append(llm_usage)
 
 
 def resolve_llm_usage_for_span(
@@ -99,15 +100,26 @@ def resolve_llm_usage_for_span(
     """
     plugin_state = _plugin_state(processor)
     sid = speech_id.strip()
+    if prefer_fifo:
+        if plugin_state.llm_queue:
+            usage = plugin_state.llm_queue.pop(0)
+            if sid:
+                queue = plugin_state.by_speech_id.get(sid)
+                if queue and usage in queue:
+                    queue.remove(usage)
+                    if not queue:
+                        del plugin_state.by_speech_id[sid]
+            return usage
+        return None
     if sid:
         queue = plugin_state.by_speech_id.get(sid)
         if queue:
             usage = queue.pop(0)
             if not queue:
                 del plugin_state.by_speech_id[sid]
+            if usage in plugin_state.llm_queue:
+                plugin_state.llm_queue.remove(usage)
             return usage
-    if prefer_fifo and plugin_state.llm_queue:
-        return plugin_state.llm_queue.pop(0)
     if plugin_state.llm_queue:
         return plugin_state.llm_queue.pop(0)
     return None

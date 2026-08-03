@@ -7,14 +7,25 @@ TypeScript: ``@parlot/core`` (``packages/core-ts/src/attrs.gen.ts``), generated 
 LiveKit vendor keys: ``parlot.instrumentation.livekit.attrs`` → ``@parlot/core/livekit``.
 OTel-standard keys (e.g. ``exception.*``) live here, not in the LiveKit vendor module.
 
-Three-layer strategy (system-design.md §3.6):
-  Layer 1 — gen_ai.*          OTel GenAI SemConv (never deviate)
+Three-layer export vocabulary (do not collapse):
+  Contract — parlot.session / parlot.turn / close / handoff
+  GenAI    — OTel GenAI SemConv v1.41.0 (invoke_agent / chat / execute_tool / invoke_workflow)
+  Voice    — tts / stt / eou_detection / amd (no GenAI equivalent)
+
+Attribute layers:
+  Layer 1 — gen_ai.*          OTel GenAI SemConv (never deviate; pin version below)
   Layer 2 — openinference.*   OpenInference semantic model
   Layer 3 — Parlot extensions  agent.*, voice.*, session.*, turn.*, participant.*,
                                conversation.*, platform.ref.*
+
+Bump ``GENAI_SEMCONV_VERSION`` only with ``packages/core/genai_semconv.lock.json``.
 """
 
 from __future__ import annotations
+
+# Pin the OTel GenAI semantic conventions revision adapters target.
+# Conventions are Development-status; bump deliberately when remapping.
+GENAI_SEMCONV_VERSION = "1.41.0"
 
 # ---------------------------------------------------------------------------
 # Layer 1 — OTel GenAI SemConv (gen_ai.*)
@@ -32,6 +43,13 @@ ATTR_GEN_AI_AUDIO_IN        = "gen_ai.usage.input_audio_tokens"
 ATTR_GEN_AI_AUDIO_OUT       = "gen_ai.usage.output_audio_tokens"
 ATTR_GEN_AI_COST_USD        = "gen_ai.usage.cost_usd"
 ATTR_GEN_AI_CACHE_HIT_RATE  = "gen_ai.usage.cache_hit_rate"
+ATTR_GEN_AI_TOOL_NAME       = "gen_ai.tool.name"
+
+# OTel GenAI operation.name values (Development status, semconv v1.41.0)
+GEN_AI_OP_CHAT = "chat"
+GEN_AI_OP_EXECUTE_TOOL = "execute_tool"
+GEN_AI_OP_INVOKE_AGENT = "invoke_agent"
+GEN_AI_OP_INVOKE_WORKFLOW = "invoke_workflow"
 
 # OTel GenAI Agent Spans spec (Development status, May 2026)
 ATTR_GEN_AI_AGENT_ID        = "gen_ai.agent.id"
@@ -53,6 +71,26 @@ ATTR_TOOL_OUTPUT_PAYLOAD_PREVIEW = "tool.output.payload_preview"
 EVENT_GEN_AI_USER_MESSAGE       = "gen_ai.user.message"
 EVENT_GEN_AI_ASSISTANT_MESSAGE  = "gen_ai.assistant.message"
 EVENT_GEN_AI_TOOL_MESSAGE       = "gen_ai.tool.message"
+
+# GenAI span name bases (export vocabulary; use helpers for parameterized names)
+SPAN_GEN_AI_CHAT = "chat"
+SPAN_GEN_AI_EXECUTE_TOOL = "execute_tool"
+SPAN_GEN_AI_INVOKE_AGENT = "invoke_agent"
+SPAN_GEN_AI_INVOKE_WORKFLOW = "invoke_workflow"
+
+
+def span_name_chat(model: str | None = None) -> str:
+    """OTel GenAI chat span name: ``chat`` or ``chat {model}``."""
+    model_name = (model or "").strip()
+    if model_name:
+        return f"{SPAN_GEN_AI_CHAT} {model_name}"
+    return SPAN_GEN_AI_CHAT
+
+
+def span_name_execute_tool(tool_name: str) -> str:
+    """OTel GenAI execute_tool span name: ``execute_tool {tool}``."""
+    name = (tool_name or "").strip() or "unknown"
+    return f"{SPAN_GEN_AI_EXECUTE_TOOL} {name}"
 
 # ---------------------------------------------------------------------------
 # Layer 2 — OpenInference
@@ -141,11 +179,60 @@ ATTR_SESSION_CLOSE_REASON = "session.close_reason"
 ATTR_SESSION_USER_ID = "session.user_id"
 ATTR_SESSION_CLOSE_ERROR = "session.close_error"
 
-# -- Framework-agnostic Parlot span names -----------------------------------
+# -- Framework-agnostic Parlot span names (Conversation Contract) -----------
 SPAN_CONVERSATION_SESSION = "parlot.session"
 SPAN_PARLOT_TURN = "parlot.turn"
 SPAN_PARLOT_SESSION_CLOSE = "parlot.session.close"
 SPAN_AGENT_HANDOFF = "parlot.agent.handoff"
+
+CONTRACT_SPAN_NAMES = frozenset({
+    SPAN_CONVERSATION_SESSION,
+    SPAN_PARLOT_TURN,
+    SPAN_PARLOT_SESSION_CLOSE,
+    SPAN_AGENT_HANDOFF,
+})
+
+# -- Voice operational span names (no GenAI equivalent) ---------------------
+SPAN_VOICE_TTS = "tts"
+SPAN_VOICE_STT = "stt"
+SPAN_VOICE_EOU = "eou_detection"
+SPAN_VOICE_AMD = "amd"
+
+VOICE_SPAN_NAMES = frozenset({
+    SPAN_VOICE_TTS,
+    SPAN_VOICE_STT,
+    SPAN_VOICE_EOU,
+    SPAN_VOICE_AMD,
+})
+
+GENAI_SPAN_NAME_BASES = frozenset({
+    SPAN_GEN_AI_CHAT,
+    SPAN_GEN_AI_EXECUTE_TOOL,
+    SPAN_GEN_AI_INVOKE_AGENT,
+    SPAN_GEN_AI_INVOKE_WORKFLOW,
+})
+
+
+def is_genai_span_name(name: str | None) -> bool:
+    """True for exact GenAI bases or parameterized ``chat {model}`` / ``execute_tool {name}``."""
+    if not name:
+        return False
+    if name in GENAI_SPAN_NAME_BASES:
+        return True
+    if name.startswith(f"{SPAN_GEN_AI_CHAT} "):
+        return True
+    if name.startswith(f"{SPAN_GEN_AI_EXECUTE_TOOL} "):
+        return True
+    return False
+
+
+def is_exportable_span_name(name: str | None) -> bool:
+    """Shared export allowlist: Conversation Contract ∪ GenAI ∪ voice."""
+    if not name:
+        return False
+    if name in CONTRACT_SPAN_NAMES or name in VOICE_SPAN_NAMES:
+        return True
+    return is_genai_span_name(name)
 
 # -- Conversation ----------------------------------------------------------
 ATTR_CONVERSATION_ID      = "conversation.id"

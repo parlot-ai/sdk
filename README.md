@@ -8,19 +8,21 @@ Open-source ([MIT](LICENSE)) SDK and instrumentation libraries for the Parlot.ai
 
 ## Structure
 
-- `packages/core/` — semantic conventions, base processor, UUID v7 session ids
-- `packages/instrumentation-livekit/` — LiveKit Agents OTel instrumentation (own `pyproject.toml`, `CHANGELOG.md`)
+- `packages/core/` — semantic conventions (OTel GenAI v1.41 + Conversation Contract + voice), base processor, UUID v7 session ids
+- `packages/instrumentation-livekit/` — LiveKit Agents OTel instrumentation
+- `packages/instrumentation-langgraph/` — LangGraph / LangChain `configure()` instrumentation
 
 ## Examples
 
 | Example | Description | Parlot install |
 |---------|-------------|----------------|
-| [`examples/livekit-voice/`](examples/livekit-voice/) | Minimal hello-world agent | Path (monorepo dev) |
-| [`examples/multi-agent/`](examples/multi-agent/) | Storytelling with agent handoffs | Git tag |
-| [`examples/restaurant-agent/`](examples/restaurant-agent/) | Restaurant greeter → specialist routing | Git tag |
-| [`examples/hotel-receptionist/`](examples/hotel-receptionist/) | Boutique-hotel receptionist + seed sample sessions | Path (monorepo dev) |
+| [`examples/livekit/livekit-voice/`](examples/livekit/livekit-voice/) | Minimal hello-world LiveKit agent | Path (monorepo dev) |
+| [`examples/livekit/multi-agent/`](examples/livekit/multi-agent/) | Storytelling with agent handoffs | Git tag |
+| [`examples/livekit/restaurant-agent/`](examples/livekit/restaurant-agent/) | Restaurant greeter → specialist routing | Git tag |
+| [`examples/livekit/hotel-receptionist/`](examples/livekit/hotel-receptionist/) | Boutique-hotel receptionist + seed sample sessions | Path (monorepo dev) |
+| [`examples/langgraph/minimal-agent/`](examples/langgraph/minimal-agent/) | Standalone LangGraph + `configure()` | Path (monorepo dev) |
 
-Integration requirements for all examples: [instrumentation-livekit README](packages/instrumentation-livekit/README.md#integration-checklist).
+Integration requirements: [instrumentation-livekit README](packages/instrumentation-livekit/README.md#integration-checklist), [instrumentation-langgraph README](packages/instrumentation-langgraph/README.md).
 
 ### Install from git
 
@@ -29,12 +31,13 @@ Integration requirements for all examples: [instrumentation-livekit README](pack
 [tool.uv.sources]
 parlot-core = { git = "https://github.com/parlot-ai/sdk.git", subdirectory = "packages/core", tag = "v0.1.0" }
 parlot-instrumentation-livekit = { git = "https://github.com/parlot-ai/sdk.git", subdirectory = "packages/instrumentation-livekit", tag = "v0.1.0" }
+parlot-instrumentation-langgraph = { git = "https://github.com/parlot-ai/sdk.git", subdirectory = "packages/instrumentation-langgraph", tag = "v0.1.0" }
 ```
 
 - `uv lock` pins the commit SHA.
-- Tag both `parlot-core` and `parlot-instrumentation-livekit` at the same release (instrumentation depends on core).
+- Tag core and each instrumentation package at the same release.
 
-See `examples/multi-agent/` or `examples/restaurant-agent/` for full consumer `pyproject.toml` templates.
+See `examples/livekit/multi-agent/` or `examples/langgraph/minimal-agent/` for consumer `pyproject.toml` templates.
 
 ## Local dev
 
@@ -65,7 +68,7 @@ If none resolve, the attribute is omitted.
 
 ### Recommended patterns
 
-- **Example / single-file agents:** set `__version__ = "1.2.3"` at the top of your entrypoint and bump on release. See [`examples/restaurant-agent/agent.py`](examples/restaurant-agent/agent.py).
+- **Example / single-file agents:** set `__version__ = "1.2.3"` at the top of your entrypoint and bump on release. See [`examples/livekit/restaurant-agent/agent.py`](examples/livekit/restaurant-agent/agent.py).
 - **Runtime override:** set `PARLOT_AGENT_VERSION` when the deploy label must differ from the code's `__version__` (canary, injected build metadata).
 - **Explicit:** pass `configure(version="2026.03.26")` for tests or special cases.
 

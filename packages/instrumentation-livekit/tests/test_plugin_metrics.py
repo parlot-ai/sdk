@@ -89,11 +89,13 @@ def test_speech_id_metrics_not_duplicated_in_fifo_queue() -> None:
 
     plugin_state = _plugin_state(processor)
     assert "sp-dup" in plugin_state.by_speech_id
-    assert plugin_state.llm_queue == []
+    # Always enqueued for export-time FIFO as well as speech_id index.
+    assert len(plugin_state.llm_queue) == 1
 
     usage = resolve_llm_usage_for_span(processor, speech_id="sp-dup")
     assert usage is not None
     assert usage.prompt_tokens == 10
+    assert plugin_state.llm_queue == []
     assert resolve_llm_usage_for_span(processor, speech_id="sp-dup") is None
 
 
@@ -120,7 +122,7 @@ def test_multiple_metrics_per_speech_id_fifo() -> None:
             )
 
     plugin_state = _plugin_state(processor)
-    assert plugin_state.llm_queue == []
+    assert [u.prompt_tokens for u in plugin_state.llm_queue] == [10, 20, 30]
     assert [u.prompt_tokens for u in plugin_state.by_speech_id["sp-multi"]] == [
         10,
         20,
@@ -132,6 +134,7 @@ def test_multiple_metrics_per_speech_id_fifo() -> None:
     assert first is not None and first.prompt_tokens == 10
     assert second is not None and second.prompt_tokens == 20
     assert "sp-multi" in plugin_state.by_speech_id
+    assert [u.prompt_tokens for u in plugin_state.llm_queue] == [30]
 
 
 def test_enrich_llm_node_applies_plugin_tokens() -> None:

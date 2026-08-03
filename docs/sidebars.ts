@@ -13,7 +13,7 @@ const sidebars: SidebarsConfig = {
       label: 'Guides',
       collapsed: false,
       link: {type: 'doc', id: 'guides/index'},
-      items: ['guides/livekit', 'guides/livekit-integration'],
+      items: ['guides/livekit', 'guides/livekit-integration', 'guides/langgraph'],
     },
     {
       type: 'category',

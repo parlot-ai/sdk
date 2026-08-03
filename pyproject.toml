@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 dependencies = [
     "parlot-core",
     "parlot-instrumentation-livekit",
+    "parlot-instrumentation-langgraph",
 ]
 
 [dependency-groups]
@@ -21,15 +22,20 @@ package = false
 members = [
     "packages/core",
     "packages/instrumentation-livekit",
+    "packages/instrumentation-langgraph",
 ]
 
 [tool.uv.sources]
 parlot-core = { workspace = true }
 parlot-instrumentation-livekit = { workspace = true }
+parlot-instrumentation-langgraph = { workspace = true }
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+import_mode = "importlib"
+pythonpath = ["packages/instrumentation-livekit/tests"]
 testpaths = [
     "packages/core/tests",
     "packages/instrumentation-livekit/tests",
+    "packages/instrumentation-langgraph/tests",
 ]

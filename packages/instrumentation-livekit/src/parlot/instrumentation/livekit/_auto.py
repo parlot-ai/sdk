@@ -51,6 +51,7 @@ def _configure_parlot_logging() -> None:
 
 
 def configure(
+    *,
     endpoint: Optional[str] = None,
     api_key: Optional[str] = None,
     capture_content: Optional[bool] = None,
@@ -100,23 +101,23 @@ def configure(
 
     _configure_parlot_logging()
 
-    resolved_endpoint = endpoint or os.environ.get("PARLOT_ENDPOINT", "")
-    resolved_api_key = api_key or os.environ.get("PARLOT_API_KEY", "")
-
     from parlot.core.diagnostics import init_diagnostics
+    from parlot.core.provider import (
+        adopt_existing_tracer_provider,
+        resolve_api_key,
+        resolve_capture_content,
+        resolve_endpoint,
+    )
+
+    resolved_endpoint = resolve_endpoint(endpoint)
+    resolved_api_key = resolve_api_key(api_key)
+    capture_content = resolve_capture_content(capture_content)
 
     init_diagnostics(endpoint=resolved_endpoint, api_key=resolved_api_key)
 
-    if capture_content is None:
-        env_val = os.environ.get("PARLOT_CAPTURE_CONTENT", "").lower()
-        capture_content = env_val not in ("false", "0", "no")
-
     if tracer_provider is None:
-        if not resolved_endpoint:
-            raise ValueError(
-                "No OTLP endpoint configured. Pass endpoint= or set the "
-                "PARLOT_ENDPOINT environment variable."
-            )
+        tracer_provider = adopt_existing_tracer_provider()
+    if tracer_provider is None:
         tracer_provider = _build_provider(
             endpoint=resolved_endpoint,
             api_key=resolved_api_key,
@@ -182,31 +183,32 @@ def _build_provider(
     service_name: Optional[str],
     service_version: Optional[str] = None,
 ):
-    from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-    from opentelemetry.sdk.resources import Resource
-    from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
-    from opentelemetry.semconv.attributes import service_attributes
+
+    from parlot.core.processor import assert_sync_span_processors
+    from parlot.core.provider import build_otlp_http_exporter, build_resource
+    from parlot.core.sdk_version import resolve_parlot_sdk_version
+
+    from parlot.core.export import ExportFilterSpanExporter
 
     from ._export import QuietOTLPSpanExporter
-    from ._export_filter import EnrichingExportSpanExporter, ExportFilterSpanExporter
+    from ._export_filter import EnrichingExportSpanExporter
     from ._export_sanitize import SanitizeVendorAttrsSpanExporter
     from ._metrics import ParlotMetricsRecorder, build_meter_provider
     from ._processor import LiveKitGenAIProcessor
+    from ._session import set_span_context_attach_enabled
     from ._turn_trace_export import TurnTraceRemappingExporter
 
     headers = {}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
 
-    resource_attrs = {service_attributes.SERVICE_NAME: service_name or "unknown"}
-    if service_version:
-        resource_attrs[service_attributes.SERVICE_VERSION] = service_version
-
-    resource = Resource.create(resource_attrs)
-
+    resource = build_resource(
+        service_name=service_name,
+        service_version=service_version,
+    )
     trace_endpoint = endpoint.rstrip("/") + "/v1/traces"
-    otlp_exporter = OTLPSpanExporter(endpoint=trace_endpoint, headers=headers)
+    otlp_exporter = build_otlp_http_exporter(endpoint=endpoint, api_key=api_key)
 
     processor = LiveKitGenAIProcessor(
         capture_content=capture_content,
@@ -221,14 +223,11 @@ def _build_provider(
         endpoint_label=trace_endpoint,
     )
 
+    from opentelemetry.sdk.trace import TracerProvider
+
     provider = TracerProvider(resource=resource)
     provider.add_span_processor(processor)
     provider.add_span_processor(BatchSpanProcessor(exporter))
-
-    from parlot.core.processor import assert_sync_span_processors
-    from parlot.core.sdk_version import resolve_parlot_sdk_version
-
-    from ._session import set_span_context_attach_enabled
 
     attach_ok = assert_sync_span_processors(provider)
     set_span_context_attach_enabled(attach_ok)

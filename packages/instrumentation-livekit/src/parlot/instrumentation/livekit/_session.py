@@ -195,10 +195,10 @@ def bootstrap_session(
     if vendor_job_id:
         _vendor_job_bootstraps[vendor_job_id] = bootstrap
 
-    from parlot.core.session import _active_session_span, _active_session_state
+    from parlot.core.session import set_active_session
 
-    _active_session_span.set(session_span)
-    _active_session_state.set(state)
+    state.framework = "livekit"
+    set_active_session(session_span, state)
 
 
 def _finalize_session_aggregates(bootstrap: _JobBootstrap) -> None:
@@ -339,10 +339,9 @@ def _cleanup_job_bootstrap(
     if on_attach_task:
         _parlot_job_bootstrap.set(None)
 
-    from parlot.core.session import _active_session_span, _active_session_state
+    from parlot.core.session import clear_active_session
 
-    _active_session_span.set(None)
-    _active_session_state.set(None)
+    clear_active_session()
 
 
 def finalize_session_close_from_hook(

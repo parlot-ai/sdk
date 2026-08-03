@@ -116,48 +116,36 @@ Org LiveKit API key/secret in Settings → Integrations are for signed egress **
 
 The conversation attribute contract is framework-agnostic. The LiveKit adapter (`parlot-instrumentation-livekit`) reads LiveKit Agents OTel spans in-process, stamps **Parlot** attributes from `parlot.core.attrs`, emits handoff spans as `parlot.agent.handoff`, and strips all `lk.*` keys before OTLP export (`SanitizeVendorAttrsSpanExporter`).
 
-### Span name → `gen_ai.operation.name`
+### Native LiveKit → exported GenAI / voice names
 
-| LiveKit span (vendor) | `gen_ai.operation.name` | Notes |
-|---|---|---|
-| `user_turn` | `speech_to_text` | Maps transcript → `turn.user_text` |
-| `agent_turn` | `agent_response` | Maps response + latencies → `turn.*` attrs + metrics |
-| `llm_node` / `llm_request_run` | `chat` | Instructions → `agent.instructions_excerpt`; tools → `agent.tool.names` |
-| `function_tool` | `execute_tool` | `agent.tool.name`, `agent.tool.is_error`, tool payloads |
-| `parlot.agent.handoff` | `agent_handoff` | Emitted from `conversation_item_added` (`agent_handoff`) |
-| `tts_node` | `text_to_speech` | TTFB → `turn.tts_ttfb_ms` metric |
-| `eou_detection` | `end_of_utterance_detection` | `voice.eou.language` → `session.languages` |
-| `amd` | `classify_contact` | `voice.amd.category` → `session.amd` |
+LiveKit still creates vendor span names internally (`llm_request`, `function_tool`, …). Before OTLP export, Parlot remaps them to the shared vocabulary (OTel GenAI semconv v1.41 + voice). Pre-launch: **no native-name export path**.
 
-### Span name → `agent_role` (waterfall / timeline)
+| LiveKit native (internal) | Exported span name | `gen_ai.operation.name` | `agent.role` | Notes |
+|---|---|---|---|---|
+| `llm_node` / `llm_request` / `llm_request_run` | `chat` / `chat {model}` | `chat` | `llm` | Stage keeps `node` / `request` / `run` |
+| `function_tool` | `execute_tool {name}` | `execute_tool` | `tool` | Tool payloads on Parlot attrs |
+| `tts_node` / `tts_request_run` | `tts` | — | `tts` | Voice layer |
+| `eou_detection` | `eou_detection` | `end_of_utterance_detection` | `stt` | |
+| `amd` | `amd` | `classify_contact` | `amd` | |
+| `drain_agent_activity` | `invoke_agent` | `invoke_agent` | `pipeline` | |
+| `user_turn` / `agent_turn` | **not exported** | — | — | Contract `parlot.turn` is source of truth; pipeline attrs (latency, STT confidence, media alignment) are stamped onto `parlot.turn` before drop |
+| `parlot.agent.handoff` | `parlot.agent.handoff` | `agent_handoff` | `handoff` | |
 
-| LiveKit span (vendor) | `agent_role` | Notes |
-|---|---|---|
-| `user_turn` / `eou_detection` | `stt` | User transcript on `turn.user_text` |
-| `agent_turn` / `drain_agent_activity` | `pipeline` | Agent turn boundary; text-console input may carry `turn.user_text` |
-| `llm_node` / `llm_request_run` | `llm` | |
-| `tts_node` / `tts_request_run` | `tts` | |
-| `function_tool` | `tool` | |
-| `parlot.agent.handoff` | `handoff` | Also written to session handoffs |
-| `amd` | `amd` | |
-
-When a span carries explicit `agent.role`, the collector prefers that value over the LiveKit default mapping.
+When a span carries explicit `agent.role`, the collector prefers that value.
 
 ### Span name → `agent.stage` (timeline labels)
 
-Each operational span carries `agent.stage` (SDK on export; collector derives from span name when missing at ingest). UI labels combine role + stage — e.g. `llm` + `run` → **LLM · API call**. Multiple spans per role per turn is normal LiveKit nesting (`llm_node` → `llm_request` → `llm_request_run`). The table below covers the LiveKit mapping.
+Each operational span carries `agent.stage` (from the native LiveKit name before rename). UI labels combine role + stage — e.g. `llm` + `run` → **LLM · API call**. Nested LiveKit LLM spans all export as `chat` with distinct stages.
 
-| LiveKit span | `agent.stage` | UI label |
+| Native LiveKit span | `agent.stage` | UI label |
 |---|---|---|
 | `llm_node` | `node` | LLM · inference |
 | `llm_request` | `request` | LLM · request |
 | `llm_request_run` | `run` | LLM · API call |
 | `tts_node` | `node` | TTS · synthesis |
 | `tts_request_run` | `run` | TTS · API call |
-| `agent_turn` | `turn` | Turn |
-| `user_turn` | `turn` | STT · utterance |
 
-In **events mode**, `llm_node` does not stamp `turn.agent_text` from chat context (prior-turn assistant text may be stale); trust `agent_turn` for authoritative agent utterance.
+In **events mode**, trust committed conversation items for authoritative agent utterance text on `parlot.turn`.
 
 ### Vendor attribute → Parlot attribute (export)
 
@@ -180,13 +168,15 @@ In **events mode**, `llm_node` does not stamp `turn.agent_text` from chat contex
 
 ### Turn metrics (LiveKit source → Parlot histogram)
 
-| Parlot metric | Source span | LiveKit attribute |
+Pipeline timing is read from native `agent_turn` / `tts_*` spans and stamped onto **`parlot.turn`** (and metrics) before those native turn spans are dropped from export.
+
+| Parlot metric | Source (native, pre-export) | LiveKit attribute |
 |---|---|---|
-| `turn.e2e_latency_ms` | `agent_turn` | `lk.e2e_latency` |
-| `turn.llm_ttft_ms` | `agent_turn` | `lk.response.ttft` |
-| `turn.tts_ttfb_ms` | `tts_node` | `lk.response.ttfb` |
-| `turn.transcription_delay_ms` | `agent_turn` | `lk.transcription_delay` |
-| `turn.eou_delay_ms` | `agent_turn` | `lk.end_of_turn_delay` |
+| `turn.e2e_latency_ms` | `agent_turn` → `parlot.turn` | `lk.e2e_latency` |
+| `turn.llm_ttft_ms` | `agent_turn` → `parlot.turn` | `lk.response.ttft` |
+| `turn.tts_ttfb_ms` | `tts` (from `tts_node`) | `lk.response.ttfb` |
+| `turn.transcription_delay_ms` | `agent_turn` → `parlot.turn` | `lk.transcription_delay` |
+| `turn.eou_delay_ms` | `agent_turn` → `parlot.turn` | `lk.end_of_turn_delay` |
 
 LiveKit-native `lk.agents.turn.*` and `lk.agents.usage.*` metrics may still land in `otel_metrics_raw` but are **not** used by the Parlot pipeline.
 
@@ -217,11 +207,11 @@ When `configure()` patches `AgentSession`, Parlot subscribes to LiveKit events f
 | `error` (non-recoverable) | `session.close_error` on close when no explicit close error |
 | `close` | `parlot.session.close` with normalized `session.close_reason` |
 
-Span-based turn emission (`user_turn` / `agent_turn` → `parlot.turn`) is **disabled** once event hooks install (`turn_source=events`). Span enrichment for latency, confidence, and pipeline attrs continues unchanged when LiveKit OTEL is enabled. Semantic session lifecycle (bootstrap, turns, close, tokens) does **not** depend on the `job_entrypoint` span.
+Span-based turn emission (`user_turn` / `agent_turn` → `parlot.turn`) is **disabled** once event hooks install (`turn_source=events`). Native turn spans are still observed to copy latency / STT confidence / media alignment onto `parlot.turn`, then dropped from export. Semantic session lifecycle (bootstrap, turns, close, tokens) does **not** depend on the `job_entrypoint` span.
 
 ### Export allowlist (LiveKit)
 
-Spans exported to Parlot (after local processing): `parlot.session`, `parlot.turn`, `parlot.session.close`, `parlot.agent.handoff`, and operational names `user_turn`, `agent_turn`, `llm_node`, `llm_request`, `llm_request_run`, `tts_node`, `tts_request_run`, `function_tool`, `eou_detection`, `drain_agent_activity`, `amd`.
+Spans exported to Parlot (after rename): Conversation Contract (`parlot.session`, `parlot.turn`, `parlot.session.close`, `parlot.agent.handoff`), GenAI (`chat` / `chat {model}`, `execute_tool {name}`, `invoke_agent`), and voice (`tts`, `stt`, `eou_detection`, `amd`).
 
 ---
 

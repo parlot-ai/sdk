@@ -1,0 +1,46 @@
+name: Python
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/**'
+      - 'scripts/check_genai_semconv_lock.py'
+      - '.github/workflows/python.yml'
+      - 'pyproject.toml'
+      - 'uv.lock'
+  pull_request:
+    paths:
+      - 'packages/**'
+      - 'scripts/check_genai_semconv_lock.py'
+      - '.github/workflows/python.yml'
+      - 'pyproject.toml'
+      - 'uv.lock'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Install
+        run: uv sync --all-packages
+      - name: GenAI semconv lock
+        run: |
+          set -euo pipefail
+          BASE_REF="${{ github.base_ref }}"
+          if [[ -z "${BASE_REF}" ]]; then
+            BASE_REF=main
+          fi
+          git fetch origin "${BASE_REF}"
+          uv run python scripts/check_genai_semconv_lock.py --base "origin/${BASE_REF}"
+      - name: Pytest (core)
+        run: uv run pytest -q packages/core/tests
+      - name: Pytest (langgraph)
+        run: uv run pytest -q packages/instrumentation-langgraph/tests
+      - name: Pytest (livekit)
+        run: uv run pytest -q packages/instrumentation-livekit/tests
