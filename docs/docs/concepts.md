@@ -44,10 +44,3 @@ Under LiveKit `dev` / job workers, prefer explicit `configure(version=...)` or `
 - **Audio recording** uses LiveKit Room Composite Egress to R2; webhooks confirm upload. Telemetry does not depend on webhooks.
 
 See the [LiveKit guide](./guides/livekit-integration.md) for the full checklist.
-
-## Roadmap adapters
-
-Future packages will use the same GenAI + contract vocabulary (not implemented yet):
-
-- **Google ADK** — lifecycle `before/after_agent|model|tool_callback` → GenAI spans
-- **Vercel AI SDK** — `experimental_telemetry` normalize (TypeScript) → GenAI spans
