@@ -68,6 +68,7 @@ from parlot.core.attrs import (
     SPAN_PARLOT_SESSION_CLOSE,
     SPAN_PARLOT_TURN,
     SPAN_VOICE_STT,
+    SPAN_VOICE_TTS,
     ATTR_STT_SPEAKER_ID,
     ATTR_DIAR_SOURCE_AGENT_ID,
     ATTR_DIAR_SOURCE_STT_SPEAKER_ID,
@@ -591,6 +592,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         turn_index = state.open_agent_turn_index or (state.turn_count + 1)
         state.agent_text_by_turn[turn_index] = text.strip()
         agent_id = self._active_agent_id(state, {})
+        modality = state.last_user_input_modality or "voice"
         self._emit_turn_trace(
             state,
             turn_index=turn_index,
@@ -598,11 +600,18 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             participant_id=agent_id,
             label=agent_id,
             diarization_source=ATTR_DIAR_SOURCE_AGENT_ID,
-            input_modality=state.last_user_input_modality or "voice",
+            input_modality=modality,
             agent_hint=agent_id,
             turn_metrics=metrics,
             interrupted=interrupted,
             utterance_text=text.strip(),
+        )
+        self._emit_committed_agent_utterance_span(
+            state,
+            turn_index=turn_index,
+            text=text.strip(),
+            modality=modality,
+            participant_id=agent_id,
         )
         if interrupted and metrics:
             self._stash_interrupt_boundary(state, metrics)
@@ -838,7 +847,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         self._stamp_session_turn_attrs(span, state)
         self._set(span, ATTR_AGENT_FRAMEWORK, "livekit")
         stage = livekit_agent_stage_for_span(name)
-        if stage:
+        if stage and not (span.attributes or {}).get(ATTR_AGENT_STAGE):
             self._set(span, ATTR_AGENT_STAGE, stage)
 
         if name in ("llm_request", "llm_request_run"):
@@ -1579,6 +1588,8 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             self._set(span, ATTR_SESSION_ID, state.parlot_session_id)
             self._set(span, ATTR_SESSION_CONVERSATION_ID, state.conversation_id)
             self._set(span, ATTR_GEN_AI_CONVERSATION_ID, state.conversation_id)
+        if (span.attributes or {}).get(ATTR_TURN_INDEX) is not None:
+            return
         active = self._active_turn_index(state, span.name)
         if active is not None:
             self._set(span, ATTR_TURN_INDEX, active)
@@ -1686,7 +1697,58 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             room_sid=state.room_sid,
         )
         if self._capture_content:
-            self._add_event(span, EVENT_GEN_AI_USER_MESSAGE, {"content": text})
+            span.add_event(EVENT_GEN_AI_USER_MESSAGE, {"content": text})
+        span.end()
+
+    def _emit_committed_agent_utterance_span(
+        self,
+        state: _LiveKitSessionState,
+        *,
+        turn_index: int,
+        text: str,
+        modality: str,
+        participant_id: str,
+    ) -> None:
+        """Events mode: export agent utterance for timeline join at the agent turn index.
+
+        Native ``agent_turn`` is not exported (GenAI remap); this companion carries
+        ``turn.agent_text`` the way ``_emit_committed_user_utterance_span`` carries
+        user text. Real ``tts``/``chat`` node/run spans still own pipeline timing.
+        """
+        if self._turn_source != "events" or not self._tracer or not state.parlot_session_id:
+            return
+        attrs: dict[str, AttributeValue] = {
+            ATTR_SESSION_ID: state.parlot_session_id,
+            ATTR_SESSION_CONVERSATION_ID: state.conversation_id,
+            ATTR_GEN_AI_CONVERSATION_ID: state.conversation_id,
+            ATTR_TURN_INDEX: turn_index,
+            ATTR_TURN_AGENT_TEXT: text,
+            ATTR_TURN_INPUT_MODALITY: modality,
+            ATTR_AGENT_FRAMEWORK: "livekit",
+            ATTR_TURN_PARTICIPANT_ID: participant_id,
+            ATTR_PARTICIPANT_DIAR_SOURCE: ATTR_DIAR_SOURCE_AGENT_ID,
+            ATTR_AGENT_STAGE: "turn",
+        }
+        if modality == "text":
+            attrs[ATTR_AGENT_ROLE] = "pipeline"
+        else:
+            attrs[ATTR_AGENT_ROLE] = "tts"
+        if state.session_id:
+            attrs[ATTR_LK_JOB_ID] = state.session_id
+        if state.room_name:
+            attrs[ATTR_LK_ROOM_NAME] = state.room_name
+        if state.room_sid:
+            attrs[ATTR_LK_ROOM_SID] = state.room_sid
+
+        span = self._tracer.start_span(SPAN_VOICE_TTS, attributes=attrs)
+        stamp_livekit_platform_refs(
+            span,
+            job_id=state.session_id,
+            room_name=state.room_name,
+            room_sid=state.room_sid,
+        )
+        if self._capture_content:
+            span.add_event(EVENT_GEN_AI_ASSISTANT_MESSAGE, {"content": text})
         span.end()
 
     def _resolve_turn_language(

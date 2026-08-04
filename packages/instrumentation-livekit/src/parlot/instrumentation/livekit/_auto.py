@@ -214,12 +214,15 @@ def _build_provider(
         capture_content=capture_content,
     )
 
+    # Rename (enrich) must run on real spans *before* sanitize wraps them and
+    # *before* the GenAI/voice allowlist filter — otherwise native names like
+    # llm_node / tts_node are dropped and never remapped.
     remapping_exporter = TurnTraceRemappingExporter(otlp_exporter, processor)
-    enriching_exporter = EnrichingExportSpanExporter(remapping_exporter, processor)
-    filtered_exporter = ExportFilterSpanExporter(enriching_exporter)
+    filtered_exporter = ExportFilterSpanExporter(remapping_exporter)
     sanitized_exporter = SanitizeVendorAttrsSpanExporter(filtered_exporter)
+    enriching_exporter = EnrichingExportSpanExporter(sanitized_exporter, processor)
     exporter = QuietOTLPSpanExporter(
-        sanitized_exporter,
+        enriching_exporter,
         endpoint_label=trace_endpoint,
     )
 
