@@ -16,12 +16,16 @@ from parlot.core.attrs import (
     ATTR_AGENT_STAGE,
     ATTR_AGENT_TOOL_IS_ERROR,
     ATTR_AGENT_TOOL_NAME,
+    ATTR_GEN_AI_CONVERSATION_ID,
     ATTR_GEN_AI_IN_TOKENS,
     ATTR_GEN_AI_MODEL,
     ATTR_GEN_AI_OP_NAME,
     ATTR_GEN_AI_OUT_TOKENS,
     ATTR_GEN_AI_PROVIDER,
     ATTR_GEN_AI_TOOL_NAME,
+    ATTR_SESSION_CONVERSATION_ID,
+    ATTR_SESSION_ID,
+    ATTR_TURN_INDEX,
     EVENT_GEN_AI_ASSISTANT_MESSAGE,
     EVENT_GEN_AI_USER_MESSAGE,
     GEN_AI_OP_CHAT,
@@ -33,6 +37,7 @@ from parlot.core.attrs import (
     span_name_chat,
     span_name_execute_tool,
 )
+from parlot.core.session import get_active_session
 from parlot.instrumentation.langgraph.attrs import (
     ATTR_LG_GRAPH_NAME,
     ATTR_LG_NODE_NAME,
@@ -40,11 +45,73 @@ from parlot.instrumentation.langgraph.attrs import (
     ATTR_LG_THREAD_ID,
 )
 from parlot.instrumentation.langgraph._session import (
+    _LangGraphSessionState,
     emit_turn,
     ensure_session,
     livekit_owns_session,
     thread_id_from_metadata,
 )
+
+
+def _message_content(msg: Any) -> str:
+    if msg is None:
+        return ""
+    if isinstance(msg, dict):
+        content = msg.get("content")
+    else:
+        content = getattr(msg, "content", None)
+    if isinstance(content, str):
+        return content.strip()
+    if isinstance(content, list):
+        parts: list[str] = []
+        for block in content:
+            if isinstance(block, str):
+                parts.append(block)
+            elif isinstance(block, dict) and isinstance(block.get("text"), str):
+                parts.append(block["text"])
+            else:
+                text = getattr(block, "text", None)
+                if isinstance(text, str):
+                    parts.append(text)
+        return "".join(parts).strip()
+    return str(content or "").strip()
+
+
+def _message_role(msg: Any) -> str:
+    if isinstance(msg, dict):
+        role = str(msg.get("role") or msg.get("type") or "").lower()
+        if role:
+            return role
+    role = str(getattr(msg, "type", None) or getattr(msg, "role", "") or "").lower()
+    if role:
+        return role
+    name = msg.__class__.__name__ if msg is not None else ""
+    if name == "HumanMessage":
+        return "human"
+    if name == "AIMessage":
+        return "ai"
+    if name == "ToolMessage":
+        return "tool"
+    return ""
+
+
+def _messages_from_payload(payload: Any) -> list[Any]:
+    if isinstance(payload, dict):
+        messages = payload.get("messages")
+        if isinstance(messages, list):
+            return messages
+    if isinstance(payload, list):
+        return payload
+    return []
+
+
+def _last_message_text(messages: list[Any], *, roles: set[str]) -> str:
+    for msg in reversed(messages):
+        if _message_role(msg) in roles:
+            text = _message_content(msg)
+            if text:
+                return text
+    return ""
 
 logger = logging.getLogger("parlot.instrumentation.langgraph")
 
@@ -84,6 +151,29 @@ class ParlotLangGraphCallbackHandler(BaseCallbackHandler):
 
     def _run_key(self, run_id: UUID | None) -> str:
         return str(run_id) if run_id else ""
+
+    def _active_langgraph_state(self) -> _LangGraphSessionState | None:
+        state = get_active_session()
+        if isinstance(state, _LangGraphSessionState):
+            return state
+        return None
+
+    def _contract_attrs(
+        self, state: _LangGraphSessionState | None
+    ) -> dict[str, AttributeValue]:
+        """Session/turn keys required by collector operational ingest."""
+        if state is None:
+            return {}
+        turn_index = state.open_agent_turn_index or state.turn_count
+        attrs: dict[str, AttributeValue] = {
+            ATTR_SESSION_ID: state.session_id,
+            ATTR_SESSION_CONVERSATION_ID: state.conversation_id,
+            ATTR_GEN_AI_CONVERSATION_ID: state.conversation_id,
+            ATTR_LG_THREAD_ID: state.thread_id,
+        }
+        if turn_index > 0:
+            attrs[ATTR_TURN_INDEX] = turn_index
+        return attrs
 
     def _start(
         self,
@@ -167,11 +257,20 @@ class ParlotLangGraphCallbackHandler(BaseCallbackHandler):
         }
         if not is_root:
             attrs[ATTR_LG_NODE_NAME] = str(chain_name)
-        if state is not None:
-            attrs["session.id"] = state.session_id
-            attrs[ATTR_LG_THREAD_ID] = state.thread_id
-        elif thread_id:
-            attrs[ATTR_LG_THREAD_ID] = thread_id
+        if is_root:
+            self._root_runs.add(str(run_id))
+            if state is not None and not livekit_owns_session():
+                user_text = _last_message_text(
+                    _messages_from_payload(inputs),
+                    roles={"human", "user"},
+                )
+                user_idx = emit_turn(
+                    state,
+                    role="user",
+                    utterance_text=user_text,
+                )
+                state.open_agent_turn_index = user_idx + 1
+        attrs.update(self._contract_attrs(state))
 
         self._start(
             span_name,
@@ -179,12 +278,6 @@ class ParlotLangGraphCallbackHandler(BaseCallbackHandler):
             attributes=attrs,
             parent_run_id=parent_run_id,
         )
-        if is_root:
-            self._root_runs.add(str(run_id))
-            if state is not None and not livekit_owns_session():
-                # One turn per root invoke when we own the session
-                emit_turn(state, role="user")
-                emit_turn(state, role="agent")
 
     def on_chain_end(
         self,
@@ -194,8 +287,23 @@ class ParlotLangGraphCallbackHandler(BaseCallbackHandler):
         parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> Any:
+        key = str(run_id)
+        if key in self._root_runs:
+            state = self._active_langgraph_state()
+            if state is not None and not livekit_owns_session():
+                agent_text = _last_message_text(
+                    _messages_from_payload(outputs),
+                    roles={"ai", "assistant"},
+                )
+                emit_turn(
+                    state,
+                    role="agent",
+                    turn_index=state.open_agent_turn_index,
+                    utterance_text=agent_text,
+                )
+                state.open_agent_turn_index = None
         self._end(run_id)
-        self._root_runs.discard(str(run_id))
+        self._root_runs.discard(key)
 
     def on_chain_error(
         self,
@@ -205,8 +313,13 @@ class ParlotLangGraphCallbackHandler(BaseCallbackHandler):
         parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> Any:
+        key = str(run_id)
+        if key in self._root_runs:
+            state = self._active_langgraph_state()
+            if state is not None:
+                state.open_agent_turn_index = None
         self._end(run_id, error=error)
-        self._root_runs.discard(str(run_id))
+        self._root_runs.discard(key)
 
     def on_llm_start(
         self,
@@ -232,13 +345,14 @@ class ParlotLangGraphCallbackHandler(BaseCallbackHandler):
             ATTR_AGENT_FRAMEWORK: "langgraph",
             ATTR_GEN_AI_OP_NAME: GEN_AI_OP_CHAT,
             ATTR_AGENT_ROLE: "llm",
-            ATTR_AGENT_STAGE: "run",
+            ATTR_AGENT_STAGE: "node",
             ATTR_LG_RUN_ID: str(run_id),
         }
         if model:
             attrs[ATTR_GEN_AI_MODEL] = model
         if provider:
             attrs[ATTR_GEN_AI_PROVIDER] = provider
+        attrs.update(self._contract_attrs(self._active_langgraph_state()))
         span = self._start(
             span_name_chat(model or None),
             run_id,
@@ -337,6 +451,7 @@ class ParlotLangGraphCallbackHandler(BaseCallbackHandler):
             ATTR_GEN_AI_TOOL_NAME: tool_name,
             ATTR_LG_RUN_ID: str(run_id),
         }
+        attrs.update(self._contract_attrs(self._active_langgraph_state()))
         self._start(
             span_name_execute_tool(tool_name),
             run_id,

@@ -22,13 +22,18 @@ def configure(
     tracer_provider=None,
     agent_id: Optional[str] = None,
     version: Optional[str] = None,
+    channel: Optional[str] = None,
+    modality: Optional[str] = None,
 ) -> None:
     """Configure Parlot LangGraph instrumentation and OTLP export.
 
     Registers a global LangChain callback handler (LangSmith-style) so
     ``invoke`` / ``ainvoke`` / ``astream`` emit GenAI spans without per-call
     callbacks. When LiveKit already owns the active session, contract spans
-    are suppressed and GenAI ops nest under the current OTel context.
+    are suppressed and GenAI ops nest under the current OTel context (LiveKit
+    stamps channel/modality). For LangGraph-owned sessions, pass ``channel``
+    (e.g. ``webchat``) and optionally ``modality`` so ingest does not assume
+    voice.
     """
     global _configured, _configured_agent_id, _configured_agent_version
     if _configured:
@@ -82,9 +87,10 @@ def configure(
 
     from ._callbacks import ParlotLangGraphCallbackHandler
     from ._hooks import install_configure_hook
-    from ._session import set_identity, set_tracer
+    from ._session import set_channel_modality, set_identity, set_tracer
 
     set_identity(_configured_agent_id or "", _configured_agent_version)
+    set_channel_modality(channel=channel or "", modality=modality or "")
     set_tracer(tracer)
     handler = ParlotLangGraphCallbackHandler(tracer, capture_content=capture)
     install_configure_hook(handler)

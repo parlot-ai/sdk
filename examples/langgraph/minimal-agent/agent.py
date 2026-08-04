@@ -13,7 +13,7 @@ from langgraph.prebuilt import ToolNode
 
 from parlot.instrumentation.langgraph import close_session, configure
 
-configure(agent_id="langgraph-minimal", version="0.1.0")
+configure(agent_id="langgraph-minimal", version="0.1.0", channel="webchat")
 
 
 class State(TypedDict):
@@ -35,6 +35,9 @@ def _build_llm():
     class _Echo:
         def invoke(self, messages, config=None):
             last = messages[-1]
+            # After a tool result, return a final answer (avoid tool-call loops).
+            if getattr(last, "type", None) == "tool" or last.__class__.__name__ == "ToolMessage":
+                return AIMessage(content=str(getattr(last, "content", last)))
             text = getattr(last, "content", str(last))
             if "time" in str(text).lower():
                 return AIMessage(
@@ -77,7 +80,9 @@ def create_graph():
 
 def main() -> None:
     graph = create_graph()
-    thread = {"configurable": {"thread_id": "demo-1"}}
+    # Unique thread per process so re-runs do not collide with prior sessions.
+    thread_id = f"demo-{os.getpid()}"
+    thread = {"configurable": {"thread_id": thread_id}}
 
     result = graph.invoke(
         {"messages": [HumanMessage(content="What time is it in Paris?")]},
@@ -87,8 +92,8 @@ def main() -> None:
         role = getattr(msg, "type", msg.__class__.__name__)
         print(f"{role}: {getattr(msg, 'content', msg)}")
 
-    close_session("demo-1", reason="completed")
-    print("done — check Parlot for parlot.session / chat / execute_tool spans")
+    close_session(thread_id, reason="completed")
+    print(f"done — thread_id={thread_id}; check Parlot for parlot.session / chat / execute_tool spans")
 
 
 if __name__ == "__main__":
