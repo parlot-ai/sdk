@@ -61,6 +61,7 @@ def _make_span(name: str, attributes: dict | None = None) -> MagicMock:
     span.start_time = 1_000_000_000
     span.end_time = 2_000_000_000
     span.context.trace_id = 0xDEADBEEF
+    span.context.span_id = 0xABCDEF01
     span.attributes = span._attributes
     return span
 
@@ -121,21 +122,17 @@ class TestEventBridgeTurns:
         turns = _parlot_turns(exporter)
         assert len(turns) == 2
         assert turns[0].attributes[ATTR_TURN_PARTICIPANT_ROLE] == "user"
+        assert turns[0].attributes[ATTR_TURN_USER_TEXT] == "Hello there"
         assert turns[1].attributes[ATTR_TURN_PARTICIPANT_ROLE] == "agent"
+        assert turns[1].attributes[ATTR_TURN_AGENT_TEXT] == "Hi, how can I help?"
 
-        user_stt = [s for s in exporter.get_finished_spans() if s.name == SPAN_VOICE_STT]
-        assert len(user_stt) == 1
-        assert user_stt[0].attributes[ATTR_TURN_USER_TEXT] == "Hello there"
-        assert user_stt[0].attributes[ATTR_AGENT_STAGE] == "turn"
-
-        agent_tts = [s for s in exporter.get_finished_spans() if s.name == SPAN_VOICE_TTS]
-        assert len(agent_tts) == 1
-        assert agent_tts[0].attributes[ATTR_TURN_AGENT_TEXT] == "Hi, how can I help?"
-        # No STT meta → text modality → pipeline companion (mirrors user path).
-        assert agent_tts[0].attributes[ATTR_AGENT_ROLE] == "pipeline"
-        assert agent_tts[0].attributes[ATTR_AGENT_STAGE] == "turn"
-        assert agent_tts[0].attributes[ATTR_TURN_INDEX] == turns[1].attributes[ATTR_TURN_INDEX]
-        assert any(e.name == EVENT_GEN_AI_ASSISTANT_MESSAGE for e in agent_tts[0].events)
+        # Text modality: no synthetic stt/tts companions.
+        assert not [
+            s for s in exporter.get_finished_spans() if s.name == SPAN_VOICE_STT
+        ]
+        assert not [
+            s for s in exporter.get_finished_spans() if s.name == SPAN_VOICE_TTS
+        ]
 
         proc.on_end(
             _make_span(
@@ -190,7 +187,7 @@ class TestEventBridgeTurns:
         assert agent_tts[0].attributes[ATTR_AGENT_STAGE] == "turn"
         assert agent_tts[0].attributes[ATTR_TURN_INPUT_MODALITY] == "voice"
 
-    def test_agent_text_modality_companion_uses_pipeline_role(self) -> None:
+    def test_agent_text_modality_stamps_turn_without_companion(self) -> None:
         proc, exporter = _proc_with_exporter()
         _bootstrap(proc)
         from parlot.instrumentation.livekit._session import get_job_bootstrap
@@ -201,12 +198,13 @@ class TestEventBridgeTurns:
         proc.set_turn_source("events")
         proc.commit_agent_message("Console reply")
 
-        agent_tts = [s for s in exporter.get_finished_spans() if s.name == SPAN_VOICE_TTS]
-        assert len(agent_tts) == 1
-        assert agent_tts[0].attributes[ATTR_TURN_AGENT_TEXT] == "Console reply"
-        assert agent_tts[0].attributes[ATTR_AGENT_ROLE] == "pipeline"
-        assert agent_tts[0].attributes[ATTR_AGENT_STAGE] == "turn"
-        assert agent_tts[0].attributes[ATTR_TURN_INPUT_MODALITY] == "text"
+        assert not [
+            s for s in exporter.get_finished_spans() if s.name == SPAN_VOICE_TTS
+        ]
+        turns = _parlot_turns(exporter)
+        assert len(turns) == 1
+        assert turns[0].attributes[ATTR_TURN_AGENT_TEXT] == "Console reply"
+        assert turns[0].attributes[ATTR_TURN_INPUT_MODALITY] == "text"
 
     def test_user_transcription_meta_applied_to_turn(self) -> None:
         proc, exporter = _proc_with_exporter()
@@ -395,8 +393,12 @@ class TestEventBridgeTurns:
             if s.name == "stt"
             and s.attributes.get(ATTR_TURN_USER_TEXT) == "Committed after pipeline span"
         ]
-        assert len(user_spans) == 1
-        assert user_spans[0].attributes[ATTR_TURN_INDEX] == 1
+        # Text modality: utterance lives on parlot.turn, not a synthetic stt companion.
+        assert user_spans == []
+        turns = _parlot_turns(exporter)
+        assert len(turns) == 1
+        assert turns[0].attributes[ATTR_TURN_USER_TEXT] == "Committed after pipeline span"
+        assert turns[0].attributes[ATTR_TURN_INDEX] == 1
 
     def test_agent_greets_first_user_utterance_at_user_turn_index(self) -> None:
         proc, exporter = _proc_with_exporter()
@@ -433,17 +435,22 @@ class TestEventBridgeTurns:
         assert len(turns) == 2
         assert turns[0].attributes[ATTR_TURN_PARTICIPANT_ROLE] == "agent"
         assert turns[0].attributes[ATTR_TURN_INDEX] == 1
+        assert turns[0].attributes[ATTR_TURN_AGENT_TEXT] == "Hello!"
         assert turns[1].attributes[ATTR_TURN_PARTICIPANT_ROLE] == "user"
         assert turns[1].attributes[ATTR_TURN_INDEX] == 2
+        assert turns[1].attributes[ATTR_TURN_USER_TEXT] == "I need help"
 
-        user_spans = [
-            s
+        # Agent greet uses default voice modality → tts companion; user is text → no stt.
+        assert any(
+            s.name == SPAN_VOICE_TTS
+            and s.attributes.get(ATTR_TURN_AGENT_TEXT) == "Hello!"
             for s in exporter.get_finished_spans()
-            if s.name == "stt"
+        )
+        assert not any(
+            s.name == SPAN_VOICE_STT
             and s.attributes.get(ATTR_TURN_USER_TEXT) == "I need help"
-        ]
-        assert len(user_spans) == 1
-        assert user_spans[0].attributes[ATTR_TURN_INDEX] == 2
+            for s in exporter.get_finished_spans()
+        )
 
         late_pipeline = _make_span(
             "user_turn",

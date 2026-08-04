@@ -10,12 +10,9 @@ from typing import Any
 
 from opentelemetry import trace
 from opentelemetry.trace import Span, Status, StatusCode, Tracer
-from opentelemetry.util.types import AttributeValue
 
 from parlot.core.attrs import (
     ATTR_AGENT_FRAMEWORK,
-    ATTR_AGENT_ROLE,
-    ATTR_AGENT_STAGE,
     ATTR_CONVERSATION_CHANNEL,
     ATTR_GEN_AI_AGENT_ID,
     ATTR_GEN_AI_AGENT_VERSION,
@@ -31,13 +28,9 @@ from parlot.core.attrs import (
     ATTR_TURN_INPUT_MODALITY,
     ATTR_TURN_PARTICIPANT_ROLE,
     ATTR_TURN_USER_TEXT,
-    EVENT_GEN_AI_ASSISTANT_MESSAGE,
-    EVENT_GEN_AI_USER_MESSAGE,
     SPAN_CONVERSATION_SESSION,
     SPAN_PARLOT_SESSION_CLOSE,
     SPAN_PARLOT_TURN,
-    SPAN_VOICE_STT,
-    SPAN_VOICE_TTS,
 )
 from parlot.core.ids import new_session_id
 from parlot.core.session import (
@@ -70,7 +63,6 @@ _configured_agent_id: str = ""
 _configured_agent_version: str = ""
 _tracer: Tracer | None = None
 _atexit_registered = False
-_capture_content: bool = True
 
 
 def set_identity(agent_id: str, version: str) -> None:
@@ -85,8 +77,8 @@ def set_tracer(tracer: Tracer) -> None:
 
 
 def set_capture_content(capture: bool) -> None:
-    global _capture_content
-    _capture_content = capture
+    """Kept for configure() compatibility; GenAI content capture is handler-owned."""
+    _ = capture
 
 
 def livekit_owns_session() -> bool:
@@ -201,51 +193,7 @@ def emit_turn(
     finally:
         span.end()
     state.last_turn_trace_id = format(trace_id, "032x")
-    if text:
-        _emit_utterance_companion(
-            state,
-            turn_index=turn_index,
-            role=role,
-            text=text,
-        )
     return turn_index
-
-
-def _emit_utterance_companion(
-    state: _LangGraphSessionState,
-    *,
-    turn_index: int,
-    role: str,
-    text: str,
-) -> None:
-    """Export timeline utterance carrier (mirrors LiveKit events-mode companions)."""
-    if _tracer is None or not text.strip():
-        return
-    attrs: dict[str, AttributeValue] = {
-        ATTR_SESSION_ID: state.session_id,
-        ATTR_SESSION_CONVERSATION_ID: state.conversation_id,
-        ATTR_GEN_AI_CONVERSATION_ID: state.conversation_id,
-        ATTR_TURN_INDEX: turn_index,
-        ATTR_TURN_INPUT_MODALITY: "text",
-        ATTR_AGENT_FRAMEWORK: LANGGRAPH_FRAMEWORK,
-        ATTR_AGENT_ROLE: "pipeline",
-        ATTR_AGENT_STAGE: "turn",
-        ATTR_LG_THREAD_ID: state.thread_id,
-    }
-    if role == "user":
-        attrs[ATTR_TURN_USER_TEXT] = text
-        span_name = SPAN_VOICE_STT
-        event_name = EVENT_GEN_AI_USER_MESSAGE
-    else:
-        attrs[ATTR_TURN_AGENT_TEXT] = text
-        span_name = SPAN_VOICE_TTS
-        event_name = EVENT_GEN_AI_ASSISTANT_MESSAGE
-    span = _tracer.start_span(span_name, attributes=attrs)
-    try:
-        if _capture_content:
-            span.add_event(event_name, {"content": text})
-    finally:
-        span.end()
 
 
 def close_session(thread_id: str, *, reason: str = "completed") -> None:

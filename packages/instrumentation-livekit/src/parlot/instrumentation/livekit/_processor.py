@@ -558,6 +558,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             speech_wall_override=speech_wall_override,
             media_segment_override=media_segment_override,
             language=user_language,
+            utterance_text=committed_text,
         )
         self._emit_committed_user_utterance_span(
             state,
@@ -1661,7 +1662,13 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         participant_id: str,
         diarization_source: str,
     ) -> None:
-        """Events mode: export user utterance on session_agents at the user turn index."""
+        """Events mode: export user utterance on session_agents at the user turn index.
+
+        Voice only — text sessions stamp ``turn.user_text`` on ``parlot.turn`` and
+        do not mint synthetic stt companions.
+        """
+        if modality == "text":
+            return
         if self._turn_source != "events" or not self._tracer or not state.parlot_session_id:
             return
         attrs: dict[str, AttributeValue] = {
@@ -1674,12 +1681,9 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             ATTR_AGENT_FRAMEWORK: "livekit",
             ATTR_TURN_PARTICIPANT_ID: participant_id,
             ATTR_PARTICIPANT_DIAR_SOURCE: diarization_source,
+            ATTR_AGENT_ROLE: "stt",
+            ATTR_AGENT_STAGE: "turn",
         }
-        if modality == "text":
-            attrs[ATTR_AGENT_ROLE] = "pipeline"
-        else:
-            attrs[ATTR_AGENT_ROLE] = "stt"
-        attrs[ATTR_AGENT_STAGE] = "turn"
         if participant_id and participant_id != ATTR_TURN_PARTICIPANT_ID_CALLER:
             attrs[ATTR_PARTICIPANT_CHANNEL_IDENTITY] = participant_id
         if state.session_id:
@@ -1711,10 +1715,11 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
     ) -> None:
         """Events mode: export agent utterance for timeline join at the agent turn index.
 
-        Native ``agent_turn`` is not exported (GenAI remap); this companion carries
-        ``turn.agent_text`` the way ``_emit_committed_user_utterance_span`` carries
-        user text. Real ``tts``/``chat`` node/run spans still own pipeline timing.
+        Voice only — text sessions stamp ``turn.agent_text`` on ``parlot.turn``.
+        Real ``tts``/``chat`` node/run spans still own pipeline timing.
         """
+        if modality == "text":
+            return
         if self._turn_source != "events" or not self._tracer or not state.parlot_session_id:
             return
         attrs: dict[str, AttributeValue] = {
@@ -1727,12 +1732,9 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             ATTR_AGENT_FRAMEWORK: "livekit",
             ATTR_TURN_PARTICIPANT_ID: participant_id,
             ATTR_PARTICIPANT_DIAR_SOURCE: ATTR_DIAR_SOURCE_AGENT_ID,
+            ATTR_AGENT_ROLE: "tts",
             ATTR_AGENT_STAGE: "turn",
         }
-        if modality == "text":
-            attrs[ATTR_AGENT_ROLE] = "pipeline"
-        else:
-            attrs[ATTR_AGENT_ROLE] = "tts"
         if state.session_id:
             attrs[ATTR_LK_JOB_ID] = state.session_id
         if state.room_name:
@@ -1895,6 +1897,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             interrupted=interrupted,
             language=resolved_language,
             language_switch=language_switch,
+            utterance_text=utterance_text,
         )
         state.last_turn_trace_id = trace_id
         state.turn_trace_by_index[turn_index] = trace_id

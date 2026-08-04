@@ -12,7 +12,6 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanE
 
 from parlot.core.attrs import (
     ATTR_AGENT_FRAMEWORK,
-    ATTR_AGENT_STAGE,
     ATTR_SESSION_AGENT_FRAMEWORK,
     ATTR_SESSION_ID,
     ATTR_TURN_AGENT_TEXT,
@@ -120,8 +119,8 @@ def test_callback_emits_invoke_agent_and_chat() -> None:
     assert SPAN_GEN_AI_INVOKE_AGENT in names
     assert any(n.startswith("chat") for n in names)
     assert "execute_tool lookup" in names
-    assert SPAN_VOICE_STT in names
-    assert SPAN_VOICE_TTS in names
+    assert SPAN_VOICE_STT not in names
+    assert SPAN_VOICE_TTS not in names
 
     session = next(s for s in spans if s.name == SPAN_CONVERSATION_SESSION)
     assert session.attributes.get(ATTR_SESSION_AGENT_FRAMEWORK) == "langgraph"
@@ -137,13 +136,6 @@ def test_callback_emits_invoke_agent_and_chat() -> None:
     )
     assert user_turn.attributes.get(ATTR_TURN_INDEX) == 1
     assert agent_turn.attributes.get(ATTR_TURN_INDEX) == 2
-
-    stt = next(s for s in spans if s.name == SPAN_VOICE_STT)
-    assert stt.attributes.get(ATTR_TURN_USER_TEXT) == "Hi there"
-    assert stt.attributes.get(ATTR_AGENT_STAGE) == "turn"
-    tts = next(s for s in spans if s.name == SPAN_VOICE_TTS)
-    assert tts.attributes.get(ATTR_TURN_AGENT_TEXT) == "Hello back"
-    assert tts.attributes.get(ATTR_AGENT_STAGE) == "turn"
 
     ops = [
         s
