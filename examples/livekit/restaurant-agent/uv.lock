@@ -1346,16 +1346,20 @@ wheels = [
 [[package]]
 name = "parlot-core"
 version = "0.1.0"
-source = { editable = "../../packages/core" }
+source = { editable = "../../../packages/core" }
 dependencies = [
     { name = "opentelemetry-api" },
+    { name = "opentelemetry-exporter-otlp-proto-http" },
     { name = "opentelemetry-sdk" },
+    { name = "opentelemetry-semantic-conventions" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "opentelemetry-api", specifier = ">=1.27.0" },
+    { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.27.0" },
     { name = "opentelemetry-sdk", specifier = ">=1.27.0" },
+    { name = "opentelemetry-semantic-conventions", specifier = ">=0.48b0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
 ]
 provides-extras = ["dev"]
@@ -1375,8 +1379,8 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "livekit-agents", extras = ["openai", "silero"] },
-    { name = "parlot-core", editable = "../../packages/core" },
-    { name = "parlot-instrumentation-livekit", editable = "../../packages/instrumentation-livekit" },
+    { name = "parlot-core", editable = "../../../packages/core" },
+    { name = "parlot-instrumentation-livekit", editable = "../../../packages/instrumentation-livekit" },
     { name = "python-dotenv", specifier = ">=1.0" },
     { name = "pyyaml", specifier = ">=6.0" },
 ]
@@ -1384,7 +1388,7 @@ requires-dist = [
 [[package]]
 name = "parlot-instrumentation-livekit"
 version = "0.1.0"
-source = { editable = "../../packages/instrumentation-livekit" }
+source = { editable = "../../../packages/instrumentation-livekit" }
 dependencies = [
     { name = "httpx" },
     { name = "opentelemetry-api" },
@@ -1399,7 +1403,7 @@ requires-dist = [
     { name = "opentelemetry-api", specifier = ">=1.27.0" },
     { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.27.0" },
     { name = "opentelemetry-sdk", specifier = ">=1.27.0" },
-    { name = "parlot-core", editable = "../../packages/core" },
+    { name = "parlot-core", editable = "../../../packages/core" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.24" },
 ]
