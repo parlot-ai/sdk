@@ -76,11 +76,6 @@ def set_tracer(tracer: Tracer) -> None:
     _tracer = tracer
 
 
-def set_capture_content(capture: bool) -> None:
-    """Kept for configure() compatibility; GenAI content capture is handler-owned."""
-    _ = capture
-
-
 def livekit_owns_session() -> bool:
     """True when LiveKit instrumentation already bound an active session."""
     if session_owned(framework="livekit"):

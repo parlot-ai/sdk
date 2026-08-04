@@ -36,7 +36,6 @@ from parlot.instrumentation.langgraph._session import (
     close_session,
     ensure_session,
     livekit_owns_session,
-    set_capture_content,
     set_tracer,
 )
 
@@ -45,7 +44,6 @@ from parlot.instrumentation.langgraph._session import (
 def _reset_session() -> None:
     clear_active_session()
     _sessions_by_thread.clear()
-    set_capture_content(True)
     yield
     clear_active_session()
     for tid in list(_sessions_by_thread):

@@ -86,9 +86,6 @@ def configure(
 
     set_identity(_configured_agent_id or "", _configured_agent_version)
     set_tracer(tracer)
-    from ._session import set_capture_content
-
-    set_capture_content(capture)
     handler = ParlotLangGraphCallbackHandler(tracer, capture_content=capture)
     install_configure_hook(handler)
 
