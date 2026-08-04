@@ -13,7 +13,7 @@ from langgraph.prebuilt import ToolNode
 
 from parlot.instrumentation.langgraph import close_session, configure
 
-configure(agent_id="langgraph-minimal", version="0.1.0")
+configure(agent_id="langgraph-minimal", version="0.1.0", channel="webchat")
 
 
 class State(TypedDict):

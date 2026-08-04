@@ -12,10 +12,13 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanE
 
 from parlot.core.attrs import (
     ATTR_AGENT_FRAMEWORK,
+    ATTR_CONVERSATION_CHANNEL,
     ATTR_SESSION_AGENT_FRAMEWORK,
     ATTR_SESSION_ID,
+    ATTR_SESSION_MODALITY,
     ATTR_TURN_AGENT_TEXT,
     ATTR_TURN_INDEX,
+    ATTR_TURN_INPUT_MODALITY,
     ATTR_TURN_USER_TEXT,
     SPAN_CONVERSATION_SESSION,
     SPAN_GEN_AI_INVOKE_AGENT,
@@ -36,6 +39,7 @@ from parlot.instrumentation.langgraph._session import (
     close_session,
     ensure_session,
     livekit_owns_session,
+    set_channel_modality,
     set_tracer,
 )
 
@@ -44,11 +48,13 @@ from parlot.instrumentation.langgraph._session import (
 def _reset_session() -> None:
     clear_active_session()
     _sessions_by_thread.clear()
+    set_channel_modality(channel="", modality="")
     yield
     clear_active_session()
     for tid in list(_sessions_by_thread):
         close_session(tid, reason="test_teardown")
     _sessions_by_thread.clear()
+    set_channel_modality(channel="", modality="")
 
 
 def test_export_allowlist_includes_genai() -> None:
@@ -123,6 +129,9 @@ def test_callback_emits_invoke_agent_and_chat() -> None:
     session = next(s for s in spans if s.name == SPAN_CONVERSATION_SESSION)
     assert session.attributes.get(ATTR_SESSION_AGENT_FRAMEWORK) == "langgraph"
     assert session.attributes.get(ATTR_AGENT_FRAMEWORK) == "langgraph"
+    # Channel/modality are not assumed — agent must configure them.
+    assert ATTR_CONVERSATION_CHANNEL not in (session.attributes or {})
+    assert ATTR_SESSION_MODALITY not in (session.attributes or {})
 
     turns = [s for s in spans if s.name == SPAN_PARLOT_TURN]
     assert len(turns) == 2
@@ -134,6 +143,7 @@ def test_callback_emits_invoke_agent_and_chat() -> None:
     )
     assert user_turn.attributes.get(ATTR_TURN_INDEX) == 1
     assert agent_turn.attributes.get(ATTR_TURN_INDEX) == 2
+    assert ATTR_TURN_INPUT_MODALITY not in (user_turn.attributes or {})
 
     ops = [
         s
@@ -145,6 +155,37 @@ def test_callback_emits_invoke_agent_and_chat() -> None:
     for span in ops:
         assert span.attributes.get(ATTR_SESSION_ID)
         assert span.attributes.get(ATTR_TURN_INDEX) == 2
+
+
+def test_channel_webchat_stamps_text_modality() -> None:
+    exporter = InMemorySpanExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    tracer = provider.get_tracer("test")
+    set_tracer(tracer)
+    set_channel_modality(channel="webchat")
+
+    handler = ParlotLangGraphCallbackHandler(tracer, capture_content=True)
+    run_id = uuid4()
+    handler.on_chain_start(
+        {"name": "g"},
+        {"messages": [{"type": "human", "content": "hi"}]},
+        run_id=run_id,
+        metadata={"thread_id": "t-channel"},
+        name="g",
+    )
+    handler.on_chain_end(
+        {"messages": [{"type": "ai", "content": "yo"}]},
+        run_id=run_id,
+    )
+    close_session("t-channel", reason="completed")
+
+    spans = list(exporter.get_finished_spans())
+    session = next(s for s in spans if s.name == SPAN_CONVERSATION_SESSION)
+    assert session.attributes.get(ATTR_CONVERSATION_CHANNEL) == "webchat"
+    assert session.attributes.get(ATTR_SESSION_MODALITY) == "text"
+    turn = next(s for s in spans if s.name == SPAN_PARLOT_TURN)
+    assert turn.attributes.get(ATTR_TURN_INPUT_MODALITY) == "text"
 
 
 def test_livekit_owns_session_suppresses_contract() -> None:

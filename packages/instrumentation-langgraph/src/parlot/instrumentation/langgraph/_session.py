@@ -45,8 +45,7 @@ from parlot.instrumentation.langgraph.attrs import ATTR_LG_THREAD_ID
 logger = logging.getLogger("parlot.instrumentation.langgraph")
 
 LANGGRAPH_FRAMEWORK = "langgraph"
-# Text agents use a non-voice channel so modality derives as text at ingest.
-LANGGRAPH_CHANNEL = "webchat"
+_TEXT_CHANNELS = frozenset({"webchat", "sms", "whatsapp"})
 
 
 @dataclass
@@ -61,6 +60,8 @@ class _LangGraphSessionState(SessionState):
 _sessions_by_thread: dict[str, tuple[Span, _LangGraphSessionState]] = {}
 _configured_agent_id: str = ""
 _configured_agent_version: str = ""
+_configured_channel: str = ""
+_configured_modality: str = ""
 _tracer: Tracer | None = None
 _atexit_registered = False
 
@@ -69,6 +70,13 @@ def set_identity(agent_id: str, version: str) -> None:
     global _configured_agent_id, _configured_agent_version
     _configured_agent_id = agent_id
     _configured_agent_version = version
+
+
+def set_channel_modality(*, channel: str = "", modality: str = "") -> None:
+    """Transport hints for LangGraph-owned sessions (ignored under LiveKit)."""
+    global _configured_channel, _configured_modality
+    _configured_channel = (channel or "").strip()
+    _configured_modality = (modality or "").strip()
 
 
 def set_tracer(tracer: Tracer) -> None:
@@ -86,6 +94,16 @@ def livekit_owns_session() -> bool:
     return bool(state and state.framework == "livekit")
 
 
+def _resolved_modality() -> str:
+    if _configured_modality:
+        return _configured_modality
+    if _configured_channel == "voice":
+        return "voice"
+    if _configured_channel in _TEXT_CHANNELS:
+        return "text"
+    return ""
+
+
 def _ensure_atexit() -> None:
     global _atexit_registered
     if _atexit_registered:
@@ -97,8 +115,14 @@ def _ensure_atexit() -> None:
 def _stamp_session_identity(span: Span, *, thread_id: str) -> None:
     span.set_attribute(ATTR_AGENT_FRAMEWORK, LANGGRAPH_FRAMEWORK)
     span.set_attribute(ATTR_SESSION_AGENT_FRAMEWORK, LANGGRAPH_FRAMEWORK)
-    span.set_attribute(ATTR_SESSION_MODALITY, "text")
-    span.set_attribute(ATTR_CONVERSATION_CHANNEL, LANGGRAPH_CHANNEL)
+    # Channel/modality are transport concerns — not implied by LangGraph.
+    # LiveKit-owned sessions never reach here; standalone agents should pass
+    # channel= (and optionally modality=) to configure().
+    if _configured_channel:
+        span.set_attribute(ATTR_CONVERSATION_CHANNEL, _configured_channel)
+    modality = _resolved_modality()
+    if modality:
+        span.set_attribute(ATTR_SESSION_MODALITY, modality)
     span.set_attribute(ATTR_LG_THREAD_ID, thread_id)
     if _configured_agent_id:
         span.set_attribute(ATTR_GEN_AI_AGENT_ID, _configured_agent_id)
@@ -178,7 +202,9 @@ def emit_turn(
         span.set_attribute(ATTR_GEN_AI_CONVERSATION_ID, state.conversation_id)
         span.set_attribute(ATTR_TURN_INDEX, turn_index)
         span.set_attribute(ATTR_TURN_PARTICIPANT_ROLE, role)
-        span.set_attribute(ATTR_TURN_INPUT_MODALITY, "text")
+        modality = _resolved_modality()
+        if modality:
+            span.set_attribute(ATTR_TURN_INPUT_MODALITY, modality)
         span.set_attribute(ATTR_AGENT_FRAMEWORK, LANGGRAPH_FRAMEWORK)
         span.set_attribute(ATTR_LG_THREAD_ID, state.thread_id)
         if text and role == "user":
