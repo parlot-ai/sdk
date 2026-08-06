@@ -1,6 +1,6 @@
 ---
 title: Guides
-description: Integration guides for instrumenting LiveKit agents with Parlot.
+description: Integration guides for instrumenting agents with Parlot.
 sidebar_position: 1
 ---
 
@@ -10,15 +10,15 @@ Hands-on guides for shipping Parlot instrumentation in production agents.
 
 <DocCardGroup columns={2}>
   <DocCard
-    eyebrow="Checklist"
-    title="LiveKit instrumentation"
-    description="Step-by-step checklist for configuring the SDK inside a LiveKit agent."
+    eyebrow="LiveKit"
+    title="LiveKit"
+    description="Configure the SDK, enable recording, and wire escalation, metadata, and OTEL coverage."
     to="/guides/livekit"
   />
   <DocCard
-    eyebrow="Recording"
-    title="LiveKit integration"
-    description="Recording, egress, and webhook patterns alongside OTLP telemetry."
-    to="/guides/livekit-integration"
+    eyebrow="LangGraph"
+    title="LangGraph instrumentation"
+    description="configure() for LangGraph / LangChain agents, including LiveKit + LangGraph combos."
+    to="/guides/langgraph"
   />
 </DocCardGroup>
