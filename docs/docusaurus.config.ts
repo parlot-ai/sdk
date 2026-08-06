@@ -108,7 +108,7 @@ const config: Config = {
       {
         name: 'description',
         content:
-          'Parlot SDK docs — OpenTelemetry instrumentation for multi-agent voice AI. Quick start, concepts, and LiveKit guides.',
+          'Parlot SDK docs — OpenTelemetry instrumentation for multi-agent voice AI. Quick start, concepts, and LiveKit guide.',
       },
       {property: 'og:type', content: 'website'},
       {name: 'twitter:card', content: 'summary'},

@@ -43,8 +43,8 @@ export default function Home(): JSX.Element {
             />
             <DocCard
               eyebrow="Guides"
-              title="LiveKit integration"
-              description="Checklist and recording/webhook patterns for production agents."
+              title="LiveKit"
+              description="Checklist, recording, escalation, and OTEL coverage for production agents."
               to="/guides/livekit"
             />
           </DocCardGroup>

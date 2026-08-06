@@ -52,5 +52,4 @@ Mint the API key in Parlot **Settings → API Keys**. For recording, enable Sett
 ## Next
 
 - [Core concepts](./concepts.md)
-- [LiveKit integration guide](./guides/livekit.md)
-- [Deep dive: recording & webhooks](./guides/livekit-integration.md)
+- [LiveKit guide](./guides/livekit.md)

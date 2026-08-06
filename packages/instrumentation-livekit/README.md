@@ -2,6 +2,8 @@
 
 LiveKit span processor, egress recording to R2, and `platform.ref.*` attributes for Parlot session resolve.
 
+Full public guide: [LiveKit](https://parlot.ai/docs/guides/livekit) (checklist, recording, contract maps, escalation, OTEL coverage). Shared semantics (escalation roles, metadata, refs): [Concepts](https://parlot.ai/docs/concepts).
+
 ## Integration checklist
 
 Two steps are required for full Parlot behavior. All SDK examples follow this pattern.
