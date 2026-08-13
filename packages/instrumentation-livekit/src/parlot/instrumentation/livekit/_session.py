@@ -124,6 +124,8 @@ def bootstrap_session(
     session_id = new_session_id()
     state = _LiveKitSessionState(
         parlot_session_id=session_id,
+        # LiveKit voice intentionally uses 1:1 conversation_id===session_id as a
+        # placeholder until multi-session conversations are modeled.
         conversation_id=session_id,
         session_id=vendor_job_id,
         room_name=room_name,
