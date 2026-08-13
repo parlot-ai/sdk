@@ -1,0 +1,52 @@
+# Curated persona-LLM scenarios for the drive-thru demo agent.
+name: Parlot drive-thru — curated persona sims
+
+scenarios:
+- label: Simple Big Mac combo order
+  instructions: |
+    PERSONA: Alex, hungry driver, decisive and brief.
+    OPENING LINE: "Hi, can I get a Big Mac combo?"
+    FACTS (reveal each only when asked):
+    - size: medium
+    - drink: Coke
+    - no extra sauces beyond what comes with it
+    - nothing else on the order
+    DO, IN ORDER:
+    1. Order a Big Mac combo (medium, Coke).
+    2. Confirm when they read the order back.
+    3. Say that's all and hang up after they give the total / send you to the window.
+  tags:
+    feature: order
+    difficulty: "1"
+
+- label: Modify then confirm order
+  instructions: |
+    PERSONA: Jordan, polite but changes mind once.
+    OPENING LINE: "Yeah hi — one McNuggets Happy Meal please."
+    FACTS (reveal each only when asked):
+    - first choice: 4-piece McNuggets Happy Meal with apple juice if offered
+    - then change: actually make it a 6-piece if available, or keep 4-piece if not
+    - add one medium fries if they ask if you want anything else
+    DO, IN ORDER:
+    1. Start with the Happy Meal.
+    2. Change the order once (size or piece count) when they start confirming.
+    3. Accept the final read-back and hang up.
+  tags:
+    feature: modify
+    difficulty: "2"
+
+- label: Abandon mid-order
+  instructions: |
+    PERSONA: Sam, distracted driver who decides not to order after starting.
+    OPENING LINE: "Uh, hi — do you still have the McFlurry?"
+    FACTS:
+    - you were considering a McFlurry but changed your mind
+    - you will NOT complete any order
+    DO, IN ORDER:
+    1. Ask about a McFlurry.
+    2. After one clarifying question from the agent, say you need to go and cancel — "actually never mind, I'll pass" — then hang up.
+    Do not confirm any items onto the order.
+  tags:
+    feature: abandon
+    difficulty: "1"
+    outcome: incomplete

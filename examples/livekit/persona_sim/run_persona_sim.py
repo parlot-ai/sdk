@@ -1,21 +1,19 @@
-"""Drive hotel receptionist sessions with a persona LLM as the guest.
+"""Drive LiveKit example sessions with a persona LLM as the caller.
 
-Loads LiveKit-style scenario YAML (PERSONA / OPENING LINE / FACTS / DO), starts
-an in-process AgentSession, and alternates agent replies with a second LLM that
-role-plays the caller. Each run closes the session so Parlot can finalize
-session-close ingest.
+Shared across ``examples/livekit/*``. Run from an example directory so
+``sim_adapter.py`` and ``.env*`` resolve correctly:
 
-Usage:
-  uv run python run_persona_sim.py --list
-  uv run python run_persona_sim.py --label "Simple room booking by phone"
-  uv run python run_persona_sim.py --all --max-turns 24
-  uv run python run_persona_sim.py --scenarios scenarios.yaml --tag feature=room_booking --limit 3
+  cd examples/livekit/hotel-receptionist
+  uv run python ../persona_sim/run_persona_sim.py --list
+  uv run python ../persona_sim/run_persona_sim.py --label "Simple room booking by phone"
+  uv run python ../persona_sim/run_persona_sim.py --all --max-turns 24
 """
 
 from __future__ import annotations
 
 import argparse
 import asyncio
+import importlib.util
 import logging
 import os
 import re
@@ -26,23 +24,9 @@ from typing import Any
 import yaml
 from dotenv import load_dotenv
 
-_ROOT = Path(__file__).resolve().parent
-sys.path.insert(0, str(_ROOT))
+from adapter import PersonaSimAdapter, SimRun
 
-load_dotenv(_ROOT / ".env.local")
-load_dotenv(_ROOT / ".env")
-
-import agent as hotel_agent  # noqa: E402
-from common import Userdata  # noqa: E402
-from fake_data.seed import build_seed_bytes  # noqa: E402
-from hotel_db import TODAY, HotelDB  # noqa: E402
-from parlot.instrumentation.livekit import _session as parlot_session  # noqa: E402
-
-from livekit.agents import AgentSession, inference, llm  # noqa: E402
-
-logger = logging.getLogger("hotel-receptionist.persona-sim")
-
-DEFAULT_SCENARIOS = _ROOT / "sim_scenarios.yaml"
+_PERSONA_SIM_DIR = Path(__file__).resolve().parent
 DEFAULT_AGENT_MODEL = "google/gemma-4-31b-it"
 DEFAULT_PERSONA_MODEL = "openai/gpt-4.1-mini"
 _START_SETTLE_S = 0.5
@@ -53,8 +37,7 @@ _OPENING_LINE_RE = re.compile(
     re.IGNORECASE | re.MULTILINE,
 )
 
-_PERSONA_SYSTEM = """\
-You are the PHONE CALLER in a hotel front-desk conversation simulation.
+_CALLER_RULES = """\
 Stay in character for the scenario instructions below.
 
 Rules:
@@ -67,6 +50,34 @@ Rules:
 with no useful path forward, reply with exactly {hangup} (nothing else).
 """.format(hangup=_HANGUP_TOKEN)
 
+logger = logging.getLogger("persona-sim")
+
+
+def _load_adapter(cwd: Path, adapter_path: Path | None) -> PersonaSimAdapter:
+    path = adapter_path or (cwd / "sim_adapter.py")
+    if not path.is_absolute():
+        path = (cwd / path).resolve()
+    if not path.exists():
+        raise SystemExit(
+            f"sim_adapter not found: {path}\n"
+            "Run from an example directory that has sim_adapter.py, "
+            "or pass --adapter."
+        )
+    # Example root first so `import agent` inside the adapter resolves.
+    example_root = str(path.parent)
+    if example_root not in sys.path:
+        sys.path.insert(0, example_root)
+    if str(_PERSONA_SIM_DIR) not in sys.path:
+        sys.path.insert(0, str(_PERSONA_SIM_DIR))
+
+    spec = importlib.util.spec_from_file_location("sim_adapter", path)
+    if spec is None or spec.loader is None:
+        raise SystemExit(f"could not load adapter: {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["sim_adapter"] = module
+    spec.loader.exec_module(module)
+    return module  # type: ignore[return-value]
+
 
 def _load_scenarios(path: Path) -> list[dict[str, Any]]:
     data = yaml.safe_load(path.read_text())
@@ -77,6 +88,8 @@ def _load_scenarios(path: Path) -> list[dict[str, Any]]:
 
 
 def _current_parlot_session_id() -> str | None:
+    from parlot.instrumentation.livekit import _session as parlot_session
+
     bootstrap = parlot_session._parlot_job_bootstrap.get()
     if bootstrap is None:
         return None
@@ -149,10 +162,7 @@ def _tag_match(scenario: dict[str, Any], tag_filter: str) -> bool:
     return str(tags.get(key)) == value
 
 
-async def _persona_reply(
-    persona_llm: llm.LLM,
-    chat_ctx: llm.ChatContext,
-) -> str:
+async def _persona_reply(persona_llm: Any, chat_ctx: Any) -> str:
     collected = await persona_llm.chat(chat_ctx=chat_ctx).collect()
     return (collected.text or "").strip()
 
@@ -161,17 +171,19 @@ def _is_hangup(text: str) -> bool:
     cleaned = text.strip().strip('"').strip("'")
     if cleaned.upper() == _HANGUP_TOKEN:
         return True
-    # Persona sometimes adds a trailing period or wraps the token.
     return cleaned.upper().rstrip(".!") == _HANGUP_TOKEN
 
 
 async def _run_scenario(
+    adapter: PersonaSimAdapter,
     scenario: dict[str, Any],
     *,
     agent_model: str,
     persona_model: str,
     max_turns: int,
 ) -> str:
+    from livekit.agents import AgentSession, inference, llm
+
     label = scenario.get("label") or "(unnamed)"
     instructions = scenario.get("instructions") or ""
     if not instructions.strip():
@@ -179,14 +191,16 @@ async def _run_scenario(
 
     print(f"\n=== {label} ===")
 
-    db = HotelDB.from_bytes(build_seed_bytes(TODAY))
+    sim: SimRun | None = None
     session_id: str | None = None
     persona = inference.LLM(persona_model)
     try:
+        sim = await adapter.open_run()
+        persona_system = f"{adapter.PERSONA_ROLE}\n\n{_CALLER_RULES}"
         persona_ctx = llm.ChatContext()
         persona_ctx.add_message(
             role="system",
-            content=f"{_PERSONA_SYSTEM}\n\n# Scenario instructions\n{instructions}",
+            content=f"{persona_system}\n\n# Scenario instructions\n{instructions}",
         )
 
         opening = _extract_opening_line(instructions)
@@ -195,7 +209,7 @@ async def _run_scenario(
             seed_ctx.add_message(
                 role="user",
                 content=(
-                    "The receptionist has just picked up. "
+                    f"The {sim.agent_speaker.lower()} has just picked up. "
                     "Say your OPENING LINE now (spoken utterance only)."
                 ),
             )
@@ -203,13 +217,14 @@ async def _run_scenario(
             if _is_hangup(opening):
                 raise RuntimeError("persona hung up before the call started")
 
-        userdata = Userdata(db=db)
-        async with AgentSession[Userdata](
-            userdata=userdata,
+        async with AgentSession(
+            userdata=sim.userdata,
             llm=inference.LLM(agent_model),
-            max_tool_steps=5,
+            max_tool_steps=sim.max_tool_steps,
         ) as session:
-            await session.start(hotel_agent.HotelReceptionistAgent(), capture_run=True)
+            # capture_run=True only returns after a spontaneous run finishes.
+            # Agents without on_enter generate_reply (e.g. drive-thru) would hang.
+            await session.start(sim.agent, capture_run=False)
             await asyncio.sleep(_START_SETTLE_S)
             session_id = _current_parlot_session_id()
             print(f"parlot_session_id={session_id or '(unknown)'}")
@@ -221,13 +236,15 @@ async def _run_scenario(
                 result = await session.run(user_input=guest_line)
                 _print_run_events(result)
 
-                # Persona history: assistant = guest, user = agent replies.
                 persona_ctx.add_message(role="assistant", content=guest_line)
                 agent_texts = _assistant_texts(result)
                 agent_blob = "\n".join(agent_texts) if agent_texts else "(no spoken reply)"
                 persona_ctx.add_message(
                     role="user",
-                    content=f"Receptionist said:\n{agent_blob}\n\nYour next spoken utterance:",
+                    content=(
+                        f"{sim.agent_speaker} said:\n{agent_blob}\n\n"
+                        "Your next spoken utterance:"
+                    ),
                 )
 
                 guest_line = await _persona_reply(persona, persona_ctx)
@@ -244,23 +261,33 @@ async def _run_scenario(
 
         print(f"\nclosed scenario={label!r} parlot_session_id={session_id or '(unknown)'}")
         if not session_id:
-            raise RuntimeError("Parlot session id was not set — configure()/bootstrap may have failed")
+            raise RuntimeError(
+                "Parlot session id was not set — configure()/bootstrap may have failed"
+            )
         return session_id
     finally:
         try:
             await persona.aclose()
         except Exception:
             logger.exception("error closing persona LLM")
-        try:
-            await db.aclose()
-        except Exception:
-            logger.exception("error closing hotel DB for %s", label)
+        if sim is not None and sim.aclose is not None:
+            try:
+                await sim.aclose()
+            except Exception:
+                logger.exception("error in adapter aclose for %s", label)
 
 
 async def _async_main(args: argparse.Namespace) -> int:
-    path = Path(args.scenarios).expanduser()
+    cwd = Path(args.cwd).expanduser().resolve() if args.cwd else Path.cwd().resolve()
+    os.chdir(cwd)
+    load_dotenv(cwd / ".env.local")
+    load_dotenv(cwd / ".env")
+
+    adapter = _load_adapter(cwd, Path(args.adapter) if args.adapter else None)
+
+    path = Path(args.scenarios).expanduser() if args.scenarios else adapter.DEFAULT_SCENARIOS
     if not path.is_absolute():
-        path = (_ROOT / path).resolve()
+        path = (cwd / path).resolve()
     if not path.exists():
         print(f"scenarios file not found: {path}", file=sys.stderr)
         return 2
@@ -272,7 +299,9 @@ async def _async_main(args: argparse.Namespace) -> int:
     if args.list:
         for s in scenarios:
             tags = s.get("tags") or {}
-            tag_s = ",".join(f"{k}={v}" for k, v in tags.items()) if isinstance(tags, dict) else ""
+            tag_s = (
+                ",".join(f"{k}={v}" for k, v in tags.items()) if isinstance(tags, dict) else ""
+            )
             print(f"{s.get('label', '')}\t{tag_s}")
         return 0
 
@@ -304,6 +333,7 @@ async def _async_main(args: argparse.Namespace) -> int:
         label = scenario.get("label") or "(unnamed)"
         try:
             sid = await _run_scenario(
+                adapter,
                 scenario,
                 agent_model=args.agent_model,
                 persona_model=args.persona_model,
@@ -327,9 +357,16 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
+        "--cwd",
+        help="Example directory (default: current working directory)",
+    )
+    parser.add_argument(
+        "--adapter",
+        help="Path to sim_adapter.py (default: <cwd>/sim_adapter.py)",
+    )
+    parser.add_argument(
         "--scenarios",
-        default=str(DEFAULT_SCENARIOS),
-        help=f"Scenario YAML path (default: {DEFAULT_SCENARIOS.name})",
+        help="Scenario YAML path (default: adapter.DEFAULT_SCENARIOS)",
     )
     parser.add_argument("--list", action="store_true", help="List scenario labels")
     parser.add_argument("--label", help="Run a single scenario by exact label")

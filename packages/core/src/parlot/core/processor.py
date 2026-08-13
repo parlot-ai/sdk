@@ -50,10 +50,25 @@ class ParlotBaseProcessor(SpanProcessor):
 
     @staticmethod
     def _set(span: ReadableSpan, key: str, value) -> None:
-        """Write an attribute into a ReadableSpan after it has ended."""
-        if span._attributes is None:
-            span._attributes = {}
-        span._attributes[key] = value
+        """Write an attribute into a ReadableSpan after it has ended.
+
+        OTel SDK ≥1.44 stores attributes in an immutable ``BoundedAttributes``
+        by default; mutating it raises ``TypeError``. Copy to a plain dict
+        when needed so enrichment can still stamp session/turn fields.
+        """
+        attrs = span._attributes
+        if attrs is None:
+            span._attributes = {key: value}
+            return
+        if getattr(attrs, "_immutable", False) or not isinstance(attrs, dict):
+            span._attributes = dict(attrs)
+            span._attributes[key] = value
+            return
+        try:
+            attrs[key] = value
+        except TypeError:
+            span._attributes = dict(attrs)
+            span._attributes[key] = value
 
     @staticmethod
     def _add_event(span: ReadableSpan, name: str, attributes: dict) -> None:

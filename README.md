@@ -19,7 +19,10 @@ Open-source ([MIT](LICENSE)) SDK and instrumentation libraries for the Parlot.ai
 | [`examples/livekit/livekit-voice/`](examples/livekit/livekit-voice/) | Minimal hello-world LiveKit agent | Path (monorepo dev) |
 | [`examples/livekit/multi-agent/`](examples/livekit/multi-agent/) | Storytelling with agent handoffs | Git tag |
 | [`examples/livekit/restaurant-agent/`](examples/livekit/restaurant-agent/) | Restaurant greeter → specialist routing | Git tag |
-| [`examples/livekit/hotel-receptionist/`](examples/livekit/hotel-receptionist/) | Boutique-hotel receptionist + seed sample sessions | Path (monorepo dev) |
+| [`examples/livekit/hotel-receptionist/`](examples/livekit/hotel-receptionist/) | Boutique-hotel receptionist + persona sample sessions | Path (monorepo dev) |
+| [`examples/livekit/healthcare/`](examples/livekit/healthcare/) | Medical front desk (intake, appointments, billing) + persona sims | Path (monorepo dev) |
+| [`examples/livekit/drive-thru/`](examples/livekit/drive-thru/) | Drive-thru ordering with dynamic tools + persona sims | Path (monorepo dev) |
+| [`examples/livekit/persona_sim/`](examples/livekit/persona_sim/) | Shared persona-LLM text session driver for LiveKit examples | — |
 | [`examples/langgraph/minimal-agent/`](examples/langgraph/minimal-agent/) | Standalone LangGraph + `configure()` | Path (monorepo dev) |
 
 Integration requirements: [instrumentation-livekit README](packages/instrumentation-livekit/README.md#integration-checklist), [instrumentation-langgraph README](packages/instrumentation-langgraph/README.md).

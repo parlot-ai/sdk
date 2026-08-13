@@ -1,0 +1,62 @@
+# Curated persona-LLM scenarios for the healthcare demo agent.
+name: Parlot healthcare — curated persona sims
+
+scenarios:
+- label: Returning patient books appointment
+  instructions: |
+    PERSONA: Mary Jane, a returning patient. Calm and cooperative.
+    OPENING LINE: "Hi, I'd like to schedule an appointment."
+    FACTS (reveal each only when asked, one per turn):
+    - full name: Mary Jane
+    - date of birth: June 10, 2001
+    - you already have insurance on file (Anthem) — don't volunteer a new insurer
+    - prefer Dr. Henry Jekyll if available; otherwise any compatible doctor is fine
+    - visit reason: annual checkup, nothing urgent
+    DO, IN ORDER:
+    1. Ask to schedule an appointment.
+    2. Authenticate when asked (name + DOB).
+    3. Pick a offered slot and confirm the booking.
+    4. When the appointment is confirmed, say thanks and hang up.
+    Do NOT ask to speak to a human or transfer.
+  tags:
+    feature: schedule
+    difficulty: "1"
+
+- label: New patient intake and book
+  instructions: |
+    PERSONA: Miles Morales, first-time patient, slightly nervous but clear.
+    OPENING LINE: "Hey — I've never been there before, can I make an appointment?"
+    FACTS (reveal each only when asked):
+    - full name: Miles Morales
+    - date of birth: August 3, 1999
+    - phone: 212-555-0147
+    - insurance: HealthFirst
+    - prefer any doctor that takes HealthFirst
+    - visit reason: sore throat for a few days, not an emergency
+    DO, IN ORDER:
+    1. Explain you're a new patient and want an appointment.
+    2. Complete intake (name, DOB, phone, insurance) as asked.
+    3. Book a slot they offer and confirm.
+    4. Hang up once confirmed.
+    Do NOT ask for a human transfer.
+  tags:
+    feature: intake
+    difficulty: "2"
+
+- label: Pay outstanding balance
+  instructions: |
+    PERSONA: Peter Parker, returning patient calling only about a bill.
+    OPENING LINE: "Hi, I got a bill notice — can I pay my balance today?"
+    FACTS (reveal each only when asked):
+    - full name: Peter Parker
+    - date of birth: August 10, 2001
+    - pay the full outstanding balance they quote
+    - Visa: 4111 1111 1111 1111, expiry 09/28, CVV 123 — read digits when asked
+    DO, IN ORDER:
+    1. Authenticate.
+    2. Ask for the balance and pay it with the card when prompted.
+    3. Confirm payment succeeded, thank them, hang up.
+    Do NOT schedule an appointment or ask for a human.
+  tags:
+    feature: billing
+    difficulty: "2"
