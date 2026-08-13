@@ -57,6 +57,8 @@ or set `PARLOT_AGENT_VERSION=0.1.0` at deploy/runtime. Under LiveKit `dev` / job
 | `session.agent_chain` | Deployment id plus runtime routing (`hotel-receptionist → Orchestrator → cancel_task`) |
 | `gen_ai.agent.version` | Agent deployment version — see [Concepts](../concepts.md#session-and-agent-identity) |
 
+LiveKit voice currently uses `conversation_id === session_id` (1:1) as a placeholder until multi-session conversations are modeled.
+
 ### 2. `await ctx.connect()` before `session.start()` (required)
 
 ```python
