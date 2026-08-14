@@ -8,6 +8,7 @@ Hard requirements:
 
 from __future__ import annotations
 
+import atexit
 import logging
 import threading
 import time
@@ -88,6 +89,7 @@ _flush_thread: threading.Thread | None = None
 _stop = threading.Event()
 _handler: Optional["SessionLogHandler"] = None
 _installed = False
+_atexit_registered = False
 
 _configure_capture_logs: ConfigureCaptureLogs = None
 _configure_log_level: Optional[str] = None
@@ -256,6 +258,7 @@ class SessionLogHandler(logging.Handler):
 def init_session_logs(*, endpoint: str = "", api_key: str = "") -> None:
     """Install root handler + start background flusher."""
     global _endpoint, _api_key, _flush_thread, _handler, _installed
+    global _atexit_registered
     with _lock:
         _endpoint = (endpoint or "").rstrip("/")
         _api_key = api_key or ""
@@ -274,6 +277,9 @@ def init_session_logs(*, endpoint: str = "", api_key: str = "") -> None:
                 daemon=True,
             )
             _flush_thread.start()
+        if not _atexit_registered:
+            atexit.register(shutdown_session_logs)
+            _atexit_registered = True
 
 
 def drain_session_logs() -> list[SessionLogRecord]:
@@ -300,7 +306,7 @@ def _flush_loop() -> None:
             continue
 
 
-def _try_flush() -> None:
+def _try_flush(*, force: bool = False) -> None:
     global _consecutive_failures, _circuit_open_until, _last_flush_at
 
     if _circuit_open():
@@ -310,9 +316,10 @@ def _try_flush() -> None:
     if not _endpoint or not _api_key:
         return
 
-    now = time.time()
-    if now - _last_flush_at < _FLUSH_INTERVAL_S * 0.5:
-        return
+    if not force:
+        now = time.time()
+        if now - _last_flush_at < _FLUSH_INTERVAL_S * 0.5:
+            return
 
     events = drain_session_logs()
     if not events:
@@ -351,12 +358,25 @@ def _post_events(events: list[SessionLogRecord]) -> bool:
 
 
 def shutdown_session_logs() -> None:
-    global _installed, _handler
-    _stop.set()
-    with _lock:
-        if _installed and _handler is not None:
-            try:
-                logging.root.removeHandler(_handler)
-            except Exception:
-                pass
-            _installed = False
+    """Stop capture and push any remaining buffered logs. Never raises."""
+    global _installed, _handler, _flush_thread
+    try:
+        _stop.set()
+        thread = _flush_thread
+        if (
+            thread is not None
+            and thread.is_alive()
+            and thread is not threading.current_thread()
+        ):
+            thread.join(timeout=1.0)
+        _flush_thread = None
+        with _lock:
+            if _installed and _handler is not None:
+                try:
+                    logging.root.removeHandler(_handler)
+                except Exception:
+                    pass
+                _installed = False
+        _try_flush(force=True)
+    except Exception:
+        return

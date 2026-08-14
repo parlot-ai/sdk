@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 import logging
+import time
 
 import pytest
 
+from parlot.core import session_logs as sl
 from parlot.core.session import SessionState, clear_active_session, set_active_session
 from parlot.core.session_logs import (
     SessionLogHandler,
     drain_session_logs,
     set_capture_logs_configure,
     shutdown_session_logs,
+    snapshot_session_logs,
 )
 
 
@@ -118,3 +121,40 @@ def test_handler_never_raises() -> None:
     handler = SessionLogHandler()
     # Broken record-like object should not propagate.
     handler.emit(None)  # type: ignore[arg-type]
+
+
+def test_shutdown_flushes_remaining_logs(monkeypatch: pytest.MonkeyPatch) -> None:
+    posted: list[sl.SessionLogRecord] = []
+
+    def fake_post(events: list[sl.SessionLogRecord]) -> bool:
+        posted.extend(events)
+        return True
+
+    monkeypatch.setattr(sl, "_endpoint", "http://localhost:4318")
+    monkeypatch.setattr(sl, "_api_key", "test-key")
+    monkeypatch.setattr(sl, "_last_flush_at", time.time())
+    monkeypatch.setattr(sl, "_circuit_open_until", 0.0)
+    monkeypatch.setattr(sl, "_post_events", fake_post)
+
+    set_active_session(None, SessionState(session_id="sess-final"))
+    handler = SessionLogHandler()
+    handler.emit(
+        logging.LogRecord(
+            name="my.agent",
+            level=logging.INFO,
+            pathname="agent.py",
+            lineno=20,
+            msg="late log",
+            args=(),
+            exc_info=None,
+        )
+    )
+    assert len(snapshot_session_logs()) == 1
+
+    sl._try_flush()
+    assert posted == []
+    assert len(snapshot_session_logs()) == 1
+
+    shutdown_session_logs()
+    assert [event.message for event in posted] == ["late log"]
+    assert drain_session_logs() == []
