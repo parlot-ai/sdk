@@ -23,6 +23,7 @@ from .provider import (
 from .configure import ConfigureProtocol
 from .export import ExportFilterSpanExporter
 from .intent import derive_intent
+from .logs_capture import should_capture_logs
 from .sdk_version import resolve_parlot_sdk_version, stamp_session_sdk_version
 from .session import (
     SessionState,
@@ -32,6 +33,7 @@ from .session import (
     session_owned,
     set_active_session,
 )
+from .session_logs import init_session_logs, shutdown_session_logs
 from .topology import SessionTopology
 
 __all__ = [
@@ -53,6 +55,7 @@ __all__ = [
     "get_active_session_span",
     "human_escalation",
     "init_diagnostics",
+    "init_session_logs",
     "record_diagnostic",
     "record_human_rep",
     "resolve_api_key",
@@ -63,7 +66,9 @@ __all__ = [
     "set_active_session",
     "set_session_attribute",
     "set_session_metadata",
+    "should_capture_logs",
     "shutdown_diagnostics",
+    "shutdown_session_logs",
     "stamp_platform_refs",
     "stamp_session_sdk_version",
 ]

@@ -16,6 +16,8 @@ _escalation_metadata_match: dict[str, str] | None = None
 _configured_agent_id: str | None = None
 _configured_agent_version: str = ""
 _configured_record: bool | list[str] | None = None
+_configured_capture_logs: bool | list[str] | None = None
+_configured_log_level: str | None = None
 
 
 def _is_livekit_dev_watch_parent() -> bool:
@@ -62,6 +64,8 @@ def configure(
     agent_id: Optional[str] = None,
     version: Optional[str] = None,
     record: bool | list[str] | None = None,
+    capture_logs: bool | list[str] | None = None,
+    log_level: Optional[str] = None,
 ) -> None:
     """Configure Parlot LiveKit instrumentation and OTLP export.
 
@@ -71,9 +75,13 @@ def configure(
 
     Recording policy precedence: job metadata ``record`` >
     ``record=`` here > Settings → Recording (telemetry bootstrap).
+
+    Log capture precedence: job metadata ``capture_logs`` >
+    ``capture_logs=`` here > Settings → Logs (telemetry bootstrap) > on.
     """
     global _configured, _auto_escalate_sip, _escalation_metadata_match
     global _configured_agent_id, _configured_agent_version, _configured_record
+    global _configured_capture_logs, _configured_log_level
     if _configured:
         logger.debug("parlot-instrumentation.livekit already configured — skipping")
         return
@@ -94,6 +102,13 @@ def configure(
         _configured_record = [str(item).strip() for item in record if str(item).strip()]
     else:
         _configured_record = record
+    if isinstance(capture_logs, list):
+        _configured_capture_logs = [
+            str(item).strip() for item in capture_logs if str(item).strip()
+        ]
+    else:
+        _configured_capture_logs = capture_logs
+    _configured_log_level = log_level.strip().upper() if log_level else None
 
     from ._agent_version import resolve_agent_version
 
@@ -108,12 +123,44 @@ def configure(
         resolve_capture_content,
         resolve_endpoint,
     )
+    from parlot.core.session_logs import (
+        init_session_logs,
+        set_capture_logs_configure,
+        set_session_log_resolvers,
+    )
 
     resolved_endpoint = resolve_endpoint(endpoint)
     resolved_api_key = resolve_api_key(api_key)
     capture_content = resolve_capture_content(capture_content)
 
     init_diagnostics(endpoint=resolved_endpoint, api_key=resolved_api_key)
+    set_capture_logs_configure(
+        _configured_capture_logs,
+        log_level=_configured_log_level,
+    )
+    from ._recording_guard import (
+        current_job_capture_logs_metadata,
+        livekit_session_log_fields,
+        recording_agent_id_from_ctx,
+    )
+
+    def _agent_id_resolver() -> str:
+        try:
+            from livekit.agents.job import get_job_context
+
+            ctx = get_job_context()
+            if ctx is not None:
+                return recording_agent_id_from_ctx(ctx)
+        except Exception:
+            pass
+        return _configured_agent_id or ""
+
+    set_session_log_resolvers(
+        session_resolver=livekit_session_log_fields,
+        agent_id_resolver=_agent_id_resolver,
+        metadata_resolver=current_job_capture_logs_metadata,
+    )
+    init_session_logs(endpoint=resolved_endpoint, api_key=resolved_api_key)
 
     if tracer_provider is None:
         tracer_provider = adopt_existing_tracer_provider()
@@ -387,3 +434,13 @@ def configured_agent_version() -> str:
 def configured_record() -> bool | list[str] | None:
     """Recording override from ``configure(record=...)`` if set."""
     return _configured_record
+
+
+def configured_capture_logs() -> bool | list[str] | None:
+    """Log capture override from ``configure(capture_logs=...)`` if set."""
+    return _configured_capture_logs
+
+
+def configured_log_level() -> str | None:
+    """Log level override from ``configure(log_level=...)`` if set."""
+    return _configured_log_level

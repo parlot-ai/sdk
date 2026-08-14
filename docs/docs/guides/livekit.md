@@ -87,6 +87,19 @@ Recording policy (precedence: job metadata → `configure(record=…)` → Setti
 - **Code:** `configure(record=True)`, `configure(record=False)`, or `configure(record=["my-agent*"])`
 - **Dispatch:** job metadata `{ "record": true }` or `{ "record": false }`
 
+### Session application logs
+
+Python `logging` from instrumented agents is captured **on by default** while a Parlot session is active (not `print()` / stdout). Rows appear on the session **Logs** tab.
+
+Precedence (same ladder as recording, but the fallback is **on**):
+
+job metadata `capture_logs` → `configure(capture_logs=…)` → Settings → Logs (bootstrap) → on
+
+- **UI:** Parlot → **Settings → Logs** — globs (default `*`), min level (default `INFO`), per-agent toggles. Empty globs turns capture off org-wide.
+- **Code:** `configure(capture_logs=True|False)` or `configure(capture_logs=["my-agent*"], log_level="WARNING")`
+- **Dispatch (LiveKit):** job metadata `{ "capture_logs": true|false }`
+- Messages are stored as emitted (treat like stdout for PII). Missing bootstrap / old collectors still capture.
+
 ### Errors in the session waterfall
 
 Failed LLM and tool work is surfaced in **`spans_agent.error_flag`** at ingest. LiveKit stamps OpenTelemetry **`exception.type`** / **`exception.message`** on spans such as **`llm_request_run`** when a provider call fails; tool failures use **`lk.function_tool.is_error`**. The collector maps those signals (and OTLP span status `ERROR`) into `error_flag` and `error_type` on each operational span row.
