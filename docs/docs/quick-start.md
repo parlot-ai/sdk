@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # Quick Start
 
-Parlot is an open-source SDK and instrumentation stack for multi-agent observability. Start with LiveKit Agents.
+Parlot is an open-source SDK and instrumentation stack for multi-agent observability. Start with LiveKit Agents. The hosted analysis platform (dashboard, goal scoring, graphs) is commercial; production Docker self-host is licensed at Scale/Enterprise.
 
 ## Install
 
