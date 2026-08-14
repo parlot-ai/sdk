@@ -68,6 +68,8 @@ Recording policy (precedence: job metadata → `configure(record=…)` → Setti
 - **Code:** `configure(record=True)`, `configure(record=False)`, or `configure(record=["my-agent*"])`
 - **Dispatch:** job metadata `{ "record": true|false }`
 
+Session application logs (Python `logging`, default on) use the same control path via Settings → Logs / `configure(capture_logs=…)` / job `capture_logs`. Not `print()`. Treat content like stdout for PII.
+
 Optional: `PARLOT_CAPTURE_CONTENT=false` to suppress prompt/response text in spans.
 
 Optional: `PARLOT_DIAGNOSTICS=off` to disable SDK self-diagnostics (export/handler failures reported to Parlot). Default is on; metadata only, no conversation content. Under sustained outage the buffer drops and circuit-breaks — it does not retry-storm the collector.

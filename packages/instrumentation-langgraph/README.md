@@ -23,6 +23,9 @@ derived from channel (`webchat`/`sms`/`whatsapp` → text, `voice` → voice).
 
 Set `PARLOT_ENDPOINT` and `PARLOT_API_KEY`. Optional: `PARLOT_CAPTURE_CONTENT=false`.
 
+Session application logs (Python `logging`, default on) follow Settings → Logs /
+`configure(capture_logs=…, log_level=…)`. Not `print()`. Treat content like stdout for PII.
+
 When used inside a LiveKit voice agent that already called
 `parlot.instrumentation.livekit.configure()`, this package nests GenAI
 operational spans under the active LiveKit session and does **not** emit

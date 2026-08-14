@@ -53,6 +53,7 @@ Each framework guide documents how those attributes are sourced from the vendor 
 
 - **Telemetry** (turns, handoffs, close, usage) always goes over OTLP to `PARLOT_ENDPOINT`.
 - **Audio recording** is optional and framework-specific. On LiveKit it uses Room Composite Egress to R2; webhooks confirm upload. Telemetry does not depend on webhooks.
+- **Application logs** (Python `logging` only — not `print()`) are captured on by default during an active session and shown on the session **Logs** tab. Policy mirrors recording (Settings → Logs + `configure(capture_logs=…)`), except the fallback is on. Treat log content like stdout for PII.
 
 See the [LiveKit guide](./guides/livekit.md) for egress, policy, and troubleshooting.
 

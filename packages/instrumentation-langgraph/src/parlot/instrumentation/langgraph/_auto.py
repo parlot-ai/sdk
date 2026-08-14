@@ -24,6 +24,8 @@ def configure(
     version: Optional[str] = None,
     channel: Optional[str] = None,
     modality: Optional[str] = None,
+    capture_logs: bool | list[str] | None = None,
+    log_level: Optional[str] = None,
 ) -> None:
     """Configure Parlot LangGraph instrumentation and OTLP export.
 
@@ -48,6 +50,10 @@ def configure(
         resolve_endpoint,
     )
     from parlot.core.sdk_version import resolve_parlot_sdk_version
+    from parlot.core.session_logs import (
+        init_session_logs,
+        set_capture_logs_configure,
+    )
 
     _configured_agent_id = agent_id.strip() if agent_id else None
     _configured_agent_version = (version or os.environ.get("PARLOT_AGENT_VERSION") or "").strip()
@@ -57,6 +63,15 @@ def configure(
     capture = resolve_capture_content(capture_content)
 
     init_diagnostics(endpoint=resolved_endpoint, api_key=resolved_api_key)
+    if isinstance(capture_logs, list):
+        capture_logs_cfg = [str(item).strip() for item in capture_logs if str(item).strip()]
+    else:
+        capture_logs_cfg = capture_logs
+    set_capture_logs_configure(
+        capture_logs_cfg,
+        log_level=log_level.strip().upper() if log_level else None,
+    )
+    init_session_logs(endpoint=resolved_endpoint, api_key=resolved_api_key)
 
     if tracer_provider is None:
         tracer_provider = adopt_existing_tracer_provider()
