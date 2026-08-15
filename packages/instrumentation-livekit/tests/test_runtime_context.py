@@ -29,7 +29,7 @@ class TestApplyBootstrapPayload:
                 "globs": ["receptionist*"],
                 "agents": {"restaurant-agent": True},
             },
-            "capture_content": {
+            "capture_genai_content": {
                 "globs": ["*"],
                 "agents": {"restaurant-agent": False},
             },
@@ -41,9 +41,9 @@ class TestApplyBootstrapPayload:
         assert runtime.org_id == "org-1"
         assert runtime.recording_globs == ("receptionist*",)
         assert runtime.recording_agents_map() == {"restaurant-agent": True}
-        assert runtime.capture_content_globs == ("*",)
-        assert runtime.capture_content_agents_map() == {"restaurant-agent": False}
-        assert runtime.capture_content_policy_present is True
+        assert runtime.capture_genai_content_globs == ("*",)
+        assert runtime.capture_genai_content_agents_map() == {"restaurant-agent": False}
+        assert runtime.capture_genai_content_policy_present is True
         lk = get_livekit_runtime()
         assert lk is not None
         assert lk.webhook_signing_key == ""

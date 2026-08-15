@@ -1,6 +1,9 @@
-"""GenAI message + tool payload capture policy (platform-agnostic).
+"""Generative AI (GenAI) message + tool payload capture policy (platform-agnostic).
 
-Content capture **on** — emit GenAI message event bodies and tool
+GenAI here means generative AI in general (any LLM/tool stack), not a
+specific vendor or model family.
+
+Content capture **on** — emit generative AI message event bodies and tool
 request/response payloads on spans.
 
 Content capture **off** — omit those bodies. Still emit span structure,
@@ -9,7 +12,7 @@ text (``turn.user_text`` / ``turn.agent_text``).
 
 Not in scope: audio recording, session logs, or instruction excerpts.
 
-Precedence: job metadata > ``configure(capture_content=…)`` > Settings bootstrap > on.
+Precedence: job metadata > ``configure(capture_genai_content=…)`` > Settings bootstrap > on.
 Default ON when bootstrap is missing. Explicit empty globs = off.
 """
 
@@ -20,31 +23,31 @@ from typing import Optional
 
 from parlot.core.recording import matches_allowlist
 
-DEFAULT_CAPTURE_CONTENT_GLOBS: tuple[str, ...] = ("*",)
+DEFAULT_CAPTURE_GENAI_CONTENT_GLOBS: tuple[str, ...] = ("*",)
 
 
-def should_capture_content(
+def should_capture_genai_content(
     agent_name: str,
     *,
-    metadata_capture_content: Optional[bool] = None,
-    configure_capture_content: Optional[bool] = None,
+    metadata_capture_genai_content: Optional[bool] = None,
+    configure_capture_genai_content: Optional[bool] = None,
     bootstrap_globs: Optional[Sequence[str]] = None,
     bootstrap_agents: Optional[Mapping[str, bool]] = None,
     bootstrap_present: bool = False,
 ) -> bool:
-    """Return True when GenAI/tool content bodies should be captured.
+    """Return True when generative AI / tool content bodies should be captured.
 
-    Precedence: job metadata > ``configure(capture_content=…)`` > bootstrap (UI).
+    Precedence: job metadata > ``configure(capture_genai_content=…)`` > bootstrap (UI).
     When bootstrap is absent (``bootstrap_present=False``) or globs are unset,
     default is **on**. Explicit empty globs means off.
     """
-    if metadata_capture_content is False:
+    if metadata_capture_genai_content is False:
         return False
-    if metadata_capture_content is True:
+    if metadata_capture_genai_content is True:
         return True
 
-    if configure_capture_content is not None:
-        return bool(configure_capture_content)
+    if configure_capture_genai_content is not None:
+        return bool(configure_capture_genai_content)
 
     agents = bootstrap_agents or {}
     if agent_name in agents:

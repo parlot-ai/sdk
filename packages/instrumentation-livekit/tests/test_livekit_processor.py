@@ -544,9 +544,9 @@ class TestRootSpanAggregates:
         assert not any(r.levelno >= logging.ERROR for r in bootstrap_msgs)
 
 
-class TestContentCapture:
-    def test_content_captured_by_default(self) -> None:
-        proc = LiveKitGenAIProcessor(capture_content=True)
+class TestGenAIContentCapture:
+    def test_genai_content_captured_by_default(self) -> None:
+        proc = LiveKitGenAIProcessor(capture_genai_content=True)
         _bootstrap_proc(proc, "job-content")
         span = _make_span("agent_turn", {
             ATTR_LK_USER_INPUT: "Hello agent",
@@ -558,7 +558,7 @@ class TestContentCapture:
         assert EVENT_GEN_AI_ASSISTANT_MESSAGE in event_names
 
     def test_content_suppressed_when_disabled(self) -> None:
-        proc = LiveKitGenAIProcessor(capture_content=False)
+        proc = LiveKitGenAIProcessor(capture_genai_content=False)
         _bootstrap_proc(proc, "job-content")
         span = _make_span("agent_turn", {
             ATTR_LK_USER_INPUT: "Hello agent",

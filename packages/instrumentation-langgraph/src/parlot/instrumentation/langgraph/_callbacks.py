@@ -134,10 +134,10 @@ class ParlotLangGraphCallbackHandler(BaseCallbackHandler):
         self,
         tracer: Tracer,
         *,
-        capture_content: bool = True,
+        capture_genai_content: bool = True,
     ) -> None:
         self._tracer = tracer
-        self._capture_content = capture_content
+        self._capture_genai_content = capture_genai_content
         self._spans: dict[str, Span] = {}
         self._root_runs: set[str] = set()
 
@@ -363,7 +363,7 @@ class ParlotLangGraphCallbackHandler(BaseCallbackHandler):
             attributes=attrs,
             parent_run_id=parent_run_id,
         )
-        if span is not None and self._capture_content and prompts:
+        if span is not None and self._capture_genai_content and prompts:
             span.add_event(
                 EVENT_GEN_AI_USER_MESSAGE,
                 {"content": prompts[-1][:4000]},
@@ -411,7 +411,7 @@ class ParlotLangGraphCallbackHandler(BaseCallbackHandler):
                 span.set_attribute(ATTR_GEN_AI_IN_TOKENS, usage["input"])
             if usage.get("output"):
                 span.set_attribute(ATTR_GEN_AI_OUT_TOKENS, usage["output"])
-            if self._capture_content:
+            if self._capture_genai_content:
                 text = _text_from_llm_result(response)
                 if text:
                     span.add_event(
@@ -462,7 +462,7 @@ class ParlotLangGraphCallbackHandler(BaseCallbackHandler):
             attributes=attrs,
             parent_run_id=parent_run_id,
         )
-        if span is not None and self._capture_content:
+        if span is not None and self._capture_genai_content:
             payload = ""
             if inputs is not None:
                 try:
@@ -494,7 +494,7 @@ class ParlotLangGraphCallbackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> Any:
         span = self._spans.get(self._run_key(run_id))
-        if span is not None and self._capture_content and output is not None:
+        if span is not None and self._capture_genai_content and output is not None:
             text = str(output)
             if text:
                 preview = text[:512]

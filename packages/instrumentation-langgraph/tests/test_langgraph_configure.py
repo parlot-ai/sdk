@@ -71,7 +71,7 @@ def test_callback_emits_invoke_agent_and_chat() -> None:
     tracer = provider.get_tracer("test")
     set_tracer(tracer)
 
-    handler = ParlotLangGraphCallbackHandler(tracer, capture_content=True)
+    handler = ParlotLangGraphCallbackHandler(tracer, capture_genai_content=True)
     run_id = uuid4()
     handler.on_chain_start(
         {"name": "my_graph"},
@@ -165,7 +165,7 @@ def test_channel_webchat_stamps_text_modality() -> None:
     set_tracer(tracer)
     set_channel_modality(channel="webchat")
 
-    handler = ParlotLangGraphCallbackHandler(tracer, capture_content=True)
+    handler = ParlotLangGraphCallbackHandler(tracer, capture_genai_content=True)
     run_id = uuid4()
     handler.on_chain_start(
         {"name": "g"},

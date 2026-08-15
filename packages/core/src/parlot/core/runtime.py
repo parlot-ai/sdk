@@ -23,10 +23,10 @@ class ParlotRuntimeContext:
     logs_min_level: str = DEFAULT_LOGS_MIN_LEVEL
     # True when bootstrap JSON included a ``logs`` object (even empty).
     logs_policy_present: bool = False
-    capture_content_globs: tuple[str, ...] = ()
-    capture_content_agents: tuple[tuple[str, bool], ...] = ()
-    # True when bootstrap JSON included a ``capture_content`` object (even empty).
-    capture_content_policy_present: bool = False
+    capture_genai_content_globs: tuple[str, ...] = ()
+    capture_genai_content_agents: tuple[tuple[str, bool], ...] = ()
+    # True when bootstrap JSON included a ``capture_genai_content`` object (even empty).
+    capture_genai_content_policy_present: bool = False
 
     def recording_agents_map(self) -> dict[str, bool]:
         return dict(self.recording_agents)
@@ -34,8 +34,8 @@ class ParlotRuntimeContext:
     def logs_agents_map(self) -> dict[str, bool]:
         return dict(self.logs_agents)
 
-    def capture_content_agents_map(self) -> dict[str, bool]:
-        return dict(self.capture_content_agents)
+    def capture_genai_content_agents_map(self) -> dict[str, bool]:
+        return dict(self.capture_genai_content_agents)
 
 
 _runtime: Optional[ParlotRuntimeContext] = None
@@ -104,19 +104,19 @@ def _parse_logs_policy(
     return tuple(globs), tuple(agents), min_level, True
 
 
-def _parse_capture_content_policy(
+def _parse_capture_genai_content_policy(
     payload: dict[str, Any],
 ) -> tuple[tuple[str, ...], tuple[tuple[str, bool], ...], bool]:
-    capture_content = payload.get("capture_content")
-    if not isinstance(capture_content, dict):
+    capture_genai_content = payload.get("capture_genai_content")
+    if not isinstance(capture_genai_content, dict):
         return (), (), False
 
-    raw_globs = capture_content.get("globs")
+    raw_globs = capture_genai_content.get("globs")
     globs: list[str] = []
     if isinstance(raw_globs, list):
         globs = [str(item).strip() for item in raw_globs if str(item).strip()]
 
-    raw_agents = capture_content.get("agents")
+    raw_agents = capture_genai_content.get("agents")
     agents: list[tuple[str, bool]] = []
     if isinstance(raw_agents, Mapping):
         for key, value in raw_agents.items():
@@ -137,7 +137,7 @@ def runtime_from_bootstrap(
         capture_globs,
         capture_agents,
         capture_present,
-    ) = _parse_capture_content_policy(payload)
+    ) = _parse_capture_genai_content_policy(payload)
     return ParlotRuntimeContext(
         endpoint=endpoint.rstrip("/"),
         api_key=api_key,
@@ -151,7 +151,7 @@ def runtime_from_bootstrap(
         logs_agents=logs_agents,
         logs_min_level=logs_min_level,
         logs_policy_present=logs_present,
-        capture_content_globs=capture_globs,
-        capture_content_agents=capture_agents,
-        capture_content_policy_present=capture_present,
+        capture_genai_content_globs=capture_globs,
+        capture_genai_content_agents=capture_agents,
+        capture_genai_content_policy_present=capture_present,
     )

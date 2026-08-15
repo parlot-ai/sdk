@@ -16,7 +16,7 @@ _escalation_metadata_match: dict[str, str] | None = None
 _configured_agent_id: str | None = None
 _configured_agent_version: str = ""
 _configured_record: bool | list[str] | None = None
-_configured_capture_content: bool | None = None
+_configured_capture_genai_content: bool | None = None
 _configured_capture_logs: bool | list[str] | None = None
 _configured_log_level: str | None = None
 
@@ -57,7 +57,7 @@ def configure(
     *,
     endpoint: Optional[str] = None,
     api_key: Optional[str] = None,
-    capture_content: Optional[bool] = None,
+    capture_genai_content: Optional[bool] = None,
     service_name: Optional[str] = None,
     tracer_provider=None,
     auto_escalate_sip: bool = False,
@@ -77,8 +77,8 @@ def configure(
     Recording policy precedence: job metadata ``record`` >
     ``record=`` here > Settings → Recording (telemetry bootstrap).
 
-    Content capture precedence: job metadata ``capture_content`` >
-    ``capture_content=`` here > Settings → Content (telemetry bootstrap) > on.
+    GenAI content capture precedence: job metadata ``capture_genai_content`` >
+    ``capture_genai_content=`` here > Settings → GenAI Content (telemetry bootstrap) > on.
     Resolved at span emit time so per-agent bootstrap overrides apply.
 
     Log capture precedence: job metadata ``capture_logs`` >
@@ -86,7 +86,7 @@ def configure(
     """
     global _configured, _auto_escalate_sip, _escalation_metadata_match
     global _configured_agent_id, _configured_agent_version, _configured_record
-    global _configured_capture_content, _configured_capture_logs, _configured_log_level
+    global _configured_capture_genai_content, _configured_capture_logs, _configured_log_level
     if _configured:
         logger.debug("parlot-instrumentation.livekit already configured — skipping")
         return
@@ -107,9 +107,9 @@ def configure(
         _configured_record = [str(item).strip() for item in record if str(item).strip()]
     else:
         _configured_record = record
-    from parlot.core.provider import resolve_capture_content
+    from parlot.core.provider import resolve_capture_genai_content
 
-    _configured_capture_content = resolve_capture_content(capture_content)
+    _configured_capture_genai_content = resolve_capture_genai_content(capture_genai_content)
     if isinstance(capture_logs, list):
         _configured_capture_logs = [
             str(item).strip() for item in capture_logs if str(item).strip()
@@ -429,9 +429,9 @@ def configured_record() -> bool | list[str] | None:
     return _configured_record
 
 
-def configured_capture_content() -> bool | None:
-    """Content capture override from ``configure(capture_content=...)`` if set."""
-    return _configured_capture_content
+def configured_capture_genai_content() -> bool | None:
+    """Content capture override from ``configure(capture_genai_content=...)`` if set."""
+    return _configured_capture_genai_content
 
 
 def configured_capture_logs() -> bool | list[str] | None:

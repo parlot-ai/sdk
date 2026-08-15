@@ -22,7 +22,7 @@ class ConfigureProtocol(Protocol):
         *,
         endpoint: Optional[str] = None,
         api_key: Optional[str] = None,
-        capture_content: Optional[bool] = None,
+        capture_genai_content: Optional[bool] = None,
         service_name: Optional[str] = None,
         tracer_provider: Any = None,
         agent_id: Optional[str] = None,
