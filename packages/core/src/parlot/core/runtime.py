@@ -20,6 +20,7 @@ class ParlotRuntimeContext:
     recording_agents: tuple[tuple[str, bool], ...] = ()
     logs_globs: tuple[str, ...] = ()
     logs_agents: tuple[tuple[str, bool], ...] = ()
+    logs_agent_min_levels: tuple[tuple[str, str], ...] = ()
     logs_min_level: str = DEFAULT_LOGS_MIN_LEVEL
     # True when bootstrap JSON included a ``logs`` object (even empty).
     logs_policy_present: bool = False
@@ -33,6 +34,9 @@ class ParlotRuntimeContext:
 
     def logs_agents_map(self) -> dict[str, bool]:
         return dict(self.logs_agents)
+
+    def logs_agent_min_levels_map(self) -> dict[str, str]:
+        return dict(self.logs_agent_min_levels)
 
     def capture_genai_content_agents_map(self) -> dict[str, bool]:
         return dict(self.capture_genai_content_agents)
@@ -81,10 +85,16 @@ def _parse_recording_policy(
 
 def _parse_logs_policy(
     payload: dict[str, Any],
-) -> tuple[tuple[str, ...], tuple[tuple[str, bool], ...], str, bool]:
+) -> tuple[
+    tuple[str, ...],
+    tuple[tuple[str, bool], ...],
+    tuple[tuple[str, str], ...],
+    str,
+    bool,
+]:
     logs = payload.get("logs")
     if not isinstance(logs, dict):
-        return (), (), DEFAULT_LOGS_MIN_LEVEL, False
+        return (), (), (), DEFAULT_LOGS_MIN_LEVEL, False
 
     raw_globs = logs.get("globs")
     globs: list[str] = []
@@ -93,15 +103,27 @@ def _parse_logs_policy(
 
     raw_agents = logs.get("agents")
     agents: list[tuple[str, bool]] = []
+    agent_min_levels: list[tuple[str, str]] = []
     if isinstance(raw_agents, Mapping):
         for key, value in raw_agents.items():
             agent_id = str(key).strip()
             if not agent_id:
                 continue
-            agents.append((agent_id, bool(value)))
+            # Bootstrap agents are objects: { "enabled": bool, "min_level"?: str }.
+            if not isinstance(value, Mapping):
+                continue
+            if "enabled" not in value:
+                continue
+            enabled = bool(value.get("enabled"))
+            agents.append((agent_id, enabled))
+            raw_level = value.get("min_level")
+            if raw_level is not None and str(raw_level).strip():
+                agent_min_levels.append(
+                    (agent_id, normalize_log_level(str(raw_level)))
+                )
 
     min_level = normalize_log_level(str(logs.get("min_level") or DEFAULT_LOGS_MIN_LEVEL))
-    return tuple(globs), tuple(agents), min_level, True
+    return tuple(globs), tuple(agents), tuple(agent_min_levels), min_level, True
 
 
 def _parse_capture_genai_content_policy(
@@ -132,7 +154,13 @@ def runtime_from_bootstrap(
     endpoint: str, api_key: str, payload: dict[str, Any]
 ) -> ParlotRuntimeContext:
     globs, agents = _parse_recording_policy(payload)
-    logs_globs, logs_agents, logs_min_level, logs_present = _parse_logs_policy(payload)
+    (
+        logs_globs,
+        logs_agents,
+        logs_agent_min_levels,
+        logs_min_level,
+        logs_present,
+    ) = _parse_logs_policy(payload)
     (
         capture_globs,
         capture_agents,
@@ -149,6 +177,7 @@ def runtime_from_bootstrap(
         recording_agents=agents,
         logs_globs=logs_globs,
         logs_agents=logs_agents,
+        logs_agent_min_levels=logs_agent_min_levels,
         logs_min_level=logs_min_level,
         logs_policy_present=logs_present,
         capture_genai_content_globs=capture_globs,
