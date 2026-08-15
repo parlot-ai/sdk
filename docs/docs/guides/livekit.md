@@ -86,12 +86,7 @@ Recording policy (precedence: job metadata → `configure(record=…)` → Setti
 - **Code:** `configure(record=True)`, `configure(record=False)`, or `configure(record=["my-agent*"])`
 - **Dispatch:** job metadata `{ "record": true }` or `{ "record": false }`
 
-Generative AI (GenAI) content capture (message bodies and tool request/response payloads; default **on**). GenAI means generative AI in general, not a specific vendor:
-
-- **UI:** Parlot → **Settings → Generative AI** / agent Settings tab — globs (default `*`) and per-agent toggles. Empty globs turns capture off org-wide. Does **not** control contract turn text, audio recording, or logs.
-- **Code:** `configure(capture_genai_content=True|False)` overrides bootstrap for the process.
-- **Dispatch:** job metadata `{ "capture_genai_content": true|false }`.
-- Resolved at span emit time from bootstrap so per-agent Settings toggles apply; restart is not required for new jobs after Settings changes (already-running processes keep their bootstrap cache until restart).
+Generative AI content capture (message bodies and tool payloads; default on) is shared across adapters — see [Concepts → Generative AI content capture](../concepts.md#generative-ai-content-capture). LiveKit job metadata: `{ "capture_genai_content": true|false }`.
 
 ### Session application logs
 

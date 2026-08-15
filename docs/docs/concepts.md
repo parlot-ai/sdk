@@ -54,8 +54,32 @@ Each framework guide documents how those attributes are sourced from the vendor 
 - **Telemetry** (turns, handoffs, close, usage) always goes over OTLP to `PARLOT_ENDPOINT`.
 - **Audio recording** is optional and framework-specific. On LiveKit it uses Room Composite Egress to R2; webhooks confirm upload. Telemetry does not depend on webhooks.
 - **Application logs** (Python `logging` only — not `print()`) are captured on by default during an active session and shown on the session **Logs** tab. Policy mirrors recording (Settings → Logs + `configure(capture_logs=…)`), except the fallback is on. Treat log content like stdout for PII.
+- **Generative AI content** (LLM/tool bodies) is a separate policy — see [Generative AI content capture](#generative-ai-content-capture).
 
 See the [LiveKit guide](./guides/livekit.md) for egress, policy, and troubleshooting.
+
+## Generative AI content capture
+
+**GenAI** here means generative AI in general (any LLM/tool stack), not a specific vendor.
+
+This policy is shared across adapters (LiveKit, LangGraph, and future frameworks). It controls whether **message bodies** and **tool request/response payloads** are attached to GenAI spans.
+
+| Mode | Behavior |
+|------|----------|
+| **On** (default) | Emit generative AI message event bodies and tool input/output payloads |
+| **Off** | Omit those bodies; still emit span structure, timings, token/usage metrics, tool names/error flags, and contract turn text (`turn.user_text` / `turn.agent_text`) |
+
+Not in scope: audio recording, session application logs, or instruction excerpts.
+
+Precedence (same ladder as recording/logs; fallback is **on**):
+
+job metadata `capture_genai_content` → `configure(capture_genai_content=…)` → Settings → Generative AI (bootstrap) → on
+
+- **UI:** Parlot → **Settings → Generative AI** / agent Settings tab — globs (default `*`) and per-agent toggles. Empty globs turns capture off org-wide for new agents.
+- **Code:** `configure(capture_genai_content=True|False)` overrides bootstrap for the process.
+- **Dispatch:** job metadata `{ "capture_genai_content": true|false }` (where the framework supports job metadata).
+
+Resolved at span emit time from bootstrap so per-agent Settings toggles apply; restart is not required for new jobs after Settings changes (already-running processes keep their bootstrap cache until restart).
 
 ## Human escalation
 

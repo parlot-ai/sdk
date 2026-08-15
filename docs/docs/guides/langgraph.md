@@ -28,10 +28,9 @@ close_session("demo-1")  # optional; also flushed on process exit
 
 Environment: `PARLOT_ENDPOINT`, `PARLOT_API_KEY`.
 
-Generative AI (GenAI) content capture (message bodies and tool payloads; default on)
-follows Settings → Generative AI via telemetry bootstrap, or
-`configure(capture_genai_content=False)` to override for the process. GenAI means
-generative AI in general, not a specific vendor. Does not gate contract turn text.
+Generative AI content capture is shared across adapters — see
+[Concepts → Generative AI content capture](../concepts.md#generative-ai-content-capture).
+Override for the process with `configure(capture_genai_content=False)`.
 
 See [`examples/langgraph/minimal-agent`](https://github.com/parlot-ai/sdk/tree/main/examples/langgraph/minimal-agent).
 
