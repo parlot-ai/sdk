@@ -129,8 +129,19 @@ def _resolve_min_level() -> str:
     if _configure_log_level:
         return _configure_log_level
     runtime = get_runtime()
-    if runtime is not None and runtime.logs_min_level:
-        return normalize_log_level(runtime.logs_min_level)
+    if runtime is not None:
+        agent_id = ""
+        if _agent_id_resolver is not None:
+            try:
+                agent_id = _agent_id_resolver() or ""
+            except Exception:
+                agent_id = ""
+        if agent_id:
+            agent_levels = runtime.logs_agent_min_levels_map()
+            if agent_id in agent_levels:
+                return normalize_log_level(agent_levels[agent_id])
+        if runtime.logs_min_level:
+            return normalize_log_level(runtime.logs_min_level)
     return DEFAULT_LOGS_MIN_LEVEL
 
 
