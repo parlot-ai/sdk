@@ -26,7 +26,11 @@ graph.invoke(
 close_session("demo-1")  # optional; also flushed on process exit
 ```
 
-Environment: `PARLOT_ENDPOINT`, `PARLOT_API_KEY`. Optional: `PARLOT_CAPTURE_CONTENT=false`.
+Environment: `PARLOT_ENDPOINT`, `PARLOT_API_KEY`.
+
+Generative AI content capture is shared across adapters — see
+[Concepts → Generative AI content capture](../concepts.md#generative-ai-content-capture).
+Override for the process with `configure(capture_genai_content=False)`.
 
 See [`examples/langgraph/minimal-agent`](https://github.com/parlot-ai/sdk/tree/main/examples/langgraph/minimal-agent).
 

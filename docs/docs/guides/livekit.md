@@ -77,7 +77,6 @@ Without `ctx.connect()` you may still see basic telemetry if you pass `room=ctx.
 |----------|------|
 | `PARLOT_ENDPOINT` | Parlot ingest base URL (OTLP, bootstrap, upload-grant). Exporter uses `/v1/traces`. **Required** unless you pass `endpoint=` into `configure()`. |
 | `PARLOT_API_KEY` | **Required for recording / bootstrap.** Org-scoped Bearer token minted in Parlot **Settings → API Keys**. |
-| `PARLOT_CAPTURE_CONTENT` | Optional. `false` / `0` / `no` to reduce prompt/response capture. |
 | `PARLOT_DIAGNOSTICS` | Optional. Default on. Set `off` / `0` / `false` / `no` to disable SDK self-diagnostics (export/handler failures). Metadata only; drops under sustained failure (no retry storm). |
 | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | Standard LiveKit Agents credentials (also used to **start** egress). |
 
@@ -86,6 +85,8 @@ Recording policy (precedence: job metadata → `configure(record=…)` → Setti
 - **UI:** Parlot → **Settings → Recording** — per-agent toggles for known deployments, plus globs (`*` or `receptionist*,cal-*`) for agents not yet ingested
 - **Code:** `configure(record=True)`, `configure(record=False)`, or `configure(record=["my-agent*"])`
 - **Dispatch:** job metadata `{ "record": true }` or `{ "record": false }`
+
+Generative AI content capture (message bodies and tool payloads; default on) is shared across adapters — see [Concepts → Generative AI content capture](../concepts.md#generative-ai-content-capture). LiveKit job metadata: `{ "capture_genai_content": true|false }`.
 
 ### Session application logs
 

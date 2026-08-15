@@ -13,7 +13,6 @@ Environment variables required:
     PARLOT_API_KEY      your Parlot API key
 
 Optional:
-    PARLOT_CAPTURE_CONTENT  false   (suppress prompt/response text in spans)
     OPENAI_API_KEY          your OpenAI API key (used by the agent below)
 """
 

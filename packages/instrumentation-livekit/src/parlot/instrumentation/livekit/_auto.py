@@ -16,6 +16,7 @@ _escalation_metadata_match: dict[str, str] | None = None
 _configured_agent_id: str | None = None
 _configured_agent_version: str = ""
 _configured_record: bool | list[str] | None = None
+_configured_capture_genai_content: bool | None = None
 _configured_capture_logs: bool | list[str] | None = None
 _configured_log_level: str | None = None
 
@@ -56,7 +57,7 @@ def configure(
     *,
     endpoint: Optional[str] = None,
     api_key: Optional[str] = None,
-    capture_content: Optional[bool] = None,
+    capture_genai_content: Optional[bool] = None,
     service_name: Optional[str] = None,
     tracer_provider=None,
     auto_escalate_sip: bool = False,
@@ -76,12 +77,16 @@ def configure(
     Recording policy precedence: job metadata ``record`` >
     ``record=`` here > Settings → Recording (telemetry bootstrap).
 
+    GenAI content capture precedence: job metadata ``capture_genai_content`` >
+    ``capture_genai_content=`` here > Settings → GenAI Content (telemetry bootstrap) > on.
+    Resolved at span emit time so per-agent bootstrap overrides apply.
+
     Log capture precedence: job metadata ``capture_logs`` >
     ``capture_logs=`` here > Settings → Logs (telemetry bootstrap) > on.
     """
     global _configured, _auto_escalate_sip, _escalation_metadata_match
     global _configured_agent_id, _configured_agent_version, _configured_record
-    global _configured_capture_logs, _configured_log_level
+    global _configured_capture_genai_content, _configured_capture_logs, _configured_log_level
     if _configured:
         logger.debug("parlot-instrumentation.livekit already configured — skipping")
         return
@@ -102,6 +107,9 @@ def configure(
         _configured_record = [str(item).strip() for item in record if str(item).strip()]
     else:
         _configured_record = record
+    from parlot.core.provider import resolve_capture_genai_content
+
+    _configured_capture_genai_content = resolve_capture_genai_content(capture_genai_content)
     if isinstance(capture_logs, list):
         _configured_capture_logs = [
             str(item).strip() for item in capture_logs if str(item).strip()
@@ -120,7 +128,6 @@ def configure(
     from parlot.core.provider import (
         adopt_existing_tracer_provider,
         resolve_api_key,
-        resolve_capture_content,
         resolve_endpoint,
     )
     from parlot.core.session_logs import (
@@ -131,7 +138,6 @@ def configure(
 
     resolved_endpoint = resolve_endpoint(endpoint)
     resolved_api_key = resolve_api_key(api_key)
-    capture_content = resolve_capture_content(capture_content)
 
     init_diagnostics(endpoint=resolved_endpoint, api_key=resolved_api_key)
     set_capture_logs_configure(
@@ -162,13 +168,15 @@ def configure(
     )
     init_session_logs(endpoint=resolved_endpoint, api_key=resolved_api_key)
 
+    if resolved_api_key:
+        _fetch_and_cache_bootstrap(resolved_endpoint, resolved_api_key)
+
     if tracer_provider is None:
         tracer_provider = adopt_existing_tracer_provider()
     if tracer_provider is None:
         tracer_provider = _build_provider(
             endpoint=resolved_endpoint,
             api_key=resolved_api_key,
-            capture_content=capture_content,
             service_name=service_name,
             service_version=_configured_agent_version or None,
         )
@@ -185,48 +193,35 @@ def configure(
     _patch_job_context_connect()
     _install_telemetry_compare()
 
-    if resolved_api_key:
-        _fetch_and_cache_bootstrap(resolved_endpoint, resolved_api_key)
-
     _configured = True
     logger.debug("parlot-instrumentation.livekit configured (endpoint=%s)", resolved_endpoint)
 
 
 def _fetch_and_cache_bootstrap(endpoint: str, api_key: str) -> None:
-    import httpx
+    from parlot.core.bootstrap import fetch_telemetry_bootstrap
 
     from ._runtime_context import apply_bootstrap_payload
 
-    url = f"{endpoint.rstrip('/')}/v1/telemetry/bootstrap"
-    headers = {"Authorization": f"Bearer {api_key}"}
-    try:
-        with httpx.Client(timeout=15.0) as client:
-            resp = client.get(url, headers=headers)
-        if resp.status_code >= 400:
-            logger.error(
-                "parlot: telemetry bootstrap failed status=%s",
-                resp.status_code,
-            )
-            return
-        webhook_confirmation = apply_bootstrap_payload(endpoint, api_key, resp.json())
-        if webhook_confirmation:
-            logger.debug(
-                "parlot: telemetry bootstrap cached (egress webhook confirmation enabled)"
-            )
-        else:
-            logger.debug(
-                "parlot: telemetry bootstrap cached "
-                "(recording can still run; configure LiveKit integration for "
-                "faster audio confirmation via webhooks)"
-            )
-    except Exception:
-        logger.exception("parlot: telemetry bootstrap request failed")
+    payload = fetch_telemetry_bootstrap(endpoint, api_key)
+    if payload is None:
+        return
+    # Re-apply so LiveKit signing key is layered on the platform runtime.
+    webhook_confirmation = apply_bootstrap_payload(endpoint, api_key, payload)
+    if webhook_confirmation:
+        logger.debug(
+            "parlot: telemetry bootstrap cached (egress webhook confirmation enabled)"
+        )
+    else:
+        logger.debug(
+            "parlot: telemetry bootstrap cached "
+            "(recording can still run; configure LiveKit integration for "
+            "faster audio confirmation via webhooks)"
+        )
 
 
 def _build_provider(
     endpoint: str,
     api_key: str,
-    capture_content: bool,
     service_name: Optional[str],
     service_version: Optional[str] = None,
 ):
@@ -257,9 +252,7 @@ def _build_provider(
     trace_endpoint = endpoint.rstrip("/") + "/v1/traces"
     otlp_exporter = build_otlp_http_exporter(endpoint=endpoint, api_key=api_key)
 
-    processor = LiveKitGenAIProcessor(
-        capture_content=capture_content,
-    )
+    processor = LiveKitGenAIProcessor()
 
     # Rename (enrich) must run on real spans *before* sanitize wraps them and
     # *before* the GenAI/voice allowlist filter — otherwise native names like
@@ -434,6 +427,11 @@ def configured_agent_version() -> str:
 def configured_record() -> bool | list[str] | None:
     """Recording override from ``configure(record=...)`` if set."""
     return _configured_record
+
+
+def configured_capture_genai_content() -> bool | None:
+    """Content capture override from ``configure(capture_genai_content=...)`` if set."""
+    return _configured_capture_genai_content
 
 
 def configured_capture_logs() -> bool | list[str] | None:

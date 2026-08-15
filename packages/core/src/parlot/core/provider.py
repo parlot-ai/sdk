@@ -24,12 +24,15 @@ def resolve_api_key(api_key: Optional[str] = None) -> str:
     return api_key or os.environ.get("PARLOT_API_KEY", "") or ""
 
 
-def resolve_capture_content(capture_content: Optional[bool] = None) -> bool:
-    """Resolve content capture; default True unless env disables it."""
-    if capture_content is not None:
-        return bool(capture_content)
-    env_val = os.environ.get("PARLOT_CAPTURE_CONTENT", "").lower()
-    return env_val not in ("false", "0", "no")
+def resolve_capture_genai_content(capture_genai_content: Optional[bool] = None) -> Optional[bool]:
+    """Return the explicit ``configure(capture_genai_content=)`` override, or None.
+
+    When None, callers should resolve via ``should_capture_genai_content`` against
+    bootstrap policy (default on).
+    """
+    if capture_genai_content is not None:
+        return bool(capture_genai_content)
+    return None
 
 
 def build_resource(

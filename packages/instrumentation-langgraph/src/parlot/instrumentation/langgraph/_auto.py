@@ -17,7 +17,7 @@ def configure(
     *,
     endpoint: Optional[str] = None,
     api_key: Optional[str] = None,
-    capture_content: Optional[bool] = None,
+    capture_genai_content: Optional[bool] = None,
     service_name: Optional[str] = None,
     tracer_provider=None,
     agent_id: Optional[str] = None,
@@ -42,13 +42,16 @@ def configure(
         logger.debug("parlot-instrumentation.langgraph already configured — skipping")
         return
 
+    from parlot.core.bootstrap import fetch_telemetry_bootstrap
+    from parlot.core.genai_content_capture import should_capture_genai_content
     from parlot.core.diagnostics import init_diagnostics
     from parlot.core.provider import (
         adopt_existing_tracer_provider,
         resolve_api_key,
-        resolve_capture_content,
+        resolve_capture_genai_content,
         resolve_endpoint,
     )
+    from parlot.core.runtime import get_runtime
     from parlot.core.sdk_version import resolve_parlot_sdk_version
     from parlot.core.session_logs import (
         init_session_logs,
@@ -60,7 +63,7 @@ def configure(
 
     resolved_endpoint = resolve_endpoint(endpoint)
     resolved_api_key = resolve_api_key(api_key)
-    capture = resolve_capture_content(capture_content)
+    configure_capture = resolve_capture_genai_content(capture_genai_content)
 
     init_diagnostics(endpoint=resolved_endpoint, api_key=resolved_api_key)
     if isinstance(capture_logs, list):
@@ -72,6 +75,18 @@ def configure(
         log_level=log_level.strip().upper() if log_level else None,
     )
     init_session_logs(endpoint=resolved_endpoint, api_key=resolved_api_key)
+
+    if resolved_api_key:
+        fetch_telemetry_bootstrap(resolved_endpoint, resolved_api_key)
+
+    runtime = get_runtime()
+    capture = should_capture_genai_content(
+        _configured_agent_id or "",
+        configure_capture_genai_content=configure_capture,
+        bootstrap_globs=list(runtime.capture_genai_content_globs) if runtime else None,
+        bootstrap_agents=runtime.capture_genai_content_agents_map() if runtime else None,
+        bootstrap_present=bool(runtime and runtime.capture_genai_content_policy_present),
+    )
 
     if tracer_provider is None:
         tracer_provider = adopt_existing_tracer_provider()
@@ -107,7 +122,7 @@ def configure(
     set_identity(_configured_agent_id or "", _configured_agent_version)
     set_channel_modality(channel=channel or "", modality=modality or "")
     set_tracer(tracer)
-    handler = ParlotLangGraphCallbackHandler(tracer, capture_content=capture)
+    handler = ParlotLangGraphCallbackHandler(tracer, capture_genai_content=capture)
     install_configure_hook(handler)
 
     _configured = True

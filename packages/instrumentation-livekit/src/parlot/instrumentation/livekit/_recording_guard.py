@@ -1,15 +1,17 @@
-"""LiveKit job context adapters for Parlot recording and logs policy."""
+"""LiveKit job context adapters for Parlot recording, logs, and content policy."""
 
 from __future__ import annotations
 
 import json
 from typing import Any, Optional
 
+from parlot.core.genai_content_capture import should_capture_genai_content as should_capture_genai_content_policy
 from parlot.core.recording import should_record as should_record_policy
 from parlot.core.runtime import get_runtime
 from parlot.instrumentation.livekit._agent_identity import topology_agent_name
 from parlot.instrumentation.livekit._auto import (
     configured_agent_id,
+    configured_capture_genai_content,
     configured_record,
 )
 
@@ -67,6 +69,13 @@ def metadata_capture_logs_flag(ctx: Any) -> Optional[bool]:
     return bool(metadata.get("capture_logs"))
 
 
+def metadata_capture_genai_content_flag(ctx: Any) -> Optional[bool]:
+    metadata = _job_metadata_dict(ctx)
+    if metadata is None or "capture_genai_content" not in metadata:
+        return None
+    return bool(metadata.get("capture_genai_content"))
+
+
 def should_record(ctx: Any) -> bool:
     """Return True when Room Composite egress should start for this LiveKit job."""
     runtime = get_runtime()
@@ -76,6 +85,37 @@ def should_record(ctx: Any) -> bool:
         configure_record=configured_record(),
         bootstrap_globs=list(runtime.recording_globs) if runtime else None,
         bootstrap_agents=runtime.recording_agents_map() if runtime else None,
+    )
+
+
+def should_capture_genai_content(ctx: Any | None = None, *, agent_id: str = "") -> bool:
+    """Return True when generative AI / tool content bodies should be captured for this job."""
+    runtime = get_runtime()
+    resolved_agent = agent_id.strip()
+    metadata_flag: Optional[bool] = None
+    if ctx is not None:
+        if not resolved_agent:
+            resolved_agent = recording_agent_id_from_ctx(ctx)
+        metadata_flag = metadata_capture_genai_content_flag(ctx)
+    elif not resolved_agent:
+        try:
+            from livekit.agents.job import get_job_context
+
+            job_ctx = get_job_context()
+            if job_ctx is not None:
+                resolved_agent = recording_agent_id_from_ctx(job_ctx)
+                metadata_flag = metadata_capture_genai_content_flag(job_ctx)
+        except Exception:
+            pass
+        if not resolved_agent:
+            resolved_agent = configured_agent_id()
+    return should_capture_genai_content_policy(
+        resolved_agent,
+        metadata_capture_genai_content=metadata_flag,
+        configure_capture_genai_content=configured_capture_genai_content(),
+        bootstrap_globs=list(runtime.capture_genai_content_globs) if runtime else None,
+        bootstrap_agents=runtime.capture_genai_content_agents_map() if runtime else None,
+        bootstrap_present=bool(runtime and runtime.capture_genai_content_policy_present),
     )
 
 

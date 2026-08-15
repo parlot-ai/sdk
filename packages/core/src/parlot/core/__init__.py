@@ -17,10 +17,12 @@ from .provider import (
     build_resource,
     build_tracer_provider,
     resolve_api_key,
-    resolve_capture_content,
+    resolve_capture_genai_content,
     resolve_endpoint,
 )
+from .bootstrap import fetch_telemetry_bootstrap
 from .configure import ConfigureProtocol
+from .genai_content_capture import should_capture_genai_content
 from .export import ExportFilterSpanExporter
 from .intent import derive_intent
 from .logs_capture import should_capture_logs
@@ -51,6 +53,7 @@ __all__ = [
     "clear_active_session",
     "derive_intent",
     "diagnostics_enabled",
+    "fetch_telemetry_bootstrap",
     "get_active_session",
     "get_active_session_span",
     "human_escalation",
@@ -59,13 +62,14 @@ __all__ = [
     "record_diagnostic",
     "record_human_rep",
     "resolve_api_key",
-    "resolve_capture_content",
+    "resolve_capture_genai_content",
     "resolve_endpoint",
     "resolve_parlot_sdk_version",
     "session_owned",
     "set_active_session",
     "set_session_attribute",
     "set_session_metadata",
+    "should_capture_genai_content",
     "should_capture_logs",
     "shutdown_diagnostics",
     "shutdown_session_logs",
