@@ -76,6 +76,9 @@ def configure(
     Recording policy precedence: job metadata ``record`` >
     ``record=`` here > Settings → Recording (telemetry bootstrap).
 
+    Content capture precedence: ``capture_content=`` here >
+    Settings → Content (telemetry bootstrap) > on.
+
     Log capture precedence: job metadata ``capture_logs`` >
     ``capture_logs=`` here > Settings → Logs (telemetry bootstrap) > on.
     """
@@ -116,6 +119,7 @@ def configure(
 
     _configure_parlot_logging()
 
+    from parlot.core.content_capture import should_capture_content
     from parlot.core.diagnostics import init_diagnostics
     from parlot.core.provider import (
         adopt_existing_tracer_provider,
@@ -123,6 +127,7 @@ def configure(
         resolve_capture_content,
         resolve_endpoint,
     )
+    from parlot.core.runtime import get_runtime
     from parlot.core.session_logs import (
         init_session_logs,
         set_capture_logs_configure,
@@ -131,7 +136,7 @@ def configure(
 
     resolved_endpoint = resolve_endpoint(endpoint)
     resolved_api_key = resolve_api_key(api_key)
-    capture_content = resolve_capture_content(capture_content)
+    configure_capture = resolve_capture_content(capture_content)
 
     init_diagnostics(endpoint=resolved_endpoint, api_key=resolved_api_key)
     set_capture_logs_configure(
@@ -162,13 +167,26 @@ def configure(
     )
     init_session_logs(endpoint=resolved_endpoint, api_key=resolved_api_key)
 
+    if resolved_api_key:
+        _fetch_and_cache_bootstrap(resolved_endpoint, resolved_api_key)
+
+    runtime = get_runtime()
+    agent_for_policy = _configured_agent_id or ""
+    capture = should_capture_content(
+        agent_for_policy,
+        configure_capture_content=configure_capture,
+        bootstrap_globs=list(runtime.capture_content_globs) if runtime else None,
+        bootstrap_agents=runtime.capture_content_agents_map() if runtime else None,
+        bootstrap_present=bool(runtime and runtime.capture_content_policy_present),
+    )
+
     if tracer_provider is None:
         tracer_provider = adopt_existing_tracer_provider()
     if tracer_provider is None:
         tracer_provider = _build_provider(
             endpoint=resolved_endpoint,
             api_key=resolved_api_key,
-            capture_content=capture_content,
+            capture_content=capture,
             service_name=service_name,
             service_version=_configured_agent_version or None,
         )
@@ -185,42 +203,30 @@ def configure(
     _patch_job_context_connect()
     _install_telemetry_compare()
 
-    if resolved_api_key:
-        _fetch_and_cache_bootstrap(resolved_endpoint, resolved_api_key)
-
     _configured = True
     logger.debug("parlot-instrumentation.livekit configured (endpoint=%s)", resolved_endpoint)
 
 
 def _fetch_and_cache_bootstrap(endpoint: str, api_key: str) -> None:
-    import httpx
+    from parlot.core.bootstrap import fetch_telemetry_bootstrap
 
     from ._runtime_context import apply_bootstrap_payload
 
-    url = f"{endpoint.rstrip('/')}/v1/telemetry/bootstrap"
-    headers = {"Authorization": f"Bearer {api_key}"}
-    try:
-        with httpx.Client(timeout=15.0) as client:
-            resp = client.get(url, headers=headers)
-        if resp.status_code >= 400:
-            logger.error(
-                "parlot: telemetry bootstrap failed status=%s",
-                resp.status_code,
-            )
-            return
-        webhook_confirmation = apply_bootstrap_payload(endpoint, api_key, resp.json())
-        if webhook_confirmation:
-            logger.debug(
-                "parlot: telemetry bootstrap cached (egress webhook confirmation enabled)"
-            )
-        else:
-            logger.debug(
-                "parlot: telemetry bootstrap cached "
-                "(recording can still run; configure LiveKit integration for "
-                "faster audio confirmation via webhooks)"
-            )
-    except Exception:
-        logger.exception("parlot: telemetry bootstrap request failed")
+    payload = fetch_telemetry_bootstrap(endpoint, api_key)
+    if payload is None:
+        return
+    # Re-apply so LiveKit signing key is layered on the platform runtime.
+    webhook_confirmation = apply_bootstrap_payload(endpoint, api_key, payload)
+    if webhook_confirmation:
+        logger.debug(
+            "parlot: telemetry bootstrap cached (egress webhook confirmation enabled)"
+        )
+    else:
+        logger.debug(
+            "parlot: telemetry bootstrap cached "
+            "(recording can still run; configure LiveKit integration for "
+            "faster audio confirmation via webhooks)"
+        )
 
 
 def _build_provider(

@@ -21,7 +21,9 @@ Pass `channel` (e.g. `webchat`, `sms`) when LangGraph owns the session so
 ingest does not assume voice. Optional `modality` overrides the default
 derived from channel (`webchat`/`sms`/`whatsapp` → text, `voice` → voice).
 
-Set `PARLOT_ENDPOINT` and `PARLOT_API_KEY`. Optional: `PARLOT_CAPTURE_CONTENT=false`.
+Set `PARLOT_ENDPOINT` and `PARLOT_API_KEY`. Content capture (GenAI message bodies
+and tool payloads; default on) follows Settings → Content via bootstrap, or
+`configure(capture_content=False)` to override. Does not gate contract turn text.
 
 Session application logs (Python `logging`, default on) follow Settings → Logs /
 `configure(capture_logs=…, log_level=…)`. Not `print()`. Treat content like stdout for PII.

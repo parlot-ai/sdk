@@ -77,7 +77,6 @@ Without `ctx.connect()` you may still see basic telemetry if you pass `room=ctx.
 |----------|------|
 | `PARLOT_ENDPOINT` | Parlot ingest base URL (OTLP, bootstrap, upload-grant). Exporter uses `/v1/traces`. **Required** unless you pass `endpoint=` into `configure()`. |
 | `PARLOT_API_KEY` | **Required for recording / bootstrap.** Org-scoped Bearer token minted in Parlot **Settings → API Keys**. |
-| `PARLOT_CAPTURE_CONTENT` | Optional. `false` / `0` / `no` to reduce prompt/response capture. |
 | `PARLOT_DIAGNOSTICS` | Optional. Default on. Set `off` / `0` / `false` / `no` to disable SDK self-diagnostics (export/handler failures). Metadata only; drops under sustained failure (no retry storm). |
 | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | Standard LiveKit Agents credentials (also used to **start** egress). |
 
@@ -86,6 +85,12 @@ Recording policy (precedence: job metadata → `configure(record=…)` → Setti
 - **UI:** Parlot → **Settings → Recording** — per-agent toggles for known deployments, plus globs (`*` or `receptionist*,cal-*`) for agents not yet ingested
 - **Code:** `configure(record=True)`, `configure(record=False)`, or `configure(record=["my-agent*"])`
 - **Dispatch:** job metadata `{ "record": true }` or `{ "record": false }`
+
+Content capture (GenAI message bodies and tool request/response payloads; default **on**):
+
+- **UI:** Parlot → **Settings → Content** / agent Settings tab — globs (default `*`) and per-agent toggles. Empty globs turns capture off org-wide. Does **not** control contract turn text, audio recording, or logs.
+- **Code:** `configure(capture_content=True|False)` overrides bootstrap for the process.
+- Resolved at `configure()` time from bootstrap; restart the agent after changing Settings.
 
 ### Session application logs
 

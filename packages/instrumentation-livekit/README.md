@@ -70,7 +70,7 @@ Recording policy (precedence: job metadata → `configure(record=…)` → Setti
 
 Session application logs (Python `logging`, default on) use the same control path via Settings → Logs / `configure(capture_logs=…)` / job `capture_logs`. Not `print()`. Treat content like stdout for PII.
 
-Optional: `PARLOT_CAPTURE_CONTENT=false` to suppress prompt/response text in spans.
+Content capture (GenAI message bodies and tool payloads; default on) uses Settings → Content via bootstrap, or `configure(capture_content=True|False)`. Does not control contract turn text, recording, or logs.
 
 Optional: `PARLOT_DIAGNOSTICS=off` to disable SDK self-diagnostics (export/handler failures reported to Parlot). Default is on; metadata only, no conversation content. Under sustained outage the buffer drops and circuit-breaks — it does not retry-storm the collector.
 

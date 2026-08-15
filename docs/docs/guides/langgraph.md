@@ -26,7 +26,11 @@ graph.invoke(
 close_session("demo-1")  # optional; also flushed on process exit
 ```
 
-Environment: `PARLOT_ENDPOINT`, `PARLOT_API_KEY`. Optional: `PARLOT_CAPTURE_CONTENT=false`.
+Environment: `PARLOT_ENDPOINT`, `PARLOT_API_KEY`.
+
+Content capture (GenAI message bodies and tool payloads; default on) follows
+Settings → Content via telemetry bootstrap, or `configure(capture_content=False)`
+to override for the process. Does not gate contract turn text.
 
 See [`examples/langgraph/minimal-agent`](https://github.com/parlot-ai/sdk/tree/main/examples/langgraph/minimal-agent).
 

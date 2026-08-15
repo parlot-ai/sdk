@@ -42,6 +42,8 @@ def configure(
         logger.debug("parlot-instrumentation.langgraph already configured — skipping")
         return
 
+    from parlot.core.bootstrap import fetch_telemetry_bootstrap
+    from parlot.core.content_capture import should_capture_content
     from parlot.core.diagnostics import init_diagnostics
     from parlot.core.provider import (
         adopt_existing_tracer_provider,
@@ -49,6 +51,7 @@ def configure(
         resolve_capture_content,
         resolve_endpoint,
     )
+    from parlot.core.runtime import get_runtime
     from parlot.core.sdk_version import resolve_parlot_sdk_version
     from parlot.core.session_logs import (
         init_session_logs,
@@ -60,7 +63,7 @@ def configure(
 
     resolved_endpoint = resolve_endpoint(endpoint)
     resolved_api_key = resolve_api_key(api_key)
-    capture = resolve_capture_content(capture_content)
+    configure_capture = resolve_capture_content(capture_content)
 
     init_diagnostics(endpoint=resolved_endpoint, api_key=resolved_api_key)
     if isinstance(capture_logs, list):
@@ -72,6 +75,18 @@ def configure(
         log_level=log_level.strip().upper() if log_level else None,
     )
     init_session_logs(endpoint=resolved_endpoint, api_key=resolved_api_key)
+
+    if resolved_api_key:
+        fetch_telemetry_bootstrap(resolved_endpoint, resolved_api_key)
+
+    runtime = get_runtime()
+    capture = should_capture_content(
+        _configured_agent_id or "",
+        configure_capture_content=configure_capture,
+        bootstrap_globs=list(runtime.capture_content_globs) if runtime else None,
+        bootstrap_agents=runtime.capture_content_agents_map() if runtime else None,
+        bootstrap_present=bool(runtime and runtime.capture_content_policy_present),
+    )
 
     if tracer_provider is None:
         tracer_provider = adopt_existing_tracer_provider()

@@ -29,6 +29,10 @@ class TestApplyBootstrapPayload:
                 "globs": ["receptionist*"],
                 "agents": {"restaurant-agent": True},
             },
+            "capture_content": {
+                "globs": ["*"],
+                "agents": {"restaurant-agent": False},
+            },
         }
         # False = no webhook confirmation key; recording can still proceed.
         assert apply_bootstrap_payload("https://ingest.test", "key", payload) is False
@@ -37,6 +41,9 @@ class TestApplyBootstrapPayload:
         assert runtime.org_id == "org-1"
         assert runtime.recording_globs == ("receptionist*",)
         assert runtime.recording_agents_map() == {"restaurant-agent": True}
+        assert runtime.capture_content_globs == ("*",)
+        assert runtime.capture_content_agents_map() == {"restaurant-agent": False}
+        assert runtime.capture_content_policy_present is True
         lk = get_livekit_runtime()
         assert lk is not None
         assert lk.webhook_signing_key == ""

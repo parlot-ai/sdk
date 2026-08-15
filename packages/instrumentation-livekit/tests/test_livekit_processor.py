@@ -566,6 +566,9 @@ class TestContentCapture:
         })
         proc.on_end(span)
         assert span._events == []
+        # Contract turn text remains for debugger/evals.
+        assert span._attributes.get(ATTR_TURN_USER_TEXT) == "Hello agent"
+        assert span._attributes.get(ATTR_TURN_AGENT_TEXT) == "Hi there"
 
 
 class TestTurnTextExport:

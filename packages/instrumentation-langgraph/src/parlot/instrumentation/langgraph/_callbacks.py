@@ -25,8 +25,12 @@ from parlot.core.attrs import (
     ATTR_GEN_AI_TOOL_NAME,
     ATTR_SESSION_CONVERSATION_ID,
     ATTR_SESSION_ID,
+    ATTR_TOOL_INPUT_PAYLOAD,
+    ATTR_TOOL_INPUT_PAYLOAD_PREVIEW,
+    ATTR_TOOL_OUTPUT_PAYLOAD_PREVIEW,
     ATTR_TURN_INDEX,
     EVENT_GEN_AI_ASSISTANT_MESSAGE,
+    EVENT_GEN_AI_TOOL_MESSAGE,
     EVENT_GEN_AI_USER_MESSAGE,
     GEN_AI_OP_CHAT,
     GEN_AI_OP_EXECUTE_TOOL,
@@ -452,12 +456,34 @@ class ParlotLangGraphCallbackHandler(BaseCallbackHandler):
             ATTR_LG_RUN_ID: str(run_id),
         }
         attrs.update(self._contract_attrs(self._active_langgraph_state()))
-        self._start(
+        span = self._start(
             span_name_execute_tool(tool_name),
             run_id,
             attributes=attrs,
             parent_run_id=parent_run_id,
         )
+        if span is not None and self._capture_content:
+            payload = ""
+            if inputs is not None:
+                try:
+                    import json
+
+                    payload = json.dumps(inputs, default=str)
+                except Exception:
+                    payload = str(inputs)
+            elif input_str:
+                payload = str(input_str)
+            if payload:
+                trimmed = payload[:8192]
+                span.set_attribute(ATTR_TOOL_INPUT_PAYLOAD, trimmed)
+                span.set_attribute(
+                    ATTR_TOOL_INPUT_PAYLOAD_PREVIEW,
+                    trimmed[:512],
+                )
+                span.add_event(
+                    EVENT_GEN_AI_TOOL_MESSAGE,
+                    {"content": trimmed[:4000], "role": "tool_input"},
+                )
 
     def on_tool_end(
         self,
@@ -467,6 +493,16 @@ class ParlotLangGraphCallbackHandler(BaseCallbackHandler):
         parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> Any:
+        span = self._spans.get(self._run_key(run_id))
+        if span is not None and self._capture_content and output is not None:
+            text = str(output)
+            if text:
+                preview = text[:512]
+                span.set_attribute(ATTR_TOOL_OUTPUT_PAYLOAD_PREVIEW, preview)
+                span.add_event(
+                    EVENT_GEN_AI_TOOL_MESSAGE,
+                    {"content": text[:4000], "role": "tool"},
+                )
         self._end(run_id)
 
     def on_tool_error(
