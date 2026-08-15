@@ -16,6 +16,7 @@ _escalation_metadata_match: dict[str, str] | None = None
 _configured_agent_id: str | None = None
 _configured_agent_version: str = ""
 _configured_record: bool | list[str] | None = None
+_configured_capture_content: bool | None = None
 _configured_capture_logs: bool | list[str] | None = None
 _configured_log_level: str | None = None
 
@@ -76,15 +77,16 @@ def configure(
     Recording policy precedence: job metadata ``record`` >
     ``record=`` here > Settings → Recording (telemetry bootstrap).
 
-    Content capture precedence: ``capture_content=`` here >
-    Settings → Content (telemetry bootstrap) > on.
+    Content capture precedence: job metadata ``capture_content`` >
+    ``capture_content=`` here > Settings → Content (telemetry bootstrap) > on.
+    Resolved at span emit time so per-agent bootstrap overrides apply.
 
     Log capture precedence: job metadata ``capture_logs`` >
     ``capture_logs=`` here > Settings → Logs (telemetry bootstrap) > on.
     """
     global _configured, _auto_escalate_sip, _escalation_metadata_match
     global _configured_agent_id, _configured_agent_version, _configured_record
-    global _configured_capture_logs, _configured_log_level
+    global _configured_capture_content, _configured_capture_logs, _configured_log_level
     if _configured:
         logger.debug("parlot-instrumentation.livekit already configured — skipping")
         return
@@ -105,6 +107,9 @@ def configure(
         _configured_record = [str(item).strip() for item in record if str(item).strip()]
     else:
         _configured_record = record
+    from parlot.core.provider import resolve_capture_content
+
+    _configured_capture_content = resolve_capture_content(capture_content)
     if isinstance(capture_logs, list):
         _configured_capture_logs = [
             str(item).strip() for item in capture_logs if str(item).strip()
@@ -119,15 +124,12 @@ def configure(
 
     _configure_parlot_logging()
 
-    from parlot.core.content_capture import should_capture_content
     from parlot.core.diagnostics import init_diagnostics
     from parlot.core.provider import (
         adopt_existing_tracer_provider,
         resolve_api_key,
-        resolve_capture_content,
         resolve_endpoint,
     )
-    from parlot.core.runtime import get_runtime
     from parlot.core.session_logs import (
         init_session_logs,
         set_capture_logs_configure,
@@ -136,7 +138,6 @@ def configure(
 
     resolved_endpoint = resolve_endpoint(endpoint)
     resolved_api_key = resolve_api_key(api_key)
-    configure_capture = resolve_capture_content(capture_content)
 
     init_diagnostics(endpoint=resolved_endpoint, api_key=resolved_api_key)
     set_capture_logs_configure(
@@ -170,23 +171,12 @@ def configure(
     if resolved_api_key:
         _fetch_and_cache_bootstrap(resolved_endpoint, resolved_api_key)
 
-    runtime = get_runtime()
-    agent_for_policy = _configured_agent_id or ""
-    capture = should_capture_content(
-        agent_for_policy,
-        configure_capture_content=configure_capture,
-        bootstrap_globs=list(runtime.capture_content_globs) if runtime else None,
-        bootstrap_agents=runtime.capture_content_agents_map() if runtime else None,
-        bootstrap_present=bool(runtime and runtime.capture_content_policy_present),
-    )
-
     if tracer_provider is None:
         tracer_provider = adopt_existing_tracer_provider()
     if tracer_provider is None:
         tracer_provider = _build_provider(
             endpoint=resolved_endpoint,
             api_key=resolved_api_key,
-            capture_content=capture,
             service_name=service_name,
             service_version=_configured_agent_version or None,
         )
@@ -232,7 +222,6 @@ def _fetch_and_cache_bootstrap(endpoint: str, api_key: str) -> None:
 def _build_provider(
     endpoint: str,
     api_key: str,
-    capture_content: bool,
     service_name: Optional[str],
     service_version: Optional[str] = None,
 ):
@@ -263,9 +252,7 @@ def _build_provider(
     trace_endpoint = endpoint.rstrip("/") + "/v1/traces"
     otlp_exporter = build_otlp_http_exporter(endpoint=endpoint, api_key=api_key)
 
-    processor = LiveKitGenAIProcessor(
-        capture_content=capture_content,
-    )
+    processor = LiveKitGenAIProcessor()
 
     # Rename (enrich) must run on real spans *before* sanitize wraps them and
     # *before* the GenAI/voice allowlist filter — otherwise native names like
@@ -440,6 +427,11 @@ def configured_agent_version() -> str:
 def configured_record() -> bool | list[str] | None:
     """Recording override from ``configure(record=...)`` if set."""
     return _configured_record
+
+
+def configured_capture_content() -> bool | None:
+    """Content capture override from ``configure(capture_content=...)`` if set."""
+    return _configured_capture_content
 
 
 def configured_capture_logs() -> bool | list[str] | None:

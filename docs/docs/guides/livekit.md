@@ -90,7 +90,8 @@ Content capture (GenAI message bodies and tool request/response payloads; defaul
 
 - **UI:** Parlot → **Settings → Content** / agent Settings tab — globs (default `*`) and per-agent toggles. Empty globs turns capture off org-wide. Does **not** control contract turn text, audio recording, or logs.
 - **Code:** `configure(capture_content=True|False)` overrides bootstrap for the process.
-- Resolved at `configure()` time from bootstrap; restart the agent after changing Settings.
+- **Dispatch:** job metadata `{ "capture_content": true|false }`.
+- Resolved at span emit time from bootstrap so per-agent Settings toggles apply; restart is not required for new jobs after Settings changes (already-running processes keep their bootstrap cache until restart).
 
 ### Session application logs
 

@@ -259,16 +259,29 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
     def __init__(
         self,
-        capture_content: bool = True,
+        capture_content: Optional[bool] = None,
         handoff_tool_names: Optional[set[str]] = None,
     ) -> None:
-        self._capture_content = capture_content
+        # Explicit override for tests / rare call sites; None → policy at emit time.
+        self._capture_content_override = capture_content
         self._handoff_tools = handoff_tool_names or set()
         self._sessions: dict[str, _LiveKitSessionState] = {}
         self._turn_trace_registry: dict[str, dict[int, tuple[str, str]]] = {}
         self._tracer: Tracer | None = None
         self._metrics = None
         self._turn_source: str = "spans"
+
+    def _content_enabled(self, state: _LiveKitSessionState | None = None) -> bool:
+        if self._capture_content_override is not None:
+            return self._capture_content_override
+        from ._recording_guard import should_capture_content
+
+        agent_id = ""
+        if state is not None:
+            agent_id = self._active_agent_id(state, {})
+            if agent_id == "unknown":
+                agent_id = ""
+        return should_capture_content(agent_id=agent_id)
 
     def on_start(self, span, parent_context=None) -> None:
         super().on_start(span, parent_context)
@@ -965,7 +978,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if assistant_text and self._turn_source != "events":
             self._set(span, ATTR_TURN_AGENT_TEXT, assistant_text)
 
-        if self._capture_content:
+        if self._content_enabled(state):
             if user_text and self._turn_source != "events":
                 self._add_event(
                     span,
@@ -1028,7 +1041,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if not attrs.get(ATTR_GEN_AI_OP_NAME):
             self._set(span, ATTR_GEN_AI_OP_NAME, "text_to_speech")
 
-        if self._capture_content:
+        if self._content_enabled(state):
             text = attrs.get(ATTR_LK_TTS_INPUT_TEXT, "")
             if text:
                 self._add_event(
@@ -1100,7 +1113,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         tool_args_raw = attrs.get(ATTR_LK_FNC_TOOL_ARGS, "")
         tool_args = str(tool_args_raw) if tool_args_raw else ""
 
-        if self._capture_content and tool_args:
+        if self._content_enabled(state) and tool_args:
             payload = tool_args[:_MAX_TOOL_PAYLOAD_CHARS]
             self._set(span, ATTR_TOOL_INPUT_PAYLOAD, payload)
             self._set(
@@ -1108,7 +1121,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
                 ATTR_TOOL_INPUT_PAYLOAD_PREVIEW,
                 payload[:_TOOL_PREVIEW_CHARS],
             )
-        if self._capture_content and tool_output:
+        if self._content_enabled(state) and tool_output:
             out_preview = str(tool_output)[:_TOOL_PREVIEW_CHARS]
             self._set(span, ATTR_TOOL_OUTPUT_PAYLOAD_PREVIEW, out_preview)
 
@@ -1130,7 +1143,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
             state.pending_handoff_end_ns = span.end_time or time.time_ns()
 
-        if self._capture_content:
+        if self._content_enabled(state):
             tool_args = attrs.get(ATTR_LK_FNC_TOOL_ARGS, "")
             if tool_args:
                 self._add_event(
@@ -1215,7 +1228,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         )
         state.open_agent_turn_index = state.turn_count + 1
 
-        if self._capture_content:
+        if self._content_enabled(state):
             self._add_event(
                 span,
                 EVENT_GEN_AI_USER_MESSAGE,
@@ -1241,7 +1254,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if not text:
             return
         self._set(span, ATTR_TURN_USER_TEXT, text)
-        if self._capture_content:
+        if self._content_enabled(state):
             self._add_event(
                 span,
                 EVENT_GEN_AI_USER_MESSAGE,
@@ -1489,7 +1502,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             )
             state.pending_tts_ttfb_s = None
 
-        if self._capture_content:
+        if self._content_enabled(state):
             user_input = attrs.get(ATTR_LK_USER_INPUT, "")
             if user_input:
                 self._add_event(
@@ -1700,7 +1713,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             room_name=state.room_name,
             room_sid=state.room_sid,
         )
-        if self._capture_content:
+        if self._content_enabled(state):
             span.add_event(EVENT_GEN_AI_USER_MESSAGE, {"content": text})
         span.end()
 
@@ -1749,7 +1762,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             room_name=state.room_name,
             room_sid=state.room_sid,
         )
-        if self._capture_content:
+        if self._content_enabled(state):
             span.add_event(EVENT_GEN_AI_ASSISTANT_MESSAGE, {"content": text})
         span.end()
 

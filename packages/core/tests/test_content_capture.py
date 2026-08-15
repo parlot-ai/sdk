@@ -73,6 +73,26 @@ class TestShouldCaptureContent:
             is True
         )
 
+    def test_metadata_overrides(self) -> None:
+        assert (
+            should_capture_content(
+                "foo",
+                metadata_capture_content=False,
+                bootstrap_globs=["*"],
+                bootstrap_present=True,
+            )
+            is False
+        )
+        assert (
+            should_capture_content(
+                "foo",
+                metadata_capture_content=True,
+                bootstrap_globs=[],
+                bootstrap_present=True,
+            )
+            is True
+        )
+
     def test_agent_override(self) -> None:
         assert (
             should_capture_content(

@@ -9,7 +9,7 @@ text (``turn.user_text`` / ``turn.agent_text``).
 
 Not in scope: audio recording, session logs, or instruction excerpts.
 
-Precedence: ``configure(capture_content=…)`` > Settings bootstrap > on.
+Precedence: job metadata > ``configure(capture_content=…)`` > Settings bootstrap > on.
 Default ON when bootstrap is missing. Explicit empty globs = off.
 """
 
@@ -26,6 +26,7 @@ DEFAULT_CAPTURE_CONTENT_GLOBS: tuple[str, ...] = ("*",)
 def should_capture_content(
     agent_name: str,
     *,
+    metadata_capture_content: Optional[bool] = None,
     configure_capture_content: Optional[bool] = None,
     bootstrap_globs: Optional[Sequence[str]] = None,
     bootstrap_agents: Optional[Mapping[str, bool]] = None,
@@ -33,10 +34,15 @@ def should_capture_content(
 ) -> bool:
     """Return True when GenAI/tool content bodies should be captured.
 
-    Precedence: ``configure(capture_content=…)`` > bootstrap (UI) > default on.
+    Precedence: job metadata > ``configure(capture_content=…)`` > bootstrap (UI).
     When bootstrap is absent (``bootstrap_present=False``) or globs are unset,
     default is **on**. Explicit empty globs means off.
     """
+    if metadata_capture_content is False:
+        return False
+    if metadata_capture_content is True:
+        return True
+
     if configure_capture_content is not None:
         return bool(configure_capture_content)
 

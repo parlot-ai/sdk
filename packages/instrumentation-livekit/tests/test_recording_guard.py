@@ -12,6 +12,7 @@ from parlot.instrumentation.livekit import _auto
 from parlot.instrumentation.livekit._recording_guard import (
     agent_name_from_ctx,
     recording_agent_id_from_ctx,
+    should_capture_content,
     should_record,
 )
 
@@ -29,10 +30,12 @@ def _ctx(metadata=None, agent_name="receptionist", dispatch_id=None):
 def _reset_recording_state():
     clear_runtime()
     _auto._configured_record = None
+    _auto._configured_capture_content = None
     _auto._configured_agent_id = None
     yield
     clear_runtime()
     _auto._configured_record = None
+    _auto._configured_capture_content = None
     _auto._configured_agent_id = None
 
 
@@ -109,3 +112,57 @@ class TestLiveKitRecordingGuard:
 
     def test_agent_name_from_ctx_rejects_dispatch_shaped_agent_name(self) -> None:
         assert agent_name_from_ctx(_ctx(agent_name="AD_fSkdjADywDrh")) == ""
+
+
+class TestLiveKitContentCaptureGuard:
+    def test_defaults_on(self) -> None:
+        assert should_capture_content(_ctx()) is True
+
+    def test_bootstrap_agent_override(self) -> None:
+        set_runtime(
+            ParlotRuntimeContext(
+                endpoint="http://localhost",
+                api_key="k",
+                org_id="o",
+                content_bucket="b",
+                r2_endpoint="http://r2",
+                egress_webhook_url="http://hook",
+                capture_content_globs=("*",),
+                capture_content_agents=(("receptionist", False),),
+                capture_content_policy_present=True,
+            )
+        )
+        assert should_capture_content(_ctx(agent_name="receptionist")) is False
+        assert should_capture_content(_ctx(agent_name="other")) is True
+
+    def test_empty_globs_off(self) -> None:
+        set_runtime(
+            ParlotRuntimeContext(
+                endpoint="http://localhost",
+                api_key="k",
+                org_id="o",
+                content_bucket="b",
+                r2_endpoint="http://r2",
+                egress_webhook_url="http://hook",
+                capture_content_globs=(),
+                capture_content_policy_present=True,
+            )
+        )
+        assert should_capture_content(_ctx()) is False
+
+    def test_metadata_and_configure_overrides(self) -> None:
+        set_runtime(
+            ParlotRuntimeContext(
+                endpoint="http://localhost",
+                api_key="k",
+                org_id="o",
+                content_bucket="b",
+                r2_endpoint="http://r2",
+                egress_webhook_url="http://hook",
+                capture_content_globs=(),
+                capture_content_policy_present=True,
+            )
+        )
+        assert should_capture_content(_ctx(metadata=json.dumps({"capture_content": True}))) is True
+        _auto._configured_capture_content = False
+        assert should_capture_content(_ctx()) is False
