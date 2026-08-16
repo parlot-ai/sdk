@@ -2,7 +2,7 @@
 
 Public Docusaurus site for the Parlot SDK. Canonical URL: **https://parlot.ai/docs**.
 
-Layout follows an ElevenLabs/Fern-inspired three-column docs shell (section tabs, cards, local search) with Parlot branding via `@parlot/docs-theme`.
+Layout uses an Obsidian Flux–aligned `@parlot/docs-theme` shell (Inter + JetBrains Mono, shared brand hexes, section tabs, cards, local search) so `/docs` feels continuous with the marketing site.
 
 ```bash
 cd docs
