@@ -21,7 +21,7 @@ from .provider import (
     resolve_endpoint,
 )
 from .bootstrap import fetch_telemetry_bootstrap
-from .configure import ConfigureProtocol
+from .configure import BaseConfigureResult, ConfigureProtocol, base_configure, configure_parlot_logging
 from .genai_content_capture import should_capture_genai_content
 from .export import ExportFilterSpanExporter
 from .intent import derive_intent
@@ -39,7 +39,10 @@ from .session_logs import init_session_logs, shutdown_session_logs
 from .topology import SessionTopology
 
 __all__ = [
+    "BaseConfigureResult",
     "ConfigureProtocol",
+    "base_configure",
+    "configure_parlot_logging",
     "ExportFilterSpanExporter",
     "ParlotBaseProcessor",
     "assert_sync_span_processors",

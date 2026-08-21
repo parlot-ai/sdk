@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "parlot-core"
+name = "parlot"
 version = "0.1.0"
-description = "Parlot core: semantic conventions, base span processor, and shared utilities"
+description = "Parlot: OpenTelemetry-native observability for AI agents"
 readme = "README.md"
 license = "MIT"
 authors = [
@@ -24,23 +24,21 @@ classifiers = [
 ]
 keywords = ["opentelemetry", "telemetry", "ai", "agents", "observability", "parlot"]
 dependencies = [
-    "opentelemetry-api>=1.27.0",
-    "opentelemetry-sdk>=1.27.0",
-    "opentelemetry-exporter-otlp-proto-http>=1.27.0",
-    "opentelemetry-semantic-conventions>=0.48b0",
-    "httpx>=0.27.0",
+    "parlot-core>=0.1.0",
+]
+
+[project.optional-dependencies]
+livekit = ["parlot-instrumentation-livekit>=0.1.0"]
+langgraph = ["parlot-instrumentation-langgraph>=0.1.0"]
+all = [
+    "parlot-instrumentation-livekit>=0.1.0",
+    "parlot-instrumentation-langgraph>=0.1.0",
 ]
 
 [project.urls]
 Homepage = "https://parlot.ai"
 Documentation = "https://parlot.ai/docs"
 Repository = "https://github.com/parlot-ai/sdk"
-
-[project.optional-dependencies]
-dev = ["pytest>=8.0"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/parlot"]
@@ -49,10 +47,5 @@ packages = ["src/parlot"]
 include = [
     "src/parlot",
     "README.md",
+    "LICENSE",
 ]
-
-[tool.pyright]
-pythonVersion = "3.11"
-venvPath = "."
-venv = ".venv"
-include = ["src", "tests"]

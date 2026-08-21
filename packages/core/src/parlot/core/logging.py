@@ -29,14 +29,26 @@ def _span_id_hex(span: Any) -> str:
     ctx = getattr(span, "context", None)
     if ctx is None:
         return ""
-    return format(ctx.span_id, "016x")
+    span_id = getattr(ctx, "span_id", None)
+    if isinstance(span_id, int):
+        return format(span_id, "016x")
+    try:
+        return format(int(span_id), "016x")
+    except (TypeError, ValueError):
+        return str(span_id or "")
 
 
 def _trace_id_hex(span: Any) -> str:
     ctx = getattr(span, "context", None)
     if ctx is None:
         return ""
-    return format(ctx.trace_id, "032x")
+    trace_id = getattr(ctx, "trace_id", None)
+    if isinstance(trace_id, int):
+        return format(trace_id, "032x")
+    try:
+        return format(int(trace_id), "032x")
+    except (TypeError, ValueError):
+        return str(trace_id or "")
 
 
 def _trim_for_log(value: str, *, max_len: int = _LOG_VALUE_MAX_LEN) -> str:

@@ -42,63 +42,44 @@ def configure(
         logger.debug("parlot-instrumentation.langgraph already configured — skipping")
         return
 
-    from parlot.core.bootstrap import fetch_telemetry_bootstrap
+    from parlot.core import base_configure
     from parlot.core.genai_content_capture import should_capture_genai_content
-    from parlot.core.diagnostics import init_diagnostics
-    from parlot.core.provider import (
-        adopt_existing_tracer_provider,
-        resolve_api_key,
-        resolve_capture_genai_content,
-        resolve_endpoint,
-    )
     from parlot.core.runtime import get_runtime
     from parlot.core.sdk_version import resolve_parlot_sdk_version
-    from parlot.core.session_logs import (
-        init_session_logs,
-        set_capture_logs_configure,
-    )
 
     _configured_agent_id = agent_id.strip() if agent_id else None
     _configured_agent_version = (version or os.environ.get("PARLOT_AGENT_VERSION") or "").strip()
 
-    resolved_endpoint = resolve_endpoint(endpoint)
-    resolved_api_key = resolve_api_key(api_key)
-    configure_capture = resolve_capture_genai_content(capture_genai_content)
-
-    init_diagnostics(endpoint=resolved_endpoint, api_key=resolved_api_key)
-    if isinstance(capture_logs, list):
-        capture_logs_cfg = [str(item).strip() for item in capture_logs if str(item).strip()]
-    else:
-        capture_logs_cfg = capture_logs
-    set_capture_logs_configure(
-        capture_logs_cfg,
-        log_level=log_level.strip().upper() if log_level else None,
+    res = base_configure(
+        endpoint=endpoint,
+        api_key=api_key,
+        capture_genai_content=capture_genai_content,
+        tracer_provider=tracer_provider,
+        agent_id=agent_id,
+        version=_configured_agent_version,
+        capture_logs=capture_logs,
+        log_level=log_level,
     )
-    init_session_logs(endpoint=resolved_endpoint, api_key=resolved_api_key)
-
-    if resolved_api_key:
-        fetch_telemetry_bootstrap(resolved_endpoint, resolved_api_key)
 
     runtime = get_runtime()
     capture = should_capture_genai_content(
         _configured_agent_id or "",
-        configure_capture_genai_content=configure_capture,
+        configure_capture_genai_content=res.capture_genai_content,
         bootstrap_globs=list(runtime.capture_genai_content_globs) if runtime else None,
         bootstrap_agents=runtime.capture_genai_content_agents_map() if runtime else None,
         bootstrap_present=bool(runtime and runtime.capture_genai_content_policy_present),
     )
 
+    tracer_provider = res.tracer_provider
     if tracer_provider is None:
-        tracer_provider = adopt_existing_tracer_provider()
-    if tracer_provider is None:
-        if not resolved_endpoint:
+        if not res.endpoint:
             raise ValueError(
                 "No OTLP endpoint configured. Pass endpoint= or set the "
                 "PARLOT_ENDPOINT environment variable."
             )
         tracer_provider = _build_provider(
-            endpoint=resolved_endpoint,
-            api_key=resolved_api_key,
+            endpoint=res.endpoint,
+            api_key=res.api_key,
             service_name=service_name,
             service_version=_configured_agent_version or None,
         )

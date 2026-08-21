@@ -4,6 +4,7 @@ version = "0.0.0"
 description = "Parlot SDK workspace (dev/test runner)"
 requires-python = ">=3.11"
 dependencies = [
+    "parlot",
     "parlot-core",
     "parlot-instrumentation-livekit",
     "parlot-instrumentation-langgraph",
@@ -20,19 +21,20 @@ package = false
 
 [tool.uv.workspace]
 members = [
+    "packages/meta",
     "packages/core",
     "packages/instrumentation-livekit",
     "packages/instrumentation-langgraph",
 ]
 
 [tool.uv.sources]
+parlot = { workspace = true }
 parlot-core = { workspace = true }
 parlot-instrumentation-livekit = { workspace = true }
 parlot-instrumentation-langgraph = { workspace = true }
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-import_mode = "importlib"
 pythonpath = ["packages/instrumentation-livekit/tests"]
 testpaths = [
     "packages/core/tests",

@@ -1,0 +1,86 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      package:
+        description: "Package to publish"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - parlot
+          - parlot-core
+          - parlot-instrumentation-livekit
+          - parlot-instrumentation-langgraph
+      repository:
+        description: "Target repository"
+        required: true
+        default: "pypi"
+        type: choice
+        options:
+          - pypi
+          - testpypi
+
+jobs:
+  publish:
+    name: Build & Publish
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Determine packages to build
+        id: target
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          PKG_INPUT="${{ github.event.inputs.package }}"
+          
+          if [[ -n "$PKG_INPUT" ]]; then
+            if [[ "$PKG_INPUT" == "all" ]]; then
+              echo "packages=parlot parlot-core parlot-instrumentation-livekit parlot-instrumentation-langgraph" >> "$GITHUB_OUTPUT"
+            else
+              echo "packages=$PKG_INPUT" >> "$GITHUB_OUTPUT"
+            fi
+          elif [[ "$TAG" == core-v* ]]; then
+            echo "packages=parlot-core" >> "$GITHUB_OUTPUT"
+          elif [[ "$TAG" == instrumentation-livekit-v* ]]; then
+            echo "packages=parlot-instrumentation-livekit" >> "$GITHUB_OUTPUT"
+          elif [[ "$TAG" == instrumentation-langgraph-v* ]]; then
+            echo "packages=parlot-instrumentation-langgraph" >> "$GITHUB_OUTPUT"
+          elif [[ "$TAG" == parlot-v* ]]; then
+            echo "packages=parlot" >> "$GITHUB_OUTPUT"
+          else
+            echo "Unknown release tag format: $TAG"
+            exit 1
+          fi
+
+      - name: Build distributions
+        run: |
+          for pkg in ${{ steps.target.outputs.packages }}; do
+            echo "Building package: $pkg"
+            uv build --package "$pkg" --out-dir dist/
+          done
+
+      - name: Publish to PyPI
+        if: ${{ github.event.inputs.repository != 'testpypi' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+
+      - name: Publish to TestPyPI
+        if: ${{ github.event.inputs.repository == 'testpypi' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: dist/
