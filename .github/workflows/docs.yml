@@ -5,12 +5,12 @@ on:
     branches: [main]
     paths:
       - 'docs/**'
-      - 'packages/instrumentation-livekit/CHANGELOG.md'
+      - 'packages/**/CHANGELOG.md'
       - '.github/workflows/docs.yml'
   pull_request:
     paths:
       - 'docs/**'
-      - 'packages/instrumentation-livekit/CHANGELOG.md'
+      - 'packages/**/CHANGELOG.md'
       - '.github/workflows/docs.yml'
 
 jobs:
