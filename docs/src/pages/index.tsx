@@ -24,11 +24,14 @@ export default function Home(): JSX.Element {
             <Link className="button button--secondary button--lg" to="/guides">
               Browse guides
             </Link>
+            <Link className="button button--secondary button--lg" to="/api">
+              API Reference
+            </Link>
           </div>
         </section>
 
         <section className="parlot-overview-section">
-          <DocCardGroup columns={3}>
+          <DocCardGroup columns={4}>
             <DocCard
               eyebrow="Get started"
               title="Quick Start"
@@ -43,9 +46,15 @@ export default function Home(): JSX.Element {
             />
             <DocCard
               eyebrow="Guides"
-              title="LiveKit"
-              description="Checklist, recording, escalation, and OTEL coverage for production agents."
-              to="/guides/livekit"
+              title="Integrations"
+              description="Checklists and guides for LiveKit and LangGraph production agents."
+              to="/guides"
+            />
+            <DocCard
+              eyebrow="Reference"
+              title="API Reference"
+              description="Complete Python API signatures, parameters, core helpers, and environment variables."
+              to="/api"
             />
           </DocCardGroup>
         </section>

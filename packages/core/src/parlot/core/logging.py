@@ -33,8 +33,8 @@ def _span_id_hex(span: Any) -> str:
     if isinstance(span_id, int):
         return format(span_id, "016x")
     try:
-        return format(int(span_id), "016x")
-    except (TypeError, ValueError):
+        return format(int(span_id), "016x")  # type: ignore[arg-type]
+    except Exception:
         return str(span_id or "")
 
 
@@ -46,8 +46,8 @@ def _trace_id_hex(span: Any) -> str:
     if isinstance(trace_id, int):
         return format(trace_id, "032x")
     try:
-        return format(int(trace_id), "032x")
-    except (TypeError, ValueError):
+        return format(int(trace_id), "032x")  # type: ignore[arg-type]
+    except Exception:
         return str(trace_id or "")
 
 

@@ -55,3 +55,4 @@ Mint the API key in Parlot **Settings → API Keys**. For recording, enable Sett
 
 - [Core concepts](./concepts.md)
 - [LiveKit guide](./guides/livekit.md)
+- [API Reference](./api/index.mdx)

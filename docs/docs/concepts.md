@@ -18,7 +18,7 @@ Parlot treats production voice agents as **event systems** first and traces seco
 | `parlot-instrumentation-livekit` | LiveKit Agents OTel instrumentation, egress hooks, platform refs |
 | `parlot-instrumentation-langgraph` | LangGraph / LangChain `configure()` via global callbacks |
 
-Contract helpers (`record_human_rep`, `set_session_metadata`, `add_platform_ref`, …) live in `parlot.core`. Framework packages re-export them for convenience — prefer those re-exports in agent code.
+Contract helpers (`record_human_rep`, `set_session_metadata`, `add_platform_ref`, …) live in `parlot.core`. Framework packages re-export them for convenience — prefer those re-exports in agent code. See the [Core & Session API Reference](./api/core.md) and [Full API Reference](./api/index.mdx).
 
 ## Shared span vocabulary
 

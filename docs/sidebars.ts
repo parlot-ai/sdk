@@ -17,6 +17,18 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'API Reference',
+      collapsed: false,
+      link: {type: 'doc', id: 'api/index'},
+      items: [
+        'api/livekit',
+        'api/langgraph',
+        'api/core',
+        'api/env-vars',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Reference',
       collapsed: false,
       items: ['changelog'],
