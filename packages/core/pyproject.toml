@@ -9,7 +9,7 @@ description = "Parlot core: semantic conventions, base span processor, and share
 readme = "README.md"
 license = "MIT"
 authors = [
-    { name = "Parlot AI", email = "hello@parlot.ai" },
+    { name = "Parlot AI", email = "hi@parlot.ai" },
 ]
 requires-python = ">=3.11"
 classifiers = [
