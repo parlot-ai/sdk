@@ -1,0 +1,55 @@
+---
+title: API Reference
+description: Overview and package reference for the Parlot Python SDK.
+sidebar_position: 1
+---
+
+# API Reference
+
+The Parlot Python SDK provides OpenTelemetry-native instrumentation and session metadata helpers for multi-agent applications.
+
+## Package architecture
+
+The SDK is organized into modular packages:
+
+| Package | PyPI Name | Description |
+|---------|-----------|-------------|
+| **Meta Package** | `parlot` | Convenient bundle installing framework adapters via extras (e.g. `pip install "parlot[livekit]"` or `pip install "parlot[langgraph]"`). |
+| **LiveKit Adapter** | `parlot-instrumentation-livekit` | OpenTelemetry instrumentation, auto-hooks, room composite egress recording, and span processor for LiveKit Agents. |
+| **LangGraph Adapter** | `parlot-instrumentation-langgraph` | Global callback handler and session management for LangGraph / LangChain graphs. |
+| **Core Utilities** | `parlot-core` | Shared semantic conventions (OTel GenAI v1.41 + Conversation Contract + Voice), metadata helpers, escalation signals, and provider setup. |
+
+## Explore the API
+
+<DocCardGroup columns={2}>
+  <DocCard
+    eyebrow="Framework"
+    title="LiveKit API"
+    description="configure(), install_session_hooks(), processor options, and LiveKit session management."
+    to="/api/livekit"
+  />
+  <DocCard
+    eyebrow="Framework"
+    title="LangGraph API"
+    description="configure(), close_session(), callbacks, and LiveKit + LangGraph coexistence."
+    to="/api/langgraph"
+  />
+  <DocCard
+    eyebrow="Shared"
+    title="Core & Session API"
+    description="set_session_metadata(), add_platform_ref(), human escalation, session state, and semantic constants."
+    to="/api/core"
+  />
+  <DocCard
+    eyebrow="Configuration"
+    title="Environment Variables"
+    description="Complete reference for PARLOT_ENDPOINT, PARLOT_API_KEY, capture policies, and logging levels."
+    to="/api/env-vars"
+  />
+</DocCardGroup>
+
+## Common conventions
+
+- **Keyword-only configuration:** All `configure()` methods use keyword-only arguments to prevent breaking changes when options evolve.
+- **Top-level re-exports:** Common session helpers (`set_session_metadata`, `set_session_attribute`, `add_platform_ref`, `record_human_rep`, `human_escalation`) are re-exported directly from `parlot.instrumentation.livekit` and `parlot.instrumentation.langgraph` so you can import everything from your framework adapter.
+- **Async & multi-process safe:** Instrumentation automatically handles LiveKit worker subprocessing and LangGraph asynchronous execution contexts.

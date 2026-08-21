@@ -134,6 +134,7 @@ const config: Config = {
         {to: '/quick-start', label: 'Quick Start', position: 'left'},
         {to: '/concepts', label: 'Concepts', position: 'left'},
         {to: '/guides', label: 'Guides', position: 'left'},
+        {to: '/api', label: 'API Reference', position: 'left'},
         {to: '/changelog', label: 'Changelog', position: 'left'},
         {
           href: 'https://github.com/parlot-ai/sdk',

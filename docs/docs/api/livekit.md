@@ -1,0 +1,174 @@
+---
+title: LiveKit API
+description: API reference for parlot-instrumentation-livekit.
+sidebar_position: 2
+---
+
+# LiveKit API Reference
+
+`parlot-instrumentation-livekit` provides OpenTelemetry instrumentation, auto-patching, and session recording hooks for [LiveKit Agents](https://docs.livekit.io/agents/).
+
+## Installation
+
+```bash
+# Using pip
+pip install parlot-instrumentation-livekit
+# or with meta-package:
+pip install "parlot[livekit]"
+
+# Using uv
+uv add parlot-instrumentation-livekit
+```
+
+## Module: `parlot.instrumentation.livekit`
+
+### `configure()`
+
+```python
+def configure(
+    *,
+    endpoint: Optional[str] = None,
+    api_key: Optional[str] = None,
+    capture_genai_content: Optional[bool] = None,
+    service_name: Optional[str] = None,
+    tracer_provider: Optional[TracerProvider] = None,
+    auto_escalate_sip: bool = False,
+    escalation_metadata_match: Optional[dict[str, str]] = None,
+    agent_id: Optional[str] = None,
+    version: Optional[str] = None,
+    record: bool | list[str] | None = None,
+    capture_logs: bool | list[str] | None = None,
+    log_level: Optional[str] = None,
+) -> None
+```
+
+Initializes the OpenTelemetry tracer provider, registers span processors, patches LiveKit's `AgentSession` and `JobContext.connect` hooks, configures session log interception, and fetches remote telemetry bootstrap settings.
+
+#### Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `endpoint` | `str \| None` | `None` | Parlot OTLP receiver base URL (e.g. `https://collector.parlot.ai:4318`). If omitted, reads the `PARLOT_ENDPOINT` environment variable. |
+| `api_key` | `str \| None` | `None` | Org-scoped API key minted in Parlot **Settings → API Keys**. If omitted, reads `PARLOT_API_KEY`. Required for audio recording grants, remote telemetry bootstrap, and self-diagnostics. |
+| `agent_id` | `str \| None` | `None` | Canonical deployment identity stamped onto `session.agent_id` on the `parlot.session` span. If omitted, falls back to LiveKit's `WorkerOptions.agent_name` or `PARLOT_AGENT_ID`. |
+| `version` | `str \| None` | `None` | Deployment version stamped onto `gen_ai.agent.version`. Precedence: `version=` kwarg → `__main__.__version__` / `VERSION` → `PARLOT_AGENT_VERSION` → local git SHA (dev only). |
+| `record` | `bool \| list[str] \| None` | `None` | Audio recording policy. Can be a boolean (`True`/`False`) or a list of agent ID glob patterns (e.g. `["support-*", "billing"]`). Precedence: LiveKit job metadata `record` > `record=` kwarg > Parlot Settings → Recording. |
+| `capture_genai_content` | `bool \| None` | `None` | Process-wide override for LLM message bodies and tool input/output payloads. If `False`, payloads are omitted while preserving span durations, tokens, and turn text. Precedence: job metadata > `capture_genai_content=` kwarg > Parlot Settings → Generative AI (default: on). |
+| `capture_logs` | `bool \| list[str] \| None` | `None` | Intercept Python `logging` during active sessions and stream to the session Logs tab. Can be a boolean or glob patterns. Precedence: job metadata > `capture_logs=` kwarg > Parlot Settings → Logs (default: on). |
+| `log_level` | `str \| None` | `None` | Minimum log level for session log capture (e.g. `"INFO"`, `"WARNING"`). Defaults to `"INFO"`. |
+| `auto_escalate_sip` | `bool` | `False` | When `True`, automatically marks the session as escalated when a SIP participant joins the room. |
+| `escalation_metadata_match` | `dict[str, str] \| None` | `None` | Match dictionary on participant metadata to automatically classify joining participants as human representatives. |
+| `service_name` | `str \| None` | `None` | OpenTelemetry resource `service.name`. Defaults to `agent_id` or `"unknown"`. |
+| `tracer_provider` | `TracerProvider \| None` | `None` | Existing custom OpenTelemetry `TracerProvider` to adopt. If omitted, builds a provider configured with Parlot's OTLP exporter and `LiveKitGenAIProcessor`. |
+
+#### Example
+
+```python
+from parlot.instrumentation.livekit import configure
+
+# Call before initializing AgentSession or starting workers
+configure(
+    agent_id="receptionist-v2",
+    version="1.4.0",
+    record=True,
+    capture_logs=True,
+    log_level="INFO",
+)
+```
+
+---
+
+### `install_session_hooks()`
+
+```python
+def install_session_hooks(session: AgentSession) -> None
+```
+
+Attaches Parlot event listeners (speech committed, agent state change, handoff, close) to a live `AgentSession` instance.
+
+> **Note:** `configure()` automatically patches `AgentSession.__init__` to invoke this function. You only need to call this directly if you manually instantiate unpatched sessions.
+
+#### Parameters
+
+- `session` (`AgentSession`): The LiveKit `AgentSession` instance to instrument.
+
+---
+
+### `LiveKitGenAIProcessor`
+
+```python
+from parlot.instrumentation.livekit import LiveKitGenAIProcessor
+```
+
+An OpenTelemetry `SpanProcessor` that intercepts spans generated by the LiveKit Agents SDK and normalizes them into Parlot's three-layer semantic vocabulary:
+
+1. **Conversation Contract:** Maps session start/close, turns, and agent handoffs.
+2. **OTel GenAI (v1.41.0):** Renames and maps LLM inference, tool executions, and agent workflows.
+3. **Voice Spans:** Tracks TTS, STT, and end-of-utterance (EOU) operational timings and metrics.
+
+---
+
+## Re-exported Core Functions
+
+`parlot.instrumentation.livekit` re-exports common session and contract functions from `parlot-core`:
+
+### `set_session_metadata()`
+
+```python
+def set_session_metadata(**pairs: str | int | float | bool) -> None
+```
+
+Attaches custom key/value metadata to the active Parlot session. See [Core API Reference](./core.md#set_session_metadata).
+
+```python
+from parlot.instrumentation.livekit import set_session_metadata
+
+set_session_metadata(order_id="ORD-1092", user_tier="premium")
+```
+
+### `set_session_attribute()`
+
+```python
+def set_session_attribute(key: str, value: str | int | float | bool) -> None
+```
+
+Stamps a single custom attribute under `session.metadata.<key>` on the active session. See [Core API Reference](./core.md#set_session_attribute).
+
+### `add_platform_ref()`
+
+```python
+def add_platform_ref(kind: str, value: str, *, framework: str = "custom") -> None
+```
+
+Attaches an external searchable identifier (e.g. CRM ticket, call SID, external database key) to the session. See [Core API Reference](./core.md#add_platform_ref).
+
+```python
+from parlot.instrumentation.livekit import add_platform_ref
+
+add_platform_ref("crm_ticket", "TKT-8841")
+```
+
+### `record_human_rep()`
+
+```python
+def record_human_rep(participant_id: str, *, label: Optional[str] = None) -> None
+```
+
+Explicitly marks a participant ID as a human representative, tagging future turns as `human_rep` and stamping `session.topology.agents`. See [Core API Reference](./core.md#record_human_rep).
+
+### `human_escalation()`
+
+```python
+@contextmanager
+def human_escalation(label: Optional[str] = None) -> Iterator[None]
+```
+
+Context manager that marks the next participant joining the LiveKit room as a human representative. See [Core API Reference](./core.md#human_escalation).
+
+```python
+from parlot.instrumentation.livekit import human_escalation
+
+async def transfer_to_human(ctx: JobContext, phone_number: str):
+    with human_escalation(label="Tier 2 Support"):
+        await ctx.room.local_participant.perform_sip_transfer(phone_number)
+```
