@@ -10,16 +10,18 @@ Parlot is an open-source SDK and instrumentation stack for multi-agent observabi
 
 ## Install
 
-From a release tag:
+Install the instrumentation package using `pip` or `uv`:
 
-```toml
-# Consumer pyproject.toml
-[tool.uv.sources]
-parlot-core = { git = "https://github.com/parlot-ai/sdk.git", subdirectory = "packages/core", tag = "v0.1.0" }
-parlot-instrumentation-livekit = { git = "https://github.com/parlot-ai/sdk.git", subdirectory = "packages/instrumentation-livekit", tag = "v0.1.0" }
+```bash
+# Using pip
+pip install parlot-instrumentation-livekit
+
+# Or using uv
+uv add parlot-instrumentation-livekit
+
+# Or via the parlot meta-package
+pip install "parlot[livekit]"
 ```
-
-Tag both packages at the same release. `uv lock` pins the commit SHA.
 
 ## Instrument
 

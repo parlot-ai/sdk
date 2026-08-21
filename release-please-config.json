@@ -1,9 +1,30 @@
 {
   "packages": {
+    "packages/core": {
+      "release-type": "python",
+      "component": "core",
+      "package-name": "parlot-core",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true
+    },
     "packages/instrumentation-livekit": {
       "release-type": "python",
       "component": "instrumentation-livekit",
       "package-name": "parlot-instrumentation-livekit",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true
+    },
+    "packages/instrumentation-langgraph": {
+      "release-type": "python",
+      "component": "instrumentation-langgraph",
+      "package-name": "parlot-instrumentation-langgraph",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true
+    },
+    "packages/meta": {
+      "release-type": "python",
+      "component": "parlot",
+      "package-name": "parlot",
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true
     }

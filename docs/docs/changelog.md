@@ -8,7 +8,7 @@ sidebar_position: 10
 
 # Changelog
 
-## instrumentation-livekit
+## parlot-instrumentation-livekit
 
 
 ### [0.1.0](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.0.0...instrumentation-livekit-v0.1.0) (2026-05-15)

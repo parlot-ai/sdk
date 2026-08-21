@@ -5,26 +5,13 @@ Parlot-instrumented multi-agent storytelling: IntroAgent collects name and locat
 Integration requirements (`configure()` + `await ctx.connect()`): see [instrumentation-livekit README](../../packages/instrumentation-livekit/README.md#integration-checklist).
 
 ## Setup
-
-Requires [uv](https://docs.astral.sh/uv/) and read access to the private `parlot-ai/sdk` repo (git-tag install).
-
+ 
 ```bash
-cd sdk/examples/livekit/multi-agent
+cd examples/livekit/multi-agent
 uv sync
 cp .env.example .env
 # edit .env
 ```
-
-### SDK contributors (monorepo dev)
-
-Replace `[tool.uv.sources]` in `pyproject.toml` with path overrides:
-
-```toml
-parlot-core = { path = "../../packages/core", editable = true }
-parlot-instrumentation-livekit = { path = "../../packages/instrumentation-livekit", editable = true }
-```
-
-Then `uv sync` again.
 
 ## Run
 

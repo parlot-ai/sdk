@@ -119,31 +119,22 @@ def configure(
     _configured_log_level = log_level.strip().upper() if log_level else None
 
     from ._agent_version import resolve_agent_version
-
     _configured_agent_version = resolve_agent_version(version)
 
-    _configure_parlot_logging()
+    from parlot.core import base_configure
 
-    from parlot.core.diagnostics import init_diagnostics
-    from parlot.core.provider import (
-        adopt_existing_tracer_provider,
-        resolve_api_key,
-        resolve_endpoint,
-    )
-    from parlot.core.session_logs import (
-        init_session_logs,
-        set_capture_logs_configure,
-        set_session_log_resolvers,
+    res = base_configure(
+        endpoint=endpoint,
+        api_key=api_key,
+        capture_genai_content=capture_genai_content,
+        tracer_provider=tracer_provider,
+        agent_id=agent_id,
+        version=_configured_agent_version,
+        capture_logs=capture_logs,
+        log_level=log_level,
     )
 
-    resolved_endpoint = resolve_endpoint(endpoint)
-    resolved_api_key = resolve_api_key(api_key)
-
-    init_diagnostics(endpoint=resolved_endpoint, api_key=resolved_api_key)
-    set_capture_logs_configure(
-        _configured_capture_logs,
-        log_level=_configured_log_level,
-    )
+    from parlot.core.session_logs import set_session_log_resolvers
     from ._recording_guard import (
         current_job_capture_logs_metadata,
         livekit_session_log_fields,
@@ -166,17 +157,15 @@ def configure(
         agent_id_resolver=_agent_id_resolver,
         metadata_resolver=current_job_capture_logs_metadata,
     )
-    init_session_logs(endpoint=resolved_endpoint, api_key=resolved_api_key)
 
-    if resolved_api_key:
-        _fetch_and_cache_bootstrap(resolved_endpoint, resolved_api_key)
+    if res.api_key:
+        _fetch_and_cache_bootstrap(res.endpoint, res.api_key)
 
-    if tracer_provider is None:
-        tracer_provider = adopt_existing_tracer_provider()
+    tracer_provider = res.tracer_provider
     if tracer_provider is None:
         tracer_provider = _build_provider(
-            endpoint=resolved_endpoint,
-            api_key=resolved_api_key,
+            endpoint=res.endpoint,
+            api_key=res.api_key,
             service_name=service_name,
             service_version=_configured_agent_version or None,
         )
@@ -194,7 +183,7 @@ def configure(
     _install_telemetry_compare()
 
     _configured = True
-    logger.debug("parlot-instrumentation.livekit configured (endpoint=%s)", resolved_endpoint)
+    logger.debug("parlot-instrumentation.livekit configured (endpoint=%s)", res.endpoint)
 
 
 def _fetch_and_cache_bootstrap(endpoint: str, api_key: str) -> None:
