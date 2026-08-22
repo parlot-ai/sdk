@@ -1,8 +1,9 @@
 """
 LiveKitGenAIProcessor — enriches LiveKit Agents OTel spans in-place.
 
-Turn boundaries (livekit-agents 1.5.9): ``user_turn`` and ``agent_turn``.
+Turn boundaries (livekit-agents 1.7.0): ``user_turn`` and ``agent_turn``.
 ``eou_detection`` is a child model span; ``drain_agent_activity`` is lifecycle only.
+Content-bearing ``lk.pii.*`` attrs are accepted alongside legacy ``lk.*`` keys.
 """
 
 from __future__ import annotations
@@ -104,11 +105,15 @@ from parlot.core.attrs import (
 )
 from parlot.instrumentation.livekit.attrs import (
     ATTR_AMD_CATEGORY,
+    ATTR_CHAT_CTX_LEGACY,
     ATTR_DIAR_SOURCE_REALTIME_INTERRUPT,
     ATTR_DIAR_SOURCE_TEXT_INPUT,
     ATTR_DIAR_SOURCE_VAD,
     ATTR_EOU_LANGUAGE,
     ATTR_END_OF_TURN_DELAY,
+    ATTR_FUNCTION_TOOL_ARGS_LEGACY,
+    ATTR_FUNCTION_TOOL_OUTPUT_LEGACY,
+    ATTR_INSTRUCTIONS_LEGACY,
     ATTR_LK_AGENT_LABEL,
     ATTR_LK_AGENT_NAME,
     ATTR_LK_CHAT_CTX,
@@ -133,10 +138,17 @@ from parlot.instrumentation.livekit.attrs import (
     ATTR_LK_USER_TRANSCRIPT,
     ATTR_DIAR_SOURCE_STT_EVENT,
     ATTR_PARTICIPANT_IDENTITY,
+    ATTR_PARTICIPANT_IDENTITY_LEGACY,
+    ATTR_RESPONSE_TEXT_LEGACY,
+    ATTR_ROOM_NAME_LEGACY,
     ATTR_TRANSCRIPT_CONFIDENCE,
     ATTR_TRANSCRIPTION_DELAY,
+    ATTR_TTS_INPUT_TEXT_LEGACY,
+    ATTR_USER_INPUT_LEGACY,
+    ATTR_USER_TRANSCRIPT_LEGACY,
     METADATA_JOB_ID,
     METADATA_ROOM_ID,
+    attr_get,
 )
 from ._chat_ctx import (
     full_instructions_excerpt,
@@ -833,7 +845,11 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         explicit_job = attrs.get(ATTR_LK_JOB_ID) or attrs.get(METADATA_JOB_ID)
         if explicit_job:
             self._maybe_update(state, "session_id", explicit_job)
-        self._maybe_update(state, "room_name", attrs.get(ATTR_LK_ROOM_NAME))
+        self._maybe_update(
+            state,
+            "room_name",
+            attr_get(attrs, ATTR_LK_ROOM_NAME, ATTR_ROOM_NAME_LEGACY),
+        )
         self._maybe_update(state, "room_sid", attrs.get(ATTR_LK_ROOM_SID) or attrs.get(METADATA_ROOM_ID))
 
         if name in _AGENT_LABEL_SPANS:
@@ -947,8 +963,15 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if not (span.attributes or {}).get(ATTR_LK_SPEECH_ID) and state.active_speech_id:
             self._set(span, ATTR_LK_SPEECH_ID, state.active_speech_id)
 
-        chat_raw = str(attrs.get(ATTR_LK_CHAT_CTX, ""))
-        lk_instructions = str(attrs.get(ATTR_LK_INSTRUCTIONS, "")).strip()
+        chat_raw = str(
+            attr_get(attrs, ATTR_LK_CHAT_CTX, ATTR_CHAT_CTX_LEGACY, default="") or ""
+        )
+        lk_instructions = str(
+            attr_get(
+                attrs, ATTR_LK_INSTRUCTIONS, ATTR_INSTRUCTIONS_LEGACY, default=""
+            )
+            or ""
+        ).strip()
         full_excerpt = full_instructions_excerpt(
             chat_raw,
             lk_instructions,
@@ -1042,7 +1065,9 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             self._set(span, ATTR_GEN_AI_OP_NAME, "text_to_speech")
 
         if self._genai_content_enabled(state):
-            text = attrs.get(ATTR_LK_TTS_INPUT_TEXT, "")
+            text = attr_get(
+                attrs, ATTR_LK_TTS_INPUT_TEXT, ATTR_TTS_INPUT_TEXT_LEGACY, default=""
+            )
             if text:
                 self._add_event(
                     span,
@@ -1101,7 +1126,15 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             self._set(span, ATTR_GEN_AI_OP_NAME, "execute_tool")
 
         tool_name = str(attrs.get(ATTR_LK_FNC_TOOL_NAME, ""))
-        tool_output = str(attrs.get(ATTR_LK_FNC_TOOL_OUTPUT, ""))
+        tool_output = str(
+            attr_get(
+                attrs,
+                ATTR_LK_FNC_TOOL_OUTPUT,
+                ATTR_FUNCTION_TOOL_OUTPUT_LEGACY,
+                default="",
+            )
+            or ""
+        )
         is_error = bool(attrs.get(ATTR_LK_FNC_TOOL_ERROR, False))
         if tool_name:
             self._set(span, ATTR_AGENT_TOOL_NAME, tool_name)
@@ -1110,7 +1143,12 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         if span.end_time is not None and span.start_time is not None:
             duration_ms = round((span.end_time - span.start_time) / 1_000_000, 2)
 
-        tool_args_raw = attrs.get(ATTR_LK_FNC_TOOL_ARGS, "")
+        tool_args_raw = attr_get(
+            attrs,
+            ATTR_LK_FNC_TOOL_ARGS,
+            ATTR_FUNCTION_TOOL_ARGS_LEGACY,
+            default="",
+        )
         tool_args = str(tool_args_raw) if tool_args_raw else ""
 
         if self._genai_content_enabled(state) and tool_args:
@@ -1144,7 +1182,6 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             state.pending_handoff_end_ns = span.end_time or time.time_ns()
 
         if self._genai_content_enabled(state):
-            tool_args = attrs.get(ATTR_LK_FNC_TOOL_ARGS, "")
             if tool_args:
                 self._add_event(
                     span,
@@ -1185,7 +1222,15 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         *,
         span: ReadableSpan | None = None,
     ) -> None:
-        identity = str(attrs.get(ATTR_PARTICIPANT_IDENTITY, "")).strip()
+        identity = str(
+            attr_get(
+                attrs,
+                ATTR_PARTICIPANT_IDENTITY,
+                ATTR_PARTICIPANT_IDENTITY_LEGACY,
+                default="",
+            )
+            or ""
+        ).strip()
         if identity:
             state.user_id = identity
             if span is not None:
@@ -1400,7 +1445,9 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             return
 
         transcript = str(
-            attrs.get(ATTR_LK_USER_TRANSCRIPT) or attrs.get(ATTR_LK_USER_INPUT) or ""
+            attr_get(attrs, ATTR_LK_USER_TRANSCRIPT, ATTR_USER_TRANSCRIPT_LEGACY)
+            or attr_get(attrs, ATTR_LK_USER_INPUT, ATTR_USER_INPUT_LEGACY)
+            or ""
         ).strip()
         if not transcript:
             return
@@ -1443,8 +1490,8 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
         if state.open_agent_turn_index is None:
             transcript = str(
-                attrs.get(ATTR_LK_USER_TRANSCRIPT)
-                or attrs.get(ATTR_LK_USER_INPUT)
+                attr_get(attrs, ATTR_LK_USER_TRANSCRIPT, ATTR_USER_TRANSCRIPT_LEGACY)
+                or attr_get(attrs, ATTR_LK_USER_INPUT, ATTR_USER_INPUT_LEGACY)
                 or ""
             ).strip()
             if transcript and not attrs.get(ATTR_LK_IS_INTERRUPTION):
@@ -1463,7 +1510,12 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             state.active_speech_id = speech_id
         agent_id = self._active_agent_id(state, attrs)
         agent_modality = self._user_turn_modality(attrs)
-        response_text = str(attrs.get(ATTR_LK_RESPONSE_TEXT, "")).strip()
+        response_text = str(
+            attr_get(
+                attrs, ATTR_LK_RESPONSE_TEXT, ATTR_RESPONSE_TEXT_LEGACY, default=""
+            )
+            or ""
+        ).strip()
         self._emit_turn_trace(
             state,
             turn_index=turn_index,
@@ -1503,14 +1555,18 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             state.pending_tts_ttfb_s = None
 
         if self._genai_content_enabled(state):
-            user_input = attrs.get(ATTR_LK_USER_INPUT, "")
+            user_input = attr_get(
+                attrs, ATTR_LK_USER_INPUT, ATTR_USER_INPUT_LEGACY, default=""
+            )
             if user_input:
                 self._add_event(
                     span,
                     EVENT_GEN_AI_USER_MESSAGE,
                     {"content": str(user_input)},
                 )
-            response = attrs.get(ATTR_LK_RESPONSE_TEXT, "")
+            response = attr_get(
+                attrs, ATTR_LK_RESPONSE_TEXT, ATTR_RESPONSE_TEXT_LEGACY, default=""
+            )
             if response:
                 self._add_event(
                     span,
@@ -1611,7 +1667,15 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
     @staticmethod
     def _user_turn_modality(attrs: Mapping[str, AttributeValue]) -> str:
         """``voice`` when STT produced a transcript; ``text`` for typed/console input."""
-        if str(attrs.get(ATTR_LK_USER_TRANSCRIPT, "")).strip():
+        if str(
+            attr_get(
+                attrs,
+                ATTR_LK_USER_TRANSCRIPT,
+                ATTR_USER_TRANSCRIPT_LEGACY,
+                default="",
+            )
+            or ""
+        ).strip():
             return "voice"
         return "text"
 
@@ -2052,7 +2116,10 @@ def _coerce_str_sequence(value: AttributeValue | None) -> list[str]:
 
 
 def _preview_from_chat_ctx(raw: str) -> tuple[str, str]:
-    """Return (last_user_text, last_assistant_or_tool_output) from lk.chat_ctx JSON."""
+    """Return (last_user_text, last_assistant_or_tool_output) from chat_ctx JSON.
+
+    Payload may arrive under ``lk.pii.chat_ctx`` or legacy ``lk.chat_ctx``.
+    """
     if not raw:
         return "", ""
     try:
