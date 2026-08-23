@@ -1,23 +1,25 @@
 # Parlot
 
-OpenTelemetry-native observability and telemetry for voice and multimodal AI agents.
+**Production voice AI observability** — MIT OpenTelemetry instrumentation for LiveKit Agents (and LangGraph when you already run voice).
 
-## Quick Start
+Know if your voice agent is actually working. Install the sidecar, call `configure()` once, and Parlot models each call as **turns**: timeline, multi-agent handoff graph, pipeline waterfall, and goal completion with an evidence trail to the proving turns and audio.
 
-Install Parlot with the extra for your agent framework:
+Works with LiveKit Cloud, self-hosted media, and [LiveKit on Telnyx](https://telnyx.com/products/livekit-on-telnyx).
+
+## Install
 
 ```bash
-# For LiveKit Agents
+# LiveKit Agents (recommended)
 pip install "parlot[livekit]"
 
-# For LangGraph / LangChain Agents
+# LangGraph / LangChain (same debugger for text agents alongside voice)
 pip install "parlot[langgraph]"
 
-# For all supported integrations
+# Both
 pip install "parlot[all]"
 ```
 
-Or install the specific instrumentation package directly:
+Or install an instrumentation package directly:
 
 ```bash
 pip install parlot-instrumentation-livekit
@@ -25,6 +27,18 @@ pip install parlot-instrumentation-livekit
 pip install parlot-instrumentation-langgraph
 ```
 
+## Instrument (LiveKit)
+
+```python
+from parlot.instrumentation.livekit import configure
+
+configure()
+```
+
+Call `configure()` before constructing `AgentSession`, then `await ctx.connect()` before `session.start()`. Set `PARLOT_ENDPOINT` and `PARLOT_API_KEY` (mint in Settings → API Keys).
+
+Full checklist: [LiveKit guide](https://parlot.ai/docs/guides/livekit) · [Quick Start](https://parlot.ai/docs/quick-start)
+
 ## Documentation
 
-Full documentation, guides, and API references are available at [parlot.ai/docs](https://parlot.ai/docs).
+[parlot.ai/docs](https://parlot.ai/docs) · [parlot.ai](https://parlot.ai) · [GitHub](https://github.com/parlot-ai/sdk)

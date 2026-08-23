@@ -1,8 +1,24 @@
 # parlot-instrumentation-livekit
 
-LiveKit span processor, egress recording to R2, and `platform.ref.*` attributes for Parlot session resolve.
+MIT OpenTelemetry instrumentation for **[LiveKit Agents](https://docs.livekit.io/agents/)** — the primary path into [Parlot](https://parlot.ai), the observability platform for **production voice AI**.
 
-Full public guide: [LiveKit](https://parlot.ai/docs/guides/livekit) (checklist, recording, contract maps, escalation, OTEL coverage). Shared semantics (escalation roles, metadata, refs): [Concepts](https://parlot.ai/docs/concepts).
+Know if your voice agent is actually working: conversational **turns** (not flat traces), multi-agent handoff graph, STT / LLM / TTS waterfall, optional call recording, and goal completion with an evidence trail to the proving turns and audio.
+
+Works with LiveKit Cloud, fully self-hosted media, and [LiveKit on Telnyx](https://telnyx.com/products/livekit-on-telnyx).
+
+```bash
+pip install parlot-instrumentation-livekit
+# or: uv add parlot-instrumentation-livekit
+# or: pip install "parlot[livekit]"
+```
+
+```python
+from parlot.instrumentation.livekit import configure
+
+configure()
+```
+
+**Docs:** [LiveKit guide](https://parlot.ai/docs/guides/livekit) · [Concepts](https://parlot.ai/docs/concepts) · [Quick Start](https://parlot.ai/docs/quick-start) · [parlot.ai](https://parlot.ai)
 
 ## Integration checklist
 
@@ -77,7 +93,7 @@ Optional: `PARLOT_DIAGNOSTICS=off` to disable SDK self-diagnostics (export/handl
 ## Examples
 
 - [`examples/livekit/livekit-voice`](../../examples/livekit/livekit-voice/) — minimal hello-world
-- [`examples/livekit/multi-agent`](../../examples/livekit/multi-agent/) — storytelling handoffs
+- [`examples/livekit/multi-agent`](../../examples/livekit/multi-agent/) — storytelling handoffs (graph demo)
 - [`examples/livekit/restaurant-agent`](../../examples/livekit/restaurant-agent/) — greeter → specialist routing
 - [`examples/livekit/hotel-receptionist`](../../examples/livekit/hotel-receptionist/) — boutique-hotel receptionist + seed sample sessions
 

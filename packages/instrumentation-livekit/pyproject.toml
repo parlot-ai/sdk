@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "parlot-instrumentation-livekit"
 version = "0.1.0"
-description = "OTel instrumentation for LiveKit Agents"
+description = "Production voice AI observability for LiveKit Agents — Parlot MIT instrumentation"
 readme = "README.md"
 license = "MIT"
 authors = [
