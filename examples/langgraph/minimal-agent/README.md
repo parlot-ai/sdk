@@ -8,7 +8,7 @@ and runs a tiny StateGraph with one tool.
 ```bash
 cd examples/langgraph/minimal-agent
 uv sync
-export PARLOT_ENDPOINT=https://your-collector.example
+export PARLOT_ENDPOINT=https://ingest.parlot.ai
 export PARLOT_API_KEY=...
 # Optional model (defaults to a fake echo LLM if OPENAI_API_KEY is unset)
 export OPENAI_API_KEY=...

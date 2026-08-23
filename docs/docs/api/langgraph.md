@@ -47,7 +47,7 @@ Configures Parlot LangGraph instrumentation, registers the LangChain configure h
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `endpoint` | `str \| None` | `None` | Parlot OTLP receiver base URL (e.g. `https://collector.parlot.ai:4318`). If omitted, reads `PARLOT_ENDPOINT`. |
+| `endpoint` | `str \| None` | `None` | Parlot OTLP collector base URL (e.g. `https://ingest.parlot.ai`). If omitted, reads `PARLOT_ENDPOINT`. |
 | `api_key` | `str \| None` | `None` | Org API key minted in Parlot **Settings → API Keys**. If omitted, reads `PARLOT_API_KEY`. |
 | `agent_id` | `str \| None` | `None` | Canonical agent deployment ID stamped on `session.agent_id`. |
 | `version` | `str \| None` | `None` | Deployment version stamped on `gen_ai.agent.version`. Precedence: `version=` kwarg → `__main__.__version__` → `PARLOT_AGENT_VERSION` → local git SHA (dev only). |
