@@ -82,7 +82,7 @@ Already running voice **and** LangGraph / LangChain? Keep one debugger — same 
 
 ## License
 
-Instrumentation packages in this repo are **[MIT](LICENSE)**. The companion analysis platform is **BSL 1.1** (free for your own agents and agents you operate for clients; converts to Apache 2.0 in 2030). Enterprise governance features require an EE license key.
+Instrumentation packages in this repo are **[MIT](LICENSE)**. The companion analysis platform is **BSL 1.1**: free production use up to 4,000 turns/month for your own agents and agents you operate for clients; above that, or to offer Parlot as a hosted service, requires a commercial license. Each version converts to Apache 2.0 four years after its first public release. Enterprise governance features require an EE license key.
 
 ## Development
 
