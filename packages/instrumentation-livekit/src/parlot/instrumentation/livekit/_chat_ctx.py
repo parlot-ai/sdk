@@ -73,7 +73,10 @@ def _join_and_truncate(parts: list[str], *, max_chars: int) -> str:
 
 
 def parse_chat_ctx_agent_config_updates(raw: str) -> list[dict[str, Any]]:
-    """Extract ``agent_config_update`` items from LiveKit ``lk.chat_ctx`` JSON."""
+    """Extract ``agent_config_update`` items from LiveKit chat_ctx JSON.
+
+    Accepts payload from ``lk.pii.chat_ctx`` (Agents 1.7+) or legacy ``lk.chat_ctx``.
+    """
     if not raw:
         return []
     try:
