@@ -57,7 +57,7 @@ Mint the API key in Parlot **Settings → API Keys**. Full checklist (recording,
 
 ## What the sidecar captures
 
-- **Below the agent pipeline** — room events, tracks, media quality, and worker lifecycle on LiveKit (including fully self-hosted media, where LiveKit Agent Insights does not run).
+- **LiveKit-native** — AgentSession lifecycle and pipeline spans (STT / LLM / TTS / tools), including fully self-hosted media where [LiveKit Agent Insights](https://docs.livekit.io/deploy/observability/insights/) does not run.
 - **Conversational turns** — caller, AI agents, and human reps as first-class turns on one timeline.
 - **Graph + waterfall** — handoffs with edge latency; STT / LLM TTFT / TTS / end-to-end timing per turn.
 - **Optional recording** — egress to object storage when enabled in Settings or `configure(record=…)`.
