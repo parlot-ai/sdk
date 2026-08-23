@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "parlot-instrumentation-langgraph"
 version = "0.1.0"
-description = "OTel instrumentation for LangGraph / LangChain agents"
+description = "Parlot turn-model instrumentation for LangGraph / LangChain (same debugger as voice)"
 readme = "README.md"
 license = "MIT"
 authors = [

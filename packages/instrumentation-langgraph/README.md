@@ -1,6 +1,14 @@
 # parlot-instrumentation-langgraph
 
-OpenTelemetry instrumentation for LangGraph / LangChain agents.
+MIT OpenTelemetry instrumentation for **LangGraph / LangChain** agents — the text/webchat path into [Parlot](https://parlot.ai).
+
+Parlot’s lead product is **production voice AI observability** on LiveKit. Use this package when you already run voice **and** want the **same debugger** for LangGraph / LangChain sessions (same turn model — not a separate observability product). Prefer [`parlot-instrumentation-livekit`](https://pypi.org/project/parlot-instrumentation-livekit/) for voice agents.
+
+```bash
+pip install parlot-instrumentation-langgraph
+# or: uv add parlot-instrumentation-langgraph
+# or: pip install "parlot[langgraph]"
+```
 
 ```python
 from parlot.instrumentation.langgraph import configure
@@ -34,3 +42,5 @@ When used inside a LiveKit voice agent that already called
 operational spans under the active LiveKit session and does **not** emit
 duplicate `parlot.session` / `parlot.turn` spans — LiveKit owns channel and
 modality.
+
+**Docs:** [LangGraph guide](https://parlot.ai/docs/guides/langgraph) · [Concepts](https://parlot.ai/docs/concepts) · [parlot.ai](https://parlot.ai)
