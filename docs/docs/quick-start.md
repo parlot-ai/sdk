@@ -1,16 +1,14 @@
 ---
 title: Quick Start
-description: Install Parlot and instrument a LiveKit agent in minutes.
+description: Production voice AI observability — instrument a LiveKit agent in minutes.
 sidebar_position: 1
 ---
 
 # Quick Start
 
-Parlot is an open-source SDK and instrumentation stack for multi-agent observability. Start with LiveKit Agents. The hosted analysis platform (dashboard, goal scoring, graphs) is commercial; production Docker self-host is licensed at Scale/Enterprise.
+**Know if your voice agent is actually working.** Parlot’s MIT `configure()` sidecar instruments [LiveKit Agents](https://docs.livekit.io/agents/) — Cloud, self-hosted, or [LiveKit on Telnyx](https://telnyx.com/products/livekit-on-telnyx) — and models each call as turns: timeline, multi-agent graph, and goal completion with an evidence trail to the proving turns and audio.
 
 ## Install
-
-Install the instrumentation package using `pip` or `uv`:
 
 ```bash
 # Using pip
@@ -56,3 +54,8 @@ Mint the API key in Parlot **Settings → API Keys**. For recording, enable Sett
 - [Core concepts](./concepts.md)
 - [LiveKit guide](./guides/livekit.md)
 - [API Reference](./api/index.mdx)
+- Already running LangGraph / LangChain alongside voice? See the [LangGraph guide](./guides/langgraph.md).
+
+## License
+
+Instrumentation is **MIT**. The companion analysis platform is **BSL 1.1** (free for your own agents and agents you operate for clients; converts to Apache 2.0 in 2030). Enterprise governance features require an EE license key.
