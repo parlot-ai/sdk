@@ -1,6 +1,6 @@
 # Parlot SDK
 
-Open-source ([MIT](LICENSE)) Python SDK and instrumentation libraries for the [Parlot.ai](https://parlot.ai) AI agent observability platform.
+Open-source ([MIT](LICENSE)) Python SDK and instrumentation libraries for the [Parlot.ai](https://parlot.ai) AI agent observability platform. The companion analysis platform (self-host) is licensed under BSL 1.1 — free for your own agents and agents you operate for clients, converting to Apache 2.0 in 2030. Enterprise governance features require an EE license key.
 
 **Contributing / releases:** see [CONTRIBUTING.md](CONTRIBUTING.md) (PR-only `main`, conventional PR titles, Release Please).
 
