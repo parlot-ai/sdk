@@ -43,7 +43,7 @@ async def entrypoint(ctx: JobContext):
 ## Environment
 
 ```bash
-export PARLOT_ENDPOINT=https://<your-collector-host>:4318
+export PARLOT_ENDPOINT=https://ingest.parlot.ai
 export PARLOT_API_KEY=<org-scoped-key>
 ```
 

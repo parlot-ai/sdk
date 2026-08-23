@@ -48,7 +48,7 @@ Initializes the OpenTelemetry tracer provider, registers span processors, patche
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `endpoint` | `str \| None` | `None` | Parlot OTLP receiver base URL (e.g. `https://collector.parlot.ai:4318`). If omitted, reads the `PARLOT_ENDPOINT` environment variable. |
+| `endpoint` | `str \| None` | `None` | Parlot OTLP collector base URL (e.g. `https://ingest.parlot.ai`). If omitted, reads the `PARLOT_ENDPOINT` environment variable. |
 | `api_key` | `str \| None` | `None` | Org-scoped API key minted in Parlot **Settings → API Keys**. If omitted, reads `PARLOT_API_KEY`. Required for audio recording grants, remote telemetry bootstrap, and self-diagnostics. |
 | `agent_id` | `str \| None` | `None` | Canonical deployment identity stamped onto `session.agent_id` on the `parlot.session` span. If omitted, falls back to LiveKit's `WorkerOptions.agent_name` or `PARLOT_AGENT_ID`. |
 | `version` | `str \| None` | `None` | Deployment version stamped onto `gen_ai.agent.version`. Precedence: `version=` kwarg → `__main__.__version__` / `VERSION` → `PARLOT_AGENT_VERSION` → local git SHA (dev only). |

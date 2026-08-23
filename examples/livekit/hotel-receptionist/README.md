@@ -14,17 +14,17 @@ Recording is **off** (`configure(..., record=False)`) — telemetry only.
 Requires [uv](https://docs.astral.sh/uv/).
 
 ```bash
-cd sdk/examples/livekit/hotel-receptionist
+cd examples/livekit/hotel-receptionist
 uv sync
 cp .env.example .env
-# edit .env — LIVEKIT_* for Inference; PARLOT_* for the collector
+# edit .env — LIVEKIT_* for Inference; PARLOT_* for ingest
 ```
 
-For local platform ingest, point Parlot at the collector:
+Point Parlot at the hosted collector:
 
 ```bash
-PARLOT_ENDPOINT=http://localhost:4318
-PARLOT_API_KEY=<minted key from Parlot Settings → API Keys>
+PARLOT_ENDPOINT=https://ingest.parlot.ai
+PARLOT_API_KEY=<org key from Settings → API Keys>
 ```
 
 Optional seed DB file for inspection:

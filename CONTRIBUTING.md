@@ -21,7 +21,4 @@ Examples: `feat: capture AMD latency`, `fix: flush spans on shutdown`, `docs: up
 
 ## Releases (SDK)
 
-Merging the Release Please PR cuts the package tag(s) and changelog. SDK releases **do not** deploy Parlot Cloud staging/production — that is driven by **platform** release tags.
-
-Cloud release / promote runbook:  
-[parlot-infra → Releasing](https://github.com/parlot-ai/parlot-infra/blob/main/internal-docs/infrastructure/releasing.md).
+Merging the Release Please PR cuts the package tag(s) and changelog. SDK releases **do not** deploy Parlot Cloud staging/production.

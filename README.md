@@ -49,7 +49,7 @@ async def entrypoint(ctx: JobContext):
 ```
 
 ```bash
-export PARLOT_ENDPOINT=https://<your-collector-host>:4318
+export PARLOT_ENDPOINT=https://ingest.parlot.ai
 export PARLOT_API_KEY=<org-scoped-key>
 ```
 
@@ -65,16 +65,16 @@ Mint the API key in Parlot **Settings → API Keys**. Full checklist (recording,
 
 ## Examples
 
-| Example | Description | Parlot install |
-|---------|-------------|----------------|
-| [`examples/livekit/livekit-voice/`](examples/livekit/livekit-voice/) | Minimal hello-world LiveKit agent | Path (monorepo dev) |
-| [`examples/livekit/multi-agent/`](examples/livekit/multi-agent/) | Storytelling handoffs (graph demo) | Path (monorepo dev) |
-| [`examples/livekit/restaurant-agent/`](examples/livekit/restaurant-agent/) | Greeter → specialist routing | Path (monorepo dev) |
-| [`examples/livekit/hotel-receptionist/`](examples/livekit/hotel-receptionist/) | Boutique-hotel receptionist + persona sessions | Path (monorepo dev) |
-| [`examples/livekit/healthcare/`](examples/livekit/healthcare/) | Front desk (intake, appointments, billing) + persona sims | Path (monorepo dev) |
-| [`examples/livekit/drive-thru/`](examples/livekit/drive-thru/) | Ordering with dynamic tools + persona sims | Path (monorepo dev) |
-| [`examples/livekit/persona_sim/`](examples/livekit/persona_sim/) | Shared persona-LLM text session driver | — |
-| [`examples/langgraph/minimal-agent/`](examples/langgraph/minimal-agent/) | Standalone LangGraph + `configure()` | Path (monorepo dev) |
+| Example | Description |
+|---------|-------------|
+| [`examples/livekit/livekit-voice/`](examples/livekit/livekit-voice/) | Minimal hello-world LiveKit agent |
+| [`examples/livekit/multi-agent/`](examples/livekit/multi-agent/) | Storytelling handoffs (graph demo) |
+| [`examples/livekit/restaurant-agent/`](examples/livekit/restaurant-agent/) | Greeter → specialist routing |
+| [`examples/livekit/hotel-receptionist/`](examples/livekit/hotel-receptionist/) | Boutique-hotel receptionist + persona sessions |
+| [`examples/livekit/healthcare/`](examples/livekit/healthcare/) | Front desk (intake, appointments, billing) + persona sims |
+| [`examples/livekit/drive-thru/`](examples/livekit/drive-thru/) | Ordering with dynamic tools + persona sims |
+| [`examples/livekit/persona_sim/`](examples/livekit/persona_sim/) | Shared persona-LLM text session driver |
+| [`examples/langgraph/minimal-agent/`](examples/langgraph/minimal-agent/) | Standalone LangGraph + `configure()` |
 
 ## LangGraph / text agents
 
@@ -87,7 +87,6 @@ Instrumentation packages in this repo are **[MIT](LICENSE)**. The companion anal
 ## Development
 
 ```bash
-cd sdk
 uv sync --group dev
 uv run pytest -q
 ```
@@ -125,14 +124,11 @@ CI commit env vars (`GITHUB_SHA`, etc.) and installed package metadata are **not
 
 Under LiveKit `dev` / spawned `job_proc` workers, `__main__` is often not your agent file, so `__version__` on the entrypoint may not resolve. Prefer `configure(version=...)` or `PARLOT_AGENT_VERSION`. See [instrumentation-livekit README — What to expect for version](packages/instrumentation-livekit/README.md#what-to-expect-for-version).
 
-### Local Dev with Platform Collector
+### Send telemetry to Parlot
 
-Point the agent at the platform OTLP receiver (no path suffix — the SDK appends `/v1/traces` and `/v1/metrics`):
+Point the agent at the hosted OTLP collector (no path suffix — the SDK appends `/v1/traces` and `/v1/metrics`):
 
 ```bash
-export PARLOT_ENDPOINT=http://localhost:4318
-# Mint in Parlot Settings → API Keys (or POST /v1/settings/api-keys), then:
-export PARLOT_API_KEY=<minted-org-key>
+export PARLOT_ENDPOINT=https://ingest.parlot.ai
+export PARLOT_API_KEY=<org key from Settings → API Keys>
 ```
-
-Full stack (collector, API, agent, resolve): [platform Local E2E runbook](https://github.com/parlot-ai/platform#local-e2e-runbook-dev-onboarding) (§6a mint key).

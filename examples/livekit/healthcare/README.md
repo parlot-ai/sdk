@@ -15,10 +15,10 @@ Recording is **off** (`configure(..., record=False)`) — telemetry only.
 ## Setup
 
 ```bash
-cd sdk/examples/livekit/healthcare
+cd examples/livekit/healthcare
 uv sync
 cp .env.example .env
-# LIVEKIT_* for Inference; PARLOT_ENDPOINT=http://localhost:4318 + PARLOT_API_KEY
+# LIVEKIT_* for Inference; PARLOT_ENDPOINT=https://ingest.parlot.ai + PARLOT_API_KEY
 ```
 
 For live warm-transfer, also set `LIVEKIT_SIP_OUTBOUND_TRUNK`,
