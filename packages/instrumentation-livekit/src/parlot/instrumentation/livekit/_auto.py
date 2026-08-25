@@ -194,18 +194,8 @@ def _fetch_and_cache_bootstrap(endpoint: str, api_key: str) -> None:
     payload = fetch_telemetry_bootstrap(endpoint, api_key)
     if payload is None:
         return
-    # Re-apply so LiveKit signing key is layered on the platform runtime.
-    webhook_confirmation = apply_bootstrap_payload(endpoint, api_key, payload)
-    if webhook_confirmation:
-        logger.debug(
-            "parlot: telemetry bootstrap cached (egress webhook confirmation enabled)"
-        )
-    else:
-        logger.debug(
-            "parlot: telemetry bootstrap cached "
-            "(recording can still run; configure LiveKit integration for "
-            "faster audio confirmation via webhooks)"
-        )
+    apply_bootstrap_payload(endpoint, api_key, payload)
+    logger.debug("parlot: telemetry bootstrap cached")
 
 
 def _build_provider(

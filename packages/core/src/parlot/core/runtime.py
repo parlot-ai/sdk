@@ -1,4 +1,4 @@
-"""Cached Parlot platform bootstrap (org, R2, egress webhook URL, recording, logs, content)."""
+"""Cached Parlot platform bootstrap (org, R2, recording, logs, content)."""
 
 from __future__ import annotations
 
@@ -15,7 +15,6 @@ class ParlotRuntimeContext:
     org_id: str
     content_bucket: str
     r2_endpoint: str
-    egress_webhook_url: str
     recording_globs: tuple[str, ...] = ()
     recording_agents: tuple[tuple[str, bool], ...] = ()
     logs_globs: tuple[str, ...] = ()
@@ -172,7 +171,6 @@ def runtime_from_bootstrap(
         org_id=str(payload.get("org_id") or ""),
         content_bucket=str(payload.get("content_bucket") or ""),
         r2_endpoint=str(payload.get("r2_endpoint") or ""),
-        egress_webhook_url=str(payload.get("egress_webhook_url") or ""),
         recording_globs=globs,
         recording_agents=agents,
         logs_globs=logs_globs,

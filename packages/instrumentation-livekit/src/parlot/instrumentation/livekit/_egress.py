@@ -17,7 +17,6 @@ from parlot.core.attrs import (
 from parlot.core.runtime import get_runtime
 
 from ._recording_guard import should_record
-from ._runtime_context import get_livekit_runtime
 
 logger = logging.getLogger("parlot.instrumentation.livekit")
 
@@ -84,9 +83,6 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
         logger.error("parlot: egress skipped — bootstrap not loaded")
         return
 
-    lk_runtime = get_livekit_runtime()
-    signing_key = (lk_runtime.webhook_signing_key if lk_runtime else "") or ""
-
     room = getattr(ctx, "room", None)
     room_name = getattr(room, "name", None) or getattr(ctx, "room_name", None)
     if not room_name:
@@ -137,30 +133,11 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
         s3=api.S3Upload(**s3_kwargs),
     )
 
-    webhook_url = (runtime.egress_webhook_url or "").strip()
-    webhooks: list[Any] = []
-    if signing_key and webhook_url:
-        webhooks = [
-            api.WebhookConfig(
-                url=webhook_url,
-                signing_key=signing_key,
-            )
-        ]
-    elif not signing_key:
-        logger.info(
-            "parlot: starting egress without LiveKit webhook confirmation "
-            "(audio_available will rely on R2 reconcile when the session is opened)"
-        )
-
-    req_kwargs: dict[str, object] = {
-        "room_name": str(room_name),
-        "audio_only": True,
-        "file_outputs": [file_output],
-    }
-    if webhooks:
-        req_kwargs["webhooks"] = webhooks
-
-    req = api.RoomCompositeEgressRequest(**req_kwargs)
+    req = api.RoomCompositeEgressRequest(
+        room_name=str(room_name),
+        audio_only=True,
+        file_outputs=[file_output],
+    )
 
     lkapi = api.LiveKitAPI(lk_url, lk_key, lk_secret)
     try:
@@ -190,8 +167,3 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
         egress_id,
         audio_uri,
     )
-    if webhooks and ("localhost" in webhook_url or "127.0.0.1" in webhook_url):
-        logger.warning(
-            "parlot: egress webhook URL is %s — LiveKit Cloud cannot POST to localhost; ",
-            webhook_url,
-        )

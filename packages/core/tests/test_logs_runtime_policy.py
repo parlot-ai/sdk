@@ -22,7 +22,6 @@ def test_runtime_parses_logs_agent_objects() -> None:
             "org_id": "org-1",
             "content_bucket": "b",
             "r2_endpoint": "https://r2",
-            "egress_webhook_url": "https://wh",
             "logs": {
                 "globs": ["*"],
                 "min_level": "INFO",
@@ -61,7 +60,6 @@ def test_handler_uses_agent_min_level_from_bootstrap() -> None:
                 "org_id": "org-1",
                 "content_bucket": "b",
                 "r2_endpoint": "https://r2",
-                "egress_webhook_url": "https://wh",
                 "logs": {
                     "globs": ["*"],
                     "min_level": "WARNING",
