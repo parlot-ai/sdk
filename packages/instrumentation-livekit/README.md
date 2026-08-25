@@ -76,7 +76,7 @@ Always call `ctx.connect()` in production agents and in all Parlot examples.
 
 ## Environment
 
-Set `PARLOT_ENDPOINT` and `PARLOT_API_KEY`. The API key is **org-scoped** — mint it in Parlot **Settings → API Keys** (shown once on create). Recording needs Settings → Recording (or `configure(record=…)` / job metadata) plus agent `LIVEKIT_*` credentials. Org **LiveKit integration** (signing key + API secret) is optional: it enables signed egress webhooks for faster `audio_available` confirmation; without it, recordings still upload to R2 and confirm via lazy R2 reconcile when the session is opened.
+Set `PARLOT_ENDPOINT` and `PARLOT_API_KEY`. The API key is **org-scoped** — mint it in Parlot **Settings → API Keys** (shown once on create). Recording needs Settings → Recording (or `configure(record=…)` / job metadata) plus agent `LIVEKIT_*` credentials. Recordings upload to R2 and confirm via lazy R2 reconcile when the session is opened.
 
 Recording policy (precedence: job metadata → `configure(record=…)` → Settings → Recording via bootstrap):
 

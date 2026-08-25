@@ -47,7 +47,7 @@ export PARLOT_ENDPOINT=https://ingest.parlot.ai
 export PARLOT_API_KEY=<org-scoped-key>
 ```
 
-Mint the API key in Parlot **Settings → API Keys**. For recording, enable Settings → Recording (or `configure(record=True)`). Org LiveKit integration is optional — it speeds up audio confirmation via egress webhooks; without it, audio still uploads to R2 and confirms when you open the session.
+Mint the API key in Parlot **Settings → API Keys**. For recording, enable Settings → Recording (or `configure(record=True)`). Audio uploads to R2 and confirms when you open the session (lazy R2 HEAD reconcile).
 
 ## Next
 

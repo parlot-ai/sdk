@@ -6,9 +6,9 @@ sidebar_position: 1
 
 # LiveKit
 
-Parlot stays **OpenTelemetry–first**: agent telemetry uses **OTLP** and standard / Parlot semantic attributes. Session **audio** is stored in **Cloudflare R2** via **LiveKit Room Composite Egress**; Parlot confirms uploads with a signed **`egress_ended`** webhook.
+Parlot stays **OpenTelemetry–first**: agent telemetry uses **OTLP** and standard / Parlot semantic attributes. Session **audio** is stored in **Cloudflare R2** via **LiveKit Room Composite Egress**; Parlot confirms uploads with **lazy R2 HEAD reconcile** when you open the session.
 
-> **Webhooks are recording-only.** Session transcript, turns, waterfall, usage, and close outcome come from **OTLP** (agent `configure()`). If LiveKit never reaches Parlot with `egress_ended`, the session still looks complete — only `audio_available` / duration confirmation is delayed. Opening `GET /v1/sessions/:id` can still flip audio on via **R2 HEAD reconcile** when the object already exists in R2. You do not need project-level LiveKit webhooks for telemetry.
+> Session transcript, turns, waterfall, usage, and close outcome come from **OTLP** (agent `configure()`). Audio confirmation (`audio_available`) happens when you open `GET /v1/sessions/:id` and the object already exists in R2.
 
 ## Get instrumentation working
 
@@ -114,32 +114,24 @@ Turn-level **`has_error`** is derived at query time — see [Concepts](../concep
 Recording uses **Room Composite Egress** (OGG, audio-only) to R2. Flow:
 
 1. Agent calls **`POST /v1/recordings/upload-grant`** → JWT-minted temporary R2 credentials (scoped to `{org}/sessions/{sessionId}/`) + canonical `r2://…/audio.ogg` URI.
-2. Agent starts egress (OGG → R2). When a LiveKit webhook signing key is present on bootstrap, the SDK also sends **`WebhookConfig`** (URL + signing key).
+2. Agent starts egress (OGG → R2) using agent `LIVEKIT_*` credentials.
 3. OTLP exports `session.recording.audio_uri`, `session.recording.anchor_wall_ms`, `session.recording.egress_id` with **`audio_available=false`** until confirmation. On egress failure, `session.recording.webhook_error` is stamped instead.
-4. When webhooks are configured, LiveKit POSTs **`egress_ended`** to Parlot → `audio_available=true` + duration. Without webhooks, opening `GET /v1/sessions/:id` can still flip audio on via **R2 HEAD reconcile**.
+4. Opening `GET /v1/sessions/:id` runs **R2 HEAD reconcile** → `audio_available=true` when the object exists.
 
-### LiveKit integration in Parlot (recommended for faster confirmation)
-
-Org LiveKit API key/secret in Settings → Integrations are for signed egress **webhooks** (faster `audio_available` confirmation). **Recordings can still start and upload to R2 without them**; confirmation in the UI may take longer until you open the session (lazy R2 HEAD reconcile). Session telemetry over OTLP does not depend on this integration.
+### Setup checklist
 
 1. LiveKit Cloud → **Settings → Keys** → create an API key with **`roomRecord`** (needed on the **agent** to start egress via `LIVEKIT_*`).
 2. Parlot → **Settings → API Keys** — mint a key for the same org; set it as `PARLOT_API_KEY` on the agent.
 3. Enable recording in Parlot → **Settings → Recording** (toggle the agent, or set globs / `*` for new agents), or call `configure(record=True)` / place `{ "record": true }` in job metadata for unnamed dispatches.
-4. **Optional — faster confirmation:** Parlot → **Settings → Integrations → LiveKit** (`PUT /v1/settings/integrations` with `name: "livekit"`):
-   - **LiveKit API key** — used in `WebhookConfig.signing_key` when starting egress with webhooks
-   - **LiveKit API secret** — used server-side only to verify egress webhook signatures (encrypted at rest; never sent to the worker)
-
-**No** project-level webhook URL in LiveKit Cloud — when the signing key is present, the SDK sends `WebhookConfig` on each egress request. Not required for session telemetry (OTLP).
 
 ### If recording stays “processing”
 
 | Symptom | Likely cause |
 |---------|----------------|
 | No egress started | Settings → Recording / `configure(record=…)` / job `{ "record": true }`; agent `LIVEKIT_*`; R2 on collector (`503 r2_not_configured`) |
-| Slow audio confirmation (no webhook) | Expected without LiveKit integration — open the session to trigger R2 HEAD reconcile, or save LiveKit API key/secret |
-| `audio_available=false` until opened | Webhook delivery failed or signature mismatch; opening the session may still reconcile via R2 HEAD |
+| `audio_available=false` until opened | Expected — open the session to trigger R2 HEAD reconcile |
 | No URI in session | Egress failed — check agent logs; grant expired; Settings → Recording / `configure(record=…)` / metadata |
-| Delayed confirmation | Parlot **R2 HEAD reconcile** on `GET /v1/sessions/:id` may flip `audio_available` without webhook |
+| Delayed confirmation | Parlot **R2 HEAD reconcile** on `GET /v1/sessions/:id` flips `audio_available` after the object lands in R2 |
 
 ---
 
@@ -380,7 +372,7 @@ With **`parlot.configure()` only** (events + Parlot OTLP, no LiveKit pipeline sp
 - **Episode record** — paste session id → read the call: turns, roles, text, close outcome, coarse usage, handoffs, intent label.
 - **Session list / search** — metadata, end state, token totals, participant count.
 - **Evals on transcript** — session-close workers can still score user turns from stored text.
-- **Recording** — egress to R2 when `PARLOT_API_KEY` and recording policy are set; org LiveKit integration is optional (faster webhook confirmation; otherwise R2 reconcile).
+- **Recording** — egress to R2 when `PARLOT_API_KEY` and recording policy are set; audio confirms via R2 reconcile when the session is opened.
 
 **Not available** (or materially degraded) without pipeline spans:
 
@@ -407,7 +399,6 @@ With **`parlot.configure()` only** (events + Parlot OTLP, no LiveKit pipeline sp
 |--------|----------------|--------|
 | **OTLP** | Agent (`PARLOT_*`, `configure()`) | Traces, refs, optimistic `session.recording.audio_uri`, anchor, `session.recording.egress_id`, or `session.recording.webhook_error` |
 | **Upload grant** | Agent → collector | Scoped temp R2 creds (`session_token`) for LiveKit egress |
-| **Egress webhook** | LiveKit → collector | Confirms upload, duration, `audio_available=true` |
-| **R2 reconcile** | Session API (lazy) | Safety net when webhook is delayed |
+| **R2 reconcile** | Session API (lazy) | Confirms upload → `audio_available=true` when the object exists |
 
-For platform env (`R2_ACCOUNT_ID`, `R2_CONTENT_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` on collector + API, `PARLOT_PUBLIC_INGEST_URL` for webhooks, `DATABASE_URL`, integration secrets), see the platform local E2E runbook. R2 key scheme: `{org_id}/sessions/{session_id}/audio.ogg`.
+For platform env (`R2_ACCOUNT_ID`, `R2_CONTENT_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` on collector + API, `DATABASE_URL`), see the platform local E2E runbook. R2 key scheme: `{org_id}/sessions/{session_id}/audio.ogg`.

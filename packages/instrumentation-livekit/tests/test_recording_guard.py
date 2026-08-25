@@ -55,7 +55,6 @@ class TestLiveKitRecordingGuard:
                 org_id="o",
                 content_bucket="b",
                 r2_endpoint="http://r2",
-                egress_webhook_url="http://hook",
                 recording_globs=("*",),
             )
         )
@@ -70,7 +69,6 @@ class TestLiveKitRecordingGuard:
                 org_id="o",
                 content_bucket="b",
                 r2_endpoint="http://r2",
-                egress_webhook_url="http://hook",
                 recording_globs=("*",),
             )
         )
@@ -89,7 +87,6 @@ class TestLiveKitRecordingGuard:
                 org_id="o",
                 content_bucket="b",
                 r2_endpoint="http://r2",
-                egress_webhook_url="http://hook",
                 recording_agents=(("custom-id", True),),
             )
         )
@@ -126,7 +123,6 @@ class TestLiveKitGenAIContentCaptureGuard:
                 org_id="o",
                 content_bucket="b",
                 r2_endpoint="http://r2",
-                egress_webhook_url="http://hook",
                 capture_genai_content_globs=("*",),
                 capture_genai_content_agents=(("receptionist", False),),
                 capture_genai_content_policy_present=True,
@@ -143,7 +139,6 @@ class TestLiveKitGenAIContentCaptureGuard:
                 org_id="o",
                 content_bucket="b",
                 r2_endpoint="http://r2",
-                egress_webhook_url="http://hook",
                 capture_genai_content_globs=(),
                 capture_genai_content_policy_present=True,
             )
@@ -158,7 +153,6 @@ class TestLiveKitGenAIContentCaptureGuard:
                 org_id="o",
                 content_bucket="b",
                 r2_endpoint="http://r2",
-                egress_webhook_url="http://hook",
                 capture_genai_content_globs=(),
                 capture_genai_content_policy_present=True,
             )
