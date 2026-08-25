@@ -1,11 +1,10 @@
 # Changelog
 
-## [0.1.1](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.1.0...instrumentation-livekit-v0.1.1) (2026-08-25)
+## [0.1.1](https://github.com/parlot-ai/sdk/compare/instrumentation-langgraph-v0.1.0...instrumentation-langgraph-v0.1.1) (2026-08-25)
 
 
 ### Features
 
-* **livekit:** accept lk.pii.* attribute keys from Agents 1.7 ([#21](https://github.com/parlot-ai/sdk/issues/21)) ([2853a40](https://github.com/parlot-ai/sdk/commit/2853a40ff568af4a10159aad94c31b129ad1bc37))
 * multi-framework GenAI vocabulary + LangGraph configure() ([#3](https://github.com/parlot-ai/sdk/issues/3)) ([8d5b3a8](https://github.com/parlot-ai/sdk/commit/8d5b3a8e7ccece33f09b4b31a424721eb54286ef))
 * prepare SDK packages and workflows for public PyPI release ([#15](https://github.com/parlot-ai/sdk/issues/15)) ([2c02e09](https://github.com/parlot-ai/sdk/commit/2c02e09960726605b937578b9f095f77f5a7f73a))
 * resolve generative AI content capture from telemetry bootstrap ([#12](https://github.com/parlot-ai/sdk/issues/12)) ([e3be83b](https://github.com/parlot-ai/sdk/commit/e3be83b14235f0b7cb718e9f97fb0dc4188e423d))
@@ -19,13 +18,4 @@
 
 ### Documentation
 
-* merge LiveKit guides and extract agnostic Concepts ([#6](https://github.com/parlot-ai/sdk/issues/6)) ([dfe6247](https://github.com/parlot-ai/sdk/commit/dfe62471afc521db16d0bc1a034ebcb066900a7e))
-* note livekit conversation_id equals session_id for now ([#7](https://github.com/parlot-ai/sdk/issues/7)) ([393eaf2](https://github.com/parlot-ai/sdk/commit/393eaf2c94f7e71ca4bab2eb100231ff530e8545))
 * rewrite README, Quick Start, and PyPI package copy for voice GTM ([#22](https://github.com/parlot-ai/sdk/issues/22)) ([5066319](https://github.com/parlot-ai/sdk/commit/5066319503d03060c783f9a3622bd30b50b05e59))
-
-## [0.1.0](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.0.0...instrumentation-livekit-v0.1.0) (2026-05-15)
-
-
-### Features
-
-* LiveKit span processor with `platform.ref.*` stamping for session resolve
