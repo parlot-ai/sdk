@@ -25,7 +25,7 @@ from parlot.instrumentation.livekit import configure
 
 __version__ = "0.1.0"
 
-configure(agent_id="hotel-receptionist", version=__version__, record=False)
+configure(agent_id="hotel-receptionist", version=__version__)
 
 from benchmark import build_expected, diff_databases
 from common import Userdata

@@ -7,7 +7,7 @@ in-memory SQLite seed database.
 Integration requirements (`configure()` + `await ctx.connect()` for LiveKit
 jobs): see [instrumentation-livekit README](../../packages/instrumentation-livekit/README.md#integration-checklist).
 
-Recording is **off** (`configure(..., record=False)`) — telemetry only.
+Recording follows Parlot **Settings → Recording** (telemetry bootstrap). Override per job with `{ "record": true|false }` in dispatch metadata or `configure(record=…)` in code.
 
 ## Setup
 
@@ -73,7 +73,7 @@ uv run python agent.py dev
 ## Architecture
 
 ```
-agent.py             — HotelReceptionistAgent + Parlot configure(record=False)
+agent.py             — HotelReceptionistAgent + Parlot configure()
 sim_adapter.py       — hooks for shared persona-sim driver
 ../persona_sim/      — shared persona-LLM guest + AgentSession.run() driver
 sim_scenarios.yaml   — curated PERSONA scenarios (default)
