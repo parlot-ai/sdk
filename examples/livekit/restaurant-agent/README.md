@@ -6,6 +6,8 @@ Uses LiveKit Inference for STT/LLM/TTS (no separate provider API keys required w
 
 Integration requirements (`configure()` + `await ctx.connect()`): see [instrumentation-livekit README](../../packages/instrumentation-livekit/README.md#integration-checklist).
 
+Recording follows Parlot **Settings → Recording** (telemetry bootstrap). Override per job with `{ "record": true|false }` in dispatch metadata or `configure(record=…)` in code.
+
 ## Setup
 
 ```bash

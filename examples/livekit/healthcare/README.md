@@ -10,7 +10,7 @@ not require SIP.
 Integration requirements (`configure()` + `await ctx.connect()`): see
 [instrumentation-livekit README](../../../packages/instrumentation-livekit/README.md#integration-checklist).
 
-Recording is **off** (`configure(..., record=False)`) — telemetry only.
+Recording follows Parlot **Settings → Recording** (telemetry bootstrap). Override per job with `{ "record": true|false }` in dispatch metadata or `configure(record=…)` in code.
 
 ## Setup
 

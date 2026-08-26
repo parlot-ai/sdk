@@ -27,7 +27,7 @@ from parlot.instrumentation.livekit import configure
 
 __version__ = "0.1.0"
 
-configure(agent_id="drive-thru", version=__version__, record=False)
+configure(agent_id="drive-thru", version=__version__)
 
 from livekit.agents import (
     Agent,
