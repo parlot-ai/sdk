@@ -11,12 +11,13 @@ import httpx
 from parlot.core.attrs import (
     ATTR_SESSION_RECORDING_ANCHOR_WALL_MS,
     ATTR_SESSION_RECORDING_AUDIO_URI,
+    ATTR_SESSION_RECORDING_DISABLED_REASON,
     ATTR_SESSION_RECORDING_EGRESS_ID,
     ATTR_SESSION_RECORDING_WEBHOOK_ERROR,
 )
 from parlot.core.runtime import get_runtime
 
-from ._recording_guard import should_record
+from ._recording_guard import recording_disabled_reason, should_record
 
 logger = logging.getLogger("parlot.instrumentation.livekit")
 
@@ -39,6 +40,15 @@ def _stamp_recording_webhook_error(bootstrap: Any, error: str) -> None:
         if session_span.is_recording():
             session_span.set_attribute(ATTR_SESSION_RECORDING_WEBHOOK_ERROR, error)
     logger.warning("parlot: recording failed — %s", error)
+
+
+def _stamp_recording_disabled(bootstrap: Any, reason: str) -> None:
+    """Record why egress was not started (Settings / configure / job metadata)."""
+    session_span = bootstrap.session_span
+    if session_span is not None and hasattr(session_span, "is_recording"):
+        if session_span.is_recording():
+            session_span.set_attribute(ATTR_SESSION_RECORDING_DISABLED_REASON, reason)
+    logger.debug("parlot: recording disabled — %s", reason)
 
 
 async def _fetch_upload_grant(session_id: str, room_name: str) -> Optional[dict]:
@@ -67,12 +77,14 @@ async def _fetch_upload_grant(session_id: str, room_name: str) -> Optional[dict]
 
 async def maybe_start_room_composite_egress(ctx: Any) -> None:
     """Start OGG room composite egress to R2 when recording policy allows."""
-    if not should_record(ctx):
-        return
-
     from parlot.instrumentation.livekit._session import get_job_bootstrap
 
     bootstrap = get_job_bootstrap()
+    if not should_record(ctx):
+        if bootstrap is not None:
+            _stamp_recording_disabled(bootstrap, recording_disabled_reason(ctx))
+        return
+
     if bootstrap is None:
         logger.warning("parlot: egress skipped — no active job bootstrap")
         return
