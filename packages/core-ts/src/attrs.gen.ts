@@ -83,6 +83,7 @@ export const ATTR_SESSION_RECORDING_ANCHOR_WALL_MS = "session.recording.anchor_w
 export const ATTR_SESSION_RECORDING_AUDIO_URI = "session.recording.audio_uri" as const;
 export const ATTR_SESSION_RECORDING_EGRESS_ID = "session.recording.egress_id" as const;
 export const ATTR_SESSION_RECORDING_WEBHOOK_ERROR = "session.recording.webhook_error" as const;
+export const ATTR_SESSION_RECORDING_DISABLED_REASON = "session.recording.disabled_reason" as const;
 export const ATTR_SESSION_LANGUAGES = "session.languages" as const;
 export const ATTR_SESSION_CLOSE_REASON = "session.close_reason" as const;
 export const ATTR_SESSION_USER_ID = "session.user_id" as const;

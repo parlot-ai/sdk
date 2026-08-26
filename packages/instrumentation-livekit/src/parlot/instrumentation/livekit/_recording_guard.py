@@ -88,6 +88,28 @@ def should_record(ctx: Any) -> bool:
     )
 
 
+def recording_disabled_reason(ctx: Any) -> str:
+    """Why recording is off for this job (call only when ``should_record`` is False)."""
+    metadata = metadata_record_flag(ctx)
+    if metadata is False:
+        return "job_metadata"
+
+    configure = configured_record()
+    if configure is False:
+        return "configure"
+
+    runtime = get_runtime()
+    agent = recording_agent_id_from_ctx(ctx)
+    agents = runtime.recording_agents_map() if runtime else {}
+    if agent in agents and not agents[agent]:
+        return "agent_override"
+
+    if isinstance(configure, (list, tuple)) and configure:
+        return "configure"
+
+    return "policy"
+
+
 def should_capture_genai_content(ctx: Any | None = None, *, agent_id: str = "") -> bool:
     """Return True when generative AI / tool content bodies should be captured for this job."""
     runtime = get_runtime()
