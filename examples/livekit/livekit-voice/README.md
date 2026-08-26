@@ -4,7 +4,7 @@ Demonstrates Parlot instrumentation on a standard LiveKit voice agent.
 
 ## Setup
 
-Requires [uv](https://docs.astral.sh/uv/).
+Requires [uv](https://docs.astral.sh/uv/) and the [LiveKit CLI](https://docs.livekit.io/reference/developer-tools/livekit-cli/) (`lk`).
 
 ```bash
 cd examples/livekit/livekit-voice
@@ -24,7 +24,7 @@ source .env
 ## Run
 
 ```bash
-uv run python agent.py dev
+lk agent dev
 ```
 
 You will see OTel spans exported to `PARLOT_ENDPOINT` after a job connects.

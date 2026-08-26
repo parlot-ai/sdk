@@ -20,7 +20,7 @@ cp .env.example .env
 ## Run
 
 ```bash
-uv run python agent.py dev
+lk agent dev
 ```
 
 Agent handoffs (greeter → reservation/takeaway/checkout) appear in Parlot telemetry.
