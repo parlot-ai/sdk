@@ -18,13 +18,15 @@ This directory contains reference implementations of AI agents instrumented with
 
 Each example uses editable local path dependencies to `packages/*` so SDK changes are immediately available.
 
+Requires [uv](https://docs.astral.sh/uv/) and the [LiveKit CLI](https://docs.livekit.io/reference/developer-tools/livekit-cli/) (`lk`) for local agent dev/console.
+
 ```bash
 cd examples/livekit/livekit-voice
 uv sync
 cp .env.example .env
 # Fill in PARLOT_API_KEY (mint in Settings → API Keys) and provider credentials
 # PARLOT_ENDPOINT defaults to https://ingest.parlot.ai in .env.example
-uv run python agent.py dev
+lk agent dev
 ```
 
 ## Copying an example into your own project

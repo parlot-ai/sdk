@@ -16,7 +16,7 @@ cp .env.example .env
 ## Run
 
 ```bash
-uv run python agent.py dev
+lk agent dev
 ```
 
 Handoffs from IntroAgent → StoryAgent appear in Parlot as agent handoff spans.

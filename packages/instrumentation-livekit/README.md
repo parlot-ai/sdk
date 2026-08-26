@@ -42,7 +42,7 @@ Optional: `agent_id=` for canonical deployment identity and `version=` for deplo
 
 If none resolve, `gen_ai.agent.version` is omitted. The platform Versions tab then stays empty (it filters `agent_version != ''`).
 
-**LiveKit job processes:** with `python agent.py dev` (or spawned `job_proc` workers), `__main__` is LiveKit’s IPC entrypoint, not your agent file. A module-level `__version__` on `agent.py` often does **not** resolve. The parent `dev` watcher also skips `configure()` via `_is_livekit_dev_watch_parent`, so instrumentation runs in the child where `__main__` is not your entrypoint. Example dirs like `examples/livekit/restaurant-agent` usually have no `.git`, so the git SHA fallback also fails.
+**LiveKit job processes:** with `lk agent dev` (or spawned `job_proc` workers), `__main__` is LiveKit’s IPC entrypoint, not your agent file. A module-level `__version__` on `agent.py` often does **not** resolve. The parent `dev` watcher also skips `configure()` via `_is_livekit_dev_watch_parent`, so instrumentation runs in the child where `__main__` is not your entrypoint. Example dirs like `examples/livekit/restaurant-agent` usually have no `.git`, so the git SHA fallback also fails.
 
 **Reliable patterns for LiveKit:**
 

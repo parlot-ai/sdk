@@ -23,8 +23,8 @@ cp .env.example .env
 ## Interactive voice / console
 
 ```bash
-uv run python agent.py console   # Ctrl+T toggles text/audio
-uv run python agent.py dev       # LiveKit worker / playground
+lk agent console   # Ctrl+T toggles text/audio; lk agent console --text for text-only start
+lk agent dev       # LiveKit worker / playground
 ```
 
 ## Persona LLM sample sessions

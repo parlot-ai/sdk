@@ -11,7 +11,7 @@ Recording follows Parlot **Settings → Recording** (telemetry bootstrap). Overr
 
 ## Setup
 
-Requires [uv](https://docs.astral.sh/uv/).
+Requires [uv](https://docs.astral.sh/uv/) and the [LiveKit CLI](https://docs.livekit.io/reference/developer-tools/livekit-cli/) (`lk`).
 
 ```bash
 cd examples/livekit/hotel-receptionist
@@ -44,7 +44,7 @@ Stable anchors (seed date `2026-06-08`):
 ## Interactive (console)
 
 ```bash
-uv run python agent.py console
+lk agent console
 ```
 
 Press **Ctrl+T** to toggle Text/Audio mode, then type as the guest. Press **Q** to quit.
@@ -67,7 +67,7 @@ Each run prints `parlot_session_id=…`.
 ## LiveKit playground / worker
 
 ```bash
-uv run python agent.py dev
+lk agent dev
 ```
 
 ## Architecture
