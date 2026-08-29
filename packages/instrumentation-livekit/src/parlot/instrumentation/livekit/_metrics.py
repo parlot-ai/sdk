@@ -26,7 +26,8 @@ from parlot.core.attrs import (
     METRIC_USAGE_TTS_AUDIO_DURATION,
     METRIC_USAGE_TTS_CHARACTERS,
 )
-from parlot.core.runtime import get_runtime
+from parlot.core.context import ParlotContext
+from parlot.core.diagnostics import DiagnosticsCollector
 
 if TYPE_CHECKING:
     from ._session_state import _LiveKitSessionState
@@ -38,11 +39,14 @@ def build_meter_provider(
     endpoint: str,
     headers: dict[str, str],
     resource: Resource,
+    *,
+    diagnostics: DiagnosticsCollector | None = None,
 ) -> MeterProvider:
     metrics_endpoint = endpoint.rstrip("/") + "/v1/metrics"
     exporter = QuietOTLPMetricExporter(
         OTLPMetricExporter(endpoint=metrics_endpoint, headers=headers),
         endpoint_label=metrics_endpoint,
+        diagnostics=diagnostics,
     )
     reader = PeriodicExportingMetricReader(exporter, export_interval_millis=5_000)
     return MeterProvider(metric_readers=[reader], resource=resource)
@@ -63,7 +67,13 @@ def _usage_metadata(metrics_obj: Any) -> tuple[str, str]:
 class ParlotMetricsRecorder:
     """Records turn.*, session.*, and usage.* metrics mapped to Parlot metric names."""
 
-    def __init__(self, meter_provider: MeterProvider) -> None:
+    def __init__(
+        self,
+        meter_provider: MeterProvider,
+        *,
+        context: ParlotContext | None = None,
+    ) -> None:
+        self._context = context
         self._meter = meter_provider.get_meter("parlot.instrumentation.livekit")
         self._turn_e2e = self._meter.create_histogram(
             "turn.e2e_latency_ms",
@@ -140,7 +150,7 @@ class ParlotMetricsRecorder:
             ATTR_SESSION_ID: state.parlot_session_id,
             ATTR_AGENT_FRAMEWORK: "livekit",
         }
-        runtime = get_runtime()
+        runtime = self._context.runtime if self._context is not None else None
         if runtime is not None and runtime.org_id:
             attrs[ATTR_ORG_ID] = runtime.org_id
         if participant_role:

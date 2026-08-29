@@ -110,10 +110,15 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         self,
         capture_genai_content: Optional[bool] = None,
         handoff_tool_names: Optional[set[str]] = None,
+        *,
+        context: Optional["ParlotContext"] = None,
     ) -> None:
+        from parlot.core.context import ParlotContext
+
         # Explicit override for tests / rare call sites; None → policy at emit time.
         self._capture_genai_content_override = capture_genai_content
         self._handoff_tools = handoff_tool_names or set()
+        self._context = context if context is not None else ParlotContext()
         self._sessions: dict[str, _LiveKitSessionState] = {}
         self._turn_trace_registry: dict[str, dict[int, tuple[str, str]]] = {}
         self._tracer: Tracer | None = None
@@ -131,6 +136,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         self._recording = RecordingCoordinator(
             get_capture_override=lambda: self._capture_genai_content_override,
             active_agent_id_fn=self._active_agent_id,
+            get_context=lambda: self._context,
         )
         self._turns = TurnEnricher(
             set_attr=self._set,

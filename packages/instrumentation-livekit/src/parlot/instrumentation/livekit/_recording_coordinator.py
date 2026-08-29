@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from opentelemetry.sdk.trace import ReadableSpan
 
 from ._session_state import _LiveKitSessionState
+
+if TYPE_CHECKING:
+    from parlot.core.context import ParlotContext
 
 ActiveAgentIdFn = Callable[..., str]
 
@@ -20,9 +23,11 @@ class RecordingCoordinator:
         *,
         get_capture_override: Callable[[], Optional[bool]],
         active_agent_id_fn: ActiveAgentIdFn,
+        get_context: Callable[[], ParlotContext] | None = None,
     ) -> None:
         self._get_capture_override = get_capture_override
         self._active_agent_id_fn = active_agent_id_fn
+        self._get_context = get_context
 
     def set_recording_anchor_wall_ms(
         self, state: _LiveKitSessionState, anchor_wall_ms: int
@@ -79,4 +84,5 @@ class RecordingCoordinator:
             agent_id = resolve_agent(state, {})
             if agent_id == "unknown":
                 agent_id = ""
-        return should_capture_genai_content(agent_id=agent_id)
+        context = self._get_context() if self._get_context is not None else None
+        return should_capture_genai_content(agent_id=agent_id, context=context)

@@ -7,24 +7,18 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from parlot.core.runtime import (
-    ParlotRuntimeContext,
-    clear_runtime,
-    set_runtime,
-)
+from parlot.core.context import ParlotContext
+from parlot.core.runtime import ParlotRuntimeContext
 from parlot.instrumentation.livekit import _auto
 from parlot.instrumentation.livekit._egress import maybe_start_room_composite_egress
-from parlot.instrumentation.livekit._runtime_context import clear_livekit_runtime
 
 
 @pytest.fixture(autouse=True)
 def _reset_runtime():
-    clear_runtime()
-    clear_livekit_runtime()
+    _auto.set_configured_context(None)
     _auto._configured_record = True
     yield
-    clear_runtime()
-    clear_livekit_runtime()
+    _auto.set_configured_context(None)
     _auto._configured_record = None
 
 
@@ -42,13 +36,15 @@ def _platform(**kwargs) -> ParlotRuntimeContext:
 
 @pytest.mark.asyncio
 async def test_egress_starts_without_webhooks(monkeypatch) -> None:
-    platform = _platform()
-    set_runtime(platform)
+    context = ParlotContext()
+    context.runtime = _platform()
+    _auto.set_configured_context(context)
 
     bootstrap = MagicMock()
     bootstrap.session_id = "sess-1"
     bootstrap.session_span = None
     bootstrap.processor = MagicMock()
+    bootstrap.processor._context = context
 
     grant = {
         "filepath": "org-1/sessions/sess-1/audio.ogg",

@@ -7,33 +7,25 @@ import time
 
 import pytest
 
-from parlot.core import session_logs as sl
+from parlot.core.context import ParlotContext
 from parlot.core.session import SessionState, clear_active_session, set_active_session
-from parlot.core.session_logs import (
-    SessionLogHandler,
-    drain_session_logs,
-    set_capture_logs_configure,
-    shutdown_session_logs,
-    snapshot_session_logs,
-)
+from parlot.core.session_logs import SessionLogHandler
 
 
-@pytest.fixture(autouse=True)
-def _reset_logs():
-    set_capture_logs_configure(True, log_level="DEBUG")
-    drain_session_logs()
+@pytest.fixture
+def ctx() -> ParlotContext:
+    context = ParlotContext()
+    context.session_logs.set_capture_logs_configure(True, log_level="DEBUG")
     clear_active_session()
-    yield
-    drain_session_logs()
+    yield context
     clear_active_session()
-    set_capture_logs_configure(None)
-    shutdown_session_logs()
+    context.shutdown()
 
 
-def test_handler_stamps_session_and_buffers() -> None:
+def test_handler_stamps_session_and_buffers(ctx: ParlotContext) -> None:
     state = SessionState(session_id="abc123", turn_count=2)
     set_active_session(None, state)
-    handler = SessionLogHandler()
+    handler = SessionLogHandler(ctx.session_logs)
     record = logging.LogRecord(
         name="my.agent",
         level=logging.INFO,
@@ -44,7 +36,7 @@ def test_handler_stamps_session_and_buffers() -> None:
         exc_info=None,
     )
     handler.emit(record)
-    events = drain_session_logs()
+    events = ctx.session_logs.drain()
     assert len(events) == 1
     assert events[0].session_id == "abc123"
     assert events[0].message == "hello world"
@@ -53,9 +45,9 @@ def test_handler_stamps_session_and_buffers() -> None:
     assert events[0].turn_index == 2
 
 
-def test_handler_drops_without_session() -> None:
+def test_handler_drops_without_session(ctx: ParlotContext) -> None:
     clear_active_session()
-    handler = SessionLogHandler()
+    handler = SessionLogHandler(ctx.session_logs)
     record = logging.LogRecord(
         name="my.agent",
         level=logging.INFO,
@@ -66,14 +58,14 @@ def test_handler_drops_without_session() -> None:
         exc_info=None,
     )
     handler.emit(record)
-    assert drain_session_logs() == []
+    assert ctx.session_logs.drain() == []
 
 
-def test_handler_respects_min_level() -> None:
-    set_capture_logs_configure(True, log_level="WARNING")
+def test_handler_respects_min_level(ctx: ParlotContext) -> None:
+    ctx.session_logs.set_capture_logs_configure(True, log_level="WARNING")
     state = SessionState(session_id="sess")
     set_active_session(None, state)
-    handler = SessionLogHandler()
+    handler = SessionLogHandler(ctx.session_logs)
     info = logging.LogRecord(
         name="my.agent",
         level=logging.INFO,
@@ -94,16 +86,16 @@ def test_handler_respects_min_level() -> None:
     )
     handler.emit(info)
     handler.emit(warn)
-    events = drain_session_logs()
+    events = ctx.session_logs.drain()
     assert len(events) == 1
     assert events[0].message == "warn"
 
 
-def test_handler_noops_when_policy_off() -> None:
-    set_capture_logs_configure(False)
+def test_handler_noops_when_policy_off(ctx: ParlotContext) -> None:
+    ctx.session_logs.set_capture_logs_configure(False)
     state = SessionState(session_id="sess")
     set_active_session(None, state)
-    handler = SessionLogHandler()
+    handler = SessionLogHandler(ctx.session_logs)
     record = logging.LogRecord(
         name="my.agent",
         level=logging.ERROR,
@@ -114,30 +106,33 @@ def test_handler_noops_when_policy_off() -> None:
         exc_info=None,
     )
     handler.emit(record)
-    assert drain_session_logs() == []
+    assert ctx.session_logs.drain() == []
 
 
-def test_handler_never_raises() -> None:
-    handler = SessionLogHandler()
+def test_handler_never_raises(ctx: ParlotContext) -> None:
+    handler = SessionLogHandler(ctx.session_logs)
     # Broken record-like object should not propagate.
     handler.emit(None)  # type: ignore[arg-type]
 
 
-def test_shutdown_flushes_remaining_logs(monkeypatch: pytest.MonkeyPatch) -> None:
-    posted: list[sl.SessionLogRecord] = []
+def test_shutdown_flushes_remaining_logs(
+    ctx: ParlotContext, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    posted: list = []
 
-    def fake_post(events: list[sl.SessionLogRecord]) -> bool:
+    def fake_post(events: list) -> bool:
         posted.extend(events)
         return True
 
-    monkeypatch.setattr(sl, "_endpoint", "http://localhost:4318")
-    monkeypatch.setattr(sl, "_api_key", "test-key")
-    monkeypatch.setattr(sl, "_last_flush_at", time.time())
-    monkeypatch.setattr(sl, "_circuit_open_until", 0.0)
-    monkeypatch.setattr(sl, "_post_events", fake_post)
+    logs = ctx.session_logs
+    monkeypatch.setattr(logs, "_endpoint", "http://localhost:4318")
+    monkeypatch.setattr(logs, "_api_key", "test-key")
+    monkeypatch.setattr(logs, "_last_flush_at", time.time())
+    monkeypatch.setattr(logs, "_circuit_open_until", 0.0)
+    monkeypatch.setattr(logs, "_post_events", fake_post)
 
     set_active_session(None, SessionState(session_id="sess-final"))
-    handler = SessionLogHandler()
+    handler = SessionLogHandler(logs)
     handler.emit(
         logging.LogRecord(
             name="my.agent",
@@ -149,12 +144,49 @@ def test_shutdown_flushes_remaining_logs(monkeypatch: pytest.MonkeyPatch) -> Non
             exc_info=None,
         )
     )
-    assert len(snapshot_session_logs()) == 1
+    assert len(logs.snapshot()) == 1
 
-    sl._try_flush()
+    logs._try_flush()
     assert posted == []
-    assert len(snapshot_session_logs()) == 1
+    assert len(logs.snapshot()) == 1
 
-    shutdown_session_logs()
+    logs.shutdown()
     assert [event.message for event in posted] == ["late log"]
-    assert drain_session_logs() == []
+    assert logs.drain() == []
+
+
+def test_two_contexts_isolate_session_logs() -> None:
+    a = ParlotContext()
+    b = ParlotContext()
+    a.session_logs.set_capture_logs_configure(True, log_level="DEBUG")
+    b.session_logs.set_capture_logs_configure(True, log_level="DEBUG")
+    set_active_session(None, SessionState(session_id="sess"))
+    try:
+        SessionLogHandler(a.session_logs).emit(
+            logging.LogRecord(
+                name="my.agent",
+                level=logging.INFO,
+                pathname="a.py",
+                lineno=1,
+                msg="a-log",
+                args=(),
+                exc_info=None,
+            )
+        )
+        SessionLogHandler(b.session_logs).emit(
+            logging.LogRecord(
+                name="my.agent",
+                level=logging.INFO,
+                pathname="b.py",
+                lineno=1,
+                msg="b-log",
+                args=(),
+                exc_info=None,
+            )
+        )
+        assert [e.message for e in a.session_logs.drain()] == ["a-log"]
+        assert [e.message for e in b.session_logs.drain()] == ["b-log"]
+    finally:
+        clear_active_session()
+        a.shutdown()
+        b.shutdown()

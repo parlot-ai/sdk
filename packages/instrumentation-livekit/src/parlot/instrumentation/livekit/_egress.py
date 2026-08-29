@@ -15,7 +15,8 @@ from parlot.core.attrs import (
     ATTR_SESSION_RECORDING_EGRESS_ID,
     ATTR_SESSION_RECORDING_WEBHOOK_ERROR,
 )
-from parlot.core.runtime import get_runtime
+from parlot.core.context import ParlotContext
+from parlot.core.runtime import ParlotRuntimeContext
 
 from ._recording_guard import recording_disabled_reason, should_record
 
@@ -51,11 +52,16 @@ def _stamp_recording_disabled(bootstrap: Any, reason: str) -> None:
     logger.debug("parlot: recording disabled — %s", reason)
 
 
-async def _fetch_upload_grant(session_id: str, room_name: str) -> Optional[dict]:
-    runtime = get_runtime()
-    if runtime is None:
-        logger.error("parlot: upload grant requested without runtime bootstrap")
-        return None
+def _context_from_bootstrap(bootstrap: Any) -> ParlotContext | None:
+    processor = getattr(bootstrap, "processor", None)
+    return getattr(processor, "_context", None) if processor is not None else None
+
+
+async def _fetch_upload_grant(
+    session_id: str,
+    room_name: str,
+    runtime: ParlotRuntimeContext,
+) -> Optional[dict]:
     url = f"{runtime.endpoint}/v1/recordings/upload-grant"
     headers = {"Authorization": f"Bearer {runtime.api_key}"}
     payload = {"session_id": session_id, "room_name": room_name}
@@ -80,16 +86,19 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
     from parlot.instrumentation.livekit._session import get_job_bootstrap
 
     bootstrap = get_job_bootstrap()
-    if not should_record(ctx):
+    context = _context_from_bootstrap(bootstrap) if bootstrap is not None else None
+    if not should_record(ctx, context=context):
         if bootstrap is not None:
-            _stamp_recording_disabled(bootstrap, recording_disabled_reason(ctx))
+            _stamp_recording_disabled(
+                bootstrap, recording_disabled_reason(ctx, context=context)
+            )
         return
 
     if bootstrap is None:
         logger.warning("parlot: egress skipped — no active job bootstrap")
         return
 
-    runtime = get_runtime()
+    runtime = context.runtime if context is not None else None
     if runtime is None:
         _stamp_recording_webhook_error(bootstrap, "egress_config_missing: bootstrap")
         logger.error("parlot: egress skipped — bootstrap not loaded")
@@ -103,7 +112,7 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
         return
 
     session_id = bootstrap.session_id
-    grant = await _fetch_upload_grant(session_id, str(room_name))
+    grant = await _fetch_upload_grant(session_id, str(room_name), runtime)
     if grant is None:
         _stamp_recording_webhook_error(bootstrap, "upload_grant_failed")
         return

@@ -41,23 +41,6 @@ class ParlotRuntimeContext:
         return dict(self.capture_genai_content_agents)
 
 
-_runtime: Optional[ParlotRuntimeContext] = None
-
-
-def get_runtime() -> Optional[ParlotRuntimeContext]:
-    return _runtime
-
-
-def set_runtime(ctx: ParlotRuntimeContext) -> None:
-    global _runtime
-    _runtime = ctx
-
-
-def clear_runtime() -> None:
-    global _runtime
-    _runtime = None
-
-
 def _parse_recording_policy(
     payload: dict[str, Any],
 ) -> tuple[tuple[str, ...], tuple[tuple[str, bool], ...]]:

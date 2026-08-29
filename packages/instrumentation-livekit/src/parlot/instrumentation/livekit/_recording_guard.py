@@ -5,13 +5,15 @@ from __future__ import annotations
 import json
 from typing import Any, Optional
 
+from parlot.core.context import ParlotContext
 from parlot.core.genai_content_capture import should_capture_genai_content as should_capture_genai_content_policy
 from parlot.core.recording import should_record as should_record_policy
-from parlot.core.runtime import get_runtime
+from parlot.core.runtime import ParlotRuntimeContext
 from parlot.instrumentation.livekit._agent_identity import topology_agent_name
 from parlot.instrumentation.livekit._auto import (
     configured_agent_id,
     configured_capture_genai_content,
+    configured_context,
     configured_record,
 )
 
@@ -76,9 +78,20 @@ def metadata_capture_genai_content_flag(ctx: Any) -> Optional[bool]:
     return bool(metadata.get("capture_genai_content"))
 
 
-def should_record(ctx: Any) -> bool:
+def _resolve_runtime(
+    context: ParlotContext | None = None,
+) -> Optional[ParlotRuntimeContext]:
+    if context is not None:
+        return context.runtime
+    configured = configured_context()
+    if configured is not None:
+        return configured.runtime
+    return None
+
+
+def should_record(ctx: Any, *, context: ParlotContext | None = None) -> bool:
     """Return True when Room Composite egress should start for this LiveKit job."""
-    runtime = get_runtime()
+    runtime = _resolve_runtime(context)
     return should_record_policy(
         recording_agent_id_from_ctx(ctx),
         metadata_record=metadata_record_flag(ctx),
@@ -88,7 +101,9 @@ def should_record(ctx: Any) -> bool:
     )
 
 
-def recording_disabled_reason(ctx: Any) -> str:
+def recording_disabled_reason(
+    ctx: Any, *, context: ParlotContext | None = None
+) -> str:
     """Why recording is off for this job (call only when ``should_record`` is False)."""
     metadata = metadata_record_flag(ctx)
     if metadata is False:
@@ -98,7 +113,7 @@ def recording_disabled_reason(ctx: Any) -> str:
     if configure is False:
         return "configure"
 
-    runtime = get_runtime()
+    runtime = _resolve_runtime(context)
     agent = recording_agent_id_from_ctx(ctx)
     agents = runtime.recording_agents_map() if runtime else {}
     if agent in agents and not agents[agent]:
@@ -110,9 +125,14 @@ def recording_disabled_reason(ctx: Any) -> str:
     return "policy"
 
 
-def should_capture_genai_content(ctx: Any | None = None, *, agent_id: str = "") -> bool:
+def should_capture_genai_content(
+    ctx: Any | None = None,
+    *,
+    agent_id: str = "",
+    context: ParlotContext | None = None,
+) -> bool:
     """Return True when generative AI / tool content bodies should be captured for this job."""
-    runtime = get_runtime()
+    runtime = _resolve_runtime(context)
     resolved_agent = agent_id.strip()
     metadata_flag: Optional[bool] = None
     if ctx is not None:

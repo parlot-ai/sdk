@@ -45,143 +45,136 @@ class DiagnosticEvent:
         }
 
 
-_lock = threading.Lock()
-_buffer: deque[DiagnosticEvent] = deque(maxlen=_MAX_BUFFER)
-_consecutive_failures = 0
-_circuit_open_until = 0.0
-_last_flush_at = 0.0
-_endpoint = ""
-_api_key = ""
-_flush_thread: threading.Thread | None = None
-_stop = threading.Event()
-
-
 def diagnostics_enabled() -> bool:
     raw = os.getenv("PARLOT_DIAGNOSTICS", "on").strip().lower()
     return raw not in _OPT_OUT
 
 
-def init_diagnostics(*, endpoint: str = "", api_key: str = "") -> None:
-    """Allocate buffer + start background flusher when enabled."""
-    global _endpoint, _api_key, _flush_thread
-    if not diagnostics_enabled():
-        return
-    with _lock:
-        _endpoint = (endpoint or os.environ.get("PARLOT_ENDPOINT", "")).rstrip("/")
-        _api_key = api_key or os.environ.get("PARLOT_API_KEY", "")
-        if _flush_thread is None or not _flush_thread.is_alive():
-            _stop.clear()
-            _flush_thread = threading.Thread(
-                target=_flush_loop,
-                name="parlot-diagnostics-flush",
-                daemon=True,
-            )
-            _flush_thread.start()
+class DiagnosticsCollector:
+    """Per-``ParlotContext`` diagnostics buffer and background flusher."""
 
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._buffer: deque[DiagnosticEvent] = deque(maxlen=_MAX_BUFFER)
+        self._consecutive_failures = 0
+        self._circuit_open_until = 0.0
+        self._last_flush_at = 0.0
+        self._endpoint = ""
+        self._api_key = ""
+        self._flush_thread: threading.Thread | None = None
+        self._stop = threading.Event()
 
-def record_diagnostic(
-    kind: str,
-    message: str,
-    *,
-    exc: BaseException | None = None,
-    attributes: dict[str, Any] | None = None,
-) -> None:
-    """Record a diagnostic event. Never raises."""
-    try:
+    def init(self, *, endpoint: str = "", api_key: str = "") -> None:
+        """Allocate buffer + start background flusher when enabled."""
         if not diagnostics_enabled():
             return
-        attrs = dict(attributes or {})
-        if exc is not None:
-            attrs.setdefault("exc_type", type(exc).__name__)
-        event = DiagnosticEvent(
-            kind=kind,
-            message=message or (str(exc) if exc else ""),
-            attributes=attrs,
-        )
-        with _lock:
-            _buffer.append(event)
-    except Exception:
-        return
+        with self._lock:
+            self._endpoint = (endpoint or os.environ.get("PARLOT_ENDPOINT", "")).rstrip("/")
+            self._api_key = api_key or os.environ.get("PARLOT_API_KEY", "")
+            if self._flush_thread is None or not self._flush_thread.is_alive():
+                self._stop.clear()
+                self._flush_thread = threading.Thread(
+                    target=self._flush_loop,
+                    name="parlot-diagnostics-flush",
+                    daemon=True,
+                )
+                self._flush_thread.start()
 
-
-def drain_diagnostics() -> list[DiagnosticEvent]:
-    with _lock:
-        events = list(_buffer)
-        _buffer.clear()
-        return events
-
-
-def snapshot_diagnostics() -> list[DiagnosticEvent]:
-    with _lock:
-        return list(_buffer)
-
-
-def _circuit_open() -> bool:
-    return time.time() < _circuit_open_until
-
-
-def _flush_loop() -> None:
-    while not _stop.wait(_FLUSH_INTERVAL_S):
+    def record(
+        self,
+        kind: str,
+        message: str,
+        *,
+        exc: BaseException | None = None,
+        attributes: dict[str, Any] | None = None,
+    ) -> None:
+        """Record a diagnostic event. Never raises."""
         try:
-            _try_flush()
-        except Exception:
-            continue
-
-
-def _try_flush() -> None:
-    global _consecutive_failures, _circuit_open_until, _last_flush_at
-
-    if not diagnostics_enabled():
-        return
-    if _circuit_open():
-        # Drop buffered events under sustained failure — do not queue forever.
-        with _lock:
-            _buffer.clear()
-        return
-    if not _endpoint or not _api_key:
-        return
-
-    now = time.time()
-    if now - _last_flush_at < _FLUSH_INTERVAL_S * 0.5:
-        return
-
-    events = drain_diagnostics()
-    if not events:
-        return
-
-    ok = _post_events(events)
-    _last_flush_at = time.time()
-    if ok:
-        _consecutive_failures = 0
-        return
-
-    _consecutive_failures += 1
-    # Drop — do not re-queue. Retry storm prevention.
-    if _consecutive_failures >= _CIRCUIT_FAILURES:
-        _circuit_open_until = time.time() + _CIRCUIT_COOLDOWN_S
-        _consecutive_failures = 0
-
-
-def _post_events(events: list[DiagnosticEvent]) -> bool:
-    """Fire-and-forget POST. Returns False on any failure (caller drops)."""
-    try:
-        import httpx
-    except Exception:
-        return False
-
-    url = f"{_endpoint}/v1/diagnostics"
-    payload = {"events": [e.to_payload() for e in events[:50]]}
-    try:
-        with httpx.Client(timeout=3.0) as client:
-            res = client.post(
-                url,
-                json=payload,
-                headers={"Authorization": f"Bearer {_api_key}"},
+            if not diagnostics_enabled():
+                return
+            attrs = dict(attributes or {})
+            if exc is not None:
+                attrs.setdefault("exc_type", type(exc).__name__)
+            event = DiagnosticEvent(
+                kind=kind,
+                message=message or (str(exc) if exc else ""),
+                attributes=attrs,
             )
-            return 200 <= res.status_code < 300
-    except Exception:
-        return False
+            with self._lock:
+                self._buffer.append(event)
+        except Exception:
+            return
 
+    def drain(self) -> list[DiagnosticEvent]:
+        with self._lock:
+            events = list(self._buffer)
+            self._buffer.clear()
+            return events
 
-def shutdown_diagnostics() -> None:
-    _stop.set()
+    def snapshot(self) -> list[DiagnosticEvent]:
+        with self._lock:
+            return list(self._buffer)
+
+    def _circuit_open(self) -> bool:
+        return time.time() < self._circuit_open_until
+
+    def _flush_loop(self) -> None:
+        while not self._stop.wait(_FLUSH_INTERVAL_S):
+            try:
+                self._try_flush()
+            except Exception:
+                continue
+
+    def _try_flush(self) -> None:
+        if not diagnostics_enabled():
+            return
+        if self._circuit_open():
+            # Drop buffered events under sustained failure — do not queue forever.
+            with self._lock:
+                self._buffer.clear()
+            return
+        if not self._endpoint or not self._api_key:
+            return
+
+        now = time.time()
+        if now - self._last_flush_at < _FLUSH_INTERVAL_S * 0.5:
+            return
+
+        events = self.drain()
+        if not events:
+            return
+
+        ok = self._post_events(events)
+        self._last_flush_at = time.time()
+        if ok:
+            self._consecutive_failures = 0
+            return
+
+        self._consecutive_failures += 1
+        # Drop — do not re-queue. Retry storm prevention.
+        if self._consecutive_failures >= _CIRCUIT_FAILURES:
+            self._circuit_open_until = time.time() + _CIRCUIT_COOLDOWN_S
+            self._consecutive_failures = 0
+
+    def _post_events(self, events: list[DiagnosticEvent]) -> bool:
+        """Fire-and-forget POST. Returns False on any failure (caller drops)."""
+        try:
+            import httpx
+        except Exception:
+            return False
+
+        url = f"{self._endpoint}/v1/diagnostics"
+        payload = {"events": [e.to_payload() for e in events[:50]]}
+        try:
+            with httpx.Client(timeout=3.0) as client:
+                res = client.post(
+                    url,
+                    json=payload,
+                    headers={"Authorization": f"Bearer {self._api_key}"},
+                )
+                return 200 <= res.status_code < 300
+        except Exception:
+            return False
+
+    def shutdown(self) -> None:
+        self._stop.set()

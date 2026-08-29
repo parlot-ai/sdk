@@ -2,16 +2,12 @@
 
 from __future__ import annotations
 
-from parlot.core.runtime import clear_runtime, runtime_from_bootstrap, set_runtime
-from parlot.core.session import SessionState, clear_active_session, set_active_session
-from parlot.core.session_logs import (
-    SessionLogHandler,
-    drain_session_logs,
-    set_capture_logs_configure,
-    set_session_log_resolvers,
-    shutdown_session_logs,
-)
 import logging
+
+from parlot.core.context import ParlotContext
+from parlot.core.runtime import runtime_from_bootstrap
+from parlot.core.session import SessionState, clear_active_session, set_active_session
+from parlot.core.session_logs import SessionLogHandler
 
 
 def test_runtime_parses_logs_agent_objects() -> None:
@@ -46,33 +42,29 @@ def test_runtime_parses_logs_agent_objects() -> None:
 
 
 def test_handler_uses_agent_min_level_from_bootstrap() -> None:
-    clear_runtime()
-    set_capture_logs_configure(None)
-    # Clear configure log_level (API only sets when provided).
-    sl_mod = __import__("parlot.core.session_logs", fromlist=["session_logs"])
-    sl_mod._configure_log_level = None
-    set_session_log_resolvers(agent_id_resolver=lambda: "on-debug")
-    set_runtime(
-        runtime_from_bootstrap(
-            "https://ingest.test",
-            "key",
-            {
-                "org_id": "org-1",
-                "content_bucket": "b",
-                "r2_endpoint": "https://r2",
-                "logs": {
-                    "globs": ["*"],
-                    "min_level": "WARNING",
-                    "agents": {
-                        "on-debug": {"enabled": True, "min_level": "DEBUG"},
-                    },
+    context = ParlotContext()
+    context.session_logs.set_capture_logs_configure(None)
+    context.session_logs._configure_log_level = None
+    context.session_logs.set_resolvers(agent_id_resolver=lambda: "on-debug")
+    context.runtime = runtime_from_bootstrap(
+        "https://ingest.test",
+        "key",
+        {
+            "org_id": "org-1",
+            "content_bucket": "b",
+            "r2_endpoint": "https://r2",
+            "logs": {
+                "globs": ["*"],
+                "min_level": "WARNING",
+                "agents": {
+                    "on-debug": {"enabled": True, "min_level": "DEBUG"},
                 },
             },
-        )
+        },
     )
     try:
         set_active_session(None, SessionState(session_id="sess"))
-        handler = SessionLogHandler()
+        handler = SessionLogHandler(context.session_logs)
         info = logging.LogRecord(
             name="my.agent",
             level=logging.INFO,
@@ -83,14 +75,10 @@ def test_handler_uses_agent_min_level_from_bootstrap() -> None:
             exc_info=None,
         )
         handler.emit(info)
-        events = drain_session_logs()
+        events = context.session_logs.drain()
         assert len(events) == 1
         assert events[0].message == "info"
     finally:
-        drain_session_logs()
+        context.session_logs.drain()
         clear_active_session()
-        set_session_log_resolvers(agent_id_resolver=lambda: "")
-        sl_mod._configure_log_level = None
-        set_capture_logs_configure(None)
-        clear_runtime()
-        shutdown_session_logs()
+        context.shutdown()
