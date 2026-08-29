@@ -45,7 +45,8 @@ from parlot.instrumentation.livekit._platform_refs import (
 )
 
 if TYPE_CHECKING:
-    from ._processor import LiveKitGenAIProcessor, _LiveKitSessionState
+    from ._processor import LiveKitGenAIProcessor
+    from ._session_state import _LiveKitSessionState
 
 logger = logging.getLogger("parlot.instrumentation.livekit")
 
@@ -119,7 +120,7 @@ def bootstrap_session(
     room_sid = str(room_sid or "").strip()
     worker_agent_name = str(worker_agent_name or "").strip()
 
-    from ._processor import _LiveKitSessionState
+    from ._session_state import _LiveKitSessionState
 
     session_id = new_session_id()
     state = _LiveKitSessionState(

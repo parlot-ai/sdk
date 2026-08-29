@@ -14,7 +14,7 @@ from parlot.core.attrs import (
 from parlot.instrumentation.livekit._auto import configured_agent_id, configured_agent_version
 
 if TYPE_CHECKING:
-    from ._processor import _LiveKitSessionState
+    from ._session_state import _LiveKitSessionState
 
 LIVEKIT_FRAMEWORK = "livekit"
 

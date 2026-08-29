@@ -10,10 +10,8 @@ import pytest
 from parlot.core.attrs import ATTR_GEN_AI_IN_TOKENS, ATTR_GEN_AI_OUT_TOKENS
 from parlot.instrumentation.livekit._export_filter import EnrichingExportSpanExporter
 from parlot.instrumentation.livekit._plugin_metrics import handle_plugin_metrics_collected
-from parlot.instrumentation.livekit._processor import (
-    LiveKitGenAIProcessor,
-    _LiveKitSessionState,
-)
+from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
+from parlot.instrumentation.livekit._session_state import _LiveKitSessionState
 
 
 class _FakeMetrics:

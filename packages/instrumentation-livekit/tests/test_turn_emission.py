@@ -34,7 +34,8 @@ from parlot.instrumentation.livekit.attrs import (
     ATTR_DIAR_SOURCE_TEXT_INPUT,
     ATTR_DIAR_SOURCE_VAD,
 )
-from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor, _LiveKitSessionState
+from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
+from parlot.instrumentation.livekit._session_state import _LiveKitSessionState
 from parlot.instrumentation.livekit._turn_trace_export import TurnTraceRemappingExporter
 from bootstrap_helpers import bootstrap_via_agent_state
 

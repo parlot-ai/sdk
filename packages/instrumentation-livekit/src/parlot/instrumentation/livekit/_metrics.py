@@ -29,7 +29,7 @@ from parlot.core.attrs import (
 from parlot.core.runtime import get_runtime
 
 if TYPE_CHECKING:
-    from ._processor import _LiveKitSessionState
+    from ._session_state import _LiveKitSessionState
 
 ATTR_ORG_ID = "org_id"
 

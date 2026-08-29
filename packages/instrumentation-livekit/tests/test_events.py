@@ -515,7 +515,7 @@ class TestEventBridgeTurns:
 
         user_commit_wall = anchor_wall_ms / 1000.0 + 55.0
         with patch(
-            "parlot.instrumentation.livekit._processor.time.time",
+            "parlot.instrumentation.livekit._turn_enricher.time.time",
             return_value=user_commit_wall,
         ):
             bridge._on_conversation_item_added(
