@@ -2,24 +2,13 @@
 
 from __future__ import annotations
 
-from parlot.instrumentation.livekit._runtime_context import (
-    apply_bootstrap_payload,
-    clear_livekit_runtime,
-    get_livekit_runtime,
-)
-from parlot.core.runtime import clear_runtime, get_runtime
+from parlot.core.context import ParlotContext
+from parlot.instrumentation.livekit._runtime_context import apply_bootstrap_payload
 
 
 class TestApplyBootstrapPayload:
-    def setup_method(self) -> None:
-        clear_runtime()
-        clear_livekit_runtime()
-
-    def teardown_method(self) -> None:
-        clear_runtime()
-        clear_livekit_runtime()
-
     def test_caches_platform_runtime(self) -> None:
+        context = ParlotContext()
         payload = {
             "org_id": "org-1",
             "content_bucket": "bucket",
@@ -33,8 +22,8 @@ class TestApplyBootstrapPayload:
                 "agents": {"restaurant-agent": False},
             },
         }
-        apply_bootstrap_payload("https://ingest.test", "key", payload)
-        runtime = get_runtime()
+        apply_bootstrap_payload(context, "https://ingest.test", "key", payload)
+        runtime = context.runtime
         assert runtime is not None
         assert runtime.org_id == "org-1"
         assert runtime.recording_globs == ("receptionist*",)
@@ -42,7 +31,3 @@ class TestApplyBootstrapPayload:
         assert runtime.capture_genai_content_globs == ("*",)
         assert runtime.capture_genai_content_agents_map() == {"restaurant-agent": False}
         assert runtime.capture_genai_content_policy_present is True
-        lk = get_livekit_runtime()
-        assert lk is not None
-        assert lk.org_id == "org-1"
-        assert lk is runtime

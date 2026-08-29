@@ -6,11 +6,14 @@ import logging
 import os
 from typing import Optional
 
+from parlot.core.context import ParlotContext
+
 logger = logging.getLogger("parlot.instrumentation.langgraph")
 
 _configured = False
 _configured_agent_id: str | None = None
 _configured_agent_version: str = ""
+_parlot_context: ParlotContext | None = None
 
 
 def configure(
@@ -26,7 +29,7 @@ def configure(
     modality: Optional[str] = None,
     capture_logs: bool | list[str] | None = None,
     log_level: Optional[str] = None,
-) -> None:
+) -> ParlotContext:
     """Configure Parlot LangGraph instrumentation and OTLP export.
 
     Registers a global LangChain callback handler (LangSmith-style) so
@@ -37,14 +40,14 @@ def configure(
     (e.g. ``webchat``) and optionally ``modality`` so ingest does not assume
     voice.
     """
-    global _configured, _configured_agent_id, _configured_agent_version
+    global _configured, _configured_agent_id, _configured_agent_version, _parlot_context
     if _configured:
         logger.debug("parlot-instrumentation.langgraph already configured — skipping")
-        return
+        assert _parlot_context is not None
+        return _parlot_context
 
     from parlot.core import base_configure
     from parlot.core.genai_content_capture import should_capture_genai_content
-    from parlot.core.runtime import get_runtime
     from parlot.core.sdk_version import resolve_parlot_sdk_version
 
     _configured_agent_id = agent_id.strip() if agent_id else None
@@ -60,8 +63,9 @@ def configure(
         capture_logs=capture_logs,
         log_level=log_level,
     )
+    _parlot_context = res.context
 
-    runtime = get_runtime()
+    runtime = res.context.runtime
     capture = should_capture_genai_content(
         _configured_agent_id or "",
         configure_capture_genai_content=res.capture_genai_content,
@@ -108,8 +112,9 @@ def configure(
 
     _configured = True
     logger.debug(
-        "parlot-instrumentation.langgraph configured (endpoint=%s)", resolved_endpoint
+        "parlot-instrumentation.langgraph configured (endpoint=%s)", res.endpoint
     )
+    return res.context
 
 
 def _build_provider(

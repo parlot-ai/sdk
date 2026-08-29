@@ -38,11 +38,13 @@ if TYPE_CHECKING:
 logger = logging.getLogger("parlot.instrumentation.livekit")
 
 
-def _record_event_diagnostic(kind: str, exc: BaseException) -> None:
+def _record_event_diagnostic(
+    plugin: "LiveKitGenAIProcessor", kind: str, exc: BaseException
+) -> None:
     try:
-        from parlot.core.diagnostics import record_diagnostic
-
-        record_diagnostic(kind, str(exc) or type(exc).__name__, exc=exc)
+        plugin._context.diagnostics.record(
+            kind, str(exc) or type(exc).__name__, exc=exc
+        )
     except Exception:
         return
 
@@ -185,7 +187,7 @@ class LiveKitEventBridge:
                 self._on_conversation_item_added(ev)
             except Exception as exc:
                 logger.debug("conversation_item_added handler failed", exc_info=True)
-                _record_event_diagnostic("event.conversation_item_added", exc)
+                _record_event_diagnostic(self._processor, "event.conversation_item_added", exc)
 
         @session.on("user_input_transcribed")
         def _on_user_input_transcribed(ev: Any) -> None:
@@ -193,7 +195,7 @@ class LiveKitEventBridge:
                 self._on_user_input_transcribed(ev)
             except Exception as exc:
                 logger.debug("user_input_transcribed handler failed", exc_info=True)
-                _record_event_diagnostic("event.user_input_transcribed", exc)
+                _record_event_diagnostic(self._processor, "event.user_input_transcribed", exc)
 
         @session.on("function_tools_executed")
         def _on_function_tools_executed(ev: Any) -> None:
@@ -201,7 +203,7 @@ class LiveKitEventBridge:
                 self._on_function_tools_executed(ev)
             except Exception as exc:
                 logger.debug("function_tools_executed handler failed", exc_info=True)
-                _record_event_diagnostic("event.function_tools_executed", exc)
+                _record_event_diagnostic(self._processor, "event.function_tools_executed", exc)
 
         @session.on("session_usage_updated")
         def _on_session_usage_updated(ev: Any) -> None:
@@ -209,7 +211,7 @@ class LiveKitEventBridge:
                 self._on_session_usage_updated(ev)
             except Exception as exc:
                 logger.debug("session_usage_updated handler failed", exc_info=True)
-                _record_event_diagnostic("event.session_usage_updated", exc)
+                _record_event_diagnostic(self._processor, "event.session_usage_updated", exc)
 
         @session.on("error")
         def _on_error(ev: Any) -> None:
@@ -217,7 +219,7 @@ class LiveKitEventBridge:
                 self._on_error(ev)
             except Exception as exc:
                 logger.debug("error handler failed", exc_info=True)
-                _record_event_diagnostic("event.error", exc)
+                _record_event_diagnostic(self._processor, "event.error", exc)
 
         @session.on("agent_state_changed")
         def _on_agent_state_changed(ev: Any) -> None:
@@ -225,7 +227,7 @@ class LiveKitEventBridge:
                 self._on_agent_state_changed(ev)
             except Exception as exc:
                 logger.debug("agent_state_changed handler failed", exc_info=True)
-                _record_event_diagnostic("event.agent_state_changed", exc)
+                _record_event_diagnostic(self._processor, "event.agent_state_changed", exc)
 
         @session.on("close")
         def _on_close(ev: Any) -> None:
@@ -233,7 +235,7 @@ class LiveKitEventBridge:
                 self._on_close(ev)
             except Exception as exc:
                 logger.debug("close handler failed", exc_info=True)
-                _record_event_diagnostic("event.close", exc)
+                _record_event_diagnostic(self._processor, "event.close", exc)
 
     def _on_agent_state_changed(self, ev: Any) -> None:
         session = self._session

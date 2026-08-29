@@ -8,6 +8,8 @@ import os
 import sys
 from typing import Any, Optional
 
+from parlot.core.context import ParlotContext
+
 logger = logging.getLogger("parlot.instrumentation.livekit")
 
 _configured = False
@@ -19,6 +21,7 @@ _configured_record: bool | list[str] | None = None
 _configured_capture_genai_content: bool | None = None
 _configured_capture_logs: bool | list[str] | None = None
 _configured_log_level: str | None = None
+_parlot_context: ParlotContext | None = None
 
 
 def _is_livekit_dev_watch_parent() -> bool:
@@ -67,7 +70,7 @@ def configure(
     record: bool | list[str] | None = None,
     capture_logs: bool | list[str] | None = None,
     log_level: Optional[str] = None,
-) -> None:
+) -> ParlotContext:
     """Configure Parlot LiveKit instrumentation and OTLP export.
 
     Deployment version (``gen_ai.agent.version``) resolves once at configure time:
@@ -87,16 +90,18 @@ def configure(
     global _configured, _auto_escalate_sip, _escalation_metadata_match
     global _configured_agent_id, _configured_agent_version, _configured_record
     global _configured_capture_genai_content, _configured_capture_logs, _configured_log_level
+    global _parlot_context
     if _configured:
         logger.debug("parlot-instrumentation.livekit already configured — skipping")
-        return
+        assert _parlot_context is not None
+        return _parlot_context
 
     if _is_livekit_dev_watch_parent():
         logger.debug(
             "Skipping parlot-instrumentation.livekit configure in LiveKit dev "
             "watcher parent (worker child will configure)"
         )
-        return
+        return ParlotContext()
 
     _auto_escalate_sip = auto_escalate_sip
     _escalation_metadata_match = (
@@ -133,8 +138,8 @@ def configure(
         capture_logs=capture_logs,
         log_level=log_level,
     )
+    _parlot_context = res.context
 
-    from parlot.core.session_logs import set_session_log_resolvers
     from ._recording_guard import (
         current_job_capture_logs_metadata,
         livekit_session_log_fields,
@@ -152,14 +157,11 @@ def configure(
             pass
         return _configured_agent_id or ""
 
-    set_session_log_resolvers(
+    res.context.session_logs.set_resolvers(
         session_resolver=livekit_session_log_fields,
         agent_id_resolver=_agent_id_resolver,
         metadata_resolver=current_job_capture_logs_metadata,
     )
-
-    if res.api_key:
-        _fetch_and_cache_bootstrap(res.endpoint, res.api_key)
 
     tracer_provider = res.tracer_provider
     if tracer_provider is None:
@@ -168,6 +170,7 @@ def configure(
             api_key=res.api_key,
             service_name=service_name,
             service_version=_configured_agent_version or None,
+            context=res.context,
         )
 
     from parlot.core.processor import assert_sync_span_processors
@@ -184,18 +187,7 @@ def configure(
 
     _configured = True
     logger.debug("parlot-instrumentation.livekit configured (endpoint=%s)", res.endpoint)
-
-
-def _fetch_and_cache_bootstrap(endpoint: str, api_key: str) -> None:
-    from parlot.core.bootstrap import fetch_telemetry_bootstrap
-
-    from ._runtime_context import apply_bootstrap_payload
-
-    payload = fetch_telemetry_bootstrap(endpoint, api_key)
-    if payload is None:
-        return
-    apply_bootstrap_payload(endpoint, api_key, payload)
-    logger.debug("parlot: telemetry bootstrap cached")
+    return res.context
 
 
 def _build_provider(
@@ -203,6 +195,8 @@ def _build_provider(
     api_key: str,
     service_name: Optional[str],
     service_version: Optional[str] = None,
+    *,
+    context: ParlotContext,
 ):
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
@@ -231,7 +225,7 @@ def _build_provider(
     trace_endpoint = endpoint.rstrip("/") + "/v1/traces"
     otlp_exporter = build_otlp_http_exporter(endpoint=endpoint, api_key=api_key)
 
-    processor = LiveKitGenAIProcessor()
+    processor = LiveKitGenAIProcessor(context=context)
 
     # Rename (enrich) must run on real spans *before* sanitize wraps them and
     # *before* the GenAI/voice allowlist filter — otherwise native names like
@@ -243,6 +237,7 @@ def _build_provider(
     exporter = QuietOTLPSpanExporter(
         enriching_exporter,
         endpoint_label=trace_endpoint,
+        diagnostics=context.diagnostics,
     )
 
     from opentelemetry.sdk.trace import TracerProvider
@@ -254,7 +249,9 @@ def _build_provider(
     attach_ok = assert_sync_span_processors(provider)
     set_span_context_attach_enabled(attach_ok)
 
-    meter_provider = build_meter_provider(endpoint, headers, resource)
+    meter_provider = build_meter_provider(
+        endpoint, headers, resource, diagnostics=context.diagnostics
+    )
     # Parlot metrics use a dedicated MeterProvider — do not call
     # otel_metrics.set_meter_provider() so LiveKit's lk.agents.usage.* counters
     # stay on the process default and are not exported to Parlot's pipeline.
@@ -264,7 +261,7 @@ def _build_provider(
             resolve_parlot_sdk_version() or None,
         )
     )
-    processor.set_metrics(ParlotMetricsRecorder(meter_provider))
+    processor.set_metrics(ParlotMetricsRecorder(meter_provider, context=context))
 
     provider._parlot_processor = processor  # type: ignore[attr-defined]
     return provider
@@ -421,3 +418,15 @@ def configured_capture_logs() -> bool | list[str] | None:
 def configured_log_level() -> str | None:
     """Log level override from ``configure(log_level=...)`` if set."""
     return _configured_log_level
+
+
+def configured_context() -> ParlotContext | None:
+    """``ParlotContext`` created by the last successful ``configure()``."""
+    return _parlot_context
+
+
+def set_configured_context(context: ParlotContext | None) -> None:
+    """Test helper to install or clear the configured ``ParlotContext``."""
+    global _parlot_context
+    _parlot_context = context
+

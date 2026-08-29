@@ -7,7 +7,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from parlot.core.runtime import ParlotRuntimeContext, clear_runtime, set_runtime
+from parlot.core.context import ParlotContext
+from parlot.core.runtime import ParlotRuntimeContext
 from parlot.instrumentation.livekit import _auto
 from parlot.instrumentation.livekit._recording_guard import (
     agent_name_from_ctx,
@@ -26,14 +27,28 @@ def _ctx(metadata=None, agent_name="receptionist", dispatch_id=None):
     return MagicMock(job=job)
 
 
+def _parlot_ctx(**runtime_kwargs) -> ParlotContext:
+    context = ParlotContext()
+    if runtime_kwargs:
+        context.runtime = ParlotRuntimeContext(
+            endpoint="http://localhost",
+            api_key="k",
+            org_id="o",
+            content_bucket="b",
+            r2_endpoint="http://r2",
+            **runtime_kwargs,
+        )
+    return context
+
+
 @pytest.fixture(autouse=True)
 def _reset_recording_state():
-    clear_runtime()
+    _auto.set_configured_context(None)
     _auto._configured_record = None
     _auto._configured_capture_genai_content = None
     _auto._configured_agent_id = None
     yield
-    clear_runtime()
+    _auto.set_configured_context(None)
     _auto._configured_record = None
     _auto._configured_capture_genai_content = None
     _auto._configured_agent_id = None
@@ -48,31 +63,20 @@ class TestLiveKitRecordingGuard:
         assert should_record(_ctx(metadata=meta)) is True
 
     def test_metadata_false_override(self) -> None:
-        set_runtime(
-            ParlotRuntimeContext(
-                endpoint="http://localhost",
-                api_key="k",
-                org_id="o",
-                content_bucket="b",
-                r2_endpoint="http://r2",
-                recording_globs=("*",),
-            )
-        )
+        context = _parlot_ctx(recording_globs=("*",))
+        _auto.set_configured_context(context)
         meta = json.dumps({"record": False})
-        assert should_record(_ctx(metadata=meta)) is False
+        assert should_record(_ctx(metadata=meta), context=context) is False
 
     def test_bootstrap_star_records_unnamed_worker(self) -> None:
-        set_runtime(
-            ParlotRuntimeContext(
-                endpoint="http://localhost",
-                api_key="k",
-                org_id="o",
-                content_bucket="b",
-                r2_endpoint="http://r2",
-                recording_globs=("*",),
+        context = _parlot_ctx(recording_globs=("*",))
+        _auto.set_configured_context(context)
+        assert (
+            should_record(
+                _ctx(agent_name="", dispatch_id="AD_GAJ5UrwGKqsZ"), context=context
             )
+            is True
         )
-        assert should_record(_ctx(agent_name="", dispatch_id="AD_GAJ5UrwGKqsZ")) is True
 
     def test_configure_record_true(self) -> None:
         _auto._configured_record = True
@@ -80,17 +84,9 @@ class TestLiveKitRecordingGuard:
 
     def test_configure_agent_id_uses_bootstrap_agents_map(self) -> None:
         _auto._configured_agent_id = "custom-id"
-        set_runtime(
-            ParlotRuntimeContext(
-                endpoint="http://localhost",
-                api_key="k",
-                org_id="o",
-                content_bucket="b",
-                r2_endpoint="http://r2",
-                recording_agents=(("custom-id", True),),
-            )
-        )
-        assert should_record(_ctx(agent_name="other")) is True
+        context = _parlot_ctx(recording_agents=(("custom-id", True),))
+        _auto.set_configured_context(context)
+        assert should_record(_ctx(agent_name="other"), context=context) is True
         assert recording_agent_id_from_ctx(_ctx(agent_name="other")) == "custom-id"
 
     def test_agent_name_from_ctx_ignores_dispatch_id(self) -> None:
@@ -116,47 +112,43 @@ class TestLiveKitGenAIContentCaptureGuard:
         assert should_capture_genai_content(_ctx()) is True
 
     def test_bootstrap_agent_override(self) -> None:
-        set_runtime(
-            ParlotRuntimeContext(
-                endpoint="http://localhost",
-                api_key="k",
-                org_id="o",
-                content_bucket="b",
-                r2_endpoint="http://r2",
-                capture_genai_content_globs=("*",),
-                capture_genai_content_agents=(("receptionist", False),),
-                capture_genai_content_policy_present=True,
-            )
+        context = _parlot_ctx(
+            capture_genai_content_globs=("*",),
+            capture_genai_content_agents=(("receptionist", False),),
+            capture_genai_content_policy_present=True,
         )
-        assert should_capture_genai_content(_ctx(agent_name="receptionist")) is False
-        assert should_capture_genai_content(_ctx(agent_name="other")) is True
+        _auto.set_configured_context(context)
+        assert (
+            should_capture_genai_content(
+                _ctx(agent_name="receptionist"), context=context
+            )
+            is False
+        )
+        assert (
+            should_capture_genai_content(_ctx(agent_name="other"), context=context)
+            is True
+        )
 
     def test_empty_globs_off(self) -> None:
-        set_runtime(
-            ParlotRuntimeContext(
-                endpoint="http://localhost",
-                api_key="k",
-                org_id="o",
-                content_bucket="b",
-                r2_endpoint="http://r2",
-                capture_genai_content_globs=(),
-                capture_genai_content_policy_present=True,
-            )
+        context = _parlot_ctx(
+            capture_genai_content_globs=(),
+            capture_genai_content_policy_present=True,
         )
-        assert should_capture_genai_content(_ctx()) is False
+        _auto.set_configured_context(context)
+        assert should_capture_genai_content(_ctx(), context=context) is False
 
     def test_metadata_and_configure_overrides(self) -> None:
-        set_runtime(
-            ParlotRuntimeContext(
-                endpoint="http://localhost",
-                api_key="k",
-                org_id="o",
-                content_bucket="b",
-                r2_endpoint="http://r2",
-                capture_genai_content_globs=(),
-                capture_genai_content_policy_present=True,
-            )
+        context = _parlot_ctx(
+            capture_genai_content_globs=(),
+            capture_genai_content_policy_present=True,
         )
-        assert should_capture_genai_content(_ctx(metadata=json.dumps({"capture_genai_content": True}))) is True
+        _auto.set_configured_context(context)
+        assert (
+            should_capture_genai_content(
+                _ctx(metadata=json.dumps({"capture_genai_content": True})),
+                context=context,
+            )
+            is True
+        )
         _auto._configured_capture_genai_content = False
-        assert should_capture_genai_content(_ctx()) is False
+        assert should_capture_genai_content(_ctx(), context=context) is False

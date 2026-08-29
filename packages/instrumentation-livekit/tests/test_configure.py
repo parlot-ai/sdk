@@ -52,6 +52,7 @@ def _reset_configure():
     import parlot.instrumentation.livekit._auto as _auto
 
     _auto._configured = False
+    _auto._parlot_context = None
     _auto._configured_agent_id = None
     _auto._configured_agent_version = ""
     _auto._configured_record = None

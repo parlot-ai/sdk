@@ -11,6 +11,8 @@ import os
 from dataclasses import dataclass
 from typing import Any, Optional, Protocol, runtime_checkable
 
+from parlot.core.context import ParlotContext
+
 logger = logging.getLogger("parlot.core.configure")
 
 
@@ -35,13 +37,14 @@ class ConfigureProtocol(Protocol):
         capture_logs: bool | list[str] | None = None,
         log_level: Optional[str] = None,
         **kwargs: Any,
-    ) -> None: ...
+    ) -> ParlotContext: ...
 
 
 @dataclass
 class BaseConfigureResult:
     """Resolved context from ``base_configure`` for framework adapters."""
 
+    context: ParlotContext
     endpoint: str
     api_key: str
     tracer_provider: Any
@@ -72,20 +75,16 @@ def base_configure(
 ) -> BaseConfigureResult:
     """Execute shared telemetry configuration common across all adapters.
 
-    Resolves endpoint, API key, diagnostics, session log collectors,
-    and remote bootstrap cache.
+    Creates a ``ParlotContext``, initializes diagnostics and session log
+    collectors, and fetches remote bootstrap into ``context.runtime``.
     """
     from parlot.core.bootstrap import fetch_telemetry_bootstrap
-    from parlot.core.diagnostics import init_diagnostics
+    from parlot.core.context import ParlotContext
     from parlot.core.provider import (
         adopt_existing_tracer_provider,
         resolve_api_key,
         resolve_capture_genai_content,
         resolve_endpoint,
-    )
-    from parlot.core.session_logs import (
-        init_session_logs,
-        set_capture_logs_configure,
     )
 
     configure_parlot_logging()
@@ -105,20 +104,22 @@ def base_configure(
 
     resolved_log_level = log_level.strip().upper() if log_level else None
 
-    init_diagnostics(endpoint=resolved_endpoint, api_key=resolved_api_key)
-    set_capture_logs_configure(
+    context = ParlotContext()
+    context.diagnostics.init(endpoint=resolved_endpoint, api_key=resolved_api_key)
+    context.session_logs.set_capture_logs_configure(
         resolved_capture_logs,
         log_level=resolved_log_level,
     )
-    init_session_logs(endpoint=resolved_endpoint, api_key=resolved_api_key)
+    context.session_logs.init(endpoint=resolved_endpoint, api_key=resolved_api_key)
 
     if resolved_api_key:
-        fetch_telemetry_bootstrap(resolved_endpoint, resolved_api_key)
+        fetch_telemetry_bootstrap(resolved_endpoint, resolved_api_key, context)
 
     if tracer_provider is None:
         tracer_provider = adopt_existing_tracer_provider()
 
     return BaseConfigureResult(
+        context=context,
         endpoint=resolved_endpoint,
         api_key=resolved_api_key,
         tracer_provider=tracer_provider,
