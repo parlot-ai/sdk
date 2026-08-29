@@ -25,7 +25,7 @@ from parlot.core.attrs import (
     METRIC_USAGE_TTS_CHARACTERS,
 )
 from parlot.instrumentation.livekit._metrics import ParlotMetricsRecorder
-from parlot.instrumentation.livekit._processor import _LiveKitSessionState
+from parlot.instrumentation.livekit._session_state import _LiveKitSessionState
 
 
 def _usage_state(session_id: str) -> _LiveKitSessionState:
