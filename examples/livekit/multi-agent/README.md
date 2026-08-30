@@ -9,8 +9,8 @@ Integration requirements (`configure()` + `await ctx.connect()`): see [instrumen
 ```bash
 cd examples/livekit/multi-agent
 uv sync
-cp .env.example .env.local
-# edit .env.local
+cp .env.example .env
+# edit .env
 ```
 
 ## Run

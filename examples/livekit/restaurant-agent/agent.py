@@ -15,7 +15,6 @@ import yaml
 from dotenv import load_dotenv
 from pydantic import Field
 
-load_dotenv(".env.local")
 load_dotenv()
 
 from parlot.instrumentation.livekit import configure

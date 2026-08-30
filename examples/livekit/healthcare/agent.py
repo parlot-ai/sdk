@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 from fake_database import FakeDatabase
 from pydantic import Field
 
-load_dotenv(".env.local")
 load_dotenv()
 
 from parlot.instrumentation.livekit import configure

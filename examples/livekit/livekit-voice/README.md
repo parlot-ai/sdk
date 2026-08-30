@@ -9,8 +9,8 @@ Requires [uv](https://docs.astral.sh/uv/) and the [LiveKit CLI](https://docs.liv
 ```bash
 cd examples/livekit/livekit-voice
 uv sync
-cp .env.example .env.local
-# edit .env.local
+cp .env.example .env
+# edit .env
 ```
 
 ## Run

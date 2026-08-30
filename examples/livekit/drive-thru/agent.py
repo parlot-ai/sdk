@@ -20,7 +20,6 @@ from dotenv import load_dotenv
 from order import OrderedCombo, OrderedHappy, OrderedRegular, OrderState
 from pydantic import Field
 
-load_dotenv(".env.local")
 load_dotenv()
 
 from parlot.instrumentation.livekit import configure
