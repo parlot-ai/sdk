@@ -15,7 +15,7 @@ def test_runtime_parses_logs_agent_objects() -> None:
         "https://ingest.test",
         "key",
         {
-            "org_id": "org-1",
+            "tenant_id": "org-1",
             "content_bucket": "b",
             "r2_endpoint": "https://r2",
             "logs": {
@@ -50,7 +50,7 @@ def test_handler_uses_agent_min_level_from_bootstrap() -> None:
         "https://ingest.test",
         "key",
         {
-            "org_id": "org-1",
+            "tenant_id": "org-1",
             "content_bucket": "b",
             "r2_endpoint": "https://r2",
             "logs": {

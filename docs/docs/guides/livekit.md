@@ -401,4 +401,4 @@ With **`parlot.configure()` only** (events + Parlot OTLP, no LiveKit pipeline sp
 | **Upload grant** | Agent → collector | Scoped temp R2 creds (`session_token`) for LiveKit egress |
 | **R2 reconcile** | Session API (lazy) | Confirms upload → `audio_available=true` when the object exists |
 
-For platform env (`R2_ACCOUNT_ID`, `R2_CONTENT_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` on collector + API, `DATABASE_URL`), see the platform local E2E runbook. R2 key scheme: `{org_id}/sessions/{session_id}/audio.ogg`.
+For platform env (`R2_ACCOUNT_ID`, `R2_CONTENT_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` on collector + API, `DATABASE_URL`), see the platform local E2E runbook. R2 key scheme: `{tenant_id}/sessions/{session_id}/audio.ogg`.

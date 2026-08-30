@@ -26,7 +26,7 @@ def _platform(**kwargs) -> ParlotRuntimeContext:
     defaults = dict(
         endpoint="https://ingest.test",
         api_key="key",
-        org_id="org-1",
+        tenant_id="org-1",
         content_bucket="bucket",
         r2_endpoint="https://r2.example.com",
     )

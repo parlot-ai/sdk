@@ -1,4 +1,4 @@
-"""Cached Parlot platform bootstrap (org, R2, recording, logs, content)."""
+"""Cached Parlot platform bootstrap (tenant, R2, recording, logs, content)."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from parlot.core.logs_capture import DEFAULT_LOGS_MIN_LEVEL, normalize_log_level
 class ParlotRuntimeContext:
     endpoint: str
     api_key: str
-    org_id: str
+    tenant_id: str
     content_bucket: str
     r2_endpoint: str
     recording_globs: tuple[str, ...] = ()
@@ -151,7 +151,7 @@ def runtime_from_bootstrap(
     return ParlotRuntimeContext(
         endpoint=endpoint.rstrip("/"),
         api_key=api_key,
-        org_id=str(payload.get("org_id") or ""),
+        tenant_id=str(payload.get("tenant_id") or ""),
         content_bucket=str(payload.get("content_bucket") or ""),
         r2_endpoint=str(payload.get("r2_endpoint") or ""),
         recording_globs=globs,

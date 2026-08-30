@@ -33,7 +33,7 @@ def _parlot_ctx(**runtime_kwargs) -> ParlotContext:
         context.runtime = ParlotRuntimeContext(
             endpoint="http://localhost",
             api_key="k",
-            org_id="o",
+            tenant_id="o",
             content_bucket="b",
             r2_endpoint="http://r2",
             **runtime_kwargs,
