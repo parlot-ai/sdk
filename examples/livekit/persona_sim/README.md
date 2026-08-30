@@ -16,7 +16,7 @@ uv run python ../persona_sim/run_persona_sim.py --all --max-turns 24
 ```
 
 `uv run` uses the example's environment (Parlot path deps, LiveKit Inference).
-The driver loads `.env.local` / `.env` from the example cwd.
+The driver loads `.env` from the example cwd.
 
 ## Adapter contract
 

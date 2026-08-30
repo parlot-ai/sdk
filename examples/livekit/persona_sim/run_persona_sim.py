@@ -1,7 +1,7 @@
 """Drive LiveKit example sessions with a persona LLM as the caller.
 
 Shared across ``examples/livekit/*``. Run from an example directory so
-``sim_adapter.py`` and ``.env*`` resolve correctly:
+``sim_adapter.py`` and ``.env`` resolve correctly:
 
   cd examples/livekit/hotel-receptionist
   uv run python ../persona_sim/run_persona_sim.py --list
@@ -280,7 +280,6 @@ async def _run_scenario(
 async def _async_main(args: argparse.Namespace) -> int:
     cwd = Path(args.cwd).expanduser().resolve() if args.cwd else Path.cwd().resolve()
     os.chdir(cwd)
-    load_dotenv(cwd / ".env.local")
     load_dotenv(cwd / ".env")
 
     adapter = _load_adapter(cwd, Path(args.adapter) if args.adapter else None)

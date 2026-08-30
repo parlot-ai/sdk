@@ -27,20 +27,23 @@ _parlot_context: ParlotContext | None = None
 def _is_livekit_dev_watch_parent() -> bool:
     """True when this process is LiveKit's dev-mode file-watcher parent.
 
-    ``lk-agents dev`` (reload on by default) imports the agent in a parent
-    process that only watches files, then spawns a child worker that
-    re-imports ``__main__`` and runs jobs. Instrumentation belongs in the child.
+    ``lk agent dev`` maps to ``python -m livekit.agents start --dev`` (reload
+    on by default). That parent imports the agent only to watch files, then
+    spawns a child worker that re-imports and runs jobs. Instrumentation
+    belongs in the child.
 
-    The spawned child inherits ``sys.argv`` (including ``dev``) and, while
-    ``agent.py`` is re-imported during ``multiprocessing`` spawn setup,
-    ``parent_process()`` is still ``None``. Use the process name instead:
-    only the top-level watcher is ``MainProcess``.
+    The spawned child inherits ``sys.argv`` (including ``--dev`` / legacy
+    ``dev``) and, while ``agent.py`` is re-imported during
+    ``multiprocessing`` spawn setup, ``parent_process()`` is still ``None``.
+    Use the process name instead: only the top-level watcher is
+    ``MainProcess``.
     """
     if multiprocessing.current_process().name != "MainProcess":
         return False
 
     argv = sys.argv
-    if "dev" not in argv:
+    # New CLI: ``start --dev``. Legacy rich CLI: ``… dev`` subcommand.
+    if "--dev" not in argv and "dev" not in argv:
         return False
 
     if "--no-reload" in argv:
