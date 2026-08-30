@@ -16,6 +16,11 @@ Optional:
     OPENAI_API_KEY          your OpenAI API key (used by the agent below)
 """
 
+from dotenv import load_dotenv
+
+load_dotenv(".env.local")
+load_dotenv()
+
 # ── Parlot instrumentation ────────────────────────────────────────────────
 from parlot.instrumentation.livekit import configure
 

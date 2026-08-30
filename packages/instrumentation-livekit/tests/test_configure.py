@@ -142,7 +142,8 @@ class TestDevWatchParentSkip:
 
     def test_skips_configure_in_dev_watch_parent(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
-        monkeypatch.setattr(sys, "argv", ["agent.py", "dev"])
+        # ``lk agent dev`` → ``python -m livekit.agents start --dev``
+        monkeypatch.setattr(sys, "argv", ["-m", "livekit.agents", "start", "--dev"])
 
         from parlot.instrumentation.livekit import configure
         import parlot.instrumentation.livekit._auto as _auto
@@ -155,9 +156,20 @@ class TestDevWatchParentSkip:
 
         assert lk.AgentSession._parlot_patched is False
 
-    def test_configures_in_dev_worker_child(self, monkeypatch):
+    def test_skips_configure_in_legacy_dev_subcommand(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
         monkeypatch.setattr(sys, "argv", ["agent.py", "dev"])
+
+        from parlot.instrumentation.livekit import configure
+        import parlot.instrumentation.livekit._auto as _auto
+
+        configure()
+
+        assert _auto._configured is False
+
+    def test_configures_in_dev_worker_child(self, monkeypatch):
+        monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
+        monkeypatch.setattr(sys, "argv", ["-m", "livekit.agents", "start", "--dev"])
 
         import multiprocessing
 

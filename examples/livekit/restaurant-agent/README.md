@@ -13,8 +13,8 @@ Recording follows Parlot **Settings → Recording** (telemetry bootstrap). Overr
 ```bash
 cd examples/livekit/restaurant-agent
 uv sync
-cp .env.example .env
-# edit .env
+cp .env.example .env.local
+# edit .env.local
 ```
 
 ## Run

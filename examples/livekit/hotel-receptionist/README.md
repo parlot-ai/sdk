@@ -16,8 +16,8 @@ Requires [uv](https://docs.astral.sh/uv/) and the [LiveKit CLI](https://docs.liv
 ```bash
 cd examples/livekit/hotel-receptionist
 uv sync
-cp .env.example .env
-# edit .env — LIVEKIT_* for Inference; PARLOT_* for ingest
+cp .env.example .env.local
+# edit .env.local — LIVEKIT_* for Inference; PARLOT_* for ingest
 ```
 
 Point Parlot at the hosted collector:

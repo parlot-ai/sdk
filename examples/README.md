@@ -23,7 +23,7 @@ Requires [uv](https://docs.astral.sh/uv/) and the [LiveKit CLI](https://docs.liv
 ```bash
 cd examples/livekit/livekit-voice
 uv sync
-cp .env.example .env
+cp .env.example .env.local
 # Fill in PARLOT_API_KEY (mint in Settings → API Keys) and provider credentials
 # PARLOT_ENDPOINT defaults to https://ingest.parlot.ai in .env.example
 lk agent dev

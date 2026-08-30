@@ -16,7 +16,7 @@ Recording follows Parlot **Settings → Recording** (telemetry bootstrap). Overr
 ```bash
 cd examples/livekit/drive-thru
 uv sync
-cp .env.example .env
+cp .env.example .env.local
 # LIVEKIT_* for Inference; PARLOT_ENDPOINT=https://ingest.parlot.ai + PARLOT_API_KEY
 ```
 
