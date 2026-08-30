@@ -32,7 +32,7 @@ from parlot.core.diagnostics import DiagnosticsCollector
 if TYPE_CHECKING:
     from ._session_state import _LiveKitSessionState
 
-ATTR_ORG_ID = "org_id"
+ATTR_TENANT_ID = "tenant_id"
 
 
 def build_meter_provider(
@@ -151,8 +151,8 @@ class ParlotMetricsRecorder:
             ATTR_AGENT_FRAMEWORK: "livekit",
         }
         runtime = self._context.runtime if self._context is not None else None
-        if runtime is not None and runtime.org_id:
-            attrs[ATTR_ORG_ID] = runtime.org_id
+        if runtime is not None and runtime.tenant_id:
+            attrs[ATTR_TENANT_ID] = runtime.tenant_id
         if participant_role:
             attrs[ATTR_TURN_PARTICIPANT_ROLE] = participant_role
         return attrs

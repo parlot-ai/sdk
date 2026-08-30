@@ -10,7 +10,7 @@ class TestApplyBootstrapPayload:
     def test_caches_platform_runtime(self) -> None:
         context = ParlotContext()
         payload = {
-            "org_id": "org-1",
+            "tenant_id": "org-1",
             "content_bucket": "bucket",
             "r2_endpoint": "https://r2.example.com",
             "recording": {
@@ -25,7 +25,7 @@ class TestApplyBootstrapPayload:
         apply_bootstrap_payload(context, "https://ingest.test", "key", payload)
         runtime = context.runtime
         assert runtime is not None
-        assert runtime.org_id == "org-1"
+        assert runtime.tenant_id == "org-1"
         assert runtime.recording_globs == ("receptionist*",)
         assert runtime.recording_agents_map() == {"restaurant-agent": True}
         assert runtime.capture_genai_content_globs == ("*",)
