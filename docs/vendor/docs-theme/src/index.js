@@ -5,5 +5,7 @@
  */
 
 export {DocBanner} from './components/DocBanner.js';
+export {CategoryDocCardList} from './components/CategoryDocCardList.js';
 export {DocCard, DocCardGroup} from './components/DocCard.js';
+export {SectionDocCardList} from './components/SectionDocCardList.js';
 export {SectionNav} from './components/SectionNav.js';

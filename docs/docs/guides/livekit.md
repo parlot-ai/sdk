@@ -2,6 +2,8 @@
 title: LiveKit
 description: Instrument LiveKit Agents with Parlot — checklist, recording, contract maps, escalation, and OTEL coverage.
 sidebar_position: 1
+sidebar_custom_props:
+  eyebrow: LiveKit
 ---
 
 # LiveKit
@@ -37,7 +39,7 @@ async def entrypoint(ctx: JobContext):
 
 Session bootstrap runs on LiveKit **`agent_state_changed`** when the agent transitions **`initializing → listening`** (the Starting phase of [AgentSession lifecycle](https://docs.livekit.io/agents/logic/sessions/)). That mints one Parlot **`session.id`**, starts a **`parlot.session`** span for ingestion, and stamps **`platform.ref.*`** keys. Room metadata refresh and egress run after bootstrap (or immediately on `JobContext.connect` if bootstrap already completed). The session closes via the AgentSession **`close`** event.
 
-Optional: `agent_id=` for canonical deployment identity and `version=` for deployment version. See [Concepts](../concepts.md#session-and-agent-identity).
+Optional: `agent_id=` for canonical deployment identity and `version=` for deployment version. See [Concepts](../get-started/concepts.md#session-and-agent-identity).
 
 **Reliable patterns for LiveKit job processes:**
 
@@ -55,7 +57,7 @@ or set `PARLOT_AGENT_VERSION=0.1.0` at deploy/runtime. Under LiveKit `dev` / job
 | `session.agent_framework` | `"livekit"` |
 | `session.agent_framework_raw_id` | LiveKit job id (`lk.job_id`) |
 | `session.agent_chain` | Deployment id plus runtime routing (`hotel-receptionist → Orchestrator → cancel_task`) |
-| `gen_ai.agent.version` | Agent deployment version — see [Concepts](../concepts.md#session-and-agent-identity) |
+| `gen_ai.agent.version` | Agent deployment version — see [Concepts](../get-started/concepts.md#session-and-agent-identity) |
 
 LiveKit voice currently uses `conversation_id === session_id` (1:1) as a placeholder until multi-session conversations are modeled.
 
@@ -86,7 +88,7 @@ Recording policy (precedence: job metadata → `configure(record=…)` → Setti
 - **Code:** `configure(record=True)`, `configure(record=False)`, or `configure(record=["my-agent*"])`
 - **Dispatch:** job metadata `{ "record": true }` or `{ "record": false }`
 
-Generative AI content capture (message bodies and tool payloads; default on) is shared across adapters — see [Concepts → Generative AI content capture](../concepts.md#generative-ai-content-capture). LiveKit job metadata: `{ "capture_genai_content": true|false }`.
+Generative AI content capture (message bodies and tool payloads; default on) is shared across adapters — see [Concepts → Generative AI content capture](../get-started/concepts.md#generative-ai-content-capture). LiveKit job metadata: `{ "capture_genai_content": true|false }`.
 
 ### Session application logs
 
@@ -105,7 +107,7 @@ job metadata `capture_logs` → `configure(capture_logs=…)` → Settings → L
 
 Failed LLM and tool work is surfaced in **`spans_agent.error_flag`** at ingest. LiveKit stamps OpenTelemetry **`exception.type`** / **`exception.message`** on spans such as **`llm_request_run`** when a provider call fails; tool failures use **`lk.function_tool.is_error`**. The collector maps those signals (and OTLP span status `ERROR`) into `error_flag` and `error_type` on each operational span row.
 
-Turn-level **`has_error`** is derived at query time — see [Concepts](../concepts.md#errors-in-the-session-waterfall).
+Turn-level **`has_error`** is derived at query time — see [Concepts](../get-started/concepts.md#errors-in-the-session-waterfall).
 
 ---
 
@@ -137,7 +139,7 @@ Recording uses **Room Composite Egress** (OGG, audio-only) to R2. Flow:
 
 ## What gets exported
 
-The conversation attribute contract is framework-agnostic (see [Concepts](../concepts.md#shared-span-vocabulary)). The LiveKit adapter (`parlot-instrumentation-livekit`) reads LiveKit Agents OTel spans in-process, stamps **Parlot** attributes from `parlot.core.attrs`, emits handoff spans as `parlot.agent.handoff`, and strips all `lk.*` keys before OTLP export (`SanitizeVendorAttrsSpanExporter`).
+The conversation attribute contract is framework-agnostic (see [Concepts](../get-started/concepts.md#shared-span-vocabulary)). The LiveKit adapter (`parlot-instrumentation-livekit`) reads LiveKit Agents OTel spans in-process, stamps **Parlot** attributes from `parlot.core.attrs`, emits handoff spans as `parlot.agent.handoff`, and strips all `lk.*` keys before OTLP export (`SanitizeVendorAttrsSpanExporter`).
 
 ### Native LiveKit → exported GenAI / voice names
 
@@ -240,7 +242,7 @@ Spans exported to Parlot (after rename): Conversation Contract (`parlot.session`
 
 ## Human escalation
 
-Semantics and role vocabulary (`user` / `agent` / `human_rep`) are in [Concepts → Human escalation](../concepts.md#human-escalation). Below are LiveKit-specific ways to signal a live rep.
+Semantics and role vocabulary (`user` / `agent` / `human_rep`) are in [Concepts → Human escalation](../get-started/concepts.md#human-escalation). Below are LiveKit-specific ways to signal a live rep.
 
 ### Explicit call
 
@@ -283,7 +285,7 @@ async def transfer_to_support_desk(session, sip_uri):
 
 ## Custom metadata and refs
 
-Semantics are in [Concepts → Custom metadata and external references](../concepts.md#custom-metadata-and-external-references). Import the same helpers from the LiveKit package:
+Semantics are in [Concepts → Custom metadata and external references](../get-started/concepts.md#custom-metadata-and-external-references). Import the same helpers from the LiveKit package:
 
 ```python
 from parlot.instrumentation.livekit import (

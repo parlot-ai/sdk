@@ -2,6 +2,8 @@
 title: LangGraph API
 description: API reference for parlot-instrumentation-langgraph.
 sidebar_position: 3
+sidebar_custom_props:
+  eyebrow: Framework
 ---
 
 # LangGraph API Reference

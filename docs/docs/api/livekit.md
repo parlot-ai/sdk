@@ -2,6 +2,8 @@
 title: LiveKit API
 description: API reference for parlot-instrumentation-livekit.
 sidebar_position: 2
+sidebar_custom_props:
+  eyebrow: Framework
 ---
 
 # LiveKit API Reference
