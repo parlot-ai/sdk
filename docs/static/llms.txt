@@ -8,13 +8,13 @@ Also see the domain-wide index at https://parlot.ai/llms.txt
 ## Docs
 
 - [Overview](https://parlot.ai/docs/): SDK docs home.
-- [Quick Start](https://parlot.ai/docs/quick-start): Install, configure(), and export OTLP.
-- [Concepts](https://parlot.ai/docs/concepts): Sessions, turns, handoffs, escalation, metadata, agent identity, generative AI content capture.
+- [Quick Start](https://parlot.ai/docs/get-started/quick-start): Install, configure(), and export OTLP.
+- [Concepts](https://parlot.ai/docs/get-started/concepts): Sessions, turns, handoffs, escalation, metadata, agent identity, generative AI content capture.
 - [Guides](https://parlot.ai/docs/guides/): Integration guide index.
 - [LiveKit](https://parlot.ai/docs/guides/livekit): Checklist, recording, egress, R2 reconcile, contract maps, and OTEL coverage.
 - [LangGraph](https://parlot.ai/docs/guides/langgraph): LangGraph / LangChain instrumentation.
 
 ## Optional
 
-- [Changelog](https://parlot.ai/docs/changelog): Release notes.
+- [Changelog](https://parlot.ai/docs/reference/changelog): Release notes.
 - [Sitemap](https://parlot.ai/docs/sitemap.xml): All indexed doc URLs.

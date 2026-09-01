@@ -2,6 +2,8 @@
 title: Core & Session API
 description: API reference for parlot-core semantic conventions, metadata, platform refs, and session helpers.
 sidebar_position: 4
+sidebar_custom_props:
+  eyebrow: Shared
 ---
 
 # Core & Session API Reference

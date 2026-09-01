@@ -18,7 +18,7 @@ export default function Home(): JSX.Element {
             optional. Open-source SDK docs for builders shipping voice agents.
           </p>
           <div className="parlot-overview-actions">
-            <Link className="button button--primary button--lg" to="/quick-start">
+            <Link className="button button--primary button--lg" to="/get-started/quick-start">
               Quick Start
             </Link>
             <Link className="button button--secondary button--lg" to="/guides">
@@ -36,13 +36,13 @@ export default function Home(): JSX.Element {
               eyebrow="Get started"
               title="Quick Start"
               description="Install the SDK, call configure(), and export OTLP in a few minutes."
-              to="/quick-start"
+              to="/get-started/quick-start"
             />
             <DocCard
               eyebrow="Concepts"
               title="Sessions and turns"
               description="Semantic conventions for sessions, turns, handoffs, and agent identity."
-              to="/concepts"
+              to="/get-started/concepts"
             />
             <DocCard
               eyebrow="Guides"

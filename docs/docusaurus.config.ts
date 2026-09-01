@@ -128,14 +128,14 @@ const config: Config = {
       logo: {
         alt: 'Parlot',
         src: 'img/logo.webp',
+        href: '/',
       },
       items: [
-        {to: '/', label: 'Overview', position: 'left'},
-        {to: '/quick-start', label: 'Quick Start', position: 'left'},
-        {to: '/concepts', label: 'Concepts', position: 'left'},
+        {to: '/get-started/quick-start', label: 'Quick Start', position: 'left'},
+        {to: '/get-started/concepts', label: 'Concepts', position: 'left'},
         {to: '/guides', label: 'Guides', position: 'left'},
         {to: '/api', label: 'API Reference', position: 'left'},
-        {to: '/changelog', label: 'Changelog', position: 'left'},
+        {to: '/reference/changelog', label: 'Changelog', position: 'left'},
         {
           href: 'https://github.com/parlot-ai/sdk',
           label: 'GitHub',
@@ -151,7 +151,7 @@ const config: Config = {
         {
           title: 'Docs',
           items: [
-            {label: 'Quick Start', to: '/quick-start'},
+            {label: 'Quick Start', to: '/get-started/quick-start'},
             {label: 'LiveKit guide', to: '/guides/livekit'},
           ],
         },
@@ -164,7 +164,7 @@ const config: Config = {
               className: 'footer-github-link',
               'aria-label': 'Parlot SDK on GitHub',
             },
-            {label: 'Changelog', to: '/changelog'},
+            {label: 'Changelog', to: '/reference/changelog'},
           ],
         },
       ],

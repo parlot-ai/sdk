@@ -2,6 +2,8 @@
 title: Environment Variables
 description: Complete reference of environment variables supported by the Parlot SDK.
 sidebar_position: 5
+sidebar_custom_props:
+  eyebrow: Configuration
 ---
 
 # Environment Variables Reference

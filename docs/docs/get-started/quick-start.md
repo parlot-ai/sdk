@@ -52,9 +52,9 @@ Mint the API key in Parlot **Settings → API Keys**. For recording, enable Sett
 ## Next
 
 - [Core concepts](./concepts.md)
-- [LiveKit guide](./guides/livekit.md)
-- [API Reference](./api/index.mdx)
-- Already running LangGraph / LangChain alongside voice? See the [LangGraph guide](./guides/langgraph.md).
+- [LiveKit guide](../guides/livekit.md)
+- [API Reference](../api/index.mdx)
+- Already running LangGraph / LangChain alongside voice? See the [LangGraph guide](../guides/langgraph.md).
 
 ## License
 

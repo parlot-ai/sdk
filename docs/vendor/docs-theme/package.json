@@ -8,12 +8,16 @@
     ".": "./src/index.js",
     "./css/custom.css": "./src/css/custom.css",
     "./components/DocBanner": "./src/components/DocBanner.js",
+    "./components/CategoryDocCardList": "./src/components/CategoryDocCardList.js",
     "./components/DocCard": "./src/components/DocCard.js",
+    "./components/SectionDocCardList": "./src/components/SectionDocCardList.js",
     "./components/SectionNav": "./src/components/SectionNav.js"
   },
   "peerDependencies": {
     "@docusaurus/Link": "*",
+    "@docusaurus/plugin-content-docs": "*",
     "@docusaurus/router": "*",
+    "@docusaurus/theme-common": "*",
     "@docusaurus/useDocusaurusContext": "*",
     "clsx": "*",
     "react": ">=18",

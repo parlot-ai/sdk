@@ -2,6 +2,8 @@
 title: LangGraph instrumentation
 description: configure() for LangGraph / LangChain agents.
 sidebar_position: 3
+sidebar_custom_props:
+  eyebrow: LangGraph
 ---
 
 # LangGraph instrumentation
@@ -29,7 +31,7 @@ close_session("demo-1")  # optional; also flushed on process exit
 Environment: `PARLOT_ENDPOINT`, `PARLOT_API_KEY`.
 
 Generative AI content capture is shared across adapters — see
-[Concepts → Generative AI content capture](../concepts.md#generative-ai-content-capture).
+[Concepts → Generative AI content capture](../get-started/concepts.md#generative-ai-content-capture).
 Override for the process with `configure(capture_genai_content=False)`.
 
 See [`examples/langgraph/minimal-agent`](https://github.com/parlot-ai/sdk/tree/main/examples/langgraph/minimal-agent).

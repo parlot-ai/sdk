@@ -5,7 +5,7 @@ set -euo pipefail
 
 DOCS_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REPO_ROOT="$(cd "${DOCS_ROOT}/.." && pwd)"
-OUT="${DOCS_ROOT}/docs/changelog.md"
+OUT="${DOCS_ROOT}/docs/reference/changelog.md"
 
 packages=(
   "meta:parlot"
@@ -45,4 +45,4 @@ EOF
   done
 } >"${OUT}"
 
-echo "Synced changelog -> docs/docs/changelog.md"
+echo "Synced changelog -> docs/docs/reference/changelog.md"
