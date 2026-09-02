@@ -763,7 +763,9 @@ class HealthcareAgent(Agent):
 server = AgentServer()
 
 
-@server.rtc_session()
+# Explicit dispatch name so WarmTransferTask's `{room}-human-agent` briefing
+# room is not auto-assigned another HealthcareAgent job.
+@server.rtc_session(agent_name="healthcare")
 async def entrypoint(ctx: JobContext):
     await ctx.connect()
 
