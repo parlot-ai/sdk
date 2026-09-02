@@ -16,7 +16,7 @@ from parlot.instrumentation.livekit import configure
 
 __version__ = "0.1.0"
 
-configure(agent_id="healthcare", version=__version__)
+configure(agent_id="healthcare", version=__version__, auto_escalate_sip=True)
 
 from livekit.agents import (
     Agent,
@@ -45,9 +45,13 @@ from livekit.agents.voice import UserStateChangedEvent
 
 logger = logging.getLogger("HealthcareAgent")
 
-# to test out warm transfer, ensure the following variables/env vars are set
+# Warm transfer: LiveKit outbound trunk + destination (PSTN or SIP URI).
+# Zoiper softphone: register Zoiper to Telnyx (credential connection), then set
+# LIVEKIT_SUPERVISOR_DESTINATION to that DID or sip:<user>@sip.telnyx.com.
 SIP_TRUNK_ID = os.getenv("LIVEKIT_SIP_OUTBOUND_TRUNK")  # "ST_abcxyz"
-SUPERVISOR_PHONE_NUMBER = os.getenv("LIVEKIT_SUPERVISOR_PHONE_NUMBER")  # "+12003004000"
+SUPERVISOR_DESTINATION = os.getenv(
+    "LIVEKIT_SUPERVISOR_DESTINATION"
+)  # "+12003004000" or "sip:supervisor@sip.telnyx.com"
 SIP_NUMBER = os.getenv("LIVEKIT_SIP_NUMBER")  # "+15005006000" - caller ID shown to supervisor
 
 VALID_INSURANCES = ["Anthem", "Aetna", "EmblemHealth", "HealthFirst"]
@@ -108,11 +112,14 @@ async def transfer_to_human(context: RunContext) -> None:
     try:
         if SIP_TRUNK_ID is None:
             raise ToolError("SIP_TRUNK_ID is not configured")
-        if SUPERVISOR_PHONE_NUMBER is None:
-            raise ToolError("SUPERVISOR_PHONE_NUMBER is not configured")
+        if SUPERVISOR_DESTINATION is None:
+            raise ToolError(
+                "LIVEKIT_SUPERVISOR_DESTINATION is not configured "
+                "(E.164 number or sip:user@host)"
+            )
 
         result = await WarmTransferTask(
-            target_phone_number=SUPERVISOR_PHONE_NUMBER,
+            sip_call_to=SUPERVISOR_DESTINATION,
             sip_trunk_id=SIP_TRUNK_ID,
             sip_number=SIP_NUMBER,
             chat_ctx=context.session.history,

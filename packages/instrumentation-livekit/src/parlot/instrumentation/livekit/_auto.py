@@ -344,7 +344,7 @@ def _is_sip_participant(participant: Any) -> bool:
     try:
         from livekit.rtc import ParticipantKind
 
-        return kind == ParticipantKind.SIP
+        return kind == ParticipantKind.PARTICIPANT_KIND_SIP
     except (ImportError, AttributeError):
         kind_name = str(getattr(kind, "name", kind)).upper()
         return kind_name in ("SIP", "PARTICIPANT_KIND_SIP")
