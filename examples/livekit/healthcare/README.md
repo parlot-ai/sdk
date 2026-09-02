@@ -22,7 +22,24 @@ cp .env.example .env
 ```
 
 For live warm-transfer, also set `LIVEKIT_SIP_OUTBOUND_TRUNK`,
-`LIVEKIT_SUPERVISOR_PHONE_NUMBER`, and `LIVEKIT_SIP_NUMBER`.
+`LIVEKIT_SUPERVISOR_DESTINATION`, and `LIVEKIT_SIP_NUMBER`.
+
+### Softphone (Zoiper) instead of cell PSTN
+
+Zoiper does **not** register to LiveKit. Register it to your **SIP carrier**
+(typically Telnyx), then have LiveKit dial that destination through the outbound trunk:
+
+1. Telnyx: create a **Credential** SIP connection + username/password; assign a DID (or use the SIP user URI).
+2. Zoiper (iPhone): account → domain `sip.telnyx.com`, same username/password; confirm registered.
+3. LiveKit: outbound trunk pointing at Telnyx (`ST_…`) — same as PSTN setup.
+4. Healthcare `.env`:
+   - `LIVEKIT_SIP_OUTBOUND_TRUNK=ST_…`
+   - `LIVEKIT_SUPERVISOR_DESTINATION=+1…` (DID that rings Zoiper), **or**
+     `sip:<username>@sip.telnyx.com`
+   - `LIVEKIT_SIP_NUMBER=+1…` (caller ID on the outbound leg)
+
+Ask the agent for a human; Zoiper should ring. You still need the LiveKit↔Telnyx
+outbound trunk — the softphone only replaces the supervisor’s cell as the dial target.
 
 ## Interactive voice / console
 

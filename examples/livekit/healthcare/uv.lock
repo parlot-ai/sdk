@@ -1500,9 +1500,10 @@ wheels = [
 
 [[package]]
 name = "parlot-core"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "../../../packages/core" }
 dependencies = [
+    { name = "httpx" },
     { name = "opentelemetry-api" },
     { name = "opentelemetry-exporter-otlp-proto-http" },
     { name = "opentelemetry-sdk" },
@@ -1511,6 +1512,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "httpx", specifier = ">=0.27.0" },
     { name = "opentelemetry-api", specifier = ">=1.27.0" },
     { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.27.0" },
     { name = "opentelemetry-sdk", specifier = ">=1.27.0" },
@@ -1544,10 +1546,11 @@ requires-dist = [
 
 [[package]]
 name = "parlot-instrumentation-livekit"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "../../../packages/instrumentation-livekit" }
 dependencies = [
     { name = "httpx" },
+    { name = "livekit-agents" },
     { name = "opentelemetry-api" },
     { name = "opentelemetry-exporter-otlp-proto-http" },
     { name = "opentelemetry-sdk" },
@@ -1557,6 +1560,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "httpx", specifier = ">=0.27.0" },
+    { name = "livekit-agents", specifier = ">=0.8.0" },
     { name = "opentelemetry-api", specifier = ">=1.27.0" },
     { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.27.0" },
     { name = "opentelemetry-sdk", specifier = ">=1.27.0" },
