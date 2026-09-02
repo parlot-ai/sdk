@@ -43,10 +43,21 @@ outbound trunk — the softphone only replaces the supervisor’s cell as the di
 
 ## Interactive voice / console
 
+The worker registers as dispatch name `healthcare` (see `agent_name=` in
+`agent.py`). That avoids auto-dispatch into WarmTransferTask’s
+`{room}-human-agent` briefing room. `lk agent console` still works locally;
+Cloud playground / SIP / tokens must dispatch that name explicitly.
+
 ```bash
 lk agent console   # Ctrl+T toggles text/audio; lk agent console --text for text-only start
-lk agent dev       # LiveKit worker / playground
+lk agent dev       # LiveKit worker — playground must select agent "healthcare"
+# Example explicit dispatch / join token:
+lk dispatch create --agent-name healthcare --room my-room
+lk token create --identity user --room my-room --agent healthcare --join
 ```
+
+For inbound SIP, set the dispatch rule’s `room_config.agents` to
+`agent_name: healthcare`.
 
 ## Persona LLM sample sessions
 
