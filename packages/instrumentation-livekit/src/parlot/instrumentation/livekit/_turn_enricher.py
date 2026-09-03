@@ -659,6 +659,8 @@ class TurnEnricher:
             turn_index = attr_int(span.attributes or {}, ATTR_TURN_INDEX) or (
                 self.active_turn_index(state, "user_turn") or 0
             )
+            if turn_index:
+                self._set(span, ATTR_TURN_INDEX, turn_index)
             self._stash_turn_pipeline_attrs(
                 state, turn_index, self._pipeline_attrs_from_user_turn(span, state)
             )
@@ -701,6 +703,8 @@ class TurnEnricher:
                 resolved_turn_index = state.open_agent_turn_index or (state.turn_count + 1)
             else:
                 resolved_turn_index = attr_int(span.attributes or {}, ATTR_TURN_INDEX)
+            if resolved_turn_index:
+                self._set(span, ATTR_TURN_INDEX, resolved_turn_index)
             agent_text = state.agent_text_by_turn.get(resolved_turn_index, "")
             if agent_text:
                 self._set(span, ATTR_TURN_AGENT_TEXT, agent_text)
@@ -732,7 +736,7 @@ class TurnEnricher:
         if speech_id:
             state.active_speech_id = speech_id
         agent_id = self._active_agent_id(state, attrs)
-        agent_modality = self._user_turn_modality(attrs)
+        agent_modality = state.last_user_input_modality or self._user_turn_modality(attrs)
         response_text = str(
             attr_get(
                 attrs, ATTR_LK_RESPONSE_TEXT, ATTR_RESPONSE_TEXT_LEGACY, default=""
@@ -842,9 +846,9 @@ class TurnEnricher:
             if name not in NATIVE_TURN_SPANS or state is None:
                 continue
             attrs = span.attributes or {}
+            # Require an explicit turn index — never guess from turn_count at export
+            # time (mis-attributes long agent_turn bounds onto a late parlot.turn).
             turn_index = attr_int(attrs, ATTR_TURN_INDEX)
-            if not turn_index:
-                turn_index = self.active_turn_index(state, name) or 0
             if not turn_index:
                 continue
             if name == "user_turn":
@@ -1009,7 +1013,7 @@ class TurnEnricher:
             diarization_source=diarization_source,
             input_modality=modality,
             agent_hint=agent_hint,
-            source_span=span,
+            source_span=span if modality == "voice" else None,
             language=state.pending_user_language,
             utterance_text=transcript,
         )
@@ -1063,6 +1067,22 @@ class TurnEnricher:
             if key not in bucket or bucket[key] in ("", 0, 0.0):
                 bucket[key] = value
 
+    @staticmethod
+    def _speech_media_from_span_allowed(
+        role: str, input_modality: str
+    ) -> bool:
+        """Native span bounds are speech windows for voice **user** turns only.
+
+        Agent ``agent_turn`` spans cover AgentTasks/tools and must not drive
+        ``speech_wall_*`` / ``media_segment_*``. Text/console turns never get
+        recording-relative media from OTLP bounds.
+        """
+        return input_modality == "voice" and role != "agent"
+
+    @staticmethod
+    def _speech_media_from_metrics_allowed(input_modality: str) -> bool:
+        return input_modality == "voice"
+
     def _pipeline_attrs_from_user_turn(
         self, span: ReadableSpan, state: _LiveKitSessionState
     ) -> dict[str, AttributeValue]:
@@ -1073,6 +1093,8 @@ class TurnEnricher:
             confidence = optional_float(attrs.get(ATTR_TRANSCRIPT_CONFIDENCE))
         if confidence is not None:
             out[ATTR_VOICE_STT_CONFIDENCE] = confidence
+        if self._user_turn_modality(attrs) != "voice":
+            return out
         wall = self._recording.speech_wall_ms_from_span(span)
         if wall is not None:
             start_ms, end_ms = wall
@@ -1089,6 +1111,12 @@ class TurnEnricher:
     def _pipeline_attrs_from_agent_turn(
         self, span: ReadableSpan, state: _LiveKitSessionState
     ) -> dict[str, AttributeValue]:
+        """Latency/interrupt attrs from native agent_turn — never speech/media.
+
+        Full agent_turn span bounds include AgentTasks/tools and must not become
+        ``speech_wall_*`` / ``media_segment_*``. Those come from ChatMessage
+        metrics at emit time only.
+        """
         out: dict[str, AttributeValue] = {}
         attrs = span.attributes or {}
         for src, dest in (
@@ -1113,17 +1141,6 @@ class TurnEnricher:
             out[ATTR_TURN_TTS_TTFB_S] = state.pending_tts_ttfb_s
         if attrs.get(ATTR_LK_INTERRUPTED) or attrs.get(ATTR_TURN_INTERRUPTED):
             out[ATTR_TURN_INTERRUPTED] = True
-        wall = self._recording.speech_wall_ms_from_span(span)
-        if wall is not None:
-            start_ms, end_ms = wall
-            out[ATTR_TURN_SPEECH_WALL_START_MS] = start_ms
-            out[ATTR_TURN_SPEECH_WALL_END_MS] = end_ms
-            media_start, media_end = self._recording.media_segments_from_speech(
-                state, start_ms, end_ms
-            )
-            if media_end > 0:
-                out[ATTR_TURN_MEDIA_START_MS] = media_start
-                out[ATTR_TURN_MEDIA_END_MS] = media_end
         return out
 
     def _stamp_agent_turn_timing_attrs(
@@ -1353,7 +1370,11 @@ class TurnEnricher:
         speech_wall: tuple[int, int] | None = speech_wall_override
         start_time_unix_ns: int | None = None
         end_time_unix_ns: int | None = None
-        if speech_wall is None and source_span is not None and input_modality == "voice":
+        if (
+            speech_wall is None
+            and source_span is not None
+            and self._speech_media_from_span_allowed(role, input_modality)
+        ):
             speech_wall = self._recording.speech_wall_ms_from_span(source_span)
             if speech_wall is not None:
                 start_time_unix_ns = source_span.start_time
@@ -1376,7 +1397,9 @@ class TurnEnricher:
                 end_time_unix_ns = speech_end_wall_ms * 1_000_000
 
         metrics = turn_metrics or {}
-        if speech_wall is None and input_modality == "voice":
+        if speech_wall is None and self._speech_media_from_metrics_allowed(
+            input_modality
+        ):
             started = metrics.get("started_speaking_at")
             stopped = metrics.get("stopped_speaking_at")
             if started is not None and stopped is not None:

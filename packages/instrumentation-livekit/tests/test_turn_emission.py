@@ -403,3 +403,148 @@ class TestParlotTurnEmission:
         assert len(turns) == 1
         assert turns[0].attributes[ATTR_TURN_LANGUAGE] == "es"
         assert turns[0].attributes[ATTR_TURN_LANGUAGE_SWITCH] == '{"from": "en", "to": "es"}'
+
+    def test_agent_turn_without_metrics_leaves_media_unset(self) -> None:
+        """Long agent_turn bounds must not become media_segment_* (AgentTasks)."""
+        proc, exporter = _proc_with_exporter()
+        state = _seed_state(proc)
+        anchor_ms = 1_700_000_000_000
+        proc.set_recording_anchor_wall_ms(state, anchor_ms)
+        state.open_agent_turn_index = 24
+
+        # Span starts near session begin but ends much later (tool / AgentTask).
+        speech_start = (anchor_ms + 3_000) * 1_000_000
+        speech_end = (anchor_ms + 160_000) * 1_000_000
+
+        proc.on_end(
+            _make_span(
+                "agent_turn",
+                {
+                    ATTR_LK_JOB_ID: "job-1",
+                    ATTR_LK_AGENT_LABEL: "Orchestrator",
+                    ATTR_LK_RESPONSE_TEXT: "I'll transfer you now",
+                },
+                start_time=speech_start,
+                end_time=speech_end,
+            )
+        )
+
+        turns = _parlot_turns(exporter)
+        assert len(turns) == 1
+        attrs = turns[0].attributes
+        assert attrs.get(ATTR_TURN_MEDIA_START_MS, 0) in (0, None)
+        assert attrs.get(ATTR_TURN_SPEECH_WALL_START_MS, 0) in (0, None)
+
+    def test_recording_anchor_freezes_after_first_set(self) -> None:
+        proc, _exporter = _proc_with_exporter()
+        state = _seed_state(proc)
+        proc.set_recording_anchor_wall_ms(state, 1_000_000)
+        proc.set_recording_anchor_wall_ms(state, 9_999_999)
+        assert state.recording_anchor_wall_ms == 1_000_000
+
+    def test_events_mode_stamps_turn_index_on_agent_turn(self) -> None:
+        proc, _exporter = _proc_with_exporter()
+        state = _seed_state(proc)
+        proc.set_turn_source("events")
+        state.open_agent_turn_index = 5
+        span = _make_span(
+            "agent_turn",
+            {
+                ATTR_LK_JOB_ID: "job-1",
+                ATTR_LK_RESPONSE_TEXT: "hi",
+            },
+        )
+        proc.on_end(span)
+        assert span._attributes[ATTR_TURN_INDEX] == 5
+
+    def test_merge_requires_turn_index_and_skips_agent_span_media(self) -> None:
+        from parlot.core.attrs import ATTR_TURN_E2E_LATENCY_S
+        from parlot.instrumentation.livekit.attrs import ATTR_LK_E2E_LATENCY
+
+        proc, _exporter = _proc_with_exporter()
+        state = _seed_state(proc)
+        state.turn_count = 24
+        state.pending_turn_pipeline_attrs.clear()
+        anchor_ms = 1_700_000_000_000
+        proc.set_recording_anchor_wall_ms(state, anchor_ms)
+
+        native_no_index = _make_span(
+            "agent_turn",
+            {
+                ATTR_LK_JOB_ID: "job-1",
+                ATTR_LK_E2E_LATENCY: 1.5,
+                ATTR_LK_RESPONSE_TEXT: "hello",
+            },
+            start_time=(anchor_ms + 3_000) * 1_000_000,
+            end_time=(anchor_ms + 10_000) * 1_000_000,
+        )
+        proc._turns.merge_native_turn_attrs_onto_parlot_turns([native_no_index])
+        assert state.pending_turn_pipeline_attrs == {}
+
+        native_with_index = _make_span(
+            "agent_turn",
+            {
+                ATTR_LK_JOB_ID: "job-1",
+                ATTR_LK_E2E_LATENCY: 1.5,
+                ATTR_LK_RESPONSE_TEXT: "hello",
+                ATTR_TURN_INDEX: 24,
+            },
+            start_time=(anchor_ms + 3_000) * 1_000_000,
+            end_time=(anchor_ms + 10_000) * 1_000_000,
+        )
+        proc._turns.merge_native_turn_attrs_onto_parlot_turns([native_with_index])
+        pending = state.pending_turn_pipeline_attrs.get(24, {})
+        assert pending.get(ATTR_TURN_E2E_LATENCY_S) == 1.5
+        assert ATTR_TURN_MEDIA_START_MS not in pending
+        assert ATTR_TURN_SPEECH_WALL_START_MS not in pending
+
+    def test_text_user_turn_does_not_stamp_media_from_span_bounds(self) -> None:
+        proc, exporter = _proc_with_exporter()
+        state = _seed_state(proc)
+        anchor_ms = 1_700_000_000_000
+        proc.set_recording_anchor_wall_ms(state, anchor_ms)
+
+        proc.on_end(
+            _make_span(
+                "user_turn",
+                {
+                    ATTR_LK_JOB_ID: "job-1",
+                    ATTR_LK_USER_INPUT: "typed in web console",
+                },
+                start_time=(anchor_ms + 1_000) * 1_000_000,
+                end_time=(anchor_ms + 5_000) * 1_000_000,
+            )
+        )
+
+        turns = _parlot_turns(exporter)
+        assert len(turns) == 1
+        assert turns[0].attributes[ATTR_TURN_INPUT_MODALITY] == "text"
+        assert turns[0].attributes.get(ATTR_TURN_MEDIA_START_MS, 0) in (0, None)
+        assert turns[0].attributes.get(ATTR_TURN_SPEECH_WALL_START_MS, 0) in (0, None)
+
+    def test_text_agent_turn_uses_last_user_modality_not_span_bounds(self) -> None:
+        proc, exporter = _proc_with_exporter()
+        state = _seed_state(proc)
+        state.last_user_input_modality = "text"
+        state.open_agent_turn_index = 2
+        anchor_ms = 1_700_000_000_000
+        proc.set_recording_anchor_wall_ms(state, anchor_ms)
+
+        proc.on_end(
+            _make_span(
+                "agent_turn",
+                {
+                    ATTR_LK_JOB_ID: "job-1",
+                    ATTR_LK_USER_TRANSCRIPT: "stale voice transcript on span",
+                    ATTR_LK_RESPONSE_TEXT: "Console reply",
+                },
+                start_time=(anchor_ms + 1_000) * 1_000_000,
+                end_time=(anchor_ms + 120_000) * 1_000_000,
+            )
+        )
+
+        turns = _parlot_turns(exporter)
+        assert len(turns) == 1
+        assert turns[0].attributes[ATTR_TURN_INPUT_MODALITY] == "text"
+        assert turns[0].attributes.get(ATTR_TURN_MEDIA_START_MS, 0) in (0, None)
+        assert turns[0].attributes.get(ATTR_TURN_SPEECH_WALL_START_MS, 0) in (0, None)

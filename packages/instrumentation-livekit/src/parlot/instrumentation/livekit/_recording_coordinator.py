@@ -35,6 +35,9 @@ class RecordingCoordinator:
         """Recording timeline t=0 (``audio_recording_started_at``) for media_segment_*."""
         if anchor_wall_ms <= 0:
             return
+        # Freeze after first set — mid-session egress must not reset media t=0.
+        if state.recording_anchor_wall_ms is not None:
+            return
         state.recording_anchor_wall_ms = anchor_wall_ms
 
     @staticmethod
