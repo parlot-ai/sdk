@@ -736,7 +736,7 @@ class TurnEnricher:
         if speech_id:
             state.active_speech_id = speech_id
         agent_id = self._active_agent_id(state, attrs)
-        agent_modality = self._user_turn_modality(attrs)
+        agent_modality = state.last_user_input_modality or self._user_turn_modality(attrs)
         response_text = str(
             attr_get(
                 attrs, ATTR_LK_RESPONSE_TEXT, ATTR_RESPONSE_TEXT_LEGACY, default=""
@@ -752,7 +752,7 @@ class TurnEnricher:
             diarization_source=ATTR_DIAR_SOURCE_AGENT_ID,
             input_modality=agent_modality,
             agent_hint=agent_id,
-            # Never use full agent_turn bounds as speech/media (AgentTasks/tools).
+            source_span=span if agent_modality == "voice" else None,
             utterance_text=response_text,
         )
         state.turn_count = turn_index
@@ -1013,7 +1013,7 @@ class TurnEnricher:
             diarization_source=diarization_source,
             input_modality=modality,
             agent_hint=agent_hint,
-            source_span=span,
+            source_span=span if modality == "voice" else None,
             language=state.pending_user_language,
             utterance_text=transcript,
         )
@@ -1067,6 +1067,22 @@ class TurnEnricher:
             if key not in bucket or bucket[key] in ("", 0, 0.0):
                 bucket[key] = value
 
+    @staticmethod
+    def _speech_media_from_span_allowed(
+        role: str, input_modality: str
+    ) -> bool:
+        """Native span bounds are speech windows for voice **user** turns only.
+
+        Agent ``agent_turn`` spans cover AgentTasks/tools and must not drive
+        ``speech_wall_*`` / ``media_segment_*``. Text/console turns never get
+        recording-relative media from OTLP bounds.
+        """
+        return input_modality == "voice" and role != "agent"
+
+    @staticmethod
+    def _speech_media_from_metrics_allowed(input_modality: str) -> bool:
+        return input_modality == "voice"
+
     def _pipeline_attrs_from_user_turn(
         self, span: ReadableSpan, state: _LiveKitSessionState
     ) -> dict[str, AttributeValue]:
@@ -1077,6 +1093,8 @@ class TurnEnricher:
             confidence = optional_float(attrs.get(ATTR_TRANSCRIPT_CONFIDENCE))
         if confidence is not None:
             out[ATTR_VOICE_STT_CONFIDENCE] = confidence
+        if self._user_turn_modality(attrs) != "voice":
+            return out
         wall = self._recording.speech_wall_ms_from_span(span)
         if wall is not None:
             start_ms, end_ms = wall
@@ -1352,13 +1370,10 @@ class TurnEnricher:
         speech_wall: tuple[int, int] | None = speech_wall_override
         start_time_unix_ns: int | None = None
         end_time_unix_ns: int | None = None
-        # Agent speech/media comes from ChatMessage metrics only — never from
-        # native agent_turn span bounds (AgentTasks/tools stretch those spans).
         if (
             speech_wall is None
-            and role != "agent"
             and source_span is not None
-            and input_modality == "voice"
+            and self._speech_media_from_span_allowed(role, input_modality)
         ):
             speech_wall = self._recording.speech_wall_ms_from_span(source_span)
             if speech_wall is not None:
@@ -1382,7 +1397,9 @@ class TurnEnricher:
                 end_time_unix_ns = speech_end_wall_ms * 1_000_000
 
         metrics = turn_metrics or {}
-        if speech_wall is None and input_modality == "voice":
+        if speech_wall is None and self._speech_media_from_metrics_allowed(
+            input_modality
+        ):
             started = metrics.get("started_speaking_at")
             stopped = metrics.get("stopped_speaking_at")
             if started is not None and stopped is not None:

@@ -497,3 +497,54 @@ class TestParlotTurnEmission:
         assert pending.get(ATTR_TURN_E2E_LATENCY_S) == 1.5
         assert ATTR_TURN_MEDIA_START_MS not in pending
         assert ATTR_TURN_SPEECH_WALL_START_MS not in pending
+
+    def test_text_user_turn_does_not_stamp_media_from_span_bounds(self) -> None:
+        proc, exporter = _proc_with_exporter()
+        state = _seed_state(proc)
+        anchor_ms = 1_700_000_000_000
+        proc.set_recording_anchor_wall_ms(state, anchor_ms)
+
+        proc.on_end(
+            _make_span(
+                "user_turn",
+                {
+                    ATTR_LK_JOB_ID: "job-1",
+                    ATTR_LK_USER_INPUT: "typed in web console",
+                },
+                start_time=(anchor_ms + 1_000) * 1_000_000,
+                end_time=(anchor_ms + 5_000) * 1_000_000,
+            )
+        )
+
+        turns = _parlot_turns(exporter)
+        assert len(turns) == 1
+        assert turns[0].attributes[ATTR_TURN_INPUT_MODALITY] == "text"
+        assert turns[0].attributes.get(ATTR_TURN_MEDIA_START_MS, 0) in (0, None)
+        assert turns[0].attributes.get(ATTR_TURN_SPEECH_WALL_START_MS, 0) in (0, None)
+
+    def test_text_agent_turn_uses_last_user_modality_not_span_bounds(self) -> None:
+        proc, exporter = _proc_with_exporter()
+        state = _seed_state(proc)
+        state.last_user_input_modality = "text"
+        state.open_agent_turn_index = 2
+        anchor_ms = 1_700_000_000_000
+        proc.set_recording_anchor_wall_ms(state, anchor_ms)
+
+        proc.on_end(
+            _make_span(
+                "agent_turn",
+                {
+                    ATTR_LK_JOB_ID: "job-1",
+                    ATTR_LK_USER_TRANSCRIPT: "stale voice transcript on span",
+                    ATTR_LK_RESPONSE_TEXT: "Console reply",
+                },
+                start_time=(anchor_ms + 1_000) * 1_000_000,
+                end_time=(anchor_ms + 120_000) * 1_000_000,
+            )
+        )
+
+        turns = _parlot_turns(exporter)
+        assert len(turns) == 1
+        assert turns[0].attributes[ATTR_TURN_INPUT_MODALITY] == "text"
+        assert turns[0].attributes.get(ATTR_TURN_MEDIA_START_MS, 0) in (0, None)
+        assert turns[0].attributes.get(ATTR_TURN_SPEECH_WALL_START_MS, 0) in (0, None)
