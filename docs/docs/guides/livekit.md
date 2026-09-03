@@ -61,6 +61,30 @@ or set `PARLOT_AGENT_VERSION=0.1.0` at deploy/runtime. Under LiveKit `dev` / job
 
 LiveKit voice currently uses `conversation_id === session_id` (1:1) as a placeholder until multi-session conversations are modeled.
 
+### Named worker dispatch (`agent_name`)
+
+This is LiveKit’s **dispatch name** (which jobs are eligible for which rooms). It is separate from Parlot `configure(agent_id=…)` / `session.agent_id`, which is the canonical product identity stamped on telemetry.
+
+Prefer an explicit name on the RTC session entrypoint:
+
+```python
+from livekit.agents import AgentServer, JobContext
+
+server = AgentServer()
+
+
+@server.rtc_session(agent_name="healthcare")
+async def entrypoint(ctx: JobContext):
+    await ctx.connect()
+    ...
+```
+
+**Why (LiveKit):** without a name, the worker registers as the default (unnamed) agent and is eligible for **automatic assignment** into any room that requests an agent. Paths such as LiveKit `WarmTransferTask` create a second room (often `{room}-human-agent` for briefing). An unnamed worker will be auto-dispatched into that room and run your entrypoint again.
+
+**Why (Parlot):** each LiveKit job bootstraps roughly one `parlot.session`. A second auto-dispatched job therefore creates a **second Parlot session** for the same caller journey (main room + transfer briefing), with its own turns and recording lifecycle. That is usually unwanted in the UI and can surface noisy teardown errors (`engine is closed`, `failed to send session event`) when the briefing room shuts down.
+
+Keep playground, SIP dispatch rules, join tokens, and `lk dispatch` aligned with the same name (`lk dispatch create --agent-name healthcare …`, SIP `room_config.agents` with `agent_name: healthcare`). Local `lk agent console` / `lk agent dev` still work; Cloud and SIP must request the named agent explicitly. See the [healthcare example README](https://github.com/parlot-ai/sdk/blob/main/examples/livekit/healthcare/README.md) for a full WarmTransferTask setup.
+
 ### 2. `await ctx.connect()` before `session.start()` (required)
 
 ```python
@@ -253,6 +277,8 @@ record_human_rep("support_rep_jane", label="Jane")
 ```
 
 ### SIP warm transfer (auto-detect)
+
+If you use `WarmTransferTask` (or any flow that opens a second agent room), set a named LiveKit [`agent_name`](#named-worker-dispatch-agent_name) on `@server.rtc_session` so the briefing room does not auto-dispatch another copy of your worker and mint a duplicate Parlot session.
 
 ```python
 from parlot.instrumentation.livekit import configure
