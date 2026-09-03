@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.2.0](https://github.com/parlot-ai/sdk/compare/core-v0.1.1...core-v0.2.0) (2026-09-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* ParlotRuntimeContext.org_id and the org_id OTel attribute are now tenant_id.
+* introduce ParlotContext for SDK instance state ([#32](https://github.com/parlot-ai/sdk/issues/32))
+
+### Features
+
+* **livekit:** stamp session.recording.disabled_reason when egress skipped ([#30](https://github.com/parlot-ai/sdk/issues/30)) ([fc1e64c](https://github.com/parlot-ai/sdk/commit/fc1e64c860c4105bd1e3eb9f646969e05d68848a))
+
+
+### Code Refactoring
+
+* introduce ParlotContext for SDK instance state ([#32](https://github.com/parlot-ai/sdk/issues/32)) ([8998bfa](https://github.com/parlot-ai/sdk/commit/8998bfa6f5b4aa75243a8b224b06631a9a61109b))
+* rename bootstrap and OTel org_id to tenant_id ([#34](https://github.com/parlot-ai/sdk/issues/34)) ([cccb6a6](https://github.com/parlot-ai/sdk/commit/cccb6a6766555a6a11997d51208eed4218e00e6d))
+
 ## [0.1.1](https://github.com/parlot-ai/sdk/compare/core-v0.1.0...core-v0.1.1) (2026-08-25)
 
 

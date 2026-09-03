@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.0](https://github.com/parlot-ai/sdk/compare/instrumentation-langgraph-v0.1.1...instrumentation-langgraph-v0.2.0) (2026-09-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* introduce ParlotContext for SDK instance state ([#32](https://github.com/parlot-ai/sdk/issues/32))
+
+### Code Refactoring
+
+* introduce ParlotContext for SDK instance state ([#32](https://github.com/parlot-ai/sdk/issues/32)) ([8998bfa](https://github.com/parlot-ai/sdk/commit/8998bfa6f5b4aa75243a8b224b06631a9a61109b))
+
 ## [0.1.1](https://github.com/parlot-ai/sdk/compare/instrumentation-langgraph-v0.1.0...instrumentation-langgraph-v0.1.1) (2026-08-25)
 
 
