@@ -6,11 +6,17 @@ on:
     paths:
       - 'docs/**'
       - 'packages/**/CHANGELOG.md'
+      - 'packages/**/*.py'
+      - 'pyproject.toml'
+      - 'uv.lock'
       - '.github/workflows/docs.yml'
   pull_request:
     paths:
       - 'docs/**'
       - 'packages/**/CHANGELOG.md'
+      - 'packages/**/*.py'
+      - 'pyproject.toml'
+      - 'uv.lock'
       - '.github/workflows/docs.yml'
 
 jobs:
@@ -21,6 +27,12 @@ jobs:
         working-directory: docs
     steps:
       - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Sync Python workspace (API doc generation)
+        working-directory: ${{ github.workspace }}
+        run: uv sync --group dev
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest

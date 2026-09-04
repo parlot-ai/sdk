@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Optional
+from typing import Any, Optional
 
 from parlot.core.context import ParlotContext
 
@@ -22,7 +22,7 @@ def configure(
     api_key: Optional[str] = None,
     capture_genai_content: Optional[bool] = None,
     service_name: Optional[str] = None,
-    tracer_provider=None,
+    tracer_provider: Any = None,
     agent_id: Optional[str] = None,
     version: Optional[str] = None,
     channel: Optional[str] = None,
@@ -39,6 +39,34 @@ def configure(
     stamps channel/modality). For LangGraph-owned sessions, pass ``channel``
     (e.g. ``webchat``) and optionally ``modality`` so ingest does not assume
     voice.
+
+    Shared kwargs (``endpoint``, ``api_key``, ``agent_id``, ``version``,
+    ``capture_genai_content``, ``capture_logs``, ``log_level``,
+    ``service_name``, ``tracer_provider``) match every adapter — see
+    ``parlot.core.ConfigureProtocol``.
+
+    Args:
+        endpoint: Shared — Parlot OTLP base URL (or ``PARLOT_ENDPOINT``).
+        api_key: Shared — org API key (or ``PARLOT_API_KEY``).
+        capture_genai_content: Shared — GenAI payload capture override.
+            Precedence: this kwarg → Settings → Generative AI → on.
+        service_name: Shared — OTel ``service.name`` (defaults to ``agent_id``
+            or ``"langgraph-agent"``).
+        tracer_provider: Shared — existing ``TracerProvider``. If LiveKit
+            already initialized one in-process, this call adopts it.
+        agent_id: Shared — canonical ``session.agent_id``.
+        version: Shared — ``gen_ai.agent.version``.
+        channel: Communication channel for standalone LangGraph sessions
+            (e.g. ``"webchat"``, ``"slack"``, ``"sms"``). Defaults to
+            ``"text"``. Ignored when LiveKit owns the session.
+        modality: Session modality (``"text"``, ``"voice"``, or
+            ``"multimodal"``). Defaults to ``"text"`` for standalone sessions.
+        capture_logs: Shared — session log capture (bool or globs).
+        log_level: Shared — minimum level for session log capture.
+
+    Returns:
+        The ``ParlotContext`` created for this process (or the prior one if
+        already configured).
     """
     global _configured, _configured_agent_id, _configured_agent_version, _parlot_context
     if _configured:
@@ -142,7 +170,17 @@ def _build_provider(
 
 
 def close_session(thread_id: str, *, reason: str = "completed") -> None:
-    """Public helper to close a LangGraph-owned session by thread_id."""
+    """Public helper to close a LangGraph-owned session by thread_id.
+
+    Emits ``parlot.session.close`` with accumulated usage and turn counts.
+    Optional — sessions are also flushed on process exit.
+
+    Args:
+        thread_id: LangGraph thread id from
+            ``config={"configurable": {"thread_id": "..."}}``.
+        reason: Close reason stamped on ``session.close_reason``. Defaults to
+            ``"completed"``.
+    """
     from ._session import close_session as _close
 
     _close(thread_id, reason=reason)

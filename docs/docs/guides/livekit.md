@@ -39,7 +39,7 @@ async def entrypoint(ctx: JobContext):
 
 Session bootstrap runs on LiveKit **`agent_state_changed`** when the agent transitions **`initializing → listening`** (the Starting phase of [AgentSession lifecycle](https://docs.livekit.io/agents/logic/sessions/)). That mints one Parlot **`session.id`**, starts a **`parlot.session`** span for ingestion, and stamps **`platform.ref.*`** keys. Room metadata refresh and egress run after bootstrap (or immediately on `JobContext.connect` if bootstrap already completed). The session closes via the AgentSession **`close`** event.
 
-Optional: `agent_id=` for canonical deployment identity and `version=` for deployment version. See [Concepts](../get-started/concepts.md#session-and-agent-identity).
+Optional: `agent_id=` for canonical deployment identity and `version=` for deployment version. Shared kwargs are on [`configure()`](../api/configure.md); LiveKit-only options (`record`, `auto_escalate_sip`, …) are on the [LiveKit API](../api/livekit.md). See also [Concepts](../get-started/concepts.md#session-and-agent-identity).
 
 **Reliable patterns for LiveKit job processes:**
 
@@ -106,7 +106,11 @@ Without `ctx.connect()` you may still see basic telemetry if you pass `room=ctx.
 | `PARLOT_DIAGNOSTICS` | Optional. Default on. Set `off` / `0` / `false` / `no` to disable SDK self-diagnostics (export/handler failures). Metadata only; drops under sustained failure (no retry storm). |
 | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | Standard LiveKit Agents credentials (also used to **start** egress). |
 
-Recording policy (precedence: job metadata → `configure(record=…)` → Settings → Recording via bootstrap):
+Full env reference: [Environment Variables](../api/env-vars.md). Shared `configure()` options: [`configure()`](../api/configure.md).
+
+### Recording policy (LiveKit)
+
+Precedence: job metadata → `configure(record=…)` → Settings → Recording via bootstrap:
 
 - **UI:** Parlot → **Settings → Recording** — per-agent toggles for known deployments, plus globs (`*` or `receptionist*,cal-*`) for agents not yet ingested
 - **Code:** `configure(record=True)`, `configure(record=False)`, or `configure(record=["my-agent*"])`

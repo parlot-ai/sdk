@@ -37,7 +37,39 @@ class ConfigureProtocol(Protocol):
         capture_logs: bool | list[str] | None = None,
         log_level: Optional[str] = None,
         **kwargs: Any,
-    ) -> ParlotContext: ...
+    ) -> ParlotContext:
+        """Shared keyword surface for every adapter ``configure()``.
+
+        Args:
+            endpoint: Parlot OTLP collector base URL (e.g.
+                ``https://ingest.parlot.ai``). Spans export to
+                ``{endpoint}/v1/traces``. If omitted, reads ``PARLOT_ENDPOINT``.
+            api_key: Org-scoped API key minted in Parlot **Settings → API Keys**.
+                If omitted, reads ``PARLOT_API_KEY``. Required for remote telemetry
+                bootstrap, recording grants, and self-diagnostics.
+            capture_genai_content: Process-wide override for LLM message bodies and
+                tool input/output payloads. If ``False``, payloads are omitted while
+                preserving span durations, tokens, and turn text. Precedence: job
+                metadata → this kwarg → Settings → Generative AI (default: on).
+            service_name: OpenTelemetry resource ``service.name``. Defaults to
+                ``agent_id`` or a framework-specific fallback.
+            tracer_provider: Existing OpenTelemetry ``TracerProvider`` to adopt. If
+                omitted, adapters build one with Parlot's OTLP exporter (or adopt an
+                already-registered provider when another adapter configured first).
+            agent_id: Canonical deployment identity stamped on ``session.agent_id``.
+                If omitted, adapters may derive from framework config or
+                ``PARLOT_AGENT_ID``.
+            version: Deployment version stamped on ``gen_ai.agent.version``.
+                Precedence: this kwarg → ``__main__.__version__`` / ``VERSION`` →
+                ``PARLOT_AGENT_VERSION`` → local git short SHA (dev only).
+            capture_logs: Intercept Python ``logging`` during active sessions and
+                stream to the session Logs tab. Boolean or agent-id glob patterns.
+                Precedence: job metadata → this kwarg → Settings → Logs (default: on).
+            log_level: Minimum level for session log capture (e.g. ``"INFO"``,
+                ``"WARNING"``). Defaults to ``"INFO"``.
+            **kwargs: Framework-specific options (ignored by the shared surface).
+        """
+        ...
 
 
 @dataclass
@@ -56,6 +88,7 @@ class BaseConfigureResult:
 
 
 def configure_parlot_logging() -> None:
+    """Configure root logging from ``PARLOT_DEBUG_LEVEL`` when no handlers exist."""
     level_name = os.getenv("PARLOT_DEBUG_LEVEL", "INFO").upper()
     level = getattr(logging, level_name, logging.INFO)
     if not logging.root.handlers:
@@ -77,6 +110,23 @@ def base_configure(
 
     Creates a ``ParlotContext``, initializes diagnostics and session log
     collectors, and fetches remote bootstrap into ``context.runtime``.
+
+    See ``ConfigureProtocol`` for the shared keyword surface.
+
+    Args:
+        endpoint: Parlot OTLP collector base URL. If omitted, reads
+            ``PARLOT_ENDPOINT``.
+        api_key: Org-scoped API key. If omitted, reads ``PARLOT_API_KEY``.
+        capture_genai_content: Process-wide GenAI content capture override.
+        tracer_provider: Existing ``TracerProvider`` to adopt, if any.
+        agent_id: Canonical deployment identity for ``session.agent_id``.
+        version: Deployment version for ``gen_ai.agent.version``.
+        capture_logs: Session log capture policy (bool or agent-id globs).
+        log_level: Minimum level for session log capture.
+
+    Returns:
+        Resolved endpoint, credentials, provider, and capture settings for the
+        calling adapter.
     """
     from parlot.core.bootstrap import fetch_telemetry_bootstrap
     from parlot.core.context import ParlotContext

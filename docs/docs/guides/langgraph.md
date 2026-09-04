@@ -28,7 +28,16 @@ graph.invoke(
 close_session("demo-1")  # optional; also flushed on process exit
 ```
 
-Environment: `PARLOT_ENDPOINT`, `PARLOT_API_KEY`.
+Environment: `PARLOT_ENDPOINT`, `PARLOT_API_KEY` — see [Environment Variables](../api/env-vars.md).
+Shared `configure()` options: [`configure()`](../api/configure.md). LangGraph-only
+kwargs (`channel`, `modality`) and `close_session`: [LangGraph API](../api/langgraph.md).
+
+For standalone (non-LiveKit) sessions, set `channel=` (e.g. `"webchat"`) and
+optionally `modality=` so ingest does not assume voice:
+
+```python
+configure(agent_id="support-bot", version="0.1.0", channel="webchat", modality="text")
+```
 
 Generative AI content capture is shared across adapters — see
 [Concepts → Generative AI content capture](../get-started/concepts.md#generative-ai-content-capture).

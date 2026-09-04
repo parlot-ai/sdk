@@ -25,6 +25,7 @@ The SDK is organized into modular packages:
 
 ## Common conventions
 
+- **Shared `configure()` surface:** Common kwargs are documented once on [`configure()`](./configure.md); LiveKit and LangGraph pages cover extras only.
 - **Keyword-only configuration:** All `configure()` methods use keyword-only arguments to prevent breaking changes when options evolve.
 - **Top-level re-exports:** Common session helpers (`set_session_metadata`, `set_session_attribute`, `add_platform_ref`, `record_human_rep`, `human_escalation`) are re-exported directly from `parlot.instrumentation.livekit` and `parlot.instrumentation.langgraph` so you can import everything from your framework adapter.
 - **Async & multi-process safe:** Instrumentation automatically handles LiveKit worker subprocessing and LangGraph asynchronous execution contexts.

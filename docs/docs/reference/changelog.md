@@ -26,6 +26,36 @@ sidebar_position: 10
 ## parlot-instrumentation-livekit
 
 
+### [0.2.0](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.1.1...instrumentation-livekit-v0.2.0) (2026-09-03)
+
+
+#### ⚠ BREAKING CHANGES
+
+* ParlotRuntimeContext.org_id and the org_id OTel attribute are now tenant_id.
+* introduce ParlotContext for SDK instance state ([#32](https://github.com/parlot-ai/sdk/issues/32))
+
+#### Features
+
+* **livekit:** stamp session.recording.disabled_reason when egress skipped ([#30](https://github.com/parlot-ai/sdk/issues/30)) ([fc1e64c](https://github.com/parlot-ai/sdk/commit/fc1e64c860c4105bd1e3eb9f646969e05d68848a))
+
+
+#### Bug Fixes
+
+* **livekit:** detect SIP kind and dial softphone supervisors ([#37](https://github.com/parlot-ai/sdk/issues/37)) ([c45db73](https://github.com/parlot-ai/sdk/commit/c45db7324fbe5120db2544d4f678eeb5f226fe8c))
+* **livekit:** stamp agent turn media from metrics only ([#39](https://github.com/parlot-ai/sdk/issues/39)) ([e61dd22](https://github.com/parlot-ai/sdk/commit/e61dd22f743bfd0a404ea4a500f7b962e82fa26e))
+* **livekit:** support lk agent --dev watch parent ([#33](https://github.com/parlot-ai/sdk/issues/33)) ([eac79b9](https://github.com/parlot-ai/sdk/commit/eac79b9034a8acc0b28f228fc8392e46fbe272f2))
+
+
+#### Documentation
+
+* use lk agent dev in LiveKit example READMEs ([#28](https://github.com/parlot-ai/sdk/issues/28)) ([397de21](https://github.com/parlot-ai/sdk/commit/397de217e7f48ed52d881a3274d55fed807dbc22))
+
+
+#### Code Refactoring
+
+* introduce ParlotContext for SDK instance state ([#32](https://github.com/parlot-ai/sdk/issues/32)) ([8998bfa](https://github.com/parlot-ai/sdk/commit/8998bfa6f5b4aa75243a8b224b06631a9a61109b))
+* rename bootstrap and OTel org_id to tenant_id ([#34](https://github.com/parlot-ai/sdk/issues/34)) ([cccb6a6](https://github.com/parlot-ai/sdk/commit/cccb6a6766555a6a11997d51208eed4218e00e6d))
+
 ### [0.1.1](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.1.0...instrumentation-livekit-v0.1.1) (2026-08-25)
 
 
@@ -59,6 +89,17 @@ sidebar_position: 10
 ## parlot-instrumentation-langgraph
 
 
+### [0.2.0](https://github.com/parlot-ai/sdk/compare/instrumentation-langgraph-v0.1.1...instrumentation-langgraph-v0.2.0) (2026-09-03)
+
+
+#### ⚠ BREAKING CHANGES
+
+* introduce ParlotContext for SDK instance state ([#32](https://github.com/parlot-ai/sdk/issues/32))
+
+#### Code Refactoring
+
+* introduce ParlotContext for SDK instance state ([#32](https://github.com/parlot-ai/sdk/issues/32)) ([8998bfa](https://github.com/parlot-ai/sdk/commit/8998bfa6f5b4aa75243a8b224b06631a9a61109b))
+
 ### [0.1.1](https://github.com/parlot-ai/sdk/compare/instrumentation-langgraph-v0.1.0...instrumentation-langgraph-v0.1.1) (2026-08-25)
 
 
@@ -81,6 +122,24 @@ sidebar_position: 10
 
 ## parlot-core
 
+
+### [0.2.0](https://github.com/parlot-ai/sdk/compare/core-v0.1.1...core-v0.2.0) (2026-09-03)
+
+
+#### ⚠ BREAKING CHANGES
+
+* ParlotRuntimeContext.org_id and the org_id OTel attribute are now tenant_id.
+* introduce ParlotContext for SDK instance state ([#32](https://github.com/parlot-ai/sdk/issues/32))
+
+#### Features
+
+* **livekit:** stamp session.recording.disabled_reason when egress skipped ([#30](https://github.com/parlot-ai/sdk/issues/30)) ([fc1e64c](https://github.com/parlot-ai/sdk/commit/fc1e64c860c4105bd1e3eb9f646969e05d68848a))
+
+
+#### Code Refactoring
+
+* introduce ParlotContext for SDK instance state ([#32](https://github.com/parlot-ai/sdk/issues/32)) ([8998bfa](https://github.com/parlot-ai/sdk/commit/8998bfa6f5b4aa75243a8b224b06631a9a61109b))
+* rename bootstrap and OTel org_id to tenant_id ([#34](https://github.com/parlot-ai/sdk/issues/34)) ([cccb6a6](https://github.com/parlot-ai/sdk/commit/cccb6a6766555a6a11997d51208eed4218e00e6d))
 
 ### [0.1.1](https://github.com/parlot-ai/sdk/compare/core-v0.1.0...core-v0.1.1) (2026-08-25)
 

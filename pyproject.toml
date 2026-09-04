@@ -12,6 +12,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "griffe>=2.2.0",
     "pytest>=8.0",
     "pytest-asyncio>=0.24",
 ]

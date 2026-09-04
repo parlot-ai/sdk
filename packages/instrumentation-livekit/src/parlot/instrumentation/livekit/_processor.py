@@ -104,7 +104,15 @@ _AGENT_LABEL_SPANS: FrozenSet[str] = frozenset({
 
 
 class LiveKitGenAIProcessor(ParlotBaseProcessor):
-    """Enriches LiveKit Agent spans in-place with Parlot conventions."""
+    """Enriches LiveKit Agent spans in-place with Parlot conventions.
+
+    Intercepts spans from the LiveKit Agents SDK and normalizes them into
+    Parlot's three-layer semantic vocabulary:
+
+    1. **Conversation Contract** — session start/close, turns, agent handoffs.
+    2. **OTel GenAI (v1.41.0)** — LLM inference, tool executions, workflows.
+    3. **Voice spans** — TTS, STT, and end-of-utterance operational timings.
+    """
 
     def __init__(
         self,
