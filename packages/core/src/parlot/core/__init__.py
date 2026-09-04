@@ -34,6 +34,7 @@ from .session import (
 )
 from .session_logs import SessionLogsCollector
 from .topology import SessionTopology
+from .turn_emit import stamp_turn_utterance_text
 
 __all__ = [
     "BaseConfigureResult",
@@ -75,4 +76,5 @@ __all__ = [
     "should_capture_logs",
     "stamp_platform_refs",
     "stamp_session_sdk_version",
+    "stamp_turn_utterance_text",
 ]
