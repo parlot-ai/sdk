@@ -13,7 +13,6 @@ from parlot.core.attrs import (
     ATTR_SESSION_CONVERSATION_ID,
     ATTR_SESSION_ID,
     ATTR_TURN_ACTIVE_AGENT_ID,
-    ATTR_TURN_AGENT_TEXT,
     ATTR_TURN_E2E_LATENCY_S,
     ATTR_TURN_EOU_DELAY_S,
     ATTR_TURN_INDEX,
@@ -32,8 +31,8 @@ from parlot.core.attrs import (
     ATTR_TURN_SPEECH_WALL_END_MS,
     ATTR_TURN_SPEECH_WALL_START_MS,
     ATTR_TURN_TRANSCRIPTION_DELAY_S,
-    ATTR_TURN_USER_TEXT,
 )
+from parlot.core.turn_emit import stamp_turn_utterance_text
 
 if TYPE_CHECKING:
     from opentelemetry.trace import Tracer
@@ -132,11 +131,11 @@ def emit_turn_root_span(
             span.set_attribute(ATTR_TURN_LANGUAGE, language)
         if language_switch:
             span.set_attribute(ATTR_TURN_LANGUAGE_SWITCH, language_switch)
-        text = utterance_text.strip()
-        if text and participant_role == "user":
-            span.set_attribute(ATTR_TURN_USER_TEXT, text)
-        elif text and participant_role == "agent":
-            span.set_attribute(ATTR_TURN_AGENT_TEXT, text)
+        stamp_turn_utterance_text(
+            span,
+            participant_role=participant_role,
+            utterance_text=utterance_text,
+        )
     finally:
         span.end(end_time=end_ns)
 

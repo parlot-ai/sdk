@@ -23,16 +23,15 @@ from parlot.core.attrs import (
     ATTR_SESSION_CONVERSATION_ID,
     ATTR_SESSION_ID,
     ATTR_SESSION_MODALITY,
-    ATTR_TURN_AGENT_TEXT,
     ATTR_TURN_INDEX,
     ATTR_TURN_INPUT_MODALITY,
     ATTR_TURN_PARTICIPANT_ROLE,
-    ATTR_TURN_USER_TEXT,
     SPAN_CONVERSATION_SESSION,
     SPAN_PARLOT_SESSION_CLOSE,
     SPAN_PARLOT_TURN,
 )
 from parlot.core.ids import new_session_id
+from parlot.core.turn_emit import stamp_turn_utterance_text
 from parlot.core.session import (
     SessionState,
     clear_active_session,
@@ -194,7 +193,6 @@ def emit_turn(
         trace_flags=TraceFlags(0x01),
     )
     parent_ctx = trace.set_span_in_context(NonRecordingSpan(ctx))
-    text = utterance_text.strip()
     span = _tracer.start_span(SPAN_PARLOT_TURN, context=parent_ctx)
     try:
         span.set_attribute(ATTR_SESSION_ID, state.session_id)
@@ -207,10 +205,11 @@ def emit_turn(
             span.set_attribute(ATTR_TURN_INPUT_MODALITY, modality)
         span.set_attribute(ATTR_AGENT_FRAMEWORK, LANGGRAPH_FRAMEWORK)
         span.set_attribute(ATTR_LG_THREAD_ID, state.thread_id)
-        if text and role == "user":
-            span.set_attribute(ATTR_TURN_USER_TEXT, text)
-        elif text and role == "agent":
-            span.set_attribute(ATTR_TURN_AGENT_TEXT, text)
+        stamp_turn_utterance_text(
+            span,
+            participant_role=role,
+            utterance_text=utterance_text,
+        )
     finally:
         span.end()
     state.last_turn_trace_id = format(trace_id, "032x")
