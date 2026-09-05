@@ -12,7 +12,14 @@ bun run build
 bun run check:leak # after build — private-content leak guard
 ```
 
-Production publishes automatically: on push to `main` under `docs/**`, the Docs
+`prestart` / `prebuild` run:
+
+- `scripts/sync-changelog.sh` — package CHANGELOGs → `docs/reference/changelog.md`
+- `scripts/generate-api.ts` — extracts from `docs-data/api.json` → `docs/docs/api/{configure,livekit,langgraph,core}.md`
+
+Regenerate API docs alone with `bun run sync-api`.
+
+Production publishes automatically: on push to `main` under `docs/**` (or `docs-data/api.json`), the Docs
 workflow dispatches `sdk-docs-updated` to `parlot-ai/platform`, which runs
 **Deploy website** (builds this site into Worker assets at `/docs/`). Requires
 repo secret `PARLOT_CROSS_REPO_TOKEN` (fine-grained PAT on platform with

@@ -126,7 +126,17 @@ except ImportError:  # pragma: no cover
 
 
 class ParlotLangGraphCallbackHandler(BaseCallbackHandler):
-    """Emits GenAI spans for chain/LLM/tool events; owns session when standalone."""
+    """LangChain callback handler that emits Parlot GenAI spans.
+
+    Translates LangGraph / LangChain execution events (LLM starts/ends, tool
+    invocations, chain runs) into OpenTelemetry GenAI spans
+    (``invoke_agent``, ``invoke_workflow``, ``chat``, ``execute_tool``).
+
+    ``configure()`` registers this handler via LangChain configuration hooks,
+    so manual ``callbacks=[...]`` attachment is not required. When LiveKit
+    owns the active session, contract spans are suppressed and GenAI ops nest
+    under the current OTel context.
+    """
 
     raise_error = False
 

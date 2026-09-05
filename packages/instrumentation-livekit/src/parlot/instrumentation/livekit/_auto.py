@@ -6,7 +6,10 @@ import logging
 import multiprocessing
 import os
 import sys
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
+
+if TYPE_CHECKING:
+    from opentelemetry.trace import TracerProvider
 
 from parlot.core.context import ParlotContext
 
@@ -65,7 +68,7 @@ def configure(
     api_key: Optional[str] = None,
     capture_genai_content: Optional[bool] = None,
     service_name: Optional[str] = None,
-    tracer_provider=None,
+    tracer_provider: TracerProvider | None = None,
     auto_escalate_sip: bool = False,
     escalation_metadata_match: dict[str, str] | None = None,
     agent_id: Optional[str] = None,
@@ -76,19 +79,51 @@ def configure(
 ) -> ParlotContext:
     """Configure Parlot LiveKit instrumentation and OTLP export.
 
-    Deployment version (``gen_ai.agent.version``) resolves once at configure time:
-    ``version=`` kwarg → ``__main__.__version__`` / ``VERSION`` →
-    ``PARLOT_AGENT_VERSION`` → local git SHA (dev only).
+    Call before constructing ``AgentSession``. Builds a ``TracerProvider`` with
+    an OTLP exporter, registers it with ``livekit.agents.telemetry``, fetches
+    telemetry bootstrap when ``PARLOT_API_KEY`` is set, patches
+    ``JobContext.connect`` / ``AgentSession.__init__``, and installs session
+    event hooks.
 
-    Recording policy precedence: job metadata ``record`` >
-    ``record=`` here > Settings → Recording (telemetry bootstrap).
+    Shared kwargs (``endpoint``, ``api_key``, ``agent_id``, ``version``,
+    ``capture_genai_content``, ``capture_logs``, ``log_level``,
+    ``service_name``, ``tracer_provider``) match every adapter — see
+    ``parlot.core.ConfigureProtocol``.
 
-    GenAI content capture precedence: job metadata ``capture_genai_content`` >
-    ``capture_genai_content=`` here > Settings → GenAI Content (telemetry bootstrap) > on.
-    Resolved at span emit time so per-agent bootstrap overrides apply.
+    Under LiveKit ``dev`` / job workers, ``__main__`` is often LiveKit's IPC
+    entrypoint, not your agent file — prefer explicit ``agent_id=`` /
+    ``version=`` (or ``PARLOT_AGENT_VERSION``) over relying on
+    ``__main__.__version__``.
 
-    Log capture precedence: job metadata ``capture_logs`` >
-    ``capture_logs=`` here > Settings → Logs (telemetry bootstrap) > on.
+    Args:
+        endpoint: Shared — Parlot OTLP base URL (or ``PARLOT_ENDPOINT``).
+        api_key: Shared — org API key (or ``PARLOT_API_KEY``).
+        capture_genai_content: Shared — GenAI payload capture override.
+            Precedence: job metadata → this kwarg → Settings → Generative AI → on.
+        service_name: Shared — OTel ``service.name`` (defaults to ``agent_id``
+            or ``"unknown"``).
+        tracer_provider: Shared — existing ``TracerProvider``, or build one with
+            Parlot's OTLP exporter and ``LiveKitGenAIProcessor``.
+        auto_escalate_sip: When ``True``, mark the session escalated when a SIP
+            participant joins the room.
+        escalation_metadata_match: Participant metadata key/value pairs that
+            classify joining participants as human representatives.
+        agent_id: Shared — canonical ``session.agent_id``. If omitted, falls
+            back to LiveKit ``WorkerOptions.agent_name`` / job ``agent_name`` or
+            ``PARLOT_AGENT_ID``.
+        version: Shared — ``gen_ai.agent.version``. Precedence: this kwarg →
+            ``__main__.__version__`` / ``VERSION`` → ``PARLOT_AGENT_VERSION`` →
+            local git SHA (dev only).
+        record: Audio recording policy. Boolean or agent-id glob patterns
+            (e.g. ``["support-*", "billing"]``). Precedence: LiveKit job
+            metadata ``record`` → this kwarg → Settings → Recording.
+        capture_logs: Shared — session log capture (bool or globs). Precedence:
+            job metadata → this kwarg → Settings → Logs → on.
+        log_level: Shared — minimum level for session log capture.
+
+    Returns:
+        The ``ParlotContext`` created for this process (or the prior one if
+        already configured).
     """
     global _configured, _auto_escalate_sip, _escalation_metadata_match
     global _configured_agent_id, _configured_agent_version, _configured_record

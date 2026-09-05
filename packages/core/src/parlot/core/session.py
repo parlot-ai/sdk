@@ -72,8 +72,9 @@ def clear_active_session() -> None:
 def session_owned(*, framework: str | None = None) -> bool:
     """True when an active Parlot session with a non-empty session_id is bound.
 
-    When ``framework`` is set, also require ``state.framework`` to match
-    (e.g. ``session_owned(framework="livekit")`` for coexistence checks).
+    Args:
+        framework: If provided, also require ``state.framework`` to match
+            (e.g. ``session_owned(framework="livekit")`` for coexistence checks).
     """
     state = get_active_session()
     if state is None or not state.session_id:

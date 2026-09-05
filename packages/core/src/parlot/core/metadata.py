@@ -23,6 +23,11 @@ def set_session_attribute(key: str, value: str | int | float | bool) -> None:
     Keys are normalized to ``session.metadata.<key>``. Values are stored as
     strings on the live session span and remembered on session state so they
     are also present on ``parlot.session.close``.
+
+    Args:
+        key: Attribute name. If not prefixed with ``session.metadata.``, the
+            prefix is added automatically.
+        value: Value to record (``str``, ``int``, ``float``, or ``bool``).
     """
     full_key = session_metadata_key(key)
     if not full_key or full_key == ATTR_SESSION_METADATA_PREFIX:
@@ -44,6 +49,10 @@ def set_session_metadata(**pairs: str | int | float | bool) -> None:
 
     Each keyword becomes ``session.metadata.<name>`` on the session span and
     appears in session detail in the Parlot UI.
+
+    Args:
+        **pairs: Keyword metadata pairs (values ``str``, ``int``, ``float``,
+            or ``bool``).
 
     Example::
 

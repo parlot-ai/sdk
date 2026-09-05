@@ -7,6 +7,8 @@ triple construction live in each instrumentation package (e.g. LiveKit).
 
 from __future__ import annotations
 
+from typing import Any
+
 from .attrs import (
     ATTR_PLATFORM_FRAMEWORK,
     ATTR_PLATFORM_KIND,
@@ -22,7 +24,7 @@ def platform_ref_flat_key(kind: str) -> str:
 
 
 def stamp_platform_refs(
-    span,
+    span: Any,
     refs: list[tuple[str, str, str]],
 ) -> None:
     """Stamp ``platform.ref.*`` triples onto a span.
@@ -78,6 +80,12 @@ def add_platform_ref(
     Stamps ``platform.ref.{kind}`` (and the primary triple when this is the
     first ref) on the live session span so the session can be found by that
     value in Parlot search / resolve.
+
+    Args:
+        kind: Identifier type (e.g. ``"crm_ticket"``, ``"order_number"``,
+            ``"call_sid"``).
+        value: Unique identifier value (e.g. ``"TKT-9921"``).
+        framework: Originating framework name. Defaults to ``"custom"``.
 
     Example::
 

@@ -5,11 +5,13 @@ on:
     branches: [main]
     paths:
       - 'docs/**'
+      - 'docs-data/api.json'
       - 'packages/**/CHANGELOG.md'
       - '.github/workflows/docs.yml'
   pull_request:
     paths:
       - 'docs/**'
+      - 'docs-data/api.json'
       - 'packages/**/CHANGELOG.md'
       - '.github/workflows/docs.yml'
 
@@ -26,8 +28,13 @@ jobs:
           bun-version: latest
       - name: Install
         run: bun install --frozen-lockfile
+      - name: Test API generator
+        run: bun test scripts/format-expr.test.ts
       - name: Build
         run: bun run build
+      - name: Check generated API drift
+        working-directory: ${{ github.workspace }}
+        run: git diff --exit-code docs/docs/api
       - name: Assert canonical URLs
         run: |
           set -euo pipefail

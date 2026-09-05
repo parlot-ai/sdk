@@ -21,6 +21,10 @@ def record_human_rep(participant_id: str, *, label: str | None = None) -> None:
 
     Stamps ``session.topology.agents`` on the active session span and registers
     the participant for ``turn.participant_role=human_rep`` on future turns.
+
+    Args:
+        participant_id: Participant identifier within the room/session.
+        label: Optional human-readable name (e.g. ``"Tier 2 Escalation Desk"``).
     """
     participant_id = str(participant_id or "").strip()
     if not participant_id:
@@ -44,7 +48,11 @@ def record_human_rep(participant_id: str, *, label: str | None = None) -> None:
 
 @contextmanager
 def human_escalation(label: str | None = None) -> Iterator[None]:
-    """Mark the next participant who joins the active session as a human rep."""
+    """Mark the next participant who joins the active session as a human rep.
+
+    Args:
+        label: Optional role or team label for the incoming human representative.
+    """
     token = _pending_escalation_label.set(label)
     try:
         yield

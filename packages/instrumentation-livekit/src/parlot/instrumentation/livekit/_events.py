@@ -505,5 +505,15 @@ def install_session_hooks(
     processor: "LiveKitGenAIProcessor",
     tracer: "Tracer",
 ) -> None:
-    """Install all AgentSession event listeners for Parlot instrumentation."""
+    """Install all AgentSession event listeners for Parlot instrumentation.
+
+    ``configure()`` patches ``AgentSession.__init__`` to invoke this
+    automatically. Call directly only when manually instantiating unpatched
+    sessions.
+
+    Args:
+        session: LiveKit ``AgentSession`` instance to instrument.
+        processor: Span processor that owns session/turn enrichment state.
+        tracer: OpenTelemetry tracer used for Parlot contract spans.
+    """
     LiveKitEventBridge(processor, tracer).install(session)
