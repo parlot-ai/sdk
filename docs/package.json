@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
-    "prestart": "bash scripts/sync-changelog.sh && bash scripts/sync-api.sh",
+    "prestart": "bash scripts/sync-changelog.sh && bun run scripts/generate-api.ts",
     "start": "docusaurus start",
-    "prebuild": "bash scripts/sync-changelog.sh && bash scripts/sync-api.sh",
+    "prebuild": "bash scripts/sync-changelog.sh && bun run scripts/generate-api.ts",
     "build": "docusaurus build",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
@@ -15,7 +15,7 @@
     "typecheck": "tsc",
     "sync-theme": "bash scripts/sync-theme.sh",
     "sync-changelog": "bash scripts/sync-changelog.sh",
-    "sync-api": "bash scripts/sync-api.sh",
+    "sync-api": "bun run scripts/generate-api.ts",
     "check:leak": "bash scripts/check-public-leak.sh"
   },
   "dependencies": {

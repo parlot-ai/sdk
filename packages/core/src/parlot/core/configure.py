@@ -9,7 +9,10 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, Optional, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Optional, Protocol, runtime_checkable
+
+if TYPE_CHECKING:
+    from opentelemetry.trace import TracerProvider
 
 from parlot.core.context import ParlotContext
 
@@ -31,7 +34,7 @@ class ConfigureProtocol(Protocol):
         api_key: Optional[str] = None,
         capture_genai_content: Optional[bool] = None,
         service_name: Optional[str] = None,
-        tracer_provider: Any = None,
+        tracer_provider: TracerProvider | None = None,
         agent_id: Optional[str] = None,
         version: Optional[str] = None,
         capture_logs: bool | list[str] | None = None,
@@ -100,7 +103,7 @@ def base_configure(
     endpoint: Optional[str] = None,
     api_key: Optional[str] = None,
     capture_genai_content: Optional[bool] = None,
-    tracer_provider: Any = None,
+    tracer_provider: TracerProvider | None = None,
     agent_id: Optional[str] = None,
     version: Optional[str] = None,
     capture_logs: bool | list[str] | None = None,

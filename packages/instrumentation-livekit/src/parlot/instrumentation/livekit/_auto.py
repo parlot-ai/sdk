@@ -6,7 +6,10 @@ import logging
 import multiprocessing
 import os
 import sys
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
+
+if TYPE_CHECKING:
+    from opentelemetry.trace import TracerProvider
 
 from parlot.core.context import ParlotContext
 
@@ -65,7 +68,7 @@ def configure(
     api_key: Optional[str] = None,
     capture_genai_content: Optional[bool] = None,
     service_name: Optional[str] = None,
-    tracer_provider: Any = None,
+    tracer_provider: TracerProvider | None = None,
     auto_escalate_sip: bool = False,
     escalation_metadata_match: dict[str, str] | None = None,
     agent_id: Optional[str] = None,

@@ -5,18 +5,14 @@ on:
     branches: [main]
     paths:
       - 'docs/**'
+      - 'docs-data/api.json'
       - 'packages/**/CHANGELOG.md'
-      - 'packages/**/*.py'
-      - 'pyproject.toml'
-      - 'uv.lock'
       - '.github/workflows/docs.yml'
   pull_request:
     paths:
       - 'docs/**'
+      - 'docs-data/api.json'
       - 'packages/**/CHANGELOG.md'
-      - 'packages/**/*.py'
-      - 'pyproject.toml'
-      - 'uv.lock'
       - '.github/workflows/docs.yml'
 
 jobs:
@@ -27,19 +23,18 @@ jobs:
         working-directory: docs
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: true
-      - name: Sync Python workspace (API doc generation)
-        working-directory: ${{ github.workspace }}
-        run: uv sync --group dev
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
       - name: Install
         run: bun install --frozen-lockfile
+      - name: Test API generator
+        run: bun test scripts/format-expr.test.ts
       - name: Build
         run: bun run build
+      - name: Check generated API drift
+        working-directory: ${{ github.workspace }}
+        run: git diff --exit-code docs/docs/api
       - name: Assert canonical URLs
         run: |
           set -euo pipefail

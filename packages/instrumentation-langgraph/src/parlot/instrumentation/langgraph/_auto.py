@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
+
+if TYPE_CHECKING:
+    from opentelemetry.trace import TracerProvider
 
 from parlot.core.context import ParlotContext
 
@@ -22,7 +25,7 @@ def configure(
     api_key: Optional[str] = None,
     capture_genai_content: Optional[bool] = None,
     service_name: Optional[str] = None,
-    tracer_provider: Any = None,
+    tracer_provider: TracerProvider | None = None,
     agent_id: Optional[str] = None,
     version: Optional[str] = None,
     channel: Optional[str] = None,
