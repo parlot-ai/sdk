@@ -259,8 +259,7 @@
             "relative_filepath": "packages/core/src/parlot/core/configure.py",
             "relative_package_filepath": "parlot/core/configure.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/configure.py#L0-L0"
+            "runtime": true
           },
           "agent_id": {
             "analysis": "static",
@@ -296,8 +295,7 @@
             "path": "parlot.core.configure.BaseConfigureResult.agent_id",
             "relative_filepath": "packages/core/src/parlot/core/configure.py",
             "relative_package_filepath": "parlot/core/configure.py",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/configure.py#L86-L86"
+            "runtime": true
           },
           "agent_version": {
             "analysis": "static",
@@ -325,8 +323,7 @@
             "path": "parlot.core.configure.BaseConfigureResult.agent_version",
             "relative_filepath": "packages/core/src/parlot/core/configure.py",
             "relative_package_filepath": "parlot/core/configure.py",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/configure.py#L87-L87"
+            "runtime": true
           },
           "api_key": {
             "analysis": "static",
@@ -354,8 +351,7 @@
             "path": "parlot.core.configure.BaseConfigureResult.api_key",
             "relative_filepath": "packages/core/src/parlot/core/configure.py",
             "relative_package_filepath": "parlot/core/configure.py",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/configure.py#L84-L84"
+            "runtime": true
           },
           "capture_genai_content": {
             "analysis": "static",
@@ -391,8 +387,7 @@
             "path": "parlot.core.configure.BaseConfigureResult.capture_genai_content",
             "relative_filepath": "packages/core/src/parlot/core/configure.py",
             "relative_package_filepath": "parlot/core/configure.py",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/configure.py#L88-L88"
+            "runtime": true
           },
           "capture_logs": {
             "analysis": "static",
@@ -442,8 +437,7 @@
             "path": "parlot.core.configure.BaseConfigureResult.capture_logs",
             "relative_filepath": "packages/core/src/parlot/core/configure.py",
             "relative_package_filepath": "parlot/core/configure.py",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/configure.py#L89-L89"
+            "runtime": true
           },
           "context": {
             "analysis": "static",
@@ -471,8 +465,7 @@
             "path": "parlot.core.configure.BaseConfigureResult.context",
             "relative_filepath": "packages/core/src/parlot/core/configure.py",
             "relative_package_filepath": "parlot/core/configure.py",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/configure.py#L82-L82"
+            "runtime": true
           },
           "endpoint": {
             "analysis": "static",
@@ -500,8 +493,7 @@
             "path": "parlot.core.configure.BaseConfigureResult.endpoint",
             "relative_filepath": "packages/core/src/parlot/core/configure.py",
             "relative_package_filepath": "parlot/core/configure.py",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/configure.py#L83-L83"
+            "runtime": true
           },
           "log_level": {
             "analysis": "static",
@@ -537,8 +529,7 @@
             "path": "parlot.core.configure.BaseConfigureResult.log_level",
             "relative_filepath": "packages/core/src/parlot/core/configure.py",
             "relative_package_filepath": "parlot/core/configure.py",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/configure.py#L90-L90"
+            "runtime": true
           },
           "tracer_provider": {
             "analysis": "static",
@@ -566,16 +557,14 @@
             "path": "parlot.core.configure.BaseConfigureResult.tracer_provider",
             "relative_filepath": "packages/core/src/parlot/core/configure.py",
             "relative_package_filepath": "parlot/core/configure.py",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/configure.py#L85-L85"
+            "runtime": true
           }
         },
         "name": "BaseConfigureResult",
         "path": "parlot.core.configure.BaseConfigureResult",
         "relative_filepath": "packages/core/src/parlot/core/configure.py",
         "relative_package_filepath": "parlot/core/configure.py",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/configure.py#L78-L90"
+        "runtime": true
       },
       "ConfigureProtocol": {
         "analysis": "static",
@@ -1035,16 +1024,14 @@
               "member": "__call__",
               "name": "ParlotContext"
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/configure.py#L30-L75"
+            "runtime": true
           }
         },
         "name": "ConfigureProtocol",
         "path": "parlot.core.configure.ConfigureProtocol",
         "relative_filepath": "packages/core/src/parlot/core/configure.py",
         "relative_package_filepath": "parlot/core/configure.py",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/configure.py#L22-L75"
+        "runtime": true
       },
       "Optional": {
         "analysis": "static",
@@ -1535,8 +1522,7 @@
           "member": "base_configure",
           "name": "BaseConfigureResult"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/configure.py#L101-L184"
+        "runtime": true
       },
       "configure_parlot_logging": {
         "analysis": "static",
@@ -1570,8 +1556,7 @@
         "relative_filepath": "packages/core/src/parlot/core/configure.py",
         "relative_package_filepath": "parlot/core/configure.py",
         "returns": "None",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/configure.py#L93-L98"
+        "runtime": true
       },
       "dataclass": {
         "analysis": "static",
@@ -1614,7 +1599,6 @@
         "relative_filepath": "packages/core/src/parlot/core/configure.py",
         "relative_package_filepath": "parlot/core/configure.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/configure.py#L19-L19",
         "value": {
           "arguments": [
             "'parlot.core.configure'"
@@ -1832,7 +1816,6 @@
         "relative_filepath": "packages/core/src/parlot/core/escalation.py",
         "relative_package_filepath": "parlot/core/escalation.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/escalation.py#L13-L15",
         "value": {
           "arguments": [
             "'_pending_escalation_label'",
@@ -2017,8 +2000,7 @@
           },
           "slice": "None"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/escalation.py#L49-L60"
+        "runtime": true
       },
       "json": {
         "analysis": "static",
@@ -2126,8 +2108,7 @@
         "relative_filepath": "packages/core/src/parlot/core/escalation.py",
         "relative_package_filepath": "parlot/core/escalation.py",
         "returns": "None",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/escalation.py#L18-L46"
+        "runtime": true
       }
     },
     "name": "escalation",
@@ -2309,8 +2290,7 @@
           "member": "session_metadata_key",
           "name": "str"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/metadata.py#L11-L16"
+        "runtime": true
       },
       "set_session_attribute": {
         "analysis": "static",
@@ -2442,8 +2422,7 @@
         "relative_filepath": "packages/core/src/parlot/core/metadata.py",
         "relative_package_filepath": "parlot/core/metadata.py",
         "returns": "None",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/metadata.py#L19-L43"
+        "runtime": true
       },
       "set_session_metadata": {
         "analysis": "static",
@@ -2561,8 +2540,7 @@
         "relative_filepath": "packages/core/src/parlot/core/metadata.py",
         "relative_package_filepath": "parlot/core/metadata.py",
         "returns": "None",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/metadata.py#L46-L64"
+        "runtime": true
       },
       "stamp_session_metadata_attrs": {
         "analysis": "static",
@@ -2660,8 +2638,7 @@
         "relative_filepath": "packages/core/src/parlot/core/metadata.py",
         "relative_package_filepath": "parlot/core/metadata.py",
         "returns": "None",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/metadata.py#L67-L76"
+        "runtime": true
       }
     },
     "name": "metadata",
@@ -2898,8 +2875,7 @@
         "relative_filepath": "packages/core/src/parlot/core/platform_refs.py",
         "relative_package_filepath": "parlot/core/platform_refs.py",
         "returns": "None",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/platform_refs.py#L71-L104"
+        "runtime": true
       },
       "annotations": {
         "analysis": "static",
@@ -2986,8 +2962,7 @@
           "member": "platform_ref_flat_key",
           "name": "str"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/platform_refs.py#L21-L23"
+        "runtime": true
       },
       "stamp_platform_refs": {
         "analysis": "static",
@@ -3129,8 +3104,7 @@
         "relative_filepath": "packages/core/src/parlot/core/platform_refs.py",
         "relative_package_filepath": "parlot/core/platform_refs.py",
         "returns": "None",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/platform_refs.py#L26-L68"
+        "runtime": true
       }
     },
     "name": "platform_refs",
@@ -3495,8 +3469,7 @@
             "relative_filepath": "packages/core/src/parlot/core/session.py",
             "relative_package_filepath": "parlot/core/session.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L0-L0"
+            "runtime": true
           },
           "agent_label": {
             "analysis": "static",
@@ -3526,7 +3499,6 @@
             "relative_filepath": "packages/core/src/parlot/core/session.py",
             "relative_package_filepath": "parlot/core/session.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L31-L31",
             "value": "''"
           },
           "custom_metadata": {
@@ -3576,7 +3548,6 @@
             "relative_filepath": "packages/core/src/parlot/core/session.py",
             "relative_package_filepath": "parlot/core/session.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L43-L43",
             "value": {
               "arguments": [
                 {
@@ -3630,7 +3601,6 @@
             "relative_filepath": "packages/core/src/parlot/core/session.py",
             "relative_package_filepath": "parlot/core/session.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L45-L45",
             "value": "''"
           },
           "handoff_count": {
@@ -3661,7 +3631,6 @@
             "relative_filepath": "packages/core/src/parlot/core/session.py",
             "relative_package_filepath": "parlot/core/session.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L35-L35",
             "value": "0"
           },
           "human_rep_participant_ids": {
@@ -3700,7 +3669,6 @@
             "relative_filepath": "packages/core/src/parlot/core/session.py",
             "relative_package_filepath": "parlot/core/session.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L41-L41",
             "value": {
               "arguments": [
                 {
@@ -3754,7 +3722,6 @@
             "relative_filepath": "packages/core/src/parlot/core/session.py",
             "relative_package_filepath": "parlot/core/session.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L29-L29",
             "value": "''"
           },
           "room_sid": {
@@ -3785,7 +3752,6 @@
             "relative_filepath": "packages/core/src/parlot/core/session.py",
             "relative_package_filepath": "parlot/core/session.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L30-L30",
             "value": "''"
           },
           "session_id": {
@@ -3816,7 +3782,6 @@
             "relative_filepath": "packages/core/src/parlot/core/session.py",
             "relative_package_filepath": "parlot/core/session.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L28-L28",
             "value": "''"
           },
           "tool_call_count": {
@@ -3847,7 +3812,6 @@
             "relative_filepath": "packages/core/src/parlot/core/session.py",
             "relative_package_filepath": "parlot/core/session.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L34-L34",
             "value": "0"
           },
           "topology_agents": {
@@ -3905,7 +3869,6 @@
             "relative_filepath": "packages/core/src/parlot/core/session.py",
             "relative_package_filepath": "parlot/core/session.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L42-L42",
             "value": {
               "arguments": [
                 {
@@ -3959,7 +3922,6 @@
             "relative_filepath": "packages/core/src/parlot/core/session.py",
             "relative_package_filepath": "parlot/core/session.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L39-L39",
             "value": "0.0"
           },
           "total_input_tokens": {
@@ -3990,7 +3952,6 @@
             "relative_filepath": "packages/core/src/parlot/core/session.py",
             "relative_package_filepath": "parlot/core/session.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L37-L37",
             "value": "0"
           },
           "total_output_tokens": {
@@ -4021,7 +3982,6 @@
             "relative_filepath": "packages/core/src/parlot/core/session.py",
             "relative_package_filepath": "parlot/core/session.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L38-L38",
             "value": "0"
           },
           "turn_count": {
@@ -4052,7 +4012,6 @@
             "relative_filepath": "packages/core/src/parlot/core/session.py",
             "relative_package_filepath": "parlot/core/session.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L33-L33",
             "value": "0"
           }
         },
@@ -4060,8 +4019,7 @@
         "path": "parlot.core.session.SessionState",
         "relative_filepath": "packages/core/src/parlot/core/session.py",
         "relative_package_filepath": "parlot/core/session.py",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L19-L45"
+        "runtime": true
       },
       "Span": {
         "analysis": "static",
@@ -4122,7 +4080,6 @@
         "relative_filepath": "packages/core/src/parlot/core/session.py",
         "relative_package_filepath": "parlot/core/session.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L11-L13",
         "value": {
           "arguments": [
             "'_active_session_span'",
@@ -4176,7 +4133,6 @@
         "relative_filepath": "packages/core/src/parlot/core/session.py",
         "relative_package_filepath": "parlot/core/session.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L14-L16",
         "value": {
           "arguments": [
             "'_active_session_state'",
@@ -4250,8 +4206,7 @@
         "relative_filepath": "packages/core/src/parlot/core/session.py",
         "relative_package_filepath": "parlot/core/session.py",
         "returns": "None",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L67-L69"
+        "runtime": true
       },
       "dataclass": {
         "analysis": "static",
@@ -4332,8 +4287,7 @@
           "operator": "|",
           "right": "None"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L48-L50"
+        "runtime": true
       },
       "get_active_session_span": {
         "analysis": "static",
@@ -4376,8 +4330,7 @@
           "operator": "|",
           "right": "None"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L53-L55"
+        "runtime": true
       },
       "session_owned": {
         "analysis": "static",
@@ -4451,8 +4404,7 @@
           "member": "session_owned",
           "name": "bool"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L72-L84"
+        "runtime": true
       },
       "set_active_session": {
         "analysis": "static",
@@ -4517,8 +4469,7 @@
         "relative_filepath": "packages/core/src/parlot/core/session.py",
         "relative_package_filepath": "parlot/core/session.py",
         "returns": "None",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/core/src/parlot/core/session.py#L58-L64"
+        "runtime": true
       }
     },
     "name": "session",
@@ -4734,8 +4685,7 @@
         "relative_filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/langgraph/_auto.py",
         "returns": null,
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py#L151-L172"
+        "runtime": true
       },
       "_configured": {
         "analysis": "static",
@@ -4759,7 +4709,6 @@
         "relative_filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/langgraph/_auto.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py#L16-L16",
         "value": "False"
       },
       "_configured_agent_id": {
@@ -4794,7 +4743,6 @@
         "relative_filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/langgraph/_auto.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py#L17-L17",
         "value": "None"
       },
       "_configured_agent_version": {
@@ -4824,7 +4772,6 @@
         "relative_filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/langgraph/_auto.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py#L18-L18",
         "value": "''"
       },
       "_parlot_context": {
@@ -4859,7 +4806,6 @@
         "relative_filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/langgraph/_auto.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py#L19-L19",
         "value": "None"
       },
       "annotations": {
@@ -4958,8 +4904,7 @@
         "relative_filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/langgraph/_auto.py",
         "returns": "None",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py#L175-L189"
+        "runtime": true
       },
       "configure": {
         "analysis": "static",
@@ -5444,8 +5389,7 @@
           "member": "configure",
           "name": "ParlotContext"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py#L22-L148"
+        "runtime": true
       },
       "logger": {
         "analysis": "static",
@@ -5469,7 +5413,6 @@
         "relative_filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/langgraph/_auto.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py#L14-L14",
         "value": {
           "arguments": [
             "'parlot.instrumentation.langgraph'"
@@ -6303,8 +6246,7 @@
             "relative_filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "relative_package_filepath": "parlot/instrumentation/langgraph/_callbacks.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L143-L152"
+            "runtime": true
           },
           "_active_langgraph_state": {
             "analysis": "static",
@@ -6343,8 +6285,7 @@
               "operator": "|",
               "right": "None"
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L169-L173"
+            "runtime": true
           },
           "_capture_genai_content": {
             "analysis": "static",
@@ -6368,7 +6309,6 @@
             "relative_filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "relative_package_filepath": "parlot/instrumentation/langgraph/_callbacks.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L150-L150",
             "value": {
               "cls": "ExprName",
               "member": null,
@@ -6452,8 +6392,7 @@
                 "implicit": true
               }
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L175-L190"
+            "runtime": true
           },
           "_end": {
             "analysis": "static",
@@ -6513,8 +6452,7 @@
             "relative_filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "relative_package_filepath": "parlot/instrumentation/langgraph/_callbacks.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L212-L222"
+            "runtime": true
           },
           "_root_runs": {
             "analysis": "static",
@@ -6551,7 +6489,6 @@
             "relative_filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "relative_package_filepath": "parlot/instrumentation/langgraph/_callbacks.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L152-L152",
             "value": {
               "arguments": [],
               "cls": "ExprCall",
@@ -6609,8 +6546,7 @@
               "member": "_run_key",
               "name": "str"
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L166-L167"
+            "runtime": true
           },
           "_spans": {
             "analysis": "static",
@@ -6658,7 +6594,6 @@
             "relative_filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "relative_package_filepath": "parlot/instrumentation/langgraph/_callbacks.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L151-L151",
             "value": {
               "cls": "ExprDict",
               "keys": [],
@@ -6776,8 +6711,7 @@
               "operator": "|",
               "right": "None"
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L192-L210"
+            "runtime": true
           },
           "_thread_id": {
             "analysis": "static",
@@ -6821,8 +6755,7 @@
               "member": "_thread_id",
               "name": "str"
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L224-L240"
+            "runtime": true
           },
           "_tracer": {
             "analysis": "static",
@@ -6846,7 +6779,6 @@
             "relative_filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "relative_package_filepath": "parlot/instrumentation/langgraph/_callbacks.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L149-L149",
             "value": {
               "cls": "ExprName",
               "member": null,
@@ -6879,8 +6811,7 @@
             "path": "parlot.instrumentation.langgraph._callbacks.ParlotLangGraphCallbackHandler.ignore_agent",
             "relative_filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "relative_package_filepath": "parlot/instrumentation/langgraph/_callbacks.py",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L163-L164"
+            "runtime": true
           },
           "ignore_chain": {
             "analysis": "static",
@@ -6908,8 +6839,7 @@
             "path": "parlot.instrumentation.langgraph._callbacks.ParlotLangGraphCallbackHandler.ignore_chain",
             "relative_filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "relative_package_filepath": "parlot/instrumentation/langgraph/_callbacks.py",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L155-L156"
+            "runtime": true
           },
           "ignore_llm": {
             "analysis": "static",
@@ -6937,8 +6867,7 @@
             "path": "parlot.instrumentation.langgraph._callbacks.ParlotLangGraphCallbackHandler.ignore_llm",
             "relative_filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "relative_package_filepath": "parlot/instrumentation/langgraph/_callbacks.py",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L159-L160"
+            "runtime": true
           },
           "on_chain_end": {
             "analysis": "static",
@@ -7036,8 +6965,7 @@
               "member": "on_chain_end",
               "name": "Any"
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L296-L320"
+            "runtime": true
           },
           "on_chain_error": {
             "analysis": "static",
@@ -7116,8 +7044,7 @@
               "member": "on_chain_error",
               "name": "Any"
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L322-L336"
+            "runtime": true
           },
           "on_chain_start": {
             "analysis": "static",
@@ -7321,8 +7248,7 @@
               "member": "on_chain_start",
               "name": "Any"
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L242-L294"
+            "runtime": true
           },
           "on_chat_model_start": {
             "analysis": "static",
@@ -7508,8 +7434,7 @@
               "member": "on_chat_model_start",
               "name": "Any"
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L382-L407"
+            "runtime": true
           },
           "on_llm_end": {
             "analysis": "static",
@@ -7588,8 +7513,7 @@
               "member": "on_llm_end",
               "name": "Any"
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L409-L431"
+            "runtime": true
           },
           "on_llm_error": {
             "analysis": "static",
@@ -7668,8 +7592,7 @@
               "member": "on_llm_error",
               "name": "Any"
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L433-L441"
+            "runtime": true
           },
           "on_llm_start": {
             "analysis": "static",
@@ -7847,8 +7770,7 @@
               "member": "on_llm_start",
               "name": "Any"
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L338-L380"
+            "runtime": true
           },
           "on_tool_end": {
             "analysis": "static",
@@ -7927,8 +7849,7 @@
               "member": "on_tool_end",
               "name": "Any"
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L498-L516"
+            "runtime": true
           },
           "on_tool_error": {
             "analysis": "static",
@@ -8007,8 +7928,7 @@
               "member": "on_tool_error",
               "name": "Any"
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L518-L529"
+            "runtime": true
           },
           "on_tool_start": {
             "analysis": "static",
@@ -8212,8 +8132,7 @@
               "member": "on_tool_start",
               "name": "Any"
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L443-L496"
+            "runtime": true
           },
           "raise_error": {
             "analysis": "static",
@@ -8238,7 +8157,6 @@
             "relative_filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "relative_package_filepath": "parlot/instrumentation/langgraph/_callbacks.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L141-L141",
             "value": "False"
           }
         },
@@ -8246,8 +8164,7 @@
         "path": "parlot.instrumentation.langgraph._callbacks.ParlotLangGraphCallbackHandler",
         "relative_filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
         "relative_package_filepath": "parlot/instrumentation/langgraph/_callbacks.py",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L128-L529"
+        "runtime": true
       },
       "SPAN_GEN_AI_INVOKE_AGENT": {
         "analysis": "static",
@@ -8463,8 +8380,7 @@
           "member": "_last_message_text",
           "name": "str"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L112-L118"
+        "runtime": true
       },
       "_message_content": {
         "analysis": "static",
@@ -8502,8 +8418,7 @@
           "member": "_message_content",
           "name": "str"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L60-L81"
+        "runtime": true
       },
       "_message_role": {
         "analysis": "static",
@@ -8541,8 +8456,7 @@
           "member": "_message_role",
           "name": "str"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L84-L99"
+        "runtime": true
       },
       "_messages_from_payload": {
         "analysis": "static",
@@ -8588,8 +8502,7 @@
             "name": "Any"
           }
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L102-L109"
+        "runtime": true
       },
       "_text_from_llm_result": {
         "analysis": "static",
@@ -8627,8 +8540,7 @@
           "member": "_text_from_llm_result",
           "name": "str"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L568-L581"
+        "runtime": true
       },
       "_usage_from_llm_result": {
         "analysis": "static",
@@ -8685,8 +8597,7 @@
             "implicit": true
           }
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L532-L565"
+        "runtime": true
       },
       "annotations": {
         "analysis": "static",
@@ -8805,7 +8716,6 @@
         "relative_filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
         "relative_package_filepath": "parlot/instrumentation/langgraph/_callbacks.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py#L120-L120",
         "value": {
           "arguments": [
             "'parlot.instrumentation.langgraph'"
@@ -9083,7 +8993,6 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_auto.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L19-L19",
         "value": "False"
       },
       "_build_provider": {
@@ -9174,8 +9083,7 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_auto.py",
         "returns": null,
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L231-L305"
+        "runtime": true
       },
       "_configure_parlot_logging": {
         "analysis": "static",
@@ -9198,8 +9106,7 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_auto.py",
         "returns": "None",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L58-L62"
+        "runtime": true
       },
       "_configured": {
         "analysis": "static",
@@ -9223,7 +9130,6 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_auto.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L18-L18",
         "value": "False"
       },
       "_configured_agent_id": {
@@ -9258,7 +9164,6 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_auto.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L21-L21",
         "value": "None"
       },
       "_configured_agent_version": {
@@ -9288,7 +9193,6 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_auto.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L22-L22",
         "value": "''"
       },
       "_configured_capture_genai_content": {
@@ -9323,7 +9227,6 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_auto.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L24-L24",
         "value": "None"
       },
       "_configured_capture_logs": {
@@ -9375,7 +9278,6 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_auto.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L25-L25",
         "value": "None"
       },
       "_configured_log_level": {
@@ -9410,7 +9312,6 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_auto.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L26-L26",
         "value": "None"
       },
       "_configured_record": {
@@ -9462,7 +9363,6 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_auto.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L23-L23",
         "value": "None"
       },
       "_escalation_metadata_match": {
@@ -9516,7 +9416,6 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_auto.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L20-L20",
         "value": "None"
       },
       "_install_participant_escalation_hooks": {
@@ -9551,8 +9450,7 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_auto.py",
         "returns": "None",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L388-L428"
+        "runtime": true
       },
       "_install_telemetry_compare": {
         "analysis": "static",
@@ -9586,8 +9484,7 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_auto.py",
         "returns": "None",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L340-L345"
+        "runtime": true
       },
       "_is_livekit_dev_watch_parent": {
         "analysis": "static",
@@ -9625,8 +9522,7 @@
           "member": "_is_livekit_dev_watch_parent",
           "name": "bool"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L30-L55"
+        "runtime": true
       },
       "_is_sip_participant": {
         "analysis": "static",
@@ -9664,8 +9560,7 @@
           "member": "_is_sip_participant",
           "name": "bool"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L375-L385"
+        "runtime": true
       },
       "_parlot_context": {
         "analysis": "static",
@@ -9699,7 +9594,6 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_auto.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L27-L27",
         "value": "None"
       },
       "_patch_agent_session_with_tracer": {
@@ -9730,8 +9624,7 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_auto.py",
         "returns": "None",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L321-L337"
+        "runtime": true
       },
       "_patch_job_context_connect": {
         "analysis": "static",
@@ -9754,8 +9647,7 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_auto.py",
         "returns": "None",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L348-L372"
+        "runtime": true
       },
       "_register_with_livekit": {
         "analysis": "static",
@@ -9785,8 +9677,7 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_auto.py",
         "returns": "None",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L308-L318"
+        "runtime": true
       },
       "annotations": {
         "analysis": "static",
@@ -10370,8 +10261,7 @@
           "member": "configure",
           "name": "ParlotContext"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L65-L228"
+        "runtime": true
       },
       "configured_agent_id": {
         "analysis": "static",
@@ -10409,8 +10299,7 @@
           "member": "configured_agent_id",
           "name": "str"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L431-L433"
+        "runtime": true
       },
       "configured_agent_version": {
         "analysis": "static",
@@ -10448,8 +10337,7 @@
           "member": "configured_agent_version",
           "name": "str"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L436-L438"
+        "runtime": true
       },
       "configured_capture_genai_content": {
         "analysis": "static",
@@ -10492,8 +10380,7 @@
           "operator": "|",
           "right": "None"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L446-L448"
+        "runtime": true
       },
       "configured_capture_logs": {
         "analysis": "static",
@@ -10553,8 +10440,7 @@
           "operator": "|",
           "right": "None"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L451-L453"
+        "runtime": true
       },
       "configured_context": {
         "analysis": "static",
@@ -10597,8 +10483,7 @@
           "operator": "|",
           "right": "None"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L461-L463"
+        "runtime": true
       },
       "configured_log_level": {
         "analysis": "static",
@@ -10641,8 +10526,7 @@
           "operator": "|",
           "right": "None"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L456-L458"
+        "runtime": true
       },
       "configured_record": {
         "analysis": "static",
@@ -10702,8 +10586,7 @@
           "operator": "|",
           "right": "None"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L441-L443"
+        "runtime": true
       },
       "logger": {
         "analysis": "static",
@@ -10727,7 +10610,6 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_auto.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L16-L16",
         "value": {
           "arguments": [
             "'parlot.instrumentation.livekit'"
@@ -10855,8 +10737,7 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_auto.py",
         "returns": "None",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py#L466-L469"
+        "runtime": true
       },
       "sys": {
         "analysis": "static",
@@ -11268,8 +11149,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_events.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L175-L178"
+            "runtime": true
           },
           "_emit_handoff_span": {
             "analysis": "static",
@@ -11309,8 +11189,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_events.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L343-L397"
+            "runtime": true
           },
           "_on_agent_state_changed": {
             "analysis": "static",
@@ -11350,8 +11229,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_events.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L240-L285"
+            "runtime": true
           },
           "_on_close": {
             "analysis": "static",
@@ -11391,8 +11269,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_events.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L466-L500"
+            "runtime": true
           },
           "_on_conversation_item_added": {
             "analysis": "static",
@@ -11432,8 +11309,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_events.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L287-L341"
+            "runtime": true
           },
           "_on_error": {
             "analysis": "static",
@@ -11473,8 +11349,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_events.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L447-L464"
+            "runtime": true
           },
           "_on_function_tools_executed": {
             "analysis": "static",
@@ -11514,8 +11389,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_events.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L409-L418"
+            "runtime": true
           },
           "_on_session_usage_updated": {
             "analysis": "static",
@@ -11555,8 +11429,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_events.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L420-L445"
+            "runtime": true
           },
           "_on_user_input_transcribed": {
             "analysis": "static",
@@ -11596,8 +11469,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_events.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L399-L407"
+            "runtime": true
           },
           "_processor": {
             "analysis": "static",
@@ -11621,7 +11493,6 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_events.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L176-L176",
             "value": {
               "cls": "ExprName",
               "member": null,
@@ -11660,7 +11531,6 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_events.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L178-L178",
             "value": "None"
           },
           "_tracer": {
@@ -11685,7 +11555,6 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_events.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L177-L177",
             "value": {
               "cls": "ExprName",
               "member": null,
@@ -11730,16 +11599,14 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_events.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L180-L238"
+            "runtime": true
           }
         },
         "name": "LiveKitEventBridge",
         "path": "parlot.instrumentation.livekit._events.LiveKitEventBridge",
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_events.py",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L172-L500"
+        "runtime": true
       },
       "LiveKitGenAIProcessor": {
         "analysis": "static",
@@ -11839,7 +11706,6 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_events.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L52-L58",
         "value": {
           "cls": "ExprDict",
           "keys": [
@@ -11904,7 +11770,6 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_events.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L104-L115",
         "value": {
           "cls": "ExprDict",
           "keys": [
@@ -11955,7 +11820,6 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_events.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L89-L102",
         "value": {
           "cls": "ExprTuple",
           "elements": [
@@ -12011,8 +11875,7 @@
           "member": "_agent_state_value",
           "name": "str"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L153-L157"
+        "runtime": true
       },
       "_item_metrics": {
         "analysis": "static",
@@ -12069,8 +11932,7 @@
             "implicit": true
           }
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L118-L140"
+        "runtime": true
       },
       "_job_room_fields": {
         "analysis": "static",
@@ -12127,8 +11989,7 @@
           "member": "_message_text",
           "name": "str"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L61-L86"
+        "runtime": true
       },
       "_normalize_close_reason": {
         "analysis": "static",
@@ -12166,8 +12027,7 @@
           "member": "_normalize_close_reason",
           "name": "str"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L143-L150"
+        "runtime": true
       },
       "_record_event_diagnostic": {
         "analysis": "static",
@@ -12217,8 +12077,7 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_events.py",
         "returns": "None",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L41-L49"
+        "runtime": true
       },
       "_resolve_job_context": {
         "analysis": "static",
@@ -12261,8 +12120,7 @@
           "operator": "|",
           "right": "None"
         },
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L160-L169"
+        "runtime": true
       },
       "_str_field": {
         "analysis": "static",
@@ -12419,8 +12277,7 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_events.py",
         "returns": "None",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L503-L519"
+        "runtime": true
       },
       "logger": {
         "analysis": "static",
@@ -12444,7 +12301,6 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_events.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py#L38-L38",
         "value": {
           "arguments": [
             "'parlot.instrumentation.livekit'"
@@ -13400,8 +13256,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L117-L164"
+            "runtime": true
           },
           "_active_agent_id": {
             "analysis": "static",
@@ -13489,8 +13344,7 @@
               "member": "_active_agent_id",
               "name": "str"
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L401-L424"
+            "runtime": true
           },
           "_apply_plugin_llm_usage_to_span": {
             "analysis": "static",
@@ -13569,8 +13423,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L339-L348"
+            "runtime": true
           },
           "_apply_root_to_live_span": {
             "analysis": "static",
@@ -13631,8 +13484,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L578-L621"
+            "runtime": true
           },
           "_capture_genai_content_override": {
             "analysis": "static",
@@ -13656,7 +13508,6 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L127-L127",
             "value": {
               "cls": "ExprName",
               "member": null,
@@ -13685,7 +13536,6 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L129-L129",
             "value": {
               "body": {
                 "cls": "ExprName",
@@ -13756,8 +13606,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L485-L561"
+            "runtime": true
           },
           "_enrich_llm_request": {
             "analysis": "static",
@@ -13807,8 +13656,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L563-L576"
+            "runtime": true
           },
           "_handoff": {
             "analysis": "static",
@@ -13832,7 +13680,6 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L136-L139",
             "value": {
               "arguments": [
                 {
@@ -13914,7 +13761,6 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L128-L128",
             "value": {
               "cls": "ExprBoolOp",
               "operator": "or",
@@ -13974,8 +13820,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L246-L258"
+            "runtime": true
           },
           "_metrics": {
             "analysis": "static",
@@ -13999,7 +13844,6 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L133-L133",
             "value": "None"
           },
           "_recording": {
@@ -14024,7 +13868,6 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L144-L148",
             "value": {
               "arguments": [
                 {
@@ -14192,8 +14035,7 @@
               "operator": "|",
               "right": "None"
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L354-L387"
+            "runtime": true
           },
           "_sessions": {
             "analysis": "static",
@@ -14241,7 +14083,6 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L130-L130",
             "value": {
               "cls": "ExprDict",
               "keys": [],
@@ -14345,8 +14186,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L426-L447"
+            "runtime": true
           },
           "_stamp_error_status_if_needed": {
             "analysis": "static",
@@ -14397,8 +14237,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L475-L479"
+            "runtime": true
           },
           "_stamp_response_model_if_distinct": {
             "analysis": "static",
@@ -14467,8 +14306,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L449-L460"
+            "runtime": true
           },
           "_stamp_session_turn_attrs": {
             "analysis": "static",
@@ -14518,8 +14356,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L462-L473"
+            "runtime": true
           },
           "_tokens": {
             "analysis": "static",
@@ -14543,7 +14380,6 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L140-L143",
             "value": {
               "arguments": [
                 {
@@ -14625,7 +14461,6 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L132-L132",
             "value": "None"
           },
           "_track_agent_label": {
@@ -14695,8 +14530,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L389-L399"
+            "runtime": true
           },
           "_turn_source": {
             "analysis": "static",
@@ -14725,7 +14559,6 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L134-L134",
             "value": "'spans'"
           },
           "_turn_trace_registry": {
@@ -14812,7 +14645,6 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L131-L131",
             "value": {
               "cls": "ExprDict",
               "keys": [],
@@ -14841,7 +14673,6 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L149-L164",
             "value": {
               "arguments": [
                 {
@@ -15254,8 +15085,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L290-L291"
+            "runtime": true
           },
           "commit_agent_message": {
             "analysis": "static",
@@ -15339,8 +15169,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L318-L327"
+            "runtime": true
           },
           "commit_user_message": {
             "analysis": "static",
@@ -15424,8 +15253,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L307-L316"
+            "runtime": true
           },
           "committed_handoff_item_ids": {
             "analysis": "static",
@@ -15467,8 +15295,7 @@
                 "name": "str"
               }
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L270-L271"
+            "runtime": true
           },
           "enrich_spans_for_export": {
             "analysis": "static",
@@ -15527,8 +15354,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L195-L244"
+            "runtime": true
           },
           "lookup_turn_trace": {
             "analysis": "static",
@@ -15606,8 +15432,7 @@
               "operator": "|",
               "right": "None"
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L329-L332"
+            "runtime": true
           },
           "mark_conversation_item_committed": {
             "analysis": "static",
@@ -15651,8 +15476,7 @@
               "member": "mark_conversation_item_committed",
               "name": "bool"
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L264-L265"
+            "runtime": true
           },
           "mark_handoff_item_committed": {
             "analysis": "static",
@@ -15692,8 +15516,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L267-L268"
+            "runtime": true
           },
           "note_function_tools_executed": {
             "analysis": "static",
@@ -15733,8 +15556,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L287-L288"
+            "runtime": true
           },
           "note_session_error": {
             "analysis": "static",
@@ -15784,8 +15606,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L293-L297"
+            "runtime": true
           },
           "note_user_transcription_meta": {
             "analysis": "static",
@@ -15835,8 +15656,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L280-L285"
+            "runtime": true
           },
           "on_end": {
             "analysis": "static",
@@ -15876,8 +15696,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L169-L179"
+            "runtime": true
           },
           "on_start": {
             "analysis": "static",
@@ -15919,8 +15738,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L166-L167"
+            "runtime": true
           },
           "pop_pending_close_error": {
             "analysis": "static",
@@ -15959,8 +15777,7 @@
               "operator": "|",
               "right": "None"
             },
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L299-L305"
+            "runtime": true
           },
           "record_handoff_from_event": {
             "analysis": "static",
@@ -16010,8 +15827,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L273-L278"
+            "runtime": true
           },
           "set_metrics": {
             "analysis": "static",
@@ -16047,8 +15863,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L184-L185"
+            "runtime": true
           },
           "set_recording_anchor_wall_ms": {
             "analysis": "static",
@@ -16098,8 +15913,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L334-L337"
+            "runtime": true
           },
           "set_tracer": {
             "analysis": "static",
@@ -16139,8 +15953,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L181-L182"
+            "runtime": true
           },
           "set_turn_source": {
             "analysis": "static",
@@ -16180,8 +15993,7 @@
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
             "returns": "None",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L187-L189"
+            "runtime": true
           },
           "turn_source": {
             "analysis": "static",
@@ -16209,16 +16021,14 @@
             "path": "parlot.instrumentation.livekit._processor.LiveKitGenAIProcessor.turn_source",
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
-            "runtime": true,
-            "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L192-L193"
+            "runtime": true
           }
         },
         "name": "LiveKitGenAIProcessor",
         "path": "parlot.instrumentation.livekit._processor.LiveKitGenAIProcessor",
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
-        "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L106-L621"
+        "runtime": true
       },
       "METADATA_JOB_ID": {
         "analysis": "static",
@@ -16559,7 +16369,6 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L92-L103",
         "value": {
           "arguments": [
             {
@@ -16840,7 +16649,6 @@
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
         "relative_package_filepath": "parlot/instrumentation/livekit/_processor.py",
         "runtime": true,
-        "source_link": "https://github.com/parlot-ai/sdk/blob/d94a16e018aec466aedba55e0c8c7e03c27bcd81/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py#L90-L90",
         "value": {
           "arguments": [
             "'parlot.instrumentation.livekit'"

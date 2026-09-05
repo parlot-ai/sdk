@@ -37,15 +37,15 @@ def configure(
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `endpoint` | `str | None` | `None` | Parlot OTLP collector base URL (e.g. `https://ingest.parlot.ai`). Spans export to `{endpoint}/v1/traces`. If omitted, reads `PARLOT_ENDPOINT`. |
-| `api_key` | `str | None` | `None` | Org-scoped API key minted in Parlot **Settings → API Keys**. If omitted, reads `PARLOT_API_KEY`. Required for remote telemetry bootstrap, recording grants, and self-diagnostics. |
-| `capture_genai_content` | `bool | None` | `None` | Process-wide override for LLM message bodies and tool input/output payloads. If `False`, payloads are omitted while preserving span durations, tokens, and turn text. Precedence: job metadata → this kwarg → Settings → Generative AI (default: on). |
-| `service_name` | `str | None` | `None` | OpenTelemetry resource `service.name`. Defaults to `agent_id` or a framework-specific fallback. |
-| `tracer_provider` | `TracerProvider | None` | `None` | Existing OpenTelemetry `TracerProvider` to adopt. If omitted, adapters build one with Parlot's OTLP exporter (or adopt an already-registered provider when another adapter configured first). |
-| `agent_id` | `str | None` | `None` | Canonical deployment identity stamped on `session.agent_id`. If omitted, adapters may derive from framework config or `PARLOT_AGENT_ID`. |
-| `version` | `str | None` | `None` | Deployment version stamped on `gen_ai.agent.version`. Precedence: this kwarg → `__main__.__version__` / `VERSION` → `PARLOT_AGENT_VERSION` → local git short SHA (dev only). |
-| `capture_logs` | `bool | list[str] | None` | `None` | Intercept Python `logging` during active sessions and stream to the session Logs tab. Boolean or agent-id glob patterns. Precedence: job metadata → this kwarg → Settings → Logs (default: on). |
-| `log_level` | `str | None` | `None` | Minimum level for session log capture (e.g. `"INFO"`, `"WARNING"`). Defaults to `"INFO"`. |
+| `endpoint` | `str \| None` | `None` | Parlot OTLP collector base URL (e.g. `https://ingest.parlot.ai`). Spans export to `{endpoint}/v1/traces`. If omitted, reads `PARLOT_ENDPOINT`. |
+| `api_key` | `str \| None` | `None` | Org-scoped API key minted in Parlot **Settings → API Keys**. If omitted, reads `PARLOT_API_KEY`. Required for remote telemetry bootstrap, recording grants, and self-diagnostics. |
+| `capture_genai_content` | `bool \| None` | `None` | Process-wide override for LLM message bodies and tool input/output payloads. If `False`, payloads are omitted while preserving span durations, tokens, and turn text. Precedence: job metadata → this kwarg → Settings → Generative AI (default: on). |
+| `service_name` | `str \| None` | `None` | OpenTelemetry resource `service.name`. Defaults to `agent_id` or a framework-specific fallback. |
+| `tracer_provider` | `TracerProvider \| None` | `None` | Existing OpenTelemetry `TracerProvider` to adopt. If omitted, adapters build one with Parlot's OTLP exporter (or adopt an already-registered provider when another adapter configured first). |
+| `agent_id` | `str \| None` | `None` | Canonical deployment identity stamped on `session.agent_id`. If omitted, adapters may derive from framework config or `PARLOT_AGENT_ID`. |
+| `version` | `str \| None` | `None` | Deployment version stamped on `gen_ai.agent.version`. Precedence: this kwarg → `__main__.__version__` / `VERSION` → `PARLOT_AGENT_VERSION` → local git short SHA (dev only). |
+| `capture_logs` | `bool \| list[str] \| None` | `None` | Intercept Python `logging` during active sessions and stream to the session Logs tab. Boolean or agent-id glob patterns. Precedence: job metadata → this kwarg → Settings → Logs (default: on). |
+| `log_level` | `str \| None` | `None` | Minimum level for session log capture (e.g. `"INFO"`, `"WARNING"`). Defaults to `"INFO"`. |
 
 ## Precedence
 

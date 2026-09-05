@@ -40,6 +40,9 @@ def dump_api(output_path: Path) -> None:
     data = {}
     for mod_name in DOCUMENTED_MODULES:
         mod = load(mod_name, search_paths=SEARCH_PATHS, docstring_parser="google")
+        # Suppress volatile git commit hashes from source_link in committed snapshot
+        if mod.package is not None:
+            mod.package._git_info = None
         data[mod_name] = mod
 
     output_path.parent.mkdir(parents=True, exist_ok=True)

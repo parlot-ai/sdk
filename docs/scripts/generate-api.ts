@@ -204,7 +204,10 @@ export function paramsTable(
       }
     }
     const desc = rstToMd(docParam.description || "").replace(/\n/g, " ");
-    rows.push(`| \`${clean}\` | \`${ann}\` | \`${defaultCell}\` | ${desc} |`);
+    const safeAnn = ann.replace(/\|/g, "\\|");
+    const safeDefault = defaultCell.replace(/\|/g, "\\|");
+    const safeDesc = desc.replace(/\|/g, "\\|");
+    rows.push(`| \`${clean}\` | \`${safeAnn}\` | \`${safeDefault}\` | ${safeDesc} |`);
   }
 
   if (rows.length === 2) return "";

@@ -34,7 +34,7 @@ Each keyword becomes `session.metadata.<name>` on the session span and appears i
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `pairs` | `str | int | float | bool` | `{}` | Keyword metadata pairs (values `str`, `int`, `float`, or `bool`). |
+| `pairs` | `str \| int \| float \| bool` | `{}` | Keyword metadata pairs (values `str`, `int`, `float`, or `bool`). |
 
 #### Example
 
@@ -69,7 +69,7 @@ Keys are normalized to `session.metadata.<key>`. Values are stored as strings on
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `key` | `str` | `—` | Attribute name. If not prefixed with `session.metadata.`, the prefix is added automatically. |
-| `value` | `str | int | float | bool` | `—` | Value to record (`str`, `int`, `float`, or `bool`). |
+| `value` | `str \| int \| float \| bool` | `—` | Value to record (`str`, `int`, `float`, or `bool`). |
 
 #### Example
 
@@ -164,7 +164,7 @@ Stamps `session.topology.agents` on the active session span and registers the pa
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `participant_id` | `str` | `—` | Participant identifier within the room/session. |
-| `label` | `str | None` | `None` | Optional human-readable name (e.g. `"Tier 2 Escalation Desk"`). |
+| `label` | `str \| None` | `None` | Optional human-readable name (e.g. `"Tier 2 Escalation Desk"`). |
 
 #### Example
 
@@ -190,7 +190,7 @@ Mark the next participant who joins the active session as a human rep.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `label` | `str | None` | `None` | Optional role or team label for the incoming human representative. |
+| `label` | `str \| None` | `None` | Optional role or team label for the incoming human representative. |
 
 #### Example
 
@@ -246,7 +246,7 @@ True when an active Parlot session with a non-empty session_id is bound.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `framework` | `str | None` | `None` | If provided, also require `state.framework` to match (e.g. `session_owned(framework="livekit")` for coexistence checks). |
+| `framework` | `str \| None` | `None` | If provided, also require `state.framework` to match (e.g. `session_owned(framework="livekit")` for coexistence checks). |
 
 ---
 

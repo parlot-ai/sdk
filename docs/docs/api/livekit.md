@@ -63,8 +63,8 @@ Shared options (`endpoint`, `api_key`, `agent_id`, `version`, `capture_genai_con
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `auto_escalate_sip` | `bool` | `False` | When `True`, mark the session escalated when a SIP participant joins the room. |
-| `escalation_metadata_match` | `dict[str, str] | None` | `None` | Participant metadata key/value pairs that classify joining participants as human representatives. |
-| `record` | `bool | list[str] | None` | `None` | Audio recording policy. Boolean or agent-id glob patterns (e.g. `["support-*", "billing"]`). Precedence: LiveKit job metadata `record` → this kwarg → Settings → Recording. |
+| `escalation_metadata_match` | `dict[str, str] \| None` | `None` | Participant metadata key/value pairs that classify joining participants as human representatives. |
+| `record` | `bool \| list[str] \| None` | `None` | Audio recording policy. Boolean or agent-id glob patterns (e.g. `["support-*", "billing"]`). Precedence: LiveKit job metadata `record` → this kwarg → Settings → Recording. |
 
 **Returns:** The `ParlotContext` created for this process (or the prior one if already configured).
 

@@ -59,8 +59,8 @@ Shared options (`endpoint`, `api_key`, `agent_id`, `version`, `capture_genai_con
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `channel` | `str | None` | `None` | Communication channel for standalone LangGraph sessions (e.g. `"webchat"`, `"slack"`, `"sms"`). Defaults to `"text"`. Ignored when LiveKit owns the session. |
-| `modality` | `str | None` | `None` | Session modality (`"text"`, `"voice"`, or `"multimodal"`). Defaults to `"text"` for standalone sessions. |
+| `channel` | `str \| None` | `None` | Communication channel for standalone LangGraph sessions (e.g. `"webchat"`, `"slack"`, `"sms"`). Defaults to `"text"`. Ignored when LiveKit owns the session. |
+| `modality` | `str \| None` | `None` | Session modality (`"text"`, `"voice"`, or `"multimodal"`). Defaults to `"text"` for standalone sessions. |
 
 **Returns:** The `ParlotContext` created for this process (or the prior one if already configured).
 
