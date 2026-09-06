@@ -45,4 +45,4 @@ EOF
   done
 } >"${OUT}"
 
-echo "Synced changelog -> docs/docs/reference/changelog.md"
+echo "Synced changelog -> content/docs/sdk/changelog.md"

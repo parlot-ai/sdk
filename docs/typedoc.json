@@ -10,6 +10,7 @@
   "plugin": ["typedoc-plugin-markdown", "typedoc-plugin-frontmatter"],
   "readme": "none",
   "fileExtension": ".mdx",
+  "gitRevision": "main",
   "cleanOutputDir": true,
   "outputFileStrategy": "modules",
   "frontmatterGlobals": {

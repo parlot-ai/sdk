@@ -3,7 +3,7 @@ import { glob } from 'node:fs/promises';
 import { getSlugs } from 'fumadocs-core/source';
 
 export default {
-  basename: '/docs',
+  basename: '/docs/',
   ssr: false,
   async prerender({ getStaticPaths }) {
     const paths: string[] = ['/', '/api/search', '/sitemap.xml', '/llms.txt', '/llms-full.txt'];
