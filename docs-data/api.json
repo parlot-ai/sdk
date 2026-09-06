@@ -13075,7 +13075,7 @@
           ],
           "value": "Enriches LiveKit Agent spans in-place with Parlot conventions.\n\nIntercepts spans from the LiveKit Agents SDK and normalizes them into\nParlot's three-layer semantic vocabulary:\n\n1. **Conversation Contract** \u2014 session start/close, turns, agent handoffs.\n2. **OTel GenAI (v1.41.0)** \u2014 LLM inference, tool executions, workflows.\n3. **Voice spans** \u2014 TTS, STT, and end-of-utterance operational timings."
         },
-        "endlineno": 627,
+        "endlineno": 636,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -13203,7 +13203,7 @@
           "_active_agent_id": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 430,
+            "endlineno": 439,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -13214,7 +13214,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 406,
+            "lineno": 415,
             "name": "_active_agent_id",
             "parameters": [
               {
@@ -13291,7 +13291,7 @@
           "_apply_plugin_llm_usage_to_span": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 351,
+            "endlineno": 360,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -13302,7 +13302,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 342,
+            "lineno": 351,
             "name": "_apply_plugin_llm_usage_to_span",
             "parameters": [
               {
@@ -13371,8 +13371,8 @@
             "analysis": "static",
             "decorators": [],
             "docstring": {
-              "endlineno": 587,
-              "lineno": 587,
+              "endlineno": 596,
+              "lineno": 596,
               "parsed": [
                 {
                   "kind": "text",
@@ -13381,7 +13381,7 @@
               ],
               "value": "Stamp session aggregates on the live ``parlot.session`` span."
             },
-            "endlineno": 627,
+            "endlineno": 636,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -13392,7 +13392,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 584,
+            "lineno": 593,
             "name": "_apply_root_to_live_span",
             "parameters": [
               {
@@ -13513,7 +13513,7 @@
           "_enrich": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 567,
+            "endlineno": 576,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -13524,7 +13524,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 491,
+            "lineno": 500,
             "name": "_enrich",
             "parameters": [
               {
@@ -13553,7 +13553,7 @@
           "_enrich_llm_request": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 582,
+            "endlineno": 591,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -13564,7 +13564,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 569,
+            "lineno": 578,
             "name": "_enrich_llm_request",
             "parameters": [
               {
@@ -13727,7 +13727,7 @@
           "_log_compare_span": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 261,
+            "endlineno": 270,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -13738,7 +13738,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 249,
+            "lineno": 258,
             "name": "_log_compare_span",
             "parameters": [
               {
@@ -13904,7 +13904,7 @@
           "_resolve_session_state": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 390,
+            "endlineno": 399,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -13915,7 +13915,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 357,
+            "lineno": 366,
             "name": "_resolve_session_state",
             "parameters": [
               {
@@ -14034,7 +14034,7 @@
           "_stamp_agent_identity": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 453,
+            "endlineno": 462,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -14045,7 +14045,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 432,
+            "lineno": 441,
             "name": "_stamp_agent_identity",
             "parameters": [
               {
@@ -14134,8 +14134,8 @@
             "analysis": "static",
             "decorators": [],
             "docstring": {
-              "endlineno": 482,
-              "lineno": 482,
+              "endlineno": 491,
+              "lineno": 491,
               "parsed": [
                 {
                   "kind": "text",
@@ -14144,7 +14144,7 @@
               ],
               "value": "Normalize failed pipeline spans to OTel ERROR status for OTLP export."
             },
-            "endlineno": 485,
+            "endlineno": 494,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -14155,7 +14155,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 481,
+            "lineno": 490,
             "name": "_stamp_error_status_if_needed",
             "parameters": [
               {
@@ -14184,7 +14184,7 @@
           "_stamp_response_model_if_distinct": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 466,
+            "endlineno": 475,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -14195,7 +14195,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 455,
+            "lineno": 464,
             "name": "_stamp_response_model_if_distinct",
             "parameters": [
               {
@@ -14253,7 +14253,7 @@
           "_stamp_session_turn_attrs": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 479,
+            "endlineno": 488,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -14264,7 +14264,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 468,
+            "lineno": 477,
             "name": "_stamp_session_turn_attrs",
             "parameters": [
               {
@@ -14408,7 +14408,7 @@
           "_track_agent_label": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 404,
+            "endlineno": 413,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -14419,7 +14419,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 392,
+            "lineno": 401,
             "name": "_track_agent_label",
             "parameters": [
               {
@@ -14982,7 +14982,7 @@
           "apply_session_usage": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 294,
+            "endlineno": 303,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -14993,7 +14993,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 293,
+            "lineno": 302,
             "name": "apply_session_usage",
             "parameters": [
               {
@@ -15032,7 +15032,7 @@
           "commit_agent_message": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 330,
+            "endlineno": 339,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -15043,7 +15043,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 321,
+            "lineno": 330,
             "name": "commit_agent_message",
             "parameters": [
               {
@@ -15116,7 +15116,7 @@
           "commit_user_message": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 319,
+            "endlineno": 328,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -15127,7 +15127,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 310,
+            "lineno": 319,
             "name": "commit_user_message",
             "parameters": [
               {
@@ -15200,7 +15200,7 @@
           "committed_handoff_item_ids": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 274,
+            "endlineno": 283,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -15211,7 +15211,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 273,
+            "lineno": 282,
             "name": "committed_handoff_item_ids",
             "parameters": [
               {
@@ -15243,8 +15243,8 @@
             "analysis": "static",
             "decorators": [],
             "docstring": {
-              "endlineno": 199,
-              "lineno": 199,
+              "endlineno": 208,
+              "lineno": 208,
               "parsed": [
                 {
                   "kind": "text",
@@ -15253,7 +15253,7 @@
               ],
               "value": "Deferred enrichment, turn-attr copy, then GenAI/voice rename for export."
             },
-            "endlineno": 247,
+            "endlineno": 256,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -15264,7 +15264,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 198,
+            "lineno": 207,
             "name": "enrich_spans_for_export",
             "parameters": [
               {
@@ -15301,7 +15301,7 @@
           "lookup_turn_trace": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 335,
+            "endlineno": 344,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -15312,7 +15312,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 332,
+            "lineno": 341,
             "name": "lookup_turn_trace",
             "parameters": [
               {
@@ -15379,7 +15379,7 @@
           "mark_conversation_item_committed": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 268,
+            "endlineno": 277,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -15390,7 +15390,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 267,
+            "lineno": 276,
             "name": "mark_conversation_item_committed",
             "parameters": [
               {
@@ -15423,7 +15423,7 @@
           "mark_handoff_item_committed": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 271,
+            "endlineno": 280,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -15434,7 +15434,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 270,
+            "lineno": 279,
             "name": "mark_handoff_item_committed",
             "parameters": [
               {
@@ -15463,7 +15463,7 @@
           "note_function_tools_executed": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 291,
+            "endlineno": 300,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -15474,7 +15474,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 290,
+            "lineno": 299,
             "name": "note_function_tools_executed",
             "parameters": [
               {
@@ -15503,7 +15503,7 @@
           "note_session_error": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 300,
+            "endlineno": 309,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -15514,7 +15514,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 296,
+            "lineno": 305,
             "name": "note_session_error",
             "parameters": [
               {
@@ -15553,7 +15553,7 @@
           "note_user_transcription_meta": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 288,
+            "endlineno": 297,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -15564,7 +15564,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 283,
+            "lineno": 292,
             "name": "note_user_transcription_meta",
             "parameters": [
               {
@@ -15603,7 +15603,7 @@
           "on_end": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 182,
+            "endlineno": 191,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -15685,7 +15685,7 @@
           "pop_pending_close_error": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 308,
+            "endlineno": 317,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -15696,7 +15696,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 302,
+            "lineno": 311,
             "name": "pop_pending_close_error",
             "parameters": [
               {
@@ -15724,7 +15724,7 @@
           "record_handoff_from_event": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 281,
+            "endlineno": 290,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -15735,7 +15735,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 276,
+            "lineno": 285,
             "name": "record_handoff_from_event",
             "parameters": [
               {
@@ -15774,7 +15774,7 @@
           "set_metrics": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 188,
+            "endlineno": 197,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -15785,7 +15785,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 187,
+            "lineno": 196,
             "name": "set_metrics",
             "parameters": [
               {
@@ -15810,7 +15810,7 @@
           "set_recording_anchor_wall_ms": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 340,
+            "endlineno": 349,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -15821,7 +15821,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 337,
+            "lineno": 346,
             "name": "set_recording_anchor_wall_ms",
             "parameters": [
               {
@@ -15860,7 +15860,7 @@
           "set_tracer": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 185,
+            "endlineno": 194,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -15871,7 +15871,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 184,
+            "lineno": 193,
             "name": "set_tracer",
             "parameters": [
               {
@@ -15900,7 +15900,7 @@
           "set_turn_source": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 192,
+            "endlineno": 201,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -15911,7 +15911,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 190,
+            "lineno": 199,
             "name": "set_turn_source",
             "parameters": [
               {
@@ -15944,7 +15944,7 @@
               "member": "turn_source",
               "name": "str"
             },
-            "endlineno": 196,
+            "endlineno": 205,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -15958,7 +15958,7 @@
             "labels": [
               "property"
             ],
-            "lineno": 195,
+            "lineno": 204,
             "name": "turn_source",
             "path": "parlot.instrumentation.livekit._processor.LiveKitGenAIProcessor.turn_source",
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
