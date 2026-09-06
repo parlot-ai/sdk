@@ -43,6 +43,7 @@ def fetch_telemetry_bootstrap(
             return None
         context.runtime = runtime_from_bootstrap(endpoint, api_key, payload)
         return payload
-    except Exception:
-        logger.exception("parlot: telemetry bootstrap request failed")
+    except Exception as exc:
+        logger.error("parlot: telemetry bootstrap request failed — %s", exc)
+        logger.debug("parlot: telemetry bootstrap request failed", exc_info=True)
         return None

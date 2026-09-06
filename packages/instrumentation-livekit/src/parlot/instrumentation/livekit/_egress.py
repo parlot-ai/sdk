@@ -31,7 +31,7 @@ def _format_egress_error(exc: BaseException) -> str:
         return f"{code}: {message}"[:500]
     if code:
         return str(code)[:500]
-    return message[:500] if message else "egress_start_failed"
+    return message[:500] if message else (repr(exc)[:500] or "egress_start_failed")
 
 
 def _stamp_recording_webhook_error(bootstrap: Any, error: str) -> None:
@@ -76,8 +76,9 @@ async def _fetch_upload_grant(
             )
             return None
         return resp.json()
-    except Exception:
-        logger.exception("parlot: upload grant request failed")
+    except Exception as exc:
+        logger.error("parlot: upload grant request failed — %s", exc)
+        logger.debug("parlot: upload grant request failed", exc_info=True)
         return None
 
 
@@ -164,8 +165,10 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
     try:
         info = await lkapi.egress.start_room_composite_egress(req)
     except Exception as exc:
-        _stamp_recording_webhook_error(bootstrap, _format_egress_error(exc))
-        logger.exception("parlot: StartRoomCompositeEgress failed")
+        err = _format_egress_error(exc)
+        _stamp_recording_webhook_error(bootstrap, err)
+        logger.error("parlot: StartRoomCompositeEgress failed — %s", err)
+        logger.debug("parlot: StartRoomCompositeEgress failed", exc_info=True)
         return
     finally:
         await lkapi.aclose()

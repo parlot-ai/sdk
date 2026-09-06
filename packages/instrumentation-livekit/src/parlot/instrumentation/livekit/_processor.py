@@ -178,8 +178,17 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
                 return
             self._enrich(span)
             self._log_compare_span(span)
-        except Exception:
-            logger.exception("LiveKitGenAIProcessor failed on span %r", span.name)
+        except Exception as exc:
+            logger.error(
+                "parlot: LiveKitGenAIProcessor failed on span %r — %s",
+                span.name,
+                exc,
+            )
+            logger.debug(
+                "parlot: LiveKitGenAIProcessor failed on span %r",
+                span.name,
+                exc_info=True,
+            )
 
     def set_tracer(self, tracer: Tracer) -> None:
         self._tracer = tracer

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
 
@@ -733,3 +734,17 @@ class TestHandoffSpanEnrichment:
         })
         proc.on_end(span)
         assert state.agent_label == "get_email_task"
+
+
+def test_processor_on_end_failure_logs_descriptively_without_traceback(caplog) -> None:
+    proc = LiveKitGenAIProcessor()
+    span = _make_span("some_span", {})
+    with patch.object(proc, "_enrich", side_effect=RuntimeError("enrichment failed")):
+        with caplog.at_level("DEBUG"):
+            proc.on_end(span)
+
+    error_records = [r for r in caplog.records if r.levelname == "ERROR"]
+    assert len(error_records) == 1
+    assert "parlot: LiveKitGenAIProcessor failed on span 'some_span' — enrichment failed" in error_records[0].message
+    assert error_records[0].exc_info is None
+

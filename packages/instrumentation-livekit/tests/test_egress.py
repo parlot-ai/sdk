@@ -104,3 +104,79 @@ async def test_egress_starts_without_webhooks(monkeypatch) -> None:
     assert "webhooks" not in kwargs
     lkapi.egress.start_room_composite_egress.assert_awaited_once_with(room_composite_req)
     bootstrap.processor.set_recording_anchor_wall_ms.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_egress_failure_logs_descriptively_without_traceback(
+    monkeypatch, caplog
+) -> None:
+    context = ParlotContext()
+    context.runtime = _platform()
+    _auto.set_configured_context(context)
+
+    bootstrap = MagicMock()
+    bootstrap.session_id = "sess-1"
+    bootstrap.session_span = MagicMock()
+    bootstrap.session_span.is_recording.return_value = True
+    bootstrap.processor = MagicMock()
+    bootstrap.processor._context = context
+
+    grant = {
+        "filepath": "org-1/sessions/sess-1/audio.ogg",
+        "audio_recording_uri": "r2://bucket/org-1/sessions/sess-1/audio.ogg",
+        "s3": {
+            "access_key": "ak",
+            "secret": "sk",
+            "bucket": "bucket",
+            "endpoint": "https://r2.example.com",
+            "force_path_style": True,
+        },
+    }
+
+    class FakeServerError(Exception):
+        def __init__(self, code: str, message: str):
+            super().__init__(f"ServerError(code={code}, message={message})")
+            self.code = code
+            self.message = message
+
+    api_mod = SimpleNamespace(
+        EncodedFileType=SimpleNamespace(OGG="ogg"),
+        EncodedFileOutput=MagicMock(),
+        S3Upload=MagicMock(),
+        RoomCompositeEgressRequest=MagicMock(),
+        LiveKitAPI=MagicMock(),
+    )
+    lkapi = api_mod.LiveKitAPI.return_value
+    lkapi.egress.start_room_composite_egress = AsyncMock(
+        side_effect=FakeServerError("not_found", "requested room does not exist")
+    )
+    lkapi.aclose = AsyncMock()
+
+    monkeypatch.setenv("LIVEKIT_URL", "wss://lk.example")
+    monkeypatch.setenv("LIVEKIT_API_KEY", "APIxxx")
+    monkeypatch.setenv("LIVEKIT_API_SECRET", "secret")
+
+    ctx = MagicMock()
+    ctx.room = SimpleNamespace(name="room-1")
+    ctx.job = SimpleNamespace(metadata='{"record": true}', agent_name="agent", dispatch_id=None)
+
+    with (
+        patch(
+            "parlot.instrumentation.livekit._session.get_job_bootstrap",
+            return_value=bootstrap,
+        ),
+        patch(
+            "parlot.instrumentation.livekit._egress._fetch_upload_grant",
+            new_callable=AsyncMock,
+            return_value=grant,
+        ),
+        patch.dict("sys.modules", {"livekit": SimpleNamespace(api=api_mod), "livekit.api": api_mod}),
+    ):
+        with caplog.at_level("DEBUG"):
+            await maybe_start_room_composite_egress(ctx)
+
+    error_records = [r for r in caplog.records if r.levelname == "ERROR"]
+    assert len(error_records) == 1
+    assert "StartRoomCompositeEgress failed — not_found: requested room does not exist" in error_records[0].message
+    assert error_records[0].exc_info is None
+
