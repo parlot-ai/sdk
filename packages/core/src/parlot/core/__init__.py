@@ -2,7 +2,6 @@
 
 from .attrs import *  # noqa: F401, F403 — re-export all attribute constants
 from .context import ParlotContext
-from .diagnostics import DiagnosticsCollector, diagnostics_enabled
 from .escalation import human_escalation, record_human_rep
 from .metadata import set_session_attribute, set_session_metadata
 from .platform_refs import add_platform_ref, stamp_platform_refs
@@ -10,11 +9,16 @@ from .processor import ParlotBaseProcessor, assert_sync_span_processors
 from .provider import (
     adopt_existing_tracer_provider,
     build_otlp_http_exporter,
+    build_parlot_client_headers,
     build_resource,
     build_tracer_provider,
     resolve_api_key,
     resolve_capture_genai_content,
     resolve_endpoint,
+    HEADER_SDK_NAME,
+    HEADER_SDK_VERSION,
+    HEADER_INGESTION_VERSION,
+    INGESTION_PROTOCOL_VERSION,
 )
 from .bootstrap import fetch_telemetry_bootstrap
 from .configure import BaseConfigureResult, ConfigureProtocol, base_configure, configure_parlot_logging
@@ -39,7 +43,6 @@ from .turn_emit import stamp_turn_utterance_text
 __all__ = [
     "BaseConfigureResult",
     "ConfigureProtocol",
-    "DiagnosticsCollector",
     "ParlotContext",
     "ParlotRuntimeContext",
     "SessionLogsCollector",
@@ -53,11 +56,15 @@ __all__ = [
     "add_platform_ref",
     "adopt_existing_tracer_provider",
     "build_otlp_http_exporter",
+    "build_parlot_client_headers",
     "build_resource",
     "build_tracer_provider",
+    "HEADER_SDK_NAME",
+    "HEADER_SDK_VERSION",
+    "HEADER_INGESTION_VERSION",
+    "INGESTION_PROTOCOL_VERSION",
     "clear_active_session",
     "derive_intent",
-    "diagnostics_enabled",
     "fetch_telemetry_bootstrap",
     "get_active_session",
     "get_active_session_span",

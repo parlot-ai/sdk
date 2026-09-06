@@ -88,8 +88,6 @@ Session application logs (Python `logging`, default on) use the same control pat
 
 Generative AI content capture (message bodies / tool payloads; default on) is documented in [Concepts](https://parlot.ai/docs/concepts#generative-ai-content-capture). Override with `configure(capture_genai_content=True|False)`.
 
-Optional: `PARLOT_DIAGNOSTICS=off` to disable SDK self-diagnostics (export/handler failures reported to Parlot). Default is on; metadata only, no conversation content. Under sustained outage the buffer drops and circuit-breaks — it does not retry-storm the collector.
-
 ## Examples
 
 - [`examples/livekit/livekit-voice`](../../examples/livekit/livekit-voice/) — minimal hello-world

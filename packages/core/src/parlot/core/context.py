@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional
 
-from parlot.core.diagnostics import DiagnosticsCollector
 from parlot.core.runtime import ParlotRuntimeContext
 from parlot.core.session_logs import SessionLogsCollector
 
@@ -15,7 +14,6 @@ class ParlotContext:
     """Owns bootstrap runtime and process-local collectors for one SDK instance."""
 
     runtime: Optional[ParlotRuntimeContext] = None
-    diagnostics: DiagnosticsCollector = field(default_factory=DiagnosticsCollector)
     session_logs: SessionLogsCollector = field(default_factory=SessionLogsCollector)
 
     def __post_init__(self) -> None:
@@ -23,5 +21,4 @@ class ParlotContext:
 
     def shutdown(self) -> None:
         self.session_logs.shutdown()
-        self.diagnostics.shutdown()
         self.runtime = None

@@ -3,7 +3,7 @@
 Hard requirements:
 - Never raises into the customer agent
 - Drop records without an active ``session.id``
-- Bounded buffer + background flush + circuit breaker (same as diagnostics)
+- Bounded buffer + background flush + circuit breaker
 """
 
 from __future__ import annotations
@@ -43,7 +43,6 @@ _SKIP_LOGGER_PREFIXES = (
     "opentelemetry",
     "parlot.core.logging",
     "parlot.core.session_logs",
-    "parlot.core.diagnostics",
     "httpx",
     "httpcore",
     "urllib3",
@@ -361,12 +360,15 @@ class SessionLogsCollector:
 
         url = f"{self._endpoint}/v1/logs"
         payload = {"logs": [e.to_payload() for e in events[:_MAX_BATCH]]}
+        from parlot.core.provider import build_parlot_client_headers
+
+        headers = build_parlot_client_headers(self._api_key)
         try:
             with httpx.Client(timeout=3.0) as client:
                 res = client.post(
                     url,
                     json=payload,
-                    headers={"Authorization": f"Bearer {self._api_key}"},
+                    headers=headers,
                 )
                 return 200 <= res.status_code < 300
         except Exception:

@@ -103,7 +103,6 @@ Without `ctx.connect()` you may still see basic telemetry if you pass `room=ctx.
 |----------|------|
 | `PARLOT_ENDPOINT` | Parlot ingest base URL (OTLP, bootstrap, upload-grant). Exporter uses `/v1/traces`. **Required** unless you pass `endpoint=` into `configure()`. |
 | `PARLOT_API_KEY` | **Required for recording / bootstrap.** Org-scoped Bearer token minted in Parlot **Settings → API Keys**. |
-| `PARLOT_DIAGNOSTICS` | Optional. Default on. Set `off` / `0` / `false` / `no` to disable SDK self-diagnostics (export/handler failures). Metadata only; drops under sustained failure (no retry storm). |
 | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | Standard LiveKit Agents credentials (also used to **start** egress). |
 
 Full env reference: [Environment Variables](../api/env-vars.md). Shared `configure()` options: [`configure()`](../api/configure.md).
