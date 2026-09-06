@@ -6,7 +6,7 @@ import asyncio
 import logging
 from contextvars import ContextVar, Token
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from opentelemetry import context as otel_context
 from opentelemetry import trace
@@ -250,7 +250,7 @@ def emit_parlot_session_close_span(
     if tracer is None:
         return
     state = bootstrap.state
-    attrs: dict[str, object] = {
+    attrs: dict[str, Any] = {
         ATTR_SESSION_ID: bootstrap.session_id,
         ATTR_SESSION_CONVERSATION_ID: state.conversation_id,
         ATTR_GEN_AI_CONVERSATION_ID: state.conversation_id,

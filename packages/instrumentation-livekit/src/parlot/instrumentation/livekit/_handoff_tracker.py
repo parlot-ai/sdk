@@ -84,7 +84,14 @@ class HandoffTracker:
             target_str = str(target)
             state.agent_label = target_str
             append_agent_chain_step(state, target_str)
-            turn_index = int(attrs.get(ATTR_TURN_INDEX, 0) or state.turn_count or 0)
+            raw_turn = attrs.get(ATTR_TURN_INDEX)
+            if isinstance(raw_turn, (int, float, str)) and raw_turn:
+                try:
+                    turn_index = int(raw_turn)
+                except (ValueError, TypeError):
+                    turn_index = int(state.turn_count or 0)
+            else:
+                turn_index = int(state.turn_count or 0)
             state.topology.open_segment_after_handoff(
                 target_str,
                 turn_index=turn_index,

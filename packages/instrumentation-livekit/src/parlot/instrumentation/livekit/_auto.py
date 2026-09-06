@@ -367,8 +367,8 @@ def _patch_job_context_connect() -> None:
             return
         await _run_post_bootstrap_connect(self)
 
-    _parlot_connect._parlot_connect_patched = True
-    JobContext.connect = _parlot_connect
+    setattr(_parlot_connect, "_parlot_connect_patched", True)
+    setattr(JobContext, "connect", _parlot_connect)
     logger.debug("Patched JobContext.connect for room_sid + egress")
 
 

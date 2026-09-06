@@ -137,7 +137,7 @@ def install_emit_metrics_intercept(processor: "LiveKitGenAIProcessor") -> None:
     original_emit = AgentSession.emit
 
     def _patched_emit(self, event_name: str, ev: Any) -> None:
-        original_emit(self, event_name, ev)
+        original_emit(self, event_name, ev)  # type: ignore[arg-type]
         if event_name != "metrics_collected":
             return
         try:
@@ -161,6 +161,6 @@ def install_emit_metrics_intercept(processor: "LiveKitGenAIProcessor") -> None:
         except Exception:
             logger.debug("emit metrics intercept failed", exc_info=True)
 
-    AgentSession.emit = _patched_emit
-    AgentSession._parlot_emit_metrics_patched = True
+    setattr(AgentSession, "emit", _patched_emit)
+    setattr(AgentSession, "_parlot_emit_metrics_patched", True)
     logger.debug("Patched AgentSession.emit for Parlot usage.* OTLP metrics")

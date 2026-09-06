@@ -13,7 +13,10 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Mapping
-from typing import Any, FrozenSet, Optional
+from typing import TYPE_CHECKING, Any, FrozenSet, Optional
+
+if TYPE_CHECKING:
+    from parlot.core.context import ParlotContext
 
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.trace import Status, StatusCode, Tracer
@@ -389,9 +392,11 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
     def _track_agent_label(
         self, state: _LiveKitSessionState, attrs: Mapping[str, AttributeValue]
     ) -> None:
-        label = topology_agent_name(attrs.get(ATTR_LK_AGENT_LABEL)) or topology_agent_name(
-            attrs.get(ATTR_LK_AGENT_NAME)
-        )
+        raw_label = attrs.get(ATTR_LK_AGENT_LABEL)
+        raw_name = attrs.get(ATTR_LK_AGENT_NAME)
+        label_str = raw_label if isinstance(raw_label, str) else None
+        name_str = raw_name if isinstance(raw_name, str) else None
+        label = topology_agent_name(label_str) or topology_agent_name(name_str)
         if label:
             self._maybe_update(state, "agent_label", label)
             canonical = resolve_canonical_agent_id(state)
@@ -418,7 +423,8 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             resolve_canonical_agent_id(state),
             state.agent_chain[-1] if state.agent_chain else "",
         ):
-            name = topology_agent_name(candidate)
+            cand_str = candidate if isinstance(candidate, str) else None
+            name = topology_agent_name(cand_str)
             if name:
                 return name
         return "unknown"

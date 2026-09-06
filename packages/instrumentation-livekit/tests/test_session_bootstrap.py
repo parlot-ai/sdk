@@ -25,7 +25,6 @@ from parlot.instrumentation.livekit._session import (
     bootstrap_session,
     finalize_session_close_from_hook,
     get_job_bootstrap,
-    handle_conversation_session_on_end,
 )
 from parlot.core.session import _active_session_span
 from parlot.instrumentation.livekit.attrs import (

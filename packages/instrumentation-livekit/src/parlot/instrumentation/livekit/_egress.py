@@ -121,7 +121,7 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
     filepath = grant.get("filepath") or ""
     audio_uri = grant.get("audio_recording_uri") or ""
 
-    s3_kwargs: dict[str, object] = {
+    s3_kwargs: dict[str, Any] = {
         "access_key": str(s3.get("access_key") or ""),
         "secret": str(s3.get("secret") or ""),
         "bucket": str(s3.get("bucket") or ""),

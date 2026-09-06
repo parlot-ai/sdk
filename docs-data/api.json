@@ -12,7 +12,7 @@
       ],
       "value": "Shared ``configure()`` keyword surface and base configuration helper.\n\nAll adapter ``configure()`` entrypoints are keyword-only so the shape can\nevolve without breaking positional call sites."
     },
-    "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/configure.py",
+    "filepath": "packages/core/src/parlot/core/configure.py",
     "imports": {
       "Any": "typing.Any",
       "Optional": "typing.Optional",
@@ -81,7 +81,7 @@
           "value": "Resolved context from ``base_configure`` for framework adapters."
         },
         "endlineno": 90,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/configure.py",
+        "filepath": "packages/core/src/parlot/core/configure.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -99,7 +99,7 @@
           "__init__": {
             "decorators": [],
             "endlineno": 0,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/configure.py",
+            "filepath": "packages/core/src/parlot/core/configure.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -277,7 +277,7 @@
               }
             },
             "endlineno": 86,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/configure.py",
+            "filepath": "packages/core/src/parlot/core/configure.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -305,7 +305,7 @@
               "name": "str"
             },
             "endlineno": 87,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/configure.py",
+            "filepath": "packages/core/src/parlot/core/configure.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -333,7 +333,7 @@
               "name": "str"
             },
             "endlineno": 84,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/configure.py",
+            "filepath": "packages/core/src/parlot/core/configure.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -369,7 +369,7 @@
               }
             },
             "endlineno": 88,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/configure.py",
+            "filepath": "packages/core/src/parlot/core/configure.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -419,7 +419,7 @@
               "right": "None"
             },
             "endlineno": 89,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/configure.py",
+            "filepath": "packages/core/src/parlot/core/configure.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -447,7 +447,7 @@
               "name": "ParlotContext"
             },
             "endlineno": 82,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/configure.py",
+            "filepath": "packages/core/src/parlot/core/configure.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -475,7 +475,7 @@
               "name": "str"
             },
             "endlineno": 83,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/configure.py",
+            "filepath": "packages/core/src/parlot/core/configure.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -511,7 +511,7 @@
               }
             },
             "endlineno": 90,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/configure.py",
+            "filepath": "packages/core/src/parlot/core/configure.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -539,7 +539,7 @@
               "name": "Any"
             },
             "endlineno": 85,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/configure.py",
+            "filepath": "packages/core/src/parlot/core/configure.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -598,7 +598,7 @@
           "value": "Common kwargs every adapter ``configure()`` must accept.\n\nFramework packages may add extra keyword-only parameters (e.g. LiveKit\n``record=`` / ``auto_escalate_sip=``)."
         },
         "endlineno": 75,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/configure.py",
+        "filepath": "packages/core/src/parlot/core/configure.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -813,7 +813,7 @@
               "value": "Shared keyword surface for every adapter ``configure()``.\n\nArgs:\n    endpoint: Parlot OTLP collector base URL (e.g.\n        ``https://ingest.parlot.ai``). Spans export to\n        ``{endpoint}/v1/traces``. If omitted, reads ``PARLOT_ENDPOINT``.\n    api_key: Org-scoped API key minted in Parlot **Settings \u2192 API Keys**.\n        If omitted, reads ``PARLOT_API_KEY``. Required for remote telemetry\n        bootstrap, recording grants, and self-diagnostics.\n    capture_genai_content: Process-wide override for LLM message bodies and\n        tool input/output payloads. If ``False``, payloads are omitted while\n        preserving span durations, tokens, and turn text. Precedence: job\n        metadata \u2192 this kwarg \u2192 Settings \u2192 Generative AI (default: on).\n    service_name: OpenTelemetry resource ``service.name``. Defaults to\n        ``agent_id`` or a framework-specific fallback.\n    tracer_provider: Existing OpenTelemetry ``TracerProvider`` to adopt. If\n        omitted, adapters build one with Parlot's OTLP exporter (or adopt an\n        already-registered provider when another adapter configured first).\n    agent_id: Canonical deployment identity stamped on ``session.agent_id``.\n        If omitted, adapters may derive from framework config or\n        ``PARLOT_AGENT_ID``.\n    version: Deployment version stamped on ``gen_ai.agent.version``.\n        Precedence: this kwarg \u2192 ``__main__.__version__`` / ``VERSION`` \u2192\n        ``PARLOT_AGENT_VERSION`` \u2192 local git short SHA (dev only).\n    capture_logs: Intercept Python ``logging`` during active sessions and\n        stream to the session Logs tab. Boolean or agent-id glob patterns.\n        Precedence: job metadata \u2192 this kwarg \u2192 Settings \u2192 Logs (default: on).\n    log_level: Minimum level for session log capture (e.g. ``\"INFO\"``,\n        ``\"WARNING\"``). Defaults to ``\"INFO\"``.\n    **kwargs: Framework-specific options (ignored by the shared surface)."
             },
             "endlineno": 75,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/configure.py",
+            "filepath": "packages/core/src/parlot/core/configure.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -1345,7 +1345,7 @@
           "value": "Execute shared telemetry configuration common across all adapters.\n\nCreates a ``ParlotContext``, initializes diagnostics and session log\ncollectors, and fetches remote bootstrap into ``context.runtime``.\n\nSee ``ConfigureProtocol`` for the shared keyword surface.\n\nArgs:\n    endpoint: Parlot OTLP collector base URL. If omitted, reads\n        ``PARLOT_ENDPOINT``.\n    api_key: Org-scoped API key. If omitted, reads ``PARLOT_API_KEY``.\n    capture_genai_content: Process-wide GenAI content capture override.\n    tracer_provider: Existing ``TracerProvider`` to adopt, if any.\n    agent_id: Canonical deployment identity for ``session.agent_id``.\n    version: Deployment version for ``gen_ai.agent.version``.\n    capture_logs: Session log capture policy (bool or agent-id globs).\n    log_level: Minimum level for session log capture.\n\nReturns:\n    Resolved endpoint, credentials, provider, and capture settings for the\n    calling adapter."
         },
         "endlineno": 184,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/configure.py",
+        "filepath": "packages/core/src/parlot/core/configure.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -1539,7 +1539,7 @@
           "value": "Configure root logging from ``PARLOT_DEBUG_LEVEL`` when no handlers exist."
         },
         "endlineno": 98,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/configure.py",
+        "filepath": "packages/core/src/parlot/core/configure.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -1580,7 +1580,7 @@
       "logger": {
         "analysis": "static",
         "endlineno": 19,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/configure.py",
+        "filepath": "packages/core/src/parlot/core/configure.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -1698,7 +1698,7 @@
       ],
       "value": "Human escalation helpers \u2014 framework-agnostic session signals."
     },
-    "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/escalation.py",
+    "filepath": "packages/core/src/parlot/core/escalation.py",
     "imports": {
       "ATTR_SESSION_TOPOLOGY_AGENTS": "parlot.core.attrs.ATTR_SESSION_TOPOLOGY_AGENTS",
       "ContextVar": "contextvars.ContextVar",
@@ -1797,7 +1797,7 @@
           }
         },
         "endlineno": 15,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/escalation.py",
+        "filepath": "packages/core/src/parlot/core/escalation.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -1959,7 +1959,7 @@
           "value": "Mark the next participant who joins the active session as a human rep.\n\nArgs:\n    label: Optional role or team label for the incoming human representative."
         },
         "endlineno": 60,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/escalation.py",
+        "filepath": "packages/core/src/parlot/core/escalation.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -2065,7 +2065,7 @@
           "value": "Mark a participant as a human representative.\n\nStamps ``session.topology.agents`` on the active session span and registers\nthe participant for ``turn.participant_role=human_rep`` on future turns.\n\nArgs:\n    participant_id: Participant identifier within the room/session.\n    label: Optional human-readable name (e.g. ``\"Tier 2 Escalation Desk\"``)."
         },
         "endlineno": 46,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/escalation.py",
+        "filepath": "packages/core/src/parlot/core/escalation.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -2130,7 +2130,7 @@
       ],
       "value": "Session custom-metadata helpers \u2014 framework-agnostic public API."
     },
-    "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/metadata.py",
+    "filepath": "packages/core/src/parlot/core/metadata.py",
     "imports": {
       "ATTR_SESSION_METADATA_PREFIX": "parlot.core.attrs.ATTR_SESSION_METADATA_PREFIX",
       "Mapping": "typing.Mapping",
@@ -2258,7 +2258,7 @@
           "value": "Return the full ``session.metadata.<key>`` attribute name."
         },
         "endlineno": 16,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/metadata.py",
+        "filepath": "packages/core/src/parlot/core/metadata.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -2357,7 +2357,7 @@
           "value": "Stamp one custom attribute on the active session under ``session.metadata.*``.\n\nKeys are normalized to ``session.metadata.<key>``. Values are stored as\nstrings on the live session span and remembered on session state so they\nare also present on ``parlot.session.close``.\n\nArgs:\n    key: Attribute name. If not prefixed with ``session.metadata.``, the\n        prefix is added automatically.\n    value: Value to record (``str``, ``int``, ``float``, or ``bool``)."
         },
         "endlineno": 43,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/metadata.py",
+        "filepath": "packages/core/src/parlot/core/metadata.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -2485,7 +2485,7 @@
           "value": "Attach custom key/value metadata to the active Parlot session.\n\nEach keyword becomes ``session.metadata.<name>`` on the session span and\nappears in session detail in the Parlot UI.\n\nArgs:\n    **pairs: Keyword metadata pairs (values ``str``, ``int``, ``float``,\n        or ``bool``).\n\nExample::\n\n    from parlot.instrumentation.livekit import set_session_metadata\n\n    set_session_metadata(order_id=\"12345\", crm_ticket=\"TKT-9\")"
         },
         "endlineno": 64,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/metadata.py",
+        "filepath": "packages/core/src/parlot/core/metadata.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -2557,7 +2557,7 @@
           "value": "Merge remembered ``session.metadata.*`` pairs into a close-span attr dict."
         },
         "endlineno": 76,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/metadata.py",
+        "filepath": "packages/core/src/parlot/core/metadata.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -2660,7 +2660,7 @@
       ],
       "value": "Parlot platform.ref.* helpers for session resolve / debug linking.\n\nFramework-agnostic span stamping only. Framework-specific registries and\ntriple construction live in each instrumentation package (e.g. LiveKit)."
     },
-    "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/platform_refs.py",
+    "filepath": "packages/core/src/parlot/core/platform_refs.py",
     "imports": {
       "ATTR_PLATFORM_FRAMEWORK": "parlot.core.attrs.ATTR_PLATFORM_FRAMEWORK",
       "ATTR_PLATFORM_KIND": "parlot.core.attrs.ATTR_PLATFORM_KIND",
@@ -2827,7 +2827,7 @@
           "value": "Attach a searchable external ID to the active Parlot session.\n\nStamps ``platform.ref.{kind}`` (and the primary triple when this is the\nfirst ref) on the live session span so the session can be found by that\nvalue in Parlot search / resolve.\n\nArgs:\n    kind: Identifier type (e.g. ``\"crm_ticket\"``, ``\"order_number\"``,\n        ``\"call_sid\"``).\n    value: Unique identifier value (e.g. ``\"TKT-9921\"``).\n    framework: Originating framework name. Defaults to ``\"custom\"``.\n\nExample::\n\n    from parlot.instrumentation.livekit import add_platform_ref\n\n    add_platform_ref(\"crm_ticket\", \"TKT-9\")"
         },
         "endlineno": 104,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/platform_refs.py",
+        "filepath": "packages/core/src/parlot/core/platform_refs.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -2930,7 +2930,7 @@
           "value": "Flat ``platform.ref.{kind}`` attribute key for ingestion fallbacks."
         },
         "endlineno": 23,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/platform_refs.py",
+        "filepath": "packages/core/src/parlot/core/platform_refs.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -3034,7 +3034,7 @@
           "value": "Stamp ``platform.ref.*`` triples onto a span.\n\n``refs`` is a list of ``(framework, kind, value)`` tuples, e.g.\n``(\"livekit\", \"room_sid\", \"RM_abc\")``. The first tuple is also written\nto the canonical triple attributes (``platform.ref.framework/kind/value``)\nso backends can pivot on a single primary ref.\n\nEvery tuple is also written as a flat ``platform.ref.{kind} = value`` key\nfor ingestion fallbacks.\n\nArgs:\n    span: A live OTel span (``set_attribute``) or a ``ReadableSpan`` with a\n        mutable ``_attributes`` dict.\n    refs: Non-empty list of reference triples."
         },
         "endlineno": 68,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/platform_refs.py",
+        "filepath": "packages/core/src/parlot/core/platform_refs.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -3126,7 +3126,7 @@
       ],
       "value": "Base session state accumulator shared across all instrumentation packages."
     },
-    "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+    "filepath": "packages/core/src/parlot/core/session.py",
     "imports": {
       "Any": "typing.Any",
       "ContextVar": "contextvars.ContextVar",
@@ -3209,7 +3209,7 @@
           "value": "Per-trace accumulator for cross-span aggregates.\n\nFramework-specific instrumentation packages subclass this to add their own\nfields (e.g. LiveKit adds agent_chain, pending_handoff_end_ns)."
         },
         "endlineno": 45,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+        "filepath": "packages/core/src/parlot/core/session.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -3227,7 +3227,7 @@
           "__init__": {
             "decorators": [],
             "endlineno": 0,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+            "filepath": "packages/core/src/parlot/core/session.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -3479,7 +3479,7 @@
               "name": "str"
             },
             "endlineno": 31,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+            "filepath": "packages/core/src/parlot/core/session.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -3528,7 +3528,7 @@
               }
             },
             "endlineno": 43,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+            "filepath": "packages/core/src/parlot/core/session.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -3581,7 +3581,7 @@
               "name": "str"
             },
             "endlineno": 45,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+            "filepath": "packages/core/src/parlot/core/session.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -3611,7 +3611,7 @@
               "name": "int"
             },
             "endlineno": 35,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+            "filepath": "packages/core/src/parlot/core/session.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -3649,7 +3649,7 @@
               }
             },
             "endlineno": 41,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+            "filepath": "packages/core/src/parlot/core/session.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -3702,7 +3702,7 @@
               "name": "str"
             },
             "endlineno": 29,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+            "filepath": "packages/core/src/parlot/core/session.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -3732,7 +3732,7 @@
               "name": "str"
             },
             "endlineno": 30,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+            "filepath": "packages/core/src/parlot/core/session.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -3762,7 +3762,7 @@
               "name": "str"
             },
             "endlineno": 28,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+            "filepath": "packages/core/src/parlot/core/session.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -3792,7 +3792,7 @@
               "name": "int"
             },
             "endlineno": 34,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+            "filepath": "packages/core/src/parlot/core/session.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -3849,7 +3849,7 @@
               }
             },
             "endlineno": 42,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+            "filepath": "packages/core/src/parlot/core/session.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -3902,7 +3902,7 @@
               "name": "float"
             },
             "endlineno": 39,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+            "filepath": "packages/core/src/parlot/core/session.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -3932,7 +3932,7 @@
               "name": "int"
             },
             "endlineno": 37,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+            "filepath": "packages/core/src/parlot/core/session.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -3962,7 +3962,7 @@
               "name": "int"
             },
             "endlineno": 38,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+            "filepath": "packages/core/src/parlot/core/session.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -3992,7 +3992,7 @@
               "name": "int"
             },
             "endlineno": 33,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+            "filepath": "packages/core/src/parlot/core/session.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -4061,7 +4061,7 @@
           }
         },
         "endlineno": 13,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+        "filepath": "packages/core/src/parlot/core/session.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -4114,7 +4114,7 @@
           "slice": "'SessionState | None'"
         },
         "endlineno": 16,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+        "filepath": "packages/core/src/parlot/core/session.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -4189,7 +4189,7 @@
           "value": "Clear the active session bindings for this context."
         },
         "endlineno": 69,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+        "filepath": "packages/core/src/parlot/core/session.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -4261,7 +4261,7 @@
           "value": "Return the session state bound to the current context, if any."
         },
         "endlineno": 50,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+        "filepath": "packages/core/src/parlot/core/session.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -4304,7 +4304,7 @@
           "value": "Return the active ``parlot.session`` span for the current context, if any."
         },
         "endlineno": 55,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+        "filepath": "packages/core/src/parlot/core/session.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -4367,7 +4367,7 @@
           "value": "True when an active Parlot session with a non-empty session_id is bound.\n\nArgs:\n    framework: If provided, also require ``state.framework`` to match\n        (e.g. ``session_owned(framework=\"livekit\")`` for coexistence checks)."
         },
         "endlineno": 84,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+        "filepath": "packages/core/src/parlot/core/session.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -4421,7 +4421,7 @@
           "value": "Bind (or clear) the active session span + state for this context."
         },
         "endlineno": 64,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/core/src/parlot/core/session.py",
+        "filepath": "packages/core/src/parlot/core/session.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -4491,9 +4491,8 @@
       ],
       "value": "Auto-configuration for parlot-instrumentation-langgraph."
     },
-    "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
+    "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
     "imports": {
-      "Any": "typing.Any",
       "Optional": "typing.Optional",
       "ParlotContext": "parlot.core.context.ParlotContext",
       "TYPE_CHECKING": "typing.TYPE_CHECKING",
@@ -4512,25 +4511,6 @@
     "is_wildcard_exposed": false,
     "kind": "module",
     "members": {
-      "Any": {
-        "analysis": "static",
-        "endlineno": 7,
-        "inherited": false,
-        "is_class_private": false,
-        "is_deprecated": false,
-        "is_exported": false,
-        "is_imported": true,
-        "is_private": false,
-        "is_public": false,
-        "is_special": false,
-        "is_wildcard_exposed": true,
-        "kind": "alias",
-        "lineno": 7,
-        "name": "Any",
-        "path": "parlot.instrumentation.langgraph._auto.Any",
-        "runtime": true,
-        "target_path": "typing.Any"
-      },
       "Optional": {
         "analysis": "static",
         "endlineno": 7,
@@ -4611,7 +4591,7 @@
         "analysis": "static",
         "decorators": [],
         "endlineno": 172,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
+        "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -4690,7 +4670,7 @@
       "_configured": {
         "analysis": "static",
         "endlineno": 16,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
+        "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -4724,7 +4704,7 @@
           "right": "None"
         },
         "endlineno": 17,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
+        "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -4753,7 +4733,7 @@
           "name": "str"
         },
         "endlineno": 18,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
+        "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -4787,7 +4767,7 @@
           "right": "None"
         },
         "endlineno": 19,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
+        "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -4866,7 +4846,7 @@
           "value": "Public helper to close a LangGraph-owned session by thread_id.\n\nEmits ``parlot.session.close`` with accumulated usage and turn counts.\nOptional \u2014 sessions are also flushed on process exit.\n\nArgs:\n    thread_id: LangGraph thread id from\n        ``config={\"configurable\": {\"thread_id\": \"...\"}}``.\n    reason: Close reason stamped on ``session.close_reason``. Defaults to\n        ``\"completed\"``."
         },
         "endlineno": 189,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
+        "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -5158,7 +5138,7 @@
           "value": "Configure Parlot LangGraph instrumentation and OTLP export.\n\nRegisters a global LangChain callback handler (LangSmith-style) so\n``invoke`` / ``ainvoke`` / ``astream`` emit GenAI spans without per-call\ncallbacks. When LiveKit already owns the active session, contract spans\nare suppressed and GenAI ops nest under the current OTel context (LiveKit\nstamps channel/modality). For LangGraph-owned sessions, pass ``channel``\n(e.g. ``webchat``) and optionally ``modality`` so ingest does not assume\nvoice.\n\nShared kwargs (``endpoint``, ``api_key``, ``agent_id``, ``version``,\n``capture_genai_content``, ``capture_logs``, ``log_level``,\n``service_name``, ``tracer_provider``) match every adapter \u2014 see\n``parlot.core.ConfigureProtocol``.\n\nArgs:\n    endpoint: Shared \u2014 Parlot OTLP base URL (or ``PARLOT_ENDPOINT``).\n    api_key: Shared \u2014 org API key (or ``PARLOT_API_KEY``).\n    capture_genai_content: Shared \u2014 GenAI payload capture override.\n        Precedence: this kwarg \u2192 Settings \u2192 Generative AI \u2192 on.\n    service_name: Shared \u2014 OTel ``service.name`` (defaults to ``agent_id``\n        or ``\"langgraph-agent\"``).\n    tracer_provider: Shared \u2014 existing ``TracerProvider``. If LiveKit\n        already initialized one in-process, this call adopts it.\n    agent_id: Shared \u2014 canonical ``session.agent_id``.\n    version: Shared \u2014 ``gen_ai.agent.version``.\n    channel: Communication channel for standalone LangGraph sessions\n        (e.g. ``\"webchat\"``, ``\"slack\"``, ``\"sms\"``). Defaults to\n        ``\"text\"``. Ignored when LiveKit owns the session.\n    modality: Session modality (``\"text\"``, ``\"voice\"``, or\n        ``\"multimodal\"``). Defaults to ``\"text\"`` for standalone sessions.\n    capture_logs: Shared \u2014 session log capture (bool or globs).\n    log_level: Shared \u2014 minimum level for session log capture.\n\nReturns:\n    The ``ParlotContext`` created for this process (or the prior one if\n    already configured)."
         },
         "endlineno": 148,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
+        "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -5394,7 +5374,7 @@
       "logger": {
         "analysis": "static",
         "endlineno": 14,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
+        "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -5493,7 +5473,7 @@
       ],
       "value": "LangChain / LangGraph callback handler \u2192 GenAI + Conversation Contract spans."
     },
-    "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+    "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
     "imports": {
       "ATTR_AGENT_FRAMEWORK": "parlot.core.attrs.ATTR_AGENT_FRAMEWORK",
       "ATTR_AGENT_ROLE": "parlot.core.attrs.ATTR_AGENT_ROLE",
@@ -6186,7 +6166,7 @@
           "value": "LangChain callback handler that emits Parlot GenAI spans.\n\nTranslates LangGraph / LangChain execution events (LLM starts/ends, tool\ninvocations, chain runs) into OpenTelemetry GenAI spans\n(``invoke_agent``, ``invoke_workflow``, ``chat``, ``execute_tool``).\n\n``configure()`` registers this handler via LangChain configuration hooks,\nso manual ``callbacks=[...]`` attachment is not required. When LiveKit\nowns the active session, contract spans are suppressed and GenAI ops nest\nunder the current OTel context."
         },
         "endlineno": 529,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+        "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -6202,7 +6182,7 @@
             "analysis": "static",
             "decorators": [],
             "endlineno": 152,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -6252,7 +6232,7 @@
             "analysis": "static",
             "decorators": [],
             "endlineno": 173,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -6290,7 +6270,7 @@
           "_capture_genai_content": {
             "analysis": "static",
             "endlineno": 150,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -6330,7 +6310,7 @@
               "value": "Session/turn keys required by collector operational ingest."
             },
             "endlineno": 190,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -6398,7 +6378,7 @@
             "analysis": "static",
             "decorators": [],
             "endlineno": 222,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -6470,7 +6450,7 @@
               }
             },
             "endlineno": 152,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -6503,7 +6483,7 @@
             "analysis": "static",
             "decorators": [],
             "endlineno": 167,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -6575,7 +6555,7 @@
               }
             },
             "endlineno": 151,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -6604,7 +6584,7 @@
             "analysis": "static",
             "decorators": [],
             "endlineno": 210,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -6717,7 +6697,7 @@
             "analysis": "static",
             "decorators": [],
             "endlineno": 240,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -6760,7 +6740,7 @@
           "_tracer": {
             "analysis": "static",
             "endlineno": 149,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -6793,7 +6773,7 @@
               "name": "bool"
             },
             "endlineno": 164,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -6821,7 +6801,7 @@
               "name": "bool"
             },
             "endlineno": 156,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -6849,7 +6829,7 @@
               "name": "bool"
             },
             "endlineno": 160,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -6873,7 +6853,7 @@
             "analysis": "static",
             "decorators": [],
             "endlineno": 320,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -6971,7 +6951,7 @@
             "analysis": "static",
             "decorators": [],
             "endlineno": 336,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -7050,7 +7030,7 @@
             "analysis": "static",
             "decorators": [],
             "endlineno": 294,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -7254,7 +7234,7 @@
             "analysis": "static",
             "decorators": [],
             "endlineno": 407,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -7440,7 +7420,7 @@
             "analysis": "static",
             "decorators": [],
             "endlineno": 431,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -7519,7 +7499,7 @@
             "analysis": "static",
             "decorators": [],
             "endlineno": 441,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -7598,7 +7578,7 @@
             "analysis": "static",
             "decorators": [],
             "endlineno": 380,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -7776,7 +7756,7 @@
             "analysis": "static",
             "decorators": [],
             "endlineno": 516,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -7855,7 +7835,7 @@
             "analysis": "static",
             "decorators": [],
             "endlineno": 529,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -7934,7 +7914,7 @@
             "analysis": "static",
             "decorators": [],
             "endlineno": 496,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -8137,7 +8117,7 @@
           "raise_error": {
             "analysis": "static",
             "endlineno": 141,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+            "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -8322,7 +8302,7 @@
         "analysis": "static",
         "decorators": [],
         "endlineno": 118,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+        "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -8386,7 +8366,7 @@
         "analysis": "static",
         "decorators": [],
         "endlineno": 81,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+        "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -8424,7 +8404,7 @@
         "analysis": "static",
         "decorators": [],
         "endlineno": 99,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+        "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -8462,7 +8442,7 @@
         "analysis": "static",
         "decorators": [],
         "endlineno": 109,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+        "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -8508,7 +8488,7 @@
         "analysis": "static",
         "decorators": [],
         "endlineno": 581,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+        "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -8546,7 +8526,7 @@
         "analysis": "static",
         "decorators": [],
         "endlineno": 565,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+        "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -8697,7 +8677,7 @@
       "logger": {
         "analysis": "static",
         "endlineno": 120,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
+        "filepath": "packages/instrumentation-langgraph/src/parlot/instrumentation/langgraph/_callbacks.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -8853,7 +8833,7 @@
       ],
       "value": "Auto-configuration helpers for parlot-instrumentation-livekit."
     },
-    "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+    "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
     "imports": {
       "Any": "typing.Any",
       "Optional": "typing.Optional",
@@ -8974,7 +8954,7 @@
       "_auto_escalate_sip": {
         "analysis": "static",
         "endlineno": 19,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -8999,7 +8979,7 @@
         "analysis": "static",
         "decorators": [],
         "endlineno": 305,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -9089,7 +9069,7 @@
         "analysis": "static",
         "decorators": [],
         "endlineno": 62,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -9111,7 +9091,7 @@
       "_configured": {
         "analysis": "static",
         "endlineno": 18,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -9145,7 +9125,7 @@
           "right": "None"
         },
         "endlineno": 21,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -9174,7 +9154,7 @@
           "name": "str"
         },
         "endlineno": 22,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -9208,7 +9188,7 @@
           "right": "None"
         },
         "endlineno": 24,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -9259,7 +9239,7 @@
           "right": "None"
         },
         "endlineno": 25,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -9293,7 +9273,7 @@
           "right": "None"
         },
         "endlineno": 26,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -9344,7 +9324,7 @@
           "right": "None"
         },
         "endlineno": 23,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -9397,7 +9377,7 @@
           "right": "None"
         },
         "endlineno": 20,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -9422,7 +9402,7 @@
         "analysis": "static",
         "decorators": [],
         "endlineno": 428,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -9467,7 +9447,7 @@
           "value": "Compare JSONL is wired through the production metrics emit intercept."
         },
         "endlineno": 345,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -9501,7 +9481,7 @@
           "value": "True when this process is LiveKit's dev-mode file-watcher parent.\n\n``lk agent dev`` maps to ``python -m livekit.agents start --dev`` (reload\non by default). That parent imports the agent only to watch files, then\nspawns a child worker that re-imports and runs jobs. Instrumentation\nbelongs in the child.\n\nThe spawned child inherits ``sys.argv`` (including ``--dev`` / legacy\n``dev``) and, while ``agent.py`` is re-imported during\n``multiprocessing`` spawn setup, ``parent_process()`` is still ``None``.\nUse the process name instead: only the top-level watcher is\n``MainProcess``."
         },
         "endlineno": 55,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -9528,7 +9508,7 @@
         "analysis": "static",
         "decorators": [],
         "endlineno": 385,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -9575,7 +9555,7 @@
           "right": "None"
         },
         "endlineno": 27,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -9600,7 +9580,7 @@
         "analysis": "static",
         "decorators": [],
         "endlineno": 337,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -9630,7 +9610,7 @@
         "analysis": "static",
         "decorators": [],
         "endlineno": 372,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -9653,7 +9633,7 @@
         "analysis": "static",
         "decorators": [],
         "endlineno": 318,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -9990,7 +9970,7 @@
           "value": "Configure Parlot LiveKit instrumentation and OTLP export.\n\nCall before constructing ``AgentSession``. Builds a ``TracerProvider`` with\nan OTLP exporter, registers it with ``livekit.agents.telemetry``, fetches\ntelemetry bootstrap when ``PARLOT_API_KEY`` is set, patches\n``JobContext.connect`` / ``AgentSession.__init__``, and installs session\nevent hooks.\n\nShared kwargs (``endpoint``, ``api_key``, ``agent_id``, ``version``,\n``capture_genai_content``, ``capture_logs``, ``log_level``,\n``service_name``, ``tracer_provider``) match every adapter \u2014 see\n``parlot.core.ConfigureProtocol``.\n\nUnder LiveKit ``dev`` / job workers, ``__main__`` is often LiveKit's IPC\nentrypoint, not your agent file \u2014 prefer explicit ``agent_id=`` /\n``version=`` (or ``PARLOT_AGENT_VERSION``) over relying on\n``__main__.__version__``.\n\nArgs:\n    endpoint: Shared \u2014 Parlot OTLP base URL (or ``PARLOT_ENDPOINT``).\n    api_key: Shared \u2014 org API key (or ``PARLOT_API_KEY``).\n    capture_genai_content: Shared \u2014 GenAI payload capture override.\n        Precedence: job metadata \u2192 this kwarg \u2192 Settings \u2192 Generative AI \u2192 on.\n    service_name: Shared \u2014 OTel ``service.name`` (defaults to ``agent_id``\n        or ``\"unknown\"``).\n    tracer_provider: Shared \u2014 existing ``TracerProvider``, or build one with\n        Parlot's OTLP exporter and ``LiveKitGenAIProcessor``.\n    auto_escalate_sip: When ``True``, mark the session escalated when a SIP\n        participant joins the room.\n    escalation_metadata_match: Participant metadata key/value pairs that\n        classify joining participants as human representatives.\n    agent_id: Shared \u2014 canonical ``session.agent_id``. If omitted, falls\n        back to LiveKit ``WorkerOptions.agent_name`` / job ``agent_name`` or\n        ``PARLOT_AGENT_ID``.\n    version: Shared \u2014 ``gen_ai.agent.version``. Precedence: this kwarg \u2192\n        ``__main__.__version__`` / ``VERSION`` \u2192 ``PARLOT_AGENT_VERSION`` \u2192\n        local git SHA (dev only).\n    record: Audio recording policy. Boolean or agent-id glob patterns\n        (e.g. ``[\"support-*\", \"billing\"]``). Precedence: LiveKit job\n        metadata ``record`` \u2192 this kwarg \u2192 Settings \u2192 Recording.\n    capture_logs: Shared \u2014 session log capture (bool or globs). Precedence:\n        job metadata \u2192 this kwarg \u2192 Settings \u2192 Logs \u2192 on.\n    log_level: Shared \u2014 minimum level for session log capture.\n\nReturns:\n    The ``ParlotContext`` created for this process (or the prior one if\n    already configured)."
         },
         "endlineno": 228,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -10278,7 +10258,7 @@
           "value": "Canonical deployment id from ``configure(agent_id=...)`` if set."
         },
         "endlineno": 433,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -10316,7 +10296,7 @@
           "value": "Deployment version resolved at ``configure()`` time."
         },
         "endlineno": 438,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -10354,7 +10334,7 @@
           "value": "Content capture override from ``configure(capture_genai_content=...)`` if set."
         },
         "endlineno": 448,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -10397,7 +10377,7 @@
           "value": "Log capture override from ``configure(capture_logs=...)`` if set."
         },
         "endlineno": 453,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -10457,7 +10437,7 @@
           "value": "``ParlotContext`` created by the last successful ``configure()``."
         },
         "endlineno": 463,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -10500,7 +10480,7 @@
           "value": "Log level override from ``configure(log_level=...)`` if set."
         },
         "endlineno": 458,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -10543,7 +10523,7 @@
           "value": "Recording override from ``configure(record=...)`` if set."
         },
         "endlineno": 443,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -10591,7 +10571,7 @@
       "logger": {
         "analysis": "static",
         "endlineno": 16,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -10704,7 +10684,7 @@
           "value": "Test helper to install or clear the configured ``ParlotContext``."
         },
         "endlineno": 469,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -10778,20 +10758,17 @@
       ],
       "value": "LiveKit AgentSession event bridge \u2014 semantic/commit layer for Parlot telemetry.\n\nTranslates LiveKit events into Parlot turn roots, session aggregates, and span\nenrichment state. Operational pipeline detail remains on OTel spans."
     },
-    "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+    "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
     "imports": {
       "ATTR_AGENT_TRANSFER_CREATED_AT": "parlot.core.attrs.ATTR_AGENT_TRANSFER_CREATED_AT",
       "ATTR_AGENT_TRANSFER_FROM": "parlot.core.attrs.ATTR_AGENT_TRANSFER_FROM",
       "ATTR_AGENT_TRANSFER_ITEM_ID": "parlot.core.attrs.ATTR_AGENT_TRANSFER_ITEM_ID",
       "ATTR_AGENT_TRANSFER_REASON": "parlot.core.attrs.ATTR_AGENT_TRANSFER_REASON",
       "ATTR_AGENT_TRANSFER_TO": "parlot.core.attrs.ATTR_AGENT_TRANSFER_TO",
-      "ATTR_DIAR_SOURCE_STT_EVENT": "parlot.instrumentation.livekit.attrs.ATTR_DIAR_SOURCE_STT_EVENT",
       "ATTR_GEN_AI_OP_NAME": "parlot.core.attrs.ATTR_GEN_AI_OP_NAME",
       "ATTR_SESSION_CONVERSATION_ID": "parlot.core.attrs.ATTR_SESSION_CONVERSATION_ID",
       "ATTR_SESSION_ID": "parlot.core.attrs.ATTR_SESSION_ID",
-      "ATTR_STT_SPEAKER_ID": "parlot.core.attrs.ATTR_STT_SPEAKER_ID",
       "ATTR_TURN_INDEX": "parlot.core.attrs.ATTR_TURN_INDEX",
-      "ATTR_TURN_INTERRUPTED": "parlot.core.attrs.ATTR_TURN_INTERRUPTED",
       "Any": "typing.Any",
       "Iterable": "collections.abc.Iterable",
       "LiveKitGenAIProcessor": "parlot.instrumentation.livekit._processor.LiveKitGenAIProcessor",
@@ -10817,7 +10794,7 @@
     "members": {
       "ATTR_AGENT_TRANSFER_CREATED_AT": {
         "analysis": "static",
-        "endlineno": 27,
+        "endlineno": 25,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -10836,7 +10813,7 @@
       },
       "ATTR_AGENT_TRANSFER_FROM": {
         "analysis": "static",
-        "endlineno": 27,
+        "endlineno": 25,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -10855,7 +10832,7 @@
       },
       "ATTR_AGENT_TRANSFER_ITEM_ID": {
         "analysis": "static",
-        "endlineno": 27,
+        "endlineno": 25,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -10874,7 +10851,7 @@
       },
       "ATTR_AGENT_TRANSFER_REASON": {
         "analysis": "static",
-        "endlineno": 27,
+        "endlineno": 25,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -10893,7 +10870,7 @@
       },
       "ATTR_AGENT_TRANSFER_TO": {
         "analysis": "static",
-        "endlineno": 27,
+        "endlineno": 25,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -10910,28 +10887,9 @@
         "runtime": true,
         "target_path": "parlot.core.attrs.ATTR_AGENT_TRANSFER_TO"
       },
-      "ATTR_DIAR_SOURCE_STT_EVENT": {
-        "analysis": "static",
-        "endlineno": 29,
-        "inherited": false,
-        "is_class_private": false,
-        "is_deprecated": false,
-        "is_exported": false,
-        "is_imported": true,
-        "is_private": false,
-        "is_public": false,
-        "is_special": false,
-        "is_wildcard_exposed": true,
-        "kind": "alias",
-        "lineno": 29,
-        "name": "ATTR_DIAR_SOURCE_STT_EVENT",
-        "path": "parlot.instrumentation.livekit._events.ATTR_DIAR_SOURCE_STT_EVENT",
-        "runtime": true,
-        "target_path": "parlot.instrumentation.livekit.attrs.ATTR_DIAR_SOURCE_STT_EVENT"
-      },
       "ATTR_GEN_AI_OP_NAME": {
         "analysis": "static",
-        "endlineno": 27,
+        "endlineno": 25,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -10950,7 +10908,7 @@
       },
       "ATTR_SESSION_CONVERSATION_ID": {
         "analysis": "static",
-        "endlineno": 27,
+        "endlineno": 25,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -10969,7 +10927,7 @@
       },
       "ATTR_SESSION_ID": {
         "analysis": "static",
-        "endlineno": 27,
+        "endlineno": 25,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -10986,28 +10944,9 @@
         "runtime": true,
         "target_path": "parlot.core.attrs.ATTR_SESSION_ID"
       },
-      "ATTR_STT_SPEAKER_ID": {
-        "analysis": "static",
-        "endlineno": 27,
-        "inherited": false,
-        "is_class_private": false,
-        "is_deprecated": false,
-        "is_exported": false,
-        "is_imported": true,
-        "is_private": false,
-        "is_public": false,
-        "is_special": false,
-        "is_wildcard_exposed": true,
-        "kind": "alias",
-        "lineno": 14,
-        "name": "ATTR_STT_SPEAKER_ID",
-        "path": "parlot.instrumentation.livekit._events.ATTR_STT_SPEAKER_ID",
-        "runtime": true,
-        "target_path": "parlot.core.attrs.ATTR_STT_SPEAKER_ID"
-      },
       "ATTR_TURN_INDEX": {
         "analysis": "static",
-        "endlineno": 27,
+        "endlineno": 25,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -11023,25 +10962,6 @@
         "path": "parlot.instrumentation.livekit._events.ATTR_TURN_INDEX",
         "runtime": true,
         "target_path": "parlot.core.attrs.ATTR_TURN_INDEX"
-      },
-      "ATTR_TURN_INTERRUPTED": {
-        "analysis": "static",
-        "endlineno": 27,
-        "inherited": false,
-        "is_class_private": false,
-        "is_deprecated": false,
-        "is_exported": false,
-        "is_imported": true,
-        "is_private": false,
-        "is_public": false,
-        "is_special": false,
-        "is_wildcard_exposed": true,
-        "kind": "alias",
-        "lineno": 14,
-        "name": "ATTR_TURN_INTERRUPTED",
-        "path": "parlot.instrumentation.livekit._events.ATTR_TURN_INTERRUPTED",
-        "runtime": true,
-        "target_path": "parlot.core.attrs.ATTR_TURN_INTERRUPTED"
       },
       "Any": {
         "analysis": "static",
@@ -11086,8 +11006,8 @@
         "bases": [],
         "decorators": [],
         "docstring": {
-          "endlineno": 173,
-          "lineno": 173,
+          "endlineno": 170,
+          "lineno": 170,
           "parsed": [
             {
               "kind": "text",
@@ -11096,8 +11016,8 @@
           ],
           "value": "Subscribes to AgentSession events and drives Parlot semantic telemetry."
         },
-        "endlineno": 500,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+        "endlineno": 497,
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -11107,13 +11027,13 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "class",
-        "lineno": 172,
+        "lineno": 169,
         "members": {
           "__init__": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 178,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+            "endlineno": 175,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -11123,7 +11043,7 @@
             "is_special": true,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 175,
+            "lineno": 172,
             "name": "__init__",
             "parameters": [
               {
@@ -11154,8 +11074,8 @@
           "_emit_handoff_span": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 397,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+            "endlineno": 394,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -11165,7 +11085,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 343,
+            "lineno": 340,
             "name": "_emit_handoff_span",
             "parameters": [
               {
@@ -11194,8 +11114,8 @@
           "_on_agent_state_changed": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 285,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+            "endlineno": 282,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -11205,7 +11125,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 240,
+            "lineno": 237,
             "name": "_on_agent_state_changed",
             "parameters": [
               {
@@ -11234,8 +11154,8 @@
           "_on_close": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 500,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+            "endlineno": 497,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -11245,7 +11165,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 466,
+            "lineno": 463,
             "name": "_on_close",
             "parameters": [
               {
@@ -11274,8 +11194,8 @@
           "_on_conversation_item_added": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 341,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+            "endlineno": 338,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -11285,7 +11205,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 287,
+            "lineno": 284,
             "name": "_on_conversation_item_added",
             "parameters": [
               {
@@ -11314,8 +11234,8 @@
           "_on_error": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 464,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+            "endlineno": 461,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -11325,7 +11245,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 447,
+            "lineno": 444,
             "name": "_on_error",
             "parameters": [
               {
@@ -11354,8 +11274,8 @@
           "_on_function_tools_executed": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 418,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+            "endlineno": 415,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -11365,7 +11285,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 409,
+            "lineno": 406,
             "name": "_on_function_tools_executed",
             "parameters": [
               {
@@ -11394,8 +11314,8 @@
           "_on_session_usage_updated": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 445,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+            "endlineno": 442,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -11405,7 +11325,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 420,
+            "lineno": 417,
             "name": "_on_session_usage_updated",
             "parameters": [
               {
@@ -11434,8 +11354,8 @@
           "_on_user_input_transcribed": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 407,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+            "endlineno": 404,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -11445,7 +11365,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 399,
+            "lineno": 396,
             "name": "_on_user_input_transcribed",
             "parameters": [
               {
@@ -11473,8 +11393,8 @@
           },
           "_processor": {
             "analysis": "static",
-            "endlineno": 176,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+            "endlineno": 173,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -11487,7 +11407,7 @@
             "labels": [
               "instance-attribute"
             ],
-            "lineno": 176,
+            "lineno": 173,
             "name": "_processor",
             "path": "parlot.instrumentation.livekit._events.LiveKitEventBridge._processor",
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
@@ -11511,8 +11431,8 @@
               "operator": "|",
               "right": "None"
             },
-            "endlineno": 178,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+            "endlineno": 175,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -11525,7 +11445,7 @@
             "labels": [
               "instance-attribute"
             ],
-            "lineno": 178,
+            "lineno": 175,
             "name": "_session",
             "path": "parlot.instrumentation.livekit._events.LiveKitEventBridge._session",
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
@@ -11535,8 +11455,8 @@
           },
           "_tracer": {
             "analysis": "static",
-            "endlineno": 177,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+            "endlineno": 174,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -11549,7 +11469,7 @@
             "labels": [
               "instance-attribute"
             ],
-            "lineno": 177,
+            "lineno": 174,
             "name": "_tracer",
             "path": "parlot.instrumentation.livekit._events.LiveKitEventBridge._tracer",
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
@@ -11564,8 +11484,8 @@
           "install": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 238,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+            "endlineno": 235,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -11575,7 +11495,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 180,
+            "lineno": 177,
             "name": "install",
             "parameters": [
               {
@@ -11610,7 +11530,7 @@
       },
       "LiveKitGenAIProcessor": {
         "analysis": "static",
-        "endlineno": 36,
+        "endlineno": 33,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -11621,7 +11541,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "alias",
-        "lineno": 36,
+        "lineno": 33,
         "name": "LiveKitGenAIProcessor",
         "path": "parlot.instrumentation.livekit._events.LiveKitGenAIProcessor",
         "runtime": false,
@@ -11629,7 +11549,7 @@
       },
       "SPAN_AGENT_HANDOFF": {
         "analysis": "static",
-        "endlineno": 27,
+        "endlineno": 25,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -11667,7 +11587,7 @@
       },
       "Tracer": {
         "analysis": "static",
-        "endlineno": 34,
+        "endlineno": 31,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -11678,7 +11598,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "alias",
-        "lineno": 34,
+        "lineno": 31,
         "name": "Tracer",
         "path": "parlot.instrumentation.livekit._events.Tracer",
         "runtime": false,
@@ -11686,8 +11606,8 @@
       },
       "_CLOSE_REASON_MAP": {
         "analysis": "static",
-        "endlineno": 58,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+        "endlineno": 55,
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -11700,7 +11620,7 @@
         "labels": [
           "module-attribute"
         ],
-        "lineno": 52,
+        "lineno": 49,
         "name": "_CLOSE_REASON_MAP",
         "path": "parlot.instrumentation.livekit._events._CLOSE_REASON_MAP",
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
@@ -11750,8 +11670,8 @@
             "implicit": true
           }
         },
-        "endlineno": 115,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+        "endlineno": 112,
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -11764,7 +11684,7 @@
         "labels": [
           "module-attribute"
         ],
-        "lineno": 104,
+        "lineno": 101,
         "name": "_ITEM_METRIC_ALIASES",
         "path": "parlot.instrumentation.livekit._events._ITEM_METRIC_ALIASES",
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
@@ -11800,8 +11720,8 @@
       },
       "_ITEM_METRIC_SOURCE_KEYS": {
         "analysis": "static",
-        "endlineno": 102,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+        "endlineno": 99,
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -11814,7 +11734,7 @@
         "labels": [
           "module-attribute"
         ],
-        "lineno": 89,
+        "lineno": 86,
         "name": "_ITEM_METRIC_SOURCE_KEYS",
         "path": "parlot.instrumentation.livekit._events._ITEM_METRIC_SOURCE_KEYS",
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
@@ -11842,8 +11762,8 @@
       "_agent_state_value": {
         "analysis": "static",
         "decorators": [],
-        "endlineno": 157,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+        "endlineno": 154,
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -11853,7 +11773,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "function",
-        "lineno": 153,
+        "lineno": 150,
         "name": "_agent_state_value",
         "parameters": [
           {
@@ -11880,8 +11800,8 @@
       "_item_metrics": {
         "analysis": "static",
         "decorators": [],
-        "endlineno": 140,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+        "endlineno": 137,
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -11891,7 +11811,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "function",
-        "lineno": 118,
+        "lineno": 115,
         "name": "_item_metrics",
         "parameters": [
           {
@@ -11936,7 +11856,7 @@
       },
       "_job_room_fields": {
         "analysis": "static",
-        "endlineno": 30,
+        "endlineno": 27,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -11947,7 +11867,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "alias",
-        "lineno": 30,
+        "lineno": 27,
         "name": "_job_room_fields",
         "path": "parlot.instrumentation.livekit._events._job_room_fields",
         "runtime": true,
@@ -11956,8 +11876,8 @@
       "_message_text": {
         "analysis": "static",
         "decorators": [],
-        "endlineno": 86,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+        "endlineno": 83,
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -11967,7 +11887,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "function",
-        "lineno": 61,
+        "lineno": 58,
         "name": "_message_text",
         "parameters": [
           {
@@ -11994,8 +11914,8 @@
       "_normalize_close_reason": {
         "analysis": "static",
         "decorators": [],
-        "endlineno": 150,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+        "endlineno": 147,
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -12005,7 +11925,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "function",
-        "lineno": 143,
+        "lineno": 140,
         "name": "_normalize_close_reason",
         "parameters": [
           {
@@ -12032,8 +11952,8 @@
       "_record_event_diagnostic": {
         "analysis": "static",
         "decorators": [],
-        "endlineno": 49,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+        "endlineno": 46,
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -12043,7 +11963,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "function",
-        "lineno": 41,
+        "lineno": 38,
         "name": "_record_event_diagnostic",
         "parameters": [
           {
@@ -12082,8 +12002,8 @@
       "_resolve_job_context": {
         "analysis": "static",
         "decorators": [],
-        "endlineno": 169,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+        "endlineno": 166,
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -12093,7 +12013,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "function",
-        "lineno": 160,
+        "lineno": 157,
         "name": "_resolve_job_context",
         "parameters": [
           {
@@ -12124,7 +12044,7 @@
       },
       "_str_field": {
         "analysis": "static",
-        "endlineno": 30,
+        "endlineno": 27,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12135,7 +12055,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "alias",
-        "lineno": 30,
+        "lineno": 27,
         "name": "_str_field",
         "path": "parlot.instrumentation.livekit._events._str_field",
         "runtime": true,
@@ -12143,7 +12063,7 @@
       },
       "agent_name_from_ctx": {
         "analysis": "static",
-        "endlineno": 31,
+        "endlineno": 28,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12154,7 +12074,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 31,
+        "lineno": 28,
         "name": "agent_name_from_ctx",
         "path": "parlot.instrumentation.livekit._events.agent_name_from_ctx",
         "runtime": true,
@@ -12202,8 +12122,8 @@
         "analysis": "static",
         "decorators": [],
         "docstring": {
-          "endlineno": 518,
-          "lineno": 508,
+          "endlineno": 515,
+          "lineno": 505,
           "parsed": [
             {
               "kind": "text",
@@ -12236,8 +12156,8 @@
           ],
           "value": "Install all AgentSession event listeners for Parlot instrumentation.\n\n``configure()`` patches ``AgentSession.__init__`` to invoke this\nautomatically. Call directly only when manually instantiating unpatched\nsessions.\n\nArgs:\n    session: LiveKit ``AgentSession`` instance to instrument.\n    processor: Span processor that owns session/turn enrichment state.\n    tracer: OpenTelemetry tracer used for Parlot contract spans."
         },
-        "endlineno": 519,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+        "endlineno": 516,
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -12247,7 +12167,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "function",
-        "lineno": 503,
+        "lineno": 500,
         "name": "install_session_hooks",
         "parameters": [
           {
@@ -12281,8 +12201,8 @@
       },
       "logger": {
         "analysis": "static",
-        "endlineno": 38,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
+        "endlineno": 35,
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -12295,7 +12215,7 @@
         "labels": [
           "module-attribute"
         ],
-        "lineno": 38,
+        "lineno": 35,
         "name": "logger",
         "path": "parlot.instrumentation.livekit._events.logger",
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
@@ -12362,7 +12282,7 @@
       ],
       "value": "LiveKitGenAIProcessor \u2014 enriches LiveKit Agents OTel spans in-place.\n\nTurn boundaries (livekit-agents 1.7.0): ``user_turn`` and ``agent_turn``.\n``eou_detection`` is a child model span; ``drain_agent_activity`` is lifecycle only.\nContent-bearing ``lk.pii.*`` attrs are accepted alongside legacy ``lk.*`` keys.\n\nEnrichment logic lives in collaborator modules; this class is the thin dispatcher."
     },
-    "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+    "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
     "imports": {
       "ATTR_AGENT_FRAMEWORK": "parlot.core.attrs.ATTR_AGENT_FRAMEWORK",
       "ATTR_AGENT_ROLE": "parlot.core.attrs.ATTR_AGENT_ROLE",
@@ -12405,6 +12325,7 @@
       "NATIVE_TURN_SPANS": "parlot.instrumentation.livekit._span_rename.NATIVE_TURN_SPANS",
       "Optional": "typing.Optional",
       "ParlotBaseProcessor": "parlot.core.processor.ParlotBaseProcessor",
+      "ParlotContext": "parlot.core.context.ParlotContext",
       "ReadableSpan": "opentelemetry.sdk.trace.ReadableSpan",
       "RecordingCoordinator": "parlot.instrumentation.livekit._recording_coordinator.RecordingCoordinator",
       "SPAN_AGENT_HANDOFF": "parlot.core.attrs.SPAN_AGENT_HANDOFF",
@@ -12412,6 +12333,7 @@
       "SPAN_PARLOT_SESSION_CLOSE": "parlot.core.attrs.SPAN_PARLOT_SESSION_CLOSE",
       "Status": "opentelemetry.trace.Status",
       "StatusCode": "opentelemetry.trace.StatusCode",
+      "TYPE_CHECKING": "typing.TYPE_CHECKING",
       "TokenAggregator": "parlot.instrumentation.livekit._token_aggregator.TokenAggregator",
       "Tracer": "opentelemetry.trace.Tracer",
       "TurnEnricher": "parlot.instrumentation.livekit._turn_enricher.TurnEnricher",
@@ -12449,7 +12371,7 @@
     "members": {
       "ATTR_AGENT_FRAMEWORK": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12460,7 +12382,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_AGENT_FRAMEWORK",
         "path": "parlot.instrumentation.livekit._processor.ATTR_AGENT_FRAMEWORK",
         "runtime": true,
@@ -12468,7 +12390,7 @@
       },
       "ATTR_AGENT_ROLE": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12479,7 +12401,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_AGENT_ROLE",
         "path": "parlot.instrumentation.livekit._processor.ATTR_AGENT_ROLE",
         "runtime": true,
@@ -12487,7 +12409,7 @@
       },
       "ATTR_AGENT_STAGE": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12498,7 +12420,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_AGENT_STAGE",
         "path": "parlot.instrumentation.livekit._processor.ATTR_AGENT_STAGE",
         "runtime": true,
@@ -12506,7 +12428,7 @@
       },
       "ATTR_EXCEPTION_TYPE": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12517,7 +12439,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_EXCEPTION_TYPE",
         "path": "parlot.instrumentation.livekit._processor.ATTR_EXCEPTION_TYPE",
         "runtime": true,
@@ -12525,7 +12447,7 @@
       },
       "ATTR_GEN_AI_AGENT_NAME": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12536,7 +12458,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_GEN_AI_AGENT_NAME",
         "path": "parlot.instrumentation.livekit._processor.ATTR_GEN_AI_AGENT_NAME",
         "runtime": true,
@@ -12544,7 +12466,7 @@
       },
       "ATTR_GEN_AI_AGENT_VERSION": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12555,7 +12477,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_GEN_AI_AGENT_VERSION",
         "path": "parlot.instrumentation.livekit._processor.ATTR_GEN_AI_AGENT_VERSION",
         "runtime": true,
@@ -12563,7 +12485,7 @@
       },
       "ATTR_GEN_AI_CONVERSATION_ID": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12574,7 +12496,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_GEN_AI_CONVERSATION_ID",
         "path": "parlot.instrumentation.livekit._processor.ATTR_GEN_AI_CONVERSATION_ID",
         "runtime": true,
@@ -12582,7 +12504,7 @@
       },
       "ATTR_GEN_AI_MODEL": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12593,7 +12515,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_GEN_AI_MODEL",
         "path": "parlot.instrumentation.livekit._processor.ATTR_GEN_AI_MODEL",
         "runtime": true,
@@ -12601,7 +12523,7 @@
       },
       "ATTR_GEN_AI_PROVIDER": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12612,7 +12534,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_GEN_AI_PROVIDER",
         "path": "parlot.instrumentation.livekit._processor.ATTR_GEN_AI_PROVIDER",
         "runtime": true,
@@ -12620,7 +12542,7 @@
       },
       "ATTR_GEN_AI_RESPONSE_MODEL": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12631,7 +12553,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_GEN_AI_RESPONSE_MODEL",
         "path": "parlot.instrumentation.livekit._processor.ATTR_GEN_AI_RESPONSE_MODEL",
         "runtime": true,
@@ -12639,7 +12561,7 @@
       },
       "ATTR_GEN_AI_SYSTEM": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12650,7 +12572,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_GEN_AI_SYSTEM",
         "path": "parlot.instrumentation.livekit._processor.ATTR_GEN_AI_SYSTEM",
         "runtime": true,
@@ -12658,7 +12580,7 @@
       },
       "ATTR_LK_AGENT_LABEL": {
         "analysis": "static",
-        "endlineno": 62,
+        "endlineno": 65,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12669,7 +12591,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 50,
+        "lineno": 53,
         "name": "ATTR_LK_AGENT_LABEL",
         "path": "parlot.instrumentation.livekit._processor.ATTR_LK_AGENT_LABEL",
         "runtime": true,
@@ -12677,7 +12599,7 @@
       },
       "ATTR_LK_AGENT_NAME": {
         "analysis": "static",
-        "endlineno": 62,
+        "endlineno": 65,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12688,7 +12610,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 50,
+        "lineno": 53,
         "name": "ATTR_LK_AGENT_NAME",
         "path": "parlot.instrumentation.livekit._processor.ATTR_LK_AGENT_NAME",
         "runtime": true,
@@ -12696,7 +12618,7 @@
       },
       "ATTR_LK_FNC_TOOL_ERROR": {
         "analysis": "static",
-        "endlineno": 62,
+        "endlineno": 65,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12707,7 +12629,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 50,
+        "lineno": 53,
         "name": "ATTR_LK_FNC_TOOL_ERROR",
         "path": "parlot.instrumentation.livekit._processor.ATTR_LK_FNC_TOOL_ERROR",
         "runtime": true,
@@ -12715,7 +12637,7 @@
       },
       "ATTR_LK_JOB_ID": {
         "analysis": "static",
-        "endlineno": 62,
+        "endlineno": 65,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12726,7 +12648,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 50,
+        "lineno": 53,
         "name": "ATTR_LK_JOB_ID",
         "path": "parlot.instrumentation.livekit._processor.ATTR_LK_JOB_ID",
         "runtime": true,
@@ -12734,7 +12656,7 @@
       },
       "ATTR_LK_ROOM_NAME": {
         "analysis": "static",
-        "endlineno": 62,
+        "endlineno": 65,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12745,7 +12667,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 50,
+        "lineno": 53,
         "name": "ATTR_LK_ROOM_NAME",
         "path": "parlot.instrumentation.livekit._processor.ATTR_LK_ROOM_NAME",
         "runtime": true,
@@ -12753,7 +12675,7 @@
       },
       "ATTR_LK_ROOM_SID": {
         "analysis": "static",
-        "endlineno": 62,
+        "endlineno": 65,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12764,7 +12686,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 50,
+        "lineno": 53,
         "name": "ATTR_LK_ROOM_SID",
         "path": "parlot.instrumentation.livekit._processor.ATTR_LK_ROOM_SID",
         "runtime": true,
@@ -12772,7 +12694,7 @@
       },
       "ATTR_LK_SPEECH_ID": {
         "analysis": "static",
-        "endlineno": 62,
+        "endlineno": 65,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12783,7 +12705,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 50,
+        "lineno": 53,
         "name": "ATTR_LK_SPEECH_ID",
         "path": "parlot.instrumentation.livekit._processor.ATTR_LK_SPEECH_ID",
         "runtime": true,
@@ -12791,7 +12713,7 @@
       },
       "ATTR_ROOM_NAME_LEGACY": {
         "analysis": "static",
-        "endlineno": 62,
+        "endlineno": 65,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12802,7 +12724,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 50,
+        "lineno": 53,
         "name": "ATTR_ROOM_NAME_LEGACY",
         "path": "parlot.instrumentation.livekit._processor.ATTR_ROOM_NAME_LEGACY",
         "runtime": true,
@@ -12810,7 +12732,7 @@
       },
       "ATTR_SESSION_AMD": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12821,7 +12743,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_SESSION_AMD",
         "path": "parlot.instrumentation.livekit._processor.ATTR_SESSION_AMD",
         "runtime": true,
@@ -12829,7 +12751,7 @@
       },
       "ATTR_SESSION_CONVERSATION_ID": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12840,7 +12762,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_SESSION_CONVERSATION_ID",
         "path": "parlot.instrumentation.livekit._processor.ATTR_SESSION_CONVERSATION_ID",
         "runtime": true,
@@ -12848,7 +12770,7 @@
       },
       "ATTR_SESSION_HANDOFF_COUNT": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12859,7 +12781,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_SESSION_HANDOFF_COUNT",
         "path": "parlot.instrumentation.livekit._processor.ATTR_SESSION_HANDOFF_COUNT",
         "runtime": true,
@@ -12867,7 +12789,7 @@
       },
       "ATTR_SESSION_ID": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12878,7 +12800,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_SESSION_ID",
         "path": "parlot.instrumentation.livekit._processor.ATTR_SESSION_ID",
         "runtime": true,
@@ -12886,7 +12808,7 @@
       },
       "ATTR_SESSION_LANGUAGES": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12897,7 +12819,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_SESSION_LANGUAGES",
         "path": "parlot.instrumentation.livekit._processor.ATTR_SESSION_LANGUAGES",
         "runtime": true,
@@ -12905,7 +12827,7 @@
       },
       "ATTR_SESSION_RECORDING_ANCHOR_WALL_MS": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12916,7 +12838,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_SESSION_RECORDING_ANCHOR_WALL_MS",
         "path": "parlot.instrumentation.livekit._processor.ATTR_SESSION_RECORDING_ANCHOR_WALL_MS",
         "runtime": true,
@@ -12924,7 +12846,7 @@
       },
       "ATTR_SESSION_TOOL_CALL_COUNT": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12935,7 +12857,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_SESSION_TOOL_CALL_COUNT",
         "path": "parlot.instrumentation.livekit._processor.ATTR_SESSION_TOOL_CALL_COUNT",
         "runtime": true,
@@ -12943,7 +12865,7 @@
       },
       "ATTR_SESSION_TOTAL_INPUT_TOKENS": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12954,7 +12876,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_SESSION_TOTAL_INPUT_TOKENS",
         "path": "parlot.instrumentation.livekit._processor.ATTR_SESSION_TOTAL_INPUT_TOKENS",
         "runtime": true,
@@ -12962,7 +12884,7 @@
       },
       "ATTR_SESSION_TOTAL_OUTPUT_TOKENS": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12973,7 +12895,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_SESSION_TOTAL_OUTPUT_TOKENS",
         "path": "parlot.instrumentation.livekit._processor.ATTR_SESSION_TOTAL_OUTPUT_TOKENS",
         "runtime": true,
@@ -12981,7 +12903,7 @@
       },
       "ATTR_SESSION_TURN_COUNT": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -12992,7 +12914,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_SESSION_TURN_COUNT",
         "path": "parlot.instrumentation.livekit._processor.ATTR_SESSION_TURN_COUNT",
         "runtime": true,
@@ -13000,7 +12922,7 @@
       },
       "ATTR_SESSION_USER_ID": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -13011,7 +12933,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_SESSION_USER_ID",
         "path": "parlot.instrumentation.livekit._processor.ATTR_SESSION_USER_ID",
         "runtime": true,
@@ -13019,7 +12941,7 @@
       },
       "ATTR_TURN_INDEX": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -13030,7 +12952,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "ATTR_TURN_INDEX",
         "path": "parlot.instrumentation.livekit._processor.ATTR_TURN_INDEX",
         "runtime": true,
@@ -13057,7 +12979,7 @@
       },
       "AttributeValue": {
         "analysis": "static",
-        "endlineno": 20,
+        "endlineno": 23,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -13068,7 +12990,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 20,
+        "lineno": 23,
         "name": "AttributeValue",
         "path": "parlot.instrumentation.livekit._processor.AttributeValue",
         "runtime": true,
@@ -13095,7 +13017,7 @@
       },
       "HandoffTracker": {
         "analysis": "static",
-        "endlineno": 85,
+        "endlineno": 88,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -13106,7 +13028,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 85,
+        "lineno": 88,
         "name": "HandoffTracker",
         "path": "parlot.instrumentation.livekit._processor.HandoffTracker",
         "runtime": true,
@@ -13123,8 +13045,8 @@
         ],
         "decorators": [],
         "docstring": {
-          "endlineno": 115,
-          "lineno": 107,
+          "endlineno": 118,
+          "lineno": 110,
           "parsed": [
             {
               "kind": "text",
@@ -13133,8 +13055,8 @@
           ],
           "value": "Enriches LiveKit Agent spans in-place with Parlot conventions.\n\nIntercepts spans from the LiveKit Agents SDK and normalizes them into\nParlot's three-layer semantic vocabulary:\n\n1. **Conversation Contract** \u2014 session start/close, turns, agent handoffs.\n2. **OTel GenAI (v1.41.0)** \u2014 LLM inference, tool executions, workflows.\n3. **Voice spans** \u2014 TTS, STT, and end-of-utterance operational timings."
         },
-        "endlineno": 621,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+        "endlineno": 627,
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -13144,13 +13066,13 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "class",
-        "lineno": 106,
+        "lineno": 109,
         "members": {
           "__init__": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 164,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 167,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "imports": {
               "ParlotContext": "parlot.core.context.ParlotContext"
             },
@@ -13163,11 +13085,11 @@
             "is_special": true,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 117,
+            "lineno": 120,
             "members": {
               "ParlotContext": {
                 "analysis": "static",
-                "endlineno": 124,
+                "endlineno": 127,
                 "inherited": false,
                 "is_class_private": false,
                 "is_deprecated": false,
@@ -13178,7 +13100,7 @@
                 "is_special": false,
                 "is_wildcard_exposed": false,
                 "kind": "alias",
-                "lineno": 124,
+                "lineno": 127,
                 "name": "ParlotContext",
                 "path": "parlot.instrumentation.livekit._processor.LiveKitGenAIProcessor.__init__.ParlotContext",
                 "runtime": true,
@@ -13261,8 +13183,8 @@
           "_active_agent_id": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 424,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 430,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -13272,7 +13194,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 401,
+            "lineno": 406,
             "name": "_active_agent_id",
             "parameters": [
               {
@@ -13349,8 +13271,8 @@
           "_apply_plugin_llm_usage_to_span": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 348,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 351,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -13360,7 +13282,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 339,
+            "lineno": 342,
             "name": "_apply_plugin_llm_usage_to_span",
             "parameters": [
               {
@@ -13429,8 +13351,8 @@
             "analysis": "static",
             "decorators": [],
             "docstring": {
-              "endlineno": 581,
-              "lineno": 581,
+              "endlineno": 587,
+              "lineno": 587,
               "parsed": [
                 {
                   "kind": "text",
@@ -13439,8 +13361,8 @@
               ],
               "value": "Stamp session aggregates on the live ``parlot.session`` span."
             },
-            "endlineno": 621,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 627,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -13450,7 +13372,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 578,
+            "lineno": 584,
             "name": "_apply_root_to_live_span",
             "parameters": [
               {
@@ -13488,8 +13410,8 @@
           },
           "_capture_genai_content_override": {
             "analysis": "static",
-            "endlineno": 127,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 130,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -13502,7 +13424,7 @@
             "labels": [
               "instance-attribute"
             ],
-            "lineno": 127,
+            "lineno": 130,
             "name": "_capture_genai_content_override",
             "path": "parlot.instrumentation.livekit._processor.LiveKitGenAIProcessor._capture_genai_content_override",
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
@@ -13516,8 +13438,8 @@
           },
           "_context": {
             "analysis": "static",
-            "endlineno": 129,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 132,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -13530,7 +13452,7 @@
             "labels": [
               "instance-attribute"
             ],
-            "lineno": 129,
+            "lineno": 132,
             "name": "_context",
             "path": "parlot.instrumentation.livekit._processor.LiveKitGenAIProcessor._context",
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
@@ -13571,8 +13493,8 @@
           "_enrich": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 561,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 567,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -13582,7 +13504,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 485,
+            "lineno": 491,
             "name": "_enrich",
             "parameters": [
               {
@@ -13611,8 +13533,8 @@
           "_enrich_llm_request": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 576,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 582,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -13622,7 +13544,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 563,
+            "lineno": 569,
             "name": "_enrich_llm_request",
             "parameters": [
               {
@@ -13660,8 +13582,8 @@
           },
           "_handoff": {
             "analysis": "static",
-            "endlineno": 139,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 142,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -13674,7 +13596,7 @@
             "labels": [
               "instance-attribute"
             ],
-            "lineno": 136,
+            "lineno": 139,
             "name": "_handoff",
             "path": "parlot.instrumentation.livekit._processor.LiveKitGenAIProcessor._handoff",
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
@@ -13741,8 +13663,8 @@
           },
           "_handoff_tools": {
             "analysis": "static",
-            "endlineno": 128,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 131,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -13755,7 +13677,7 @@
             "labels": [
               "instance-attribute"
             ],
-            "lineno": 128,
+            "lineno": 131,
             "name": "_handoff_tools",
             "path": "parlot.instrumentation.livekit._processor.LiveKitGenAIProcessor._handoff_tools",
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
@@ -13785,8 +13707,8 @@
           "_log_compare_span": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 258,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 261,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -13796,7 +13718,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 246,
+            "lineno": 249,
             "name": "_log_compare_span",
             "parameters": [
               {
@@ -13824,8 +13746,8 @@
           },
           "_metrics": {
             "analysis": "static",
-            "endlineno": 133,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 136,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -13838,7 +13760,7 @@
             "labels": [
               "instance-attribute"
             ],
-            "lineno": 133,
+            "lineno": 136,
             "name": "_metrics",
             "path": "parlot.instrumentation.livekit._processor.LiveKitGenAIProcessor._metrics",
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
@@ -13848,8 +13770,8 @@
           },
           "_recording": {
             "analysis": "static",
-            "endlineno": 148,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 151,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -13862,7 +13784,7 @@
             "labels": [
               "instance-attribute"
             ],
-            "lineno": 144,
+            "lineno": 147,
             "name": "_recording",
             "path": "parlot.instrumentation.livekit._processor.LiveKitGenAIProcessor._recording",
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
@@ -13962,8 +13884,8 @@
           "_resolve_session_state": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 387,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 390,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -13973,7 +13895,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 354,
+            "lineno": 357,
             "name": "_resolve_session_state",
             "parameters": [
               {
@@ -14063,8 +13985,8 @@
                 "implicit": true
               }
             },
-            "endlineno": 130,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 133,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -14077,7 +13999,7 @@
             "labels": [
               "instance-attribute"
             ],
-            "lineno": 130,
+            "lineno": 133,
             "name": "_sessions",
             "path": "parlot.instrumentation.livekit._processor.LiveKitGenAIProcessor._sessions",
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
@@ -14092,8 +14014,8 @@
           "_stamp_agent_identity": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 447,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 453,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -14103,7 +14025,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 426,
+            "lineno": 432,
             "name": "_stamp_agent_identity",
             "parameters": [
               {
@@ -14192,8 +14114,8 @@
             "analysis": "static",
             "decorators": [],
             "docstring": {
-              "endlineno": 476,
-              "lineno": 476,
+              "endlineno": 482,
+              "lineno": 482,
               "parsed": [
                 {
                   "kind": "text",
@@ -14202,8 +14124,8 @@
               ],
               "value": "Normalize failed pipeline spans to OTel ERROR status for OTLP export."
             },
-            "endlineno": 479,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 485,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -14213,7 +14135,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 475,
+            "lineno": 481,
             "name": "_stamp_error_status_if_needed",
             "parameters": [
               {
@@ -14242,8 +14164,8 @@
           "_stamp_response_model_if_distinct": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 460,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 466,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -14253,7 +14175,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 449,
+            "lineno": 455,
             "name": "_stamp_response_model_if_distinct",
             "parameters": [
               {
@@ -14311,8 +14233,8 @@
           "_stamp_session_turn_attrs": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 473,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 479,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -14322,7 +14244,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 462,
+            "lineno": 468,
             "name": "_stamp_session_turn_attrs",
             "parameters": [
               {
@@ -14360,8 +14282,8 @@
           },
           "_tokens": {
             "analysis": "static",
-            "endlineno": 143,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 146,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -14374,7 +14296,7 @@
             "labels": [
               "instance-attribute"
             ],
-            "lineno": 140,
+            "lineno": 143,
             "name": "_tokens",
             "path": "parlot.instrumentation.livekit._processor.LiveKitGenAIProcessor._tokens",
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
@@ -14441,8 +14363,8 @@
               "operator": "|",
               "right": "None"
             },
-            "endlineno": 132,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 135,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -14455,7 +14377,7 @@
             "labels": [
               "instance-attribute"
             ],
-            "lineno": 132,
+            "lineno": 135,
             "name": "_tracer",
             "path": "parlot.instrumentation.livekit._processor.LiveKitGenAIProcessor._tracer",
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
@@ -14466,8 +14388,8 @@
           "_track_agent_label": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 399,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 404,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -14477,7 +14399,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 389,
+            "lineno": 392,
             "name": "_track_agent_label",
             "parameters": [
               {
@@ -14539,8 +14461,8 @@
               "member": null,
               "name": "str"
             },
-            "endlineno": 134,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 137,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -14553,7 +14475,7 @@
             "labels": [
               "instance-attribute"
             ],
-            "lineno": 134,
+            "lineno": 137,
             "name": "_turn_source",
             "path": "parlot.instrumentation.livekit._processor.LiveKitGenAIProcessor._turn_source",
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
@@ -14625,8 +14547,8 @@
                 "implicit": true
               }
             },
-            "endlineno": 131,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 134,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -14639,7 +14561,7 @@
             "labels": [
               "instance-attribute"
             ],
-            "lineno": 131,
+            "lineno": 134,
             "name": "_turn_trace_registry",
             "path": "parlot.instrumentation.livekit._processor.LiveKitGenAIProcessor._turn_trace_registry",
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
@@ -14653,8 +14575,8 @@
           },
           "_turns": {
             "analysis": "static",
-            "endlineno": 164,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 167,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -14667,7 +14589,7 @@
             "labels": [
               "instance-attribute"
             ],
-            "lineno": 149,
+            "lineno": 152,
             "name": "_turns",
             "path": "parlot.instrumentation.livekit._processor.LiveKitGenAIProcessor._turns",
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
@@ -15040,8 +14962,8 @@
           "apply_session_usage": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 291,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 294,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -15051,7 +14973,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 290,
+            "lineno": 293,
             "name": "apply_session_usage",
             "parameters": [
               {
@@ -15090,8 +15012,8 @@
           "commit_agent_message": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 327,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 330,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -15101,7 +15023,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 318,
+            "lineno": 321,
             "name": "commit_agent_message",
             "parameters": [
               {
@@ -15174,8 +15096,8 @@
           "commit_user_message": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 316,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 319,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -15185,7 +15107,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 307,
+            "lineno": 310,
             "name": "commit_user_message",
             "parameters": [
               {
@@ -15258,8 +15180,8 @@
           "committed_handoff_item_ids": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 271,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 274,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -15269,7 +15191,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 270,
+            "lineno": 273,
             "name": "committed_handoff_item_ids",
             "parameters": [
               {
@@ -15301,8 +15223,8 @@
             "analysis": "static",
             "decorators": [],
             "docstring": {
-              "endlineno": 196,
-              "lineno": 196,
+              "endlineno": 199,
+              "lineno": 199,
               "parsed": [
                 {
                   "kind": "text",
@@ -15311,8 +15233,8 @@
               ],
               "value": "Deferred enrichment, turn-attr copy, then GenAI/voice rename for export."
             },
-            "endlineno": 244,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 247,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -15322,7 +15244,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 195,
+            "lineno": 198,
             "name": "enrich_spans_for_export",
             "parameters": [
               {
@@ -15359,8 +15281,8 @@
           "lookup_turn_trace": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 332,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 335,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -15370,7 +15292,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 329,
+            "lineno": 332,
             "name": "lookup_turn_trace",
             "parameters": [
               {
@@ -15437,8 +15359,8 @@
           "mark_conversation_item_committed": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 265,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 268,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -15448,7 +15370,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 264,
+            "lineno": 267,
             "name": "mark_conversation_item_committed",
             "parameters": [
               {
@@ -15481,8 +15403,8 @@
           "mark_handoff_item_committed": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 268,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 271,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -15492,7 +15414,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 267,
+            "lineno": 270,
             "name": "mark_handoff_item_committed",
             "parameters": [
               {
@@ -15521,8 +15443,8 @@
           "note_function_tools_executed": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 288,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 291,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -15532,7 +15454,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 287,
+            "lineno": 290,
             "name": "note_function_tools_executed",
             "parameters": [
               {
@@ -15561,8 +15483,8 @@
           "note_session_error": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 297,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 300,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -15572,7 +15494,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 293,
+            "lineno": 296,
             "name": "note_session_error",
             "parameters": [
               {
@@ -15611,8 +15533,8 @@
           "note_user_transcription_meta": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 285,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 288,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -15622,7 +15544,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 280,
+            "lineno": 283,
             "name": "note_user_transcription_meta",
             "parameters": [
               {
@@ -15661,8 +15583,8 @@
           "on_end": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 179,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 182,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -15672,7 +15594,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 169,
+            "lineno": 172,
             "name": "on_end",
             "parameters": [
               {
@@ -15701,8 +15623,8 @@
           "on_start": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 167,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 170,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -15712,7 +15634,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 166,
+            "lineno": 169,
             "name": "on_start",
             "parameters": [
               {
@@ -15743,8 +15665,8 @@
           "pop_pending_close_error": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 305,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 308,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -15754,7 +15676,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 299,
+            "lineno": 302,
             "name": "pop_pending_close_error",
             "parameters": [
               {
@@ -15782,8 +15704,8 @@
           "record_handoff_from_event": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 278,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 281,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -15793,7 +15715,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 273,
+            "lineno": 276,
             "name": "record_handoff_from_event",
             "parameters": [
               {
@@ -15832,8 +15754,8 @@
           "set_metrics": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 185,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 188,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -15843,7 +15765,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 184,
+            "lineno": 187,
             "name": "set_metrics",
             "parameters": [
               {
@@ -15868,8 +15790,8 @@
           "set_recording_anchor_wall_ms": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 337,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 340,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -15879,7 +15801,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 334,
+            "lineno": 337,
             "name": "set_recording_anchor_wall_ms",
             "parameters": [
               {
@@ -15918,8 +15840,8 @@
           "set_tracer": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 182,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 185,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -15929,7 +15851,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 181,
+            "lineno": 184,
             "name": "set_tracer",
             "parameters": [
               {
@@ -15958,8 +15880,8 @@
           "set_turn_source": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 189,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 192,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -15969,7 +15891,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 187,
+            "lineno": 190,
             "name": "set_turn_source",
             "parameters": [
               {
@@ -16002,8 +15924,8 @@
               "member": "turn_source",
               "name": "str"
             },
-            "endlineno": 193,
-            "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+            "endlineno": 196,
+            "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
             "is_class_private": false,
             "is_deprecated": false,
             "is_exported": false,
@@ -16016,7 +15938,7 @@
             "labels": [
               "property"
             ],
-            "lineno": 192,
+            "lineno": 195,
             "name": "turn_source",
             "path": "parlot.instrumentation.livekit._processor.LiveKitGenAIProcessor.turn_source",
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
@@ -16032,7 +15954,7 @@
       },
       "METADATA_JOB_ID": {
         "analysis": "static",
-        "endlineno": 62,
+        "endlineno": 65,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16043,7 +15965,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 50,
+        "lineno": 53,
         "name": "METADATA_JOB_ID",
         "path": "parlot.instrumentation.livekit._processor.METADATA_JOB_ID",
         "runtime": true,
@@ -16051,7 +15973,7 @@
       },
       "METADATA_ROOM_ID": {
         "analysis": "static",
-        "endlineno": 62,
+        "endlineno": 65,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16062,7 +15984,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 50,
+        "lineno": 53,
         "name": "METADATA_ROOM_ID",
         "path": "parlot.instrumentation.livekit._processor.METADATA_ROOM_ID",
         "runtime": true,
@@ -16089,7 +16011,7 @@
       },
       "NATIVE_TURN_SPANS": {
         "analysis": "static",
-        "endlineno": 67,
+        "endlineno": 70,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16100,7 +16022,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 63,
+        "lineno": 66,
         "name": "NATIVE_TURN_SPANS",
         "path": "parlot.instrumentation.livekit._processor.NATIVE_TURN_SPANS",
         "runtime": true,
@@ -16127,7 +16049,7 @@
       },
       "ParlotBaseProcessor": {
         "analysis": "static",
-        "endlineno": 81,
+        "endlineno": 84,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16138,15 +16060,34 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 81,
+        "lineno": 84,
         "name": "ParlotBaseProcessor",
         "path": "parlot.instrumentation.livekit._processor.ParlotBaseProcessor",
         "runtime": true,
         "target_path": "parlot.core.processor.ParlotBaseProcessor"
       },
+      "ParlotContext": {
+        "analysis": "static",
+        "endlineno": 19,
+        "inherited": false,
+        "is_class_private": false,
+        "is_deprecated": false,
+        "is_exported": false,
+        "is_imported": true,
+        "is_private": false,
+        "is_public": false,
+        "is_special": false,
+        "is_wildcard_exposed": false,
+        "kind": "alias",
+        "lineno": 19,
+        "name": "ParlotContext",
+        "path": "parlot.instrumentation.livekit._processor.ParlotContext",
+        "runtime": false,
+        "target_path": "parlot.core.context.ParlotContext"
+      },
       "ReadableSpan": {
         "analysis": "static",
-        "endlineno": 18,
+        "endlineno": 21,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16157,7 +16098,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 18,
+        "lineno": 21,
         "name": "ReadableSpan",
         "path": "parlot.instrumentation.livekit._processor.ReadableSpan",
         "runtime": true,
@@ -16165,7 +16106,7 @@
       },
       "RecordingCoordinator": {
         "analysis": "static",
-        "endlineno": 87,
+        "endlineno": 90,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16176,7 +16117,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 87,
+        "lineno": 90,
         "name": "RecordingCoordinator",
         "path": "parlot.instrumentation.livekit._processor.RecordingCoordinator",
         "runtime": true,
@@ -16184,7 +16125,7 @@
       },
       "SPAN_AGENT_HANDOFF": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16195,7 +16136,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "SPAN_AGENT_HANDOFF",
         "path": "parlot.instrumentation.livekit._processor.SPAN_AGENT_HANDOFF",
         "runtime": true,
@@ -16203,7 +16144,7 @@
       },
       "SPAN_CONVERSATION_SESSION": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16214,7 +16155,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 22,
+        "lineno": 25,
         "name": "SPAN_CONVERSATION_SESSION",
         "path": "parlot.instrumentation.livekit._processor.SPAN_CONVERSATION_SESSION",
         "runtime": true,
@@ -16222,7 +16163,26 @@
       },
       "SPAN_PARLOT_SESSION_CLOSE": {
         "analysis": "static",
-        "endlineno": 49,
+        "endlineno": 52,
+        "inherited": false,
+        "is_class_private": false,
+        "is_deprecated": false,
+        "is_exported": false,
+        "is_imported": true,
+        "is_private": false,
+        "is_public": false,
+        "is_special": false,
+        "is_wildcard_exposed": true,
+        "kind": "alias",
+        "lineno": 25,
+        "name": "SPAN_PARLOT_SESSION_CLOSE",
+        "path": "parlot.instrumentation.livekit._processor.SPAN_PARLOT_SESSION_CLOSE",
+        "runtime": true,
+        "target_path": "parlot.core.attrs.SPAN_PARLOT_SESSION_CLOSE"
+      },
+      "Status": {
+        "analysis": "static",
+        "endlineno": 22,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16234,25 +16194,6 @@
         "is_wildcard_exposed": true,
         "kind": "alias",
         "lineno": 22,
-        "name": "SPAN_PARLOT_SESSION_CLOSE",
-        "path": "parlot.instrumentation.livekit._processor.SPAN_PARLOT_SESSION_CLOSE",
-        "runtime": true,
-        "target_path": "parlot.core.attrs.SPAN_PARLOT_SESSION_CLOSE"
-      },
-      "Status": {
-        "analysis": "static",
-        "endlineno": 19,
-        "inherited": false,
-        "is_class_private": false,
-        "is_deprecated": false,
-        "is_exported": false,
-        "is_imported": true,
-        "is_private": false,
-        "is_public": false,
-        "is_special": false,
-        "is_wildcard_exposed": true,
-        "kind": "alias",
-        "lineno": 19,
         "name": "Status",
         "path": "parlot.instrumentation.livekit._processor.Status",
         "runtime": true,
@@ -16260,7 +16201,7 @@
       },
       "StatusCode": {
         "analysis": "static",
-        "endlineno": 19,
+        "endlineno": 22,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16271,15 +16212,15 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 19,
+        "lineno": 22,
         "name": "StatusCode",
         "path": "parlot.instrumentation.livekit._processor.StatusCode",
         "runtime": true,
         "target_path": "opentelemetry.trace.StatusCode"
       },
-      "TokenAggregator": {
+      "TYPE_CHECKING": {
         "analysis": "static",
-        "endlineno": 86,
+        "endlineno": 16,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16290,7 +16231,26 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 86,
+        "lineno": 16,
+        "name": "TYPE_CHECKING",
+        "path": "parlot.instrumentation.livekit._processor.TYPE_CHECKING",
+        "runtime": true,
+        "target_path": "typing.TYPE_CHECKING"
+      },
+      "TokenAggregator": {
+        "analysis": "static",
+        "endlineno": 89,
+        "inherited": false,
+        "is_class_private": false,
+        "is_deprecated": false,
+        "is_exported": false,
+        "is_imported": true,
+        "is_private": false,
+        "is_public": false,
+        "is_special": false,
+        "is_wildcard_exposed": true,
+        "kind": "alias",
+        "lineno": 89,
         "name": "TokenAggregator",
         "path": "parlot.instrumentation.livekit._processor.TokenAggregator",
         "runtime": true,
@@ -16298,7 +16258,7 @@
       },
       "Tracer": {
         "analysis": "static",
-        "endlineno": 19,
+        "endlineno": 22,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16309,7 +16269,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 19,
+        "lineno": 22,
         "name": "Tracer",
         "path": "parlot.instrumentation.livekit._processor.Tracer",
         "runtime": true,
@@ -16317,7 +16277,7 @@
       },
       "TurnEnricher": {
         "analysis": "static",
-        "endlineno": 88,
+        "endlineno": 91,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16328,7 +16288,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 88,
+        "lineno": 91,
         "name": "TurnEnricher",
         "path": "parlot.instrumentation.livekit._processor.TurnEnricher",
         "runtime": true,
@@ -16349,8 +16309,8 @@
             "name": "str"
           }
         },
-        "endlineno": 103,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+        "endlineno": 106,
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -16363,7 +16323,7 @@
         "labels": [
           "module-attribute"
         ],
-        "lineno": 92,
+        "lineno": 95,
         "name": "_AGENT_LABEL_SPANS",
         "path": "parlot.instrumentation.livekit._processor._AGENT_LABEL_SPANS",
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
@@ -16401,7 +16361,7 @@
       },
       "_AGENT_PIPELINE_SPANS": {
         "analysis": "static",
-        "endlineno": 88,
+        "endlineno": 91,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16412,7 +16372,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "alias",
-        "lineno": 88,
+        "lineno": 91,
         "name": "_AGENT_PIPELINE_SPANS",
         "path": "parlot.instrumentation.livekit._processor._AGENT_PIPELINE_SPANS",
         "runtime": true,
@@ -16420,7 +16380,7 @@
       },
       "_LiveKitSessionState": {
         "analysis": "static",
-        "endlineno": 83,
+        "endlineno": 86,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16431,7 +16391,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "alias",
-        "lineno": 83,
+        "lineno": 86,
         "name": "_LiveKitSessionState",
         "path": "parlot.instrumentation.livekit._processor._LiveKitSessionState",
         "runtime": true,
@@ -16458,7 +16418,7 @@
       },
       "append_agent_chain_step": {
         "analysis": "static",
-        "endlineno": 76,
+        "endlineno": 79,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16469,7 +16429,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 70,
+        "lineno": 73,
         "name": "append_agent_chain_step",
         "path": "parlot.instrumentation.livekit._processor.append_agent_chain_step",
         "runtime": true,
@@ -16477,7 +16437,7 @@
       },
       "apply_livekit_span_rename": {
         "analysis": "static",
-        "endlineno": 67,
+        "endlineno": 70,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16488,7 +16448,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 63,
+        "lineno": 66,
         "name": "apply_livekit_span_rename",
         "path": "parlot.instrumentation.livekit._processor.apply_livekit_span_rename",
         "runtime": true,
@@ -16496,7 +16456,7 @@
       },
       "attr_get": {
         "analysis": "static",
-        "endlineno": 62,
+        "endlineno": 65,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16507,7 +16467,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 50,
+        "lineno": 53,
         "name": "attr_get",
         "path": "parlot.instrumentation.livekit._processor.attr_get",
         "runtime": true,
@@ -16515,7 +16475,7 @@
       },
       "ensure_agent_chain_seeded": {
         "analysis": "static",
-        "endlineno": 76,
+        "endlineno": 79,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16526,7 +16486,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 70,
+        "lineno": 73,
         "name": "ensure_agent_chain_seeded",
         "path": "parlot.instrumentation.livekit._processor.ensure_agent_chain_seeded",
         "runtime": true,
@@ -16534,7 +16494,7 @@
       },
       "get_job_bootstrap": {
         "analysis": "static",
-        "endlineno": 80,
+        "endlineno": 83,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16545,7 +16505,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 77,
+        "lineno": 80,
         "name": "get_job_bootstrap",
         "path": "parlot.instrumentation.livekit._processor.get_job_bootstrap",
         "runtime": true,
@@ -16553,7 +16513,7 @@
       },
       "handle_conversation_session_on_end": {
         "analysis": "static",
-        "endlineno": 80,
+        "endlineno": 83,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16564,7 +16524,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 77,
+        "lineno": 80,
         "name": "handle_conversation_session_on_end",
         "path": "parlot.instrumentation.livekit._processor.handle_conversation_session_on_end",
         "runtime": true,
@@ -16591,7 +16551,7 @@
       },
       "livekit_agent_role_for_span": {
         "analysis": "static",
-        "endlineno": 68,
+        "endlineno": 71,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16602,7 +16562,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 68,
+        "lineno": 71,
         "name": "livekit_agent_role_for_span",
         "path": "parlot.instrumentation.livekit._processor.livekit_agent_role_for_span",
         "runtime": true,
@@ -16610,7 +16570,7 @@
       },
       "livekit_agent_stage_for_span": {
         "analysis": "static",
-        "endlineno": 68,
+        "endlineno": 71,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16621,7 +16581,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 68,
+        "lineno": 71,
         "name": "livekit_agent_stage_for_span",
         "path": "parlot.instrumentation.livekit._processor.livekit_agent_stage_for_span",
         "runtime": true,
@@ -16629,8 +16589,8 @@
       },
       "logger": {
         "analysis": "static",
-        "endlineno": 90,
-        "filepath": "/Users/charlie/dev/parlot.ai/sdk/packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
+        "endlineno": 93,
+        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
         "is_class_private": false,
         "is_deprecated": false,
         "is_exported": false,
@@ -16643,7 +16603,7 @@
         "labels": [
           "module-attribute"
         ],
-        "lineno": 90,
+        "lineno": 93,
         "name": "logger",
         "path": "parlot.instrumentation.livekit._processor.logger",
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_processor.py",
@@ -16692,7 +16652,7 @@
       },
       "lookup_room_context": {
         "analysis": "static",
-        "endlineno": 69,
+        "endlineno": 72,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16703,7 +16663,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 69,
+        "lineno": 72,
         "name": "lookup_room_context",
         "path": "parlot.instrumentation.livekit._processor.lookup_room_context",
         "runtime": true,
@@ -16711,7 +16671,7 @@
       },
       "provider_to_system": {
         "analysis": "static",
-        "endlineno": 84,
+        "endlineno": 87,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16722,7 +16682,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 84,
+        "lineno": 87,
         "name": "provider_to_system",
         "path": "parlot.instrumentation.livekit._processor.provider_to_system",
         "runtime": true,
@@ -16730,7 +16690,7 @@
       },
       "remap_livekit_span_name": {
         "analysis": "static",
-        "endlineno": 67,
+        "endlineno": 70,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16741,7 +16701,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 63,
+        "lineno": 66,
         "name": "remap_livekit_span_name",
         "path": "parlot.instrumentation.livekit._processor.remap_livekit_span_name",
         "runtime": true,
@@ -16749,7 +16709,7 @@
       },
       "resolve_canonical_agent_id": {
         "analysis": "static",
-        "endlineno": 76,
+        "endlineno": 79,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16760,7 +16720,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 70,
+        "lineno": 73,
         "name": "resolve_canonical_agent_id",
         "path": "parlot.instrumentation.livekit._processor.resolve_canonical_agent_id",
         "runtime": true,
@@ -16768,7 +16728,7 @@
       },
       "stamp_livekit_platform_refs": {
         "analysis": "static",
-        "endlineno": 69,
+        "endlineno": 72,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16779,7 +16739,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 69,
+        "lineno": 72,
         "name": "stamp_livekit_platform_refs",
         "path": "parlot.instrumentation.livekit._processor.stamp_livekit_platform_refs",
         "runtime": true,
@@ -16787,7 +16747,7 @@
       },
       "stamp_session_agent_identity": {
         "analysis": "static",
-        "endlineno": 76,
+        "endlineno": 79,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16798,7 +16758,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 70,
+        "lineno": 73,
         "name": "stamp_session_agent_identity",
         "path": "parlot.instrumentation.livekit._processor.stamp_session_agent_identity",
         "runtime": true,
@@ -16806,7 +16766,7 @@
       },
       "stamp_session_sdk_version": {
         "analysis": "static",
-        "endlineno": 82,
+        "endlineno": 85,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16817,7 +16777,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 82,
+        "lineno": 85,
         "name": "stamp_session_sdk_version",
         "path": "parlot.instrumentation.livekit._processor.stamp_session_sdk_version",
         "runtime": true,
@@ -16825,7 +16785,7 @@
       },
       "topology_agent_name": {
         "analysis": "static",
-        "endlineno": 76,
+        "endlineno": 79,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -16836,7 +16796,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 70,
+        "lineno": 73,
         "name": "topology_agent_name",
         "path": "parlot.instrumentation.livekit._processor.topology_agent_name",
         "runtime": true,

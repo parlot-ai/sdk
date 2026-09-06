@@ -20,13 +20,10 @@ from parlot.core.attrs import (
     ATTR_GEN_AI_OP_NAME,
     ATTR_SESSION_CONVERSATION_ID,
     ATTR_SESSION_ID,
-    ATTR_STT_SPEAKER_ID,
     ATTR_TURN_INDEX,
-    ATTR_TURN_INTERRUPTED,
     SPAN_AGENT_HANDOFF,
 )
 
-from parlot.instrumentation.livekit.attrs import ATTR_DIAR_SOURCE_STT_EVENT
 from parlot.instrumentation.livekit._platform_refs import _job_room_fields, _str_field
 from parlot.instrumentation.livekit._recording_guard import agent_name_from_ctx
 

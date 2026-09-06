@@ -1,23 +1,21 @@
-name: Python
+name: CI
 
 on:
   push:
     branches: [main]
     paths:
       - 'packages/**'
-      - 'scripts/check_genai_semconv_lock.py'
-      - 'scripts/dump_api.py'
+      - 'scripts/**'
       - 'docs-data/api.json'
-      - '.github/workflows/python.yml'
+      - '.github/workflows/ci.yml'
       - 'pyproject.toml'
       - 'uv.lock'
   pull_request:
     paths:
       - 'packages/**'
-      - 'scripts/check_genai_semconv_lock.py'
-      - 'scripts/dump_api.py'
+      - 'scripts/**'
       - 'docs-data/api.json'
-      - '.github/workflows/python.yml'
+      - '.github/workflows/ci.yml'
       - 'pyproject.toml'
       - 'uv.lock'
 
@@ -33,6 +31,8 @@ jobs:
           enable-cache: true
       - name: Install
         run: uv sync --all-packages
+      - name: Lint and typecheck
+        run: bash scripts/lint.sh
       - name: GenAI semconv lock
         run: |
           set -euo pipefail
