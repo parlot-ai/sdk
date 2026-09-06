@@ -15,6 +15,7 @@ from .attrs import (
     ATTR_PLATFORM_REF_PREFIX,
     ATTR_PLATFORM_VALUE,
 )
+from .processor import ParlotBaseProcessor
 from .session import get_active_session_span
 
 
@@ -52,12 +53,10 @@ def stamp_platform_refs(
                 return
             except Exception:
                 pass
-        if getattr(span, "_attributes", None) is None:
-            try:
-                span._attributes = {}
-            except Exception:
-                return
-        span._attributes[key] = value
+        try:
+            ParlotBaseProcessor._set(span, key, value)
+        except Exception:
+            return
 
     fw, kind, val = refs[0]
     _write(ATTR_PLATFORM_FRAMEWORK, fw)

@@ -21,6 +21,7 @@ from parlot.core.attrs import (
     span_name_chat,
     span_name_execute_tool,
 )
+from parlot.core.processor import ParlotBaseProcessor
 from parlot.instrumentation.livekit.attrs import ATTR_LK_FNC_TOOL_NAME
 
 # Native LiveKit names observed internally by the processor (before rename).
@@ -88,22 +89,16 @@ def apply_livekit_span_rename(span: ReadableSpan) -> None:
     if exported != native:
         span._name = exported
     stage = native_stage_for_span(native)
-    span_attrs = getattr(span, "_attributes", None)
-    if span_attrs is None:
-        span_attrs = {}
-        span._attributes = span_attrs
-    if not isinstance(span_attrs, dict):
-        return
     if stage and not (attrs.get(ATTR_AGENT_STAGE)):
-        span_attrs[ATTR_AGENT_STAGE] = stage
+        ParlotBaseProcessor._set(span, ATTR_AGENT_STAGE, stage)
     if native in NATIVE_LLM_SPANS:
-        span_attrs[ATTR_GEN_AI_OP_NAME] = GEN_AI_OP_CHAT
+        ParlotBaseProcessor._set(span, ATTR_GEN_AI_OP_NAME, GEN_AI_OP_CHAT)
     elif native in NATIVE_TOOL_SPANS:
-        span_attrs[ATTR_GEN_AI_OP_NAME] = GEN_AI_OP_EXECUTE_TOOL
+        ParlotBaseProcessor._set(span, ATTR_GEN_AI_OP_NAME, GEN_AI_OP_EXECUTE_TOOL)
         tool = str(
             attrs.get(ATTR_GEN_AI_TOOL_NAME)
             or attrs.get(ATTR_LK_FNC_TOOL_NAME)
             or ""
         ).strip()
         if tool:
-            span_attrs[ATTR_GEN_AI_TOOL_NAME] = tool
+            ParlotBaseProcessor._set(span, ATTR_GEN_AI_TOOL_NAME, tool)

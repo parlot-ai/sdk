@@ -66,3 +66,19 @@ def test_export_allowlist_after_rename() -> None:
     assert is_exportable_span_name("parlot.turn")
     assert not is_exportable_span_name("user_turn")
     assert not is_exportable_span_name("llm_request")
+
+
+def test_apply_rename_with_real_otel_bounded_attributes() -> None:
+    from opentelemetry.sdk.trace import TracerProvider
+
+    provider = TracerProvider()
+    tracer = provider.get_tracer("test")
+    span = tracer.start_span("llm_node")
+    span.end()
+
+    # On ended span, attributes are immutable BoundedAttributes
+    apply_livekit_span_rename(span)
+    assert span.name == "chat"
+    assert span.attributes[ATTR_GEN_AI_OP_NAME] == GEN_AI_OP_CHAT
+    assert span.attributes["agent.stage"] == "node"
+

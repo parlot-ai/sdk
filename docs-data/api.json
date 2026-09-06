@@ -2667,6 +2667,7 @@
       "ATTR_PLATFORM_REF_PREFIX": "parlot.core.attrs.ATTR_PLATFORM_REF_PREFIX",
       "ATTR_PLATFORM_VALUE": "parlot.core.attrs.ATTR_PLATFORM_VALUE",
       "Any": "typing.Any",
+      "ParlotBaseProcessor": "parlot.core.processor.ParlotBaseProcessor",
       "annotations": "__future__.annotations",
       "get_active_session_span": "parlot.core.session.get_active_session_span"
     },
@@ -2775,12 +2776,31 @@
         "runtime": true,
         "target_path": "typing.Any"
       },
+      "ParlotBaseProcessor": {
+        "analysis": "static",
+        "endlineno": 18,
+        "inherited": false,
+        "is_class_private": false,
+        "is_deprecated": false,
+        "is_exported": false,
+        "is_imported": true,
+        "is_private": false,
+        "is_public": false,
+        "is_special": false,
+        "is_wildcard_exposed": true,
+        "kind": "alias",
+        "lineno": 18,
+        "name": "ParlotBaseProcessor",
+        "path": "parlot.core.platform_refs.ParlotBaseProcessor",
+        "runtime": true,
+        "target_path": "parlot.core.processor.ParlotBaseProcessor"
+      },
       "add_platform_ref": {
         "analysis": "static",
         "decorators": [],
         "docstring": {
-          "endlineno": 95,
-          "lineno": 77,
+          "endlineno": 94,
+          "lineno": 76,
           "parsed": [
             {
               "kind": "text",
@@ -2826,7 +2846,7 @@
           ],
           "value": "Attach a searchable external ID to the active Parlot session.\n\nStamps ``platform.ref.{kind}`` (and the primary triple when this is the\nfirst ref) on the live session span so the session can be found by that\nvalue in Parlot search / resolve.\n\nArgs:\n    kind: Identifier type (e.g. ``\"crm_ticket\"``, ``\"order_number\"``,\n        ``\"call_sid\"``).\n    value: Unique identifier value (e.g. ``\"TKT-9921\"``).\n    framework: Originating framework name. Defaults to ``\"custom\"``.\n\nExample::\n\n    from parlot.instrumentation.livekit import add_platform_ref\n\n    add_platform_ref(\"crm_ticket\", \"TKT-9\")"
         },
-        "endlineno": 104,
+        "endlineno": 103,
         "filepath": "packages/core/src/parlot/core/platform_refs.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -2837,7 +2857,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "function",
-        "lineno": 71,
+        "lineno": 70,
         "name": "add_platform_ref",
         "parameters": [
           {
@@ -2898,7 +2918,7 @@
       },
       "get_active_session_span": {
         "analysis": "static",
-        "endlineno": 18,
+        "endlineno": 19,
         "inherited": false,
         "is_class_private": false,
         "is_deprecated": false,
@@ -2909,7 +2929,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "alias",
-        "lineno": 18,
+        "lineno": 19,
         "name": "get_active_session_span",
         "path": "parlot.core.platform_refs.get_active_session_span",
         "runtime": true,
@@ -2919,8 +2939,8 @@
         "analysis": "static",
         "decorators": [],
         "docstring": {
-          "endlineno": 22,
-          "lineno": 22,
+          "endlineno": 23,
+          "lineno": 23,
           "parsed": [
             {
               "kind": "text",
@@ -2929,7 +2949,7 @@
           ],
           "value": "Flat ``platform.ref.{kind}`` attribute key for ingestion fallbacks."
         },
-        "endlineno": 23,
+        "endlineno": 24,
         "filepath": "packages/core/src/parlot/core/platform_refs.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -2940,7 +2960,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "function",
-        "lineno": 21,
+        "lineno": 22,
         "name": "platform_ref_flat_key",
         "parameters": [
           {
@@ -2968,8 +2988,8 @@
         "analysis": "static",
         "decorators": [],
         "docstring": {
-          "endlineno": 44,
-          "lineno": 30,
+          "endlineno": 45,
+          "lineno": 31,
           "parsed": [
             {
               "kind": "text",
@@ -3033,7 +3053,7 @@
           ],
           "value": "Stamp ``platform.ref.*`` triples onto a span.\n\n``refs`` is a list of ``(framework, kind, value)`` tuples, e.g.\n``(\"livekit\", \"room_sid\", \"RM_abc\")``. The first tuple is also written\nto the canonical triple attributes (``platform.ref.framework/kind/value``)\nso backends can pivot on a single primary ref.\n\nEvery tuple is also written as a flat ``platform.ref.{kind} = value`` key\nfor ingestion fallbacks.\n\nArgs:\n    span: A live OTel span (``set_attribute``) or a ``ReadableSpan`` with a\n        mutable ``_attributes`` dict.\n    refs: Non-empty list of reference triples."
         },
-        "endlineno": 68,
+        "endlineno": 67,
         "filepath": "packages/core/src/parlot/core/platform_refs.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -3044,7 +3064,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "function",
-        "lineno": 26,
+        "lineno": 27,
         "name": "stamp_platform_refs",
         "parameters": [
           {

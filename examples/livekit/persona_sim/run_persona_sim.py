@@ -13,13 +13,15 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+from contextlib import contextmanager
 import importlib.util
 import logging
 import os
 import re
 import sys
 from pathlib import Path
-from typing import Any
+from types import SimpleNamespace
+from typing import Any, Generator
 
 import yaml
 from dotenv import load_dotenv
@@ -51,6 +53,71 @@ with no useful path forward, reply with exactly {hangup} (nothing else).
 """.format(hangup=_HANGUP_TOKEN)
 
 logger = logging.getLogger("persona-sim")
+
+
+class _SimJobContext:
+    """Lightweight JobContext mock allowing EndCallTool and room lookups in simulation."""
+
+    def __init__(self, room_name: str = "sim-room", job_id: str = "sim-job") -> None:
+        self.job = SimpleNamespace(
+            id=job_id,
+            room=SimpleNamespace(name=room_name, sid=f"RM_{room_name}"),
+            agent_name="sim-agent",
+            enable_recording=False,
+            fake_job=True,
+            url="",
+        )
+        self.room = SimpleNamespace(
+            name=room_name,
+            sid=f"RM_{room_name}",
+            isconnected=lambda: False,
+        )
+        self.inference_headers: dict[str, str] = {}
+        self._primary_agent_session = None
+        self._shutdown_callbacks: list[Any] = []
+
+    def simulation_context(self) -> Any:
+        return None
+
+    def init_recording(self, options: Any = None) -> None:
+        pass
+
+    async def connect(self) -> None:
+        pass
+
+    async def delete_room(self) -> None:
+        pass
+
+    def add_shutdown_callback(self, cb: Any) -> None:
+        self._shutdown_callbacks.append(cb)
+
+    def shutdown(self, reason: str = "") -> None:
+        pass
+
+
+@contextmanager
+def _simulated_job_context(
+    room_name: str = "sim-room",
+    job_id: str = "sim-job",
+) -> Generator[_SimJobContext, None, None]:
+    token = None
+    try:
+        from livekit.agents.job import _JobContextVar
+
+        sim_ctx = _SimJobContext(room_name=room_name, job_id=job_id)
+        token = _JobContextVar.set(sim_ctx)  # type: ignore[arg-type]
+    except (ImportError, AttributeError):
+        sim_ctx = _SimJobContext()
+    try:
+        yield sim_ctx
+    finally:
+        if token is not None:
+            try:
+                from livekit.agents.job import _JobContextVar
+
+                _JobContextVar.reset(token)
+            except Exception:
+                pass
 
 
 def _load_adapter(cwd: Path, adapter_path: Path | None) -> PersonaSimAdapter:
@@ -217,47 +284,52 @@ async def _run_scenario(
             if _is_hangup(opening):
                 raise RuntimeError("persona hung up before the call started")
 
-        async with AgentSession(
-            userdata=sim.userdata,
-            llm=inference.LLM(agent_model),
-            max_tool_steps=sim.max_tool_steps,
-        ) as session:
-            # capture_run=True only returns after a spontaneous run finishes.
-            # Agents without on_enter generate_reply (e.g. drive-thru) would hang.
-            await session.start(sim.agent, capture_run=False)
-            await asyncio.sleep(_START_SETTLE_S)
-            session_id = _current_parlot_session_id()
-            print(f"parlot_session_id={session_id or '(unknown)'}")
+        clean_label = re.sub(r"[^a-zA-Z0-9_-]", "-", label).strip("-").lower()
+        sim_room = f"sim-{clean_label}" or "sim-room"
+        sim_job = f"job-{clean_label}" or "sim-job"
 
-            guest_line = opening
-            for turn in range(1, max_turns + 1):
-                print(f"\n-- turn {turn}/{max_turns} --")
-                print(f"  [user] {guest_line}")
-                result = await session.run(user_input=guest_line)
-                _print_run_events(result)
+        with _simulated_job_context(room_name=sim_room, job_id=sim_job):
+            async with AgentSession(
+                userdata=sim.userdata,
+                llm=inference.LLM(agent_model),
+                max_tool_steps=sim.max_tool_steps,
+            ) as session:
+                # capture_run=True only returns after a spontaneous run finishes.
+                # Agents without on_enter generate_reply (e.g. drive-thru) would hang.
+                await session.start(sim.agent, capture_run=False)
+                await asyncio.sleep(_START_SETTLE_S)
+                session_id = _current_parlot_session_id()
+                print(f"parlot_session_id={session_id or '(unknown)'}")
 
-                persona_ctx.add_message(role="assistant", content=guest_line)
-                agent_texts = _assistant_texts(result)
-                agent_blob = "\n".join(agent_texts) if agent_texts else "(no spoken reply)"
-                persona_ctx.add_message(
-                    role="user",
-                    content=(
-                        f"{sim.agent_speaker} said:\n{agent_blob}\n\n"
-                        "Your next spoken utterance:"
-                    ),
-                )
+                guest_line = opening
+                for turn in range(1, max_turns + 1):
+                    print(f"\n-- turn {turn}/{max_turns} --")
+                    print(f"  [user] {guest_line}")
+                    result = await session.run(user_input=guest_line)
+                    _print_run_events(result)
 
-                guest_line = await _persona_reply(persona, persona_ctx)
-                if not guest_line:
-                    print("  [persona] empty reply — stopping")
-                    break
-                if _is_hangup(guest_line):
-                    print(f"  [persona] {_HANGUP_TOKEN}")
-                    break
-            else:
-                print(f"\n(max turns {max_turns} reached)")
+                    persona_ctx.add_message(role="assistant", content=guest_line)
+                    agent_texts = _assistant_texts(result)
+                    agent_blob = "\n".join(agent_texts) if agent_texts else "(no spoken reply)"
+                    persona_ctx.add_message(
+                        role="user",
+                        content=(
+                            f"{sim.agent_speaker} said:\n{agent_blob}\n\n"
+                            "Your next spoken utterance:"
+                        ),
+                    )
 
-            session_id = _current_parlot_session_id() or session_id
+                    guest_line = await _persona_reply(persona, persona_ctx)
+                    if not guest_line:
+                        print("  [persona] empty reply — stopping")
+                        break
+                    if _is_hangup(guest_line):
+                        print(f"  [persona] {_HANGUP_TOKEN}")
+                        break
+                else:
+                    print(f"\n(max turns {max_turns} reached)")
+
+                session_id = _current_parlot_session_id() or session_id
 
         print(f"\nclosed scenario={label!r} parlot_session_id={session_id or '(unknown)'}")
         if not session_id:
