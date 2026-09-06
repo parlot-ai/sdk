@@ -18,7 +18,7 @@ Parlot treats production voice agents as **event systems** first and traces seco
 | `parlot-instrumentation-livekit` | LiveKit Agents OTel instrumentation, egress hooks, platform refs |
 | `parlot-instrumentation-langgraph` | LangGraph / LangChain `configure()` via global callbacks |
 
-Contract helpers (`record_human_rep`, `set_session_metadata`, `add_platform_ref`, …) live in `parlot.core`. Framework packages re-export them for convenience — prefer those re-exports in agent code. See the [Python API Reference](/docs/sdk/python) and [Interactive API Docs](/docs/ref/python/).
+Contract helpers (`record_human_rep`, `set_session_metadata`, `add_platform_ref`, …) live in `parlot.core`. Framework packages re-export them for convenience — prefer those re-exports in agent code. See the [Python API Reference](/sdk/python) and [Interactive API Docs](/docs/ref/python/).
 
 ## Shared span vocabulary
 
@@ -28,7 +28,7 @@ All adapters export the same three layers:
 2. **OTel GenAI** (semconv v1.41.0) — `invoke_agent`, `chat`, `execute_tool {name}`, `invoke_workflow`
 3. **Voice** — `tts`, `stt`, `eou_detection`, `amd`
 
-Vendor span and attribute maps live in each framework guide. See [LangGraph](/docs/sdk/guides/langgraph) and [LiveKit](/docs/sdk/guides/livekit).
+Vendor span and attribute maps live in each framework guide. See [LangGraph](/sdk/guides/langgraph) and [LiveKit](/sdk/guides/livekit).
 
 ## Session and agent identity
 
@@ -56,7 +56,7 @@ Each framework guide documents how those attributes are sourced from the vendor 
 - **Application logs** (Python `logging` only — not `print()`) are captured on by default during an active session and shown on the session **Logs** tab. Policy mirrors recording (Settings → Logs + `configure(capture_logs=…)`), except the fallback is on. Treat log content like stdout for PII.
 - **Generative AI content** (LLM/tool bodies) is a separate policy — see [Generative AI content capture](#generative-ai-content-capture).
 
-See the [LiveKit guide](/docs/sdk/guides/livekit) for egress, policy, and troubleshooting.
+See the [LiveKit guide](/sdk/guides/livekit) for egress, policy, and troubleshooting.
 
 ## Generative AI content capture
 
@@ -113,7 +113,7 @@ record_human_rep("support_rep_jane", label="Jane")
 
 This stamps the rep on the live session (works even if the rep never speaks) and registers the participant so future turns use `turn.participant_role=human_rep`.
 
-Framework adapters may add auto-detect paths (for example LiveKit SIP warm transfer). See [LiveKit → Human escalation](/docs/sdk/guides/livekit#human-escalation).
+Framework adapters may add auto-detect paths (for example LiveKit SIP warm transfer). See [LiveKit → Human escalation](/sdk/guides/livekit#human-escalation).
 
 ## Custom metadata and external references
 

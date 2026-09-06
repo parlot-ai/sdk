@@ -1,5 +1,5 @@
 export const appName = 'Parlot Docs';
-export const docsRoute = '/docs';
+export const docsRoute = '';
 export const docsContentRoute = '/docs/llms.mdx/docs';
 
 export const gitConfig = {

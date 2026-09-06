@@ -4,10 +4,13 @@ import { Callout } from 'fumadocs-ui/components/callout';
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import { Card, Cards } from 'fumadocs-ui/components/card';
 import { TypeTable } from 'fumadocs-ui/components/type-table';
+import CustomLink from '@/components/link';
 
 export function getMDXComponents(components?: MDXComponents) {
   return {
     ...defaultMdxComponents,
+    a: CustomLink,
+    h1: () => null,
     Callout,
     Tab,
     Tabs,

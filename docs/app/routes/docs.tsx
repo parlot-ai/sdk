@@ -1,12 +1,11 @@
 import type { Route } from './+types/docs';
-import { DocsLayout } from 'fumadocs-ui/layouts/docs';
+import { DocsLayout } from 'fumadocs-ui/layouts/notebook';
 import {
   DocsBody,
   DocsDescription,
   DocsPage,
   DocsTitle,
-  ViewOptionsPopover,
-} from 'fumadocs-ui/layouts/docs/page';
+} from 'fumadocs-ui/layouts/notebook/page';
 import { LLMCopyButton } from '@/components/llm-copy-button';
 import { docs, getPageMarkdownUrl, source } from '@/lib/source';
 import { baseOptions } from '@/lib/layout.shared';
@@ -37,19 +36,17 @@ function Content({ path, markdownUrl }: { path: string; markdownUrl: string }) {
 
   const { toc } = use(page.load());
   const Mdx = page.body;
+  const filteredToc = toc.filter((item) => item.depth > 1);
+  const pageId = path.split('/').pop()?.replace(/\.(mdx|md)$/, '');
 
   return (
-    <DocsPage toc={toc}>
+    <DocsPage toc={filteredToc}>
       <title>{page.title}</title>
       <meta name="description" content={page.description} />
-      <DocsTitle>{page.title}</DocsTitle>
-      <DocsDescription>{page.description}</DocsDescription>
+      <DocsTitle id={pageId}>{page.title}</DocsTitle>
+      {page.description && <DocsDescription>{page.description}</DocsDescription>}
       <div className="flex flex-row gap-2 items-center border-b border-fd-border -mt-4 pb-6 mb-6">
         <LLMCopyButton markdownUrl={markdownUrl} />
-        <ViewOptionsPopover
-          markdownUrl={markdownUrl}
-          githubUrl={`https://github.com/${gitConfig.user}/${gitConfig.repo}/blob/${gitConfig.branch}/content/docs/${path}`}
-        />
       </div>
       <DocsBody>
         <Mdx components={useMDXComponents()} />
@@ -60,25 +57,30 @@ function Content({ path, markdownUrl }: { path: string; markdownUrl: string }) {
 
 export default function Page({ loaderData }: Route.ComponentProps) {
   const { pageTree, path, markdownUrl } = useFumadocsLoader(loaderData);
+  const base = baseOptions();
 
   return (
     <DocsLayout
-      {...baseOptions()}
+      {...base}
+      nav={{
+        ...base.nav,
+        mode: 'top',
+      }}
       tree={pageTree}
       tabs={[
         {
           title: 'SDK Guide',
-          url: '/docs/sdk',
+          url: '/sdk',
           description: 'Open-source voice AI observability SDK',
         },
         {
           title: 'App Guide',
-          url: '/docs/app',
+          url: '/app',
           description: 'Parlot dashboard, policies, and evaluation',
         },
         {
           title: 'Python API',
-          url: '/docs/ref/python',
+          url: '/docs/ref/python/',
           description: 'Generated Python SDK reference (pdoc)',
         },
       ]}

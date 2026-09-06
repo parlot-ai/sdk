@@ -18,13 +18,15 @@ function updateFrontmatter(filePath: string, title: string, description: string)
       content = content.slice(secondFence + 3).trimStart();
     }
   }
+  // Strip any leading H1 heading since DocsTitle handles the page title
+  content = content.trimStart().replace(/^#\s+[^\n]*\n*/, '');
   const newHeader = `---\ntitle: ${title}\ndescription: ${description}\n---\n\n`;
   writeFileSync(filePath, newHeader + content);
 }
 
 updateFrontmatter(
   resolve(tsDir, 'README.mdx'),
-  'TypeScript Reference',
+  'Overview',
   'TypeScript semantic convention constants and attributes for @parlot/core.'
 );
 

@@ -20,8 +20,6 @@ export default function Home() {
     <HomeLayout {...baseOptions()}>
       <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-16 max-w-5xl mx-auto w-full">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-fd-primary/10 text-fd-primary mb-6">
-          <span>Obsidian Flux</span>
-          <span className="text-fd-muted-foreground">•</span>
           <span>Voice AI Observability</span>
         </div>
 

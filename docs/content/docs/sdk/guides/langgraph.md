@@ -28,8 +28,8 @@ graph.invoke(
 close_session("demo-1")  # optional; also flushed on process exit
 ```
 
-Environment: `PARLOT_ENDPOINT`, `PARLOT_API_KEY` — see [Environment Variables](/docs/sdk/env-vars).
-Shared `configure()` options: [Python SDK Reference](/docs/sdk/python). LangGraph-only
+Environment: `PARLOT_ENDPOINT`, `PARLOT_API_KEY` — see [Environment Variables](/sdk/env-vars).
+Shared `configure()` options: [Python SDK Reference](/sdk/python). LangGraph-only
 kwargs (`channel`, `modality`) and `close_session`: [Interactive API Reference](/docs/ref/python/parlot/instrumentation/langgraph.html).
 
 For standalone (non-LiveKit) sessions, set `channel=` (e.g. `"webchat"`) and
@@ -40,7 +40,7 @@ configure(agent_id="support-bot", version="0.1.0", channel="webchat", modality="
 ```
 
 Generative AI content capture is shared across adapters — see
-[Concepts → Generative AI content capture](/docs/sdk/get-started/concepts#generative-ai-content-capture).
+[Concepts → Generative AI content capture](/sdk/get-started/concepts#generative-ai-content-capture).
 Override for the process with `configure(capture_genai_content=False)`.
 
 See [`examples/langgraph/minimal-agent`](https://github.com/parlot-ai/sdk/tree/main/examples/langgraph/minimal-agent).
