@@ -49,7 +49,7 @@ class ConfigureProtocol(Protocol):
                 ``{endpoint}/v1/traces``. If omitted, reads ``PARLOT_ENDPOINT``.
             api_key: Org-scoped API key minted in Parlot **Settings → API Keys**.
                 If omitted, reads ``PARLOT_API_KEY``. Required for remote telemetry
-                bootstrap, recording grants, and self-diagnostics.
+                bootstrap and recording grants.
             capture_genai_content: Process-wide override for LLM message bodies and
                 tool input/output payloads. If ``False``, payloads are omitted while
                 preserving span durations, tokens, and turn text. Precedence: job
@@ -111,8 +111,8 @@ def base_configure(
 ) -> BaseConfigureResult:
     """Execute shared telemetry configuration common across all adapters.
 
-    Creates a ``ParlotContext``, initializes diagnostics and session log
-    collectors, and fetches remote bootstrap into ``context.runtime``.
+    Creates a ``ParlotContext``, initializes the session log
+    collector, and fetches remote bootstrap into ``context.runtime``.
 
     See ``ConfigureProtocol`` for the shared keyword surface.
 
@@ -158,7 +158,6 @@ def base_configure(
     resolved_log_level = log_level.strip().upper() if log_level else None
 
     context = ParlotContext()
-    context.diagnostics.init(endpoint=resolved_endpoint, api_key=resolved_api_key)
     context.session_logs.set_capture_logs_configure(
         resolved_capture_logs,
         log_level=resolved_log_level,

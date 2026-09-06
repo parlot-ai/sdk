@@ -74,6 +74,7 @@ export const ATTR_SESSION_AGENT_FRAMEWORK = "session.agent_framework" as const;
 export const ATTR_SESSION_AGENT_FRAMEWORK_RAW_ID = "session.agent_framework_raw_id" as const;
 export const ATTR_PARLOT_SDK_VERSION = "parlot.sdk.version" as const;
 export const ATTR_SESSION_METADATA_PREFIX = "session.metadata." as const;
+export const ATTR_SESSION_METADATA_SDK_VERSION = "session.metadata.sdk_version" as const;
 export const ATTR_SESSION_AGENT_CHAIN = "session.agent_chain" as const;
 export const ATTR_SESSION_TOPOLOGY_AGENTS = "session.topology.agents" as const;
 export const ATTR_SESSION_TOPOLOGY_TOOLS = "session.topology.tools" as const;

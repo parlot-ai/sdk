@@ -46,6 +46,27 @@ def build_resource(
     return Resource.create(attrs)
 
 
+INGESTION_PROTOCOL_VERSION = "1"
+HEADER_SDK_NAME = "x-parlot-sdk-name"
+HEADER_SDK_VERSION = "x-parlot-sdk-version"
+HEADER_INGESTION_VERSION = "x-parlot-ingestion-version"
+
+
+def build_parlot_client_headers(api_key: str = "") -> dict[str, str]:
+    """Build standard transport headers sent with Parlot telemetry exports."""
+    from parlot.core.sdk_version import resolve_parlot_sdk_version
+
+    version = resolve_parlot_sdk_version() or "unknown"
+    headers: dict[str, str] = {
+        HEADER_SDK_NAME: "parlot-python",
+        HEADER_SDK_VERSION: version,
+        HEADER_INGESTION_VERSION: INGESTION_PROTOCOL_VERSION,
+    }
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    return headers
+
+
 def build_otlp_http_exporter(
     *,
     endpoint: str,
@@ -59,9 +80,7 @@ def build_otlp_http_exporter(
             "No OTLP endpoint configured. Pass endpoint= or set the "
             "PARLOT_ENDPOINT environment variable."
         )
-    headers: dict[str, str] = {}
-    if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
+    headers = build_parlot_client_headers(api_key)
     trace_endpoint = endpoint.rstrip("/") + "/v1/traces"
     return OTLPSpanExporter(endpoint=trace_endpoint, headers=headers)
 

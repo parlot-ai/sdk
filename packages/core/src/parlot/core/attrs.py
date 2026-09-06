@@ -155,6 +155,7 @@ ATTR_PARLOT_SDK_VERSION = "parlot.sdk.version"
 
 # -- Session custom metadata (public user bag; prefix-passthrough at ingest) --
 ATTR_SESSION_METADATA_PREFIX = "session.metadata."
+ATTR_SESSION_METADATA_SDK_VERSION = "session.metadata.sdk_version"
 
 # -- OTLP metric names (Parlot contract; framework adapters map vendor usage here) --
 METRIC_USAGE_LLM_INPUT_TOKENS = "usage.llm_input_tokens"

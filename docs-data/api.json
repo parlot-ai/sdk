@@ -656,7 +656,7 @@
                           "name": "str"
                         }
                       },
-                      "description": "Org-scoped API key minted in Parlot **Settings \u2192 API Keys**.\nIf omitted, reads ``PARLOT_API_KEY``. Required for remote telemetry\nbootstrap, recording grants, and self-diagnostics.",
+                      "description": "Org-scoped API key minted in Parlot **Settings \u2192 API Keys**.\nIf omitted, reads ``PARLOT_API_KEY``. Required for remote telemetry\nbootstrap and recording grants.",
                       "name": "api_key",
                       "value": "None"
                     },
@@ -810,7 +810,7 @@
                   ]
                 }
               ],
-              "value": "Shared keyword surface for every adapter ``configure()``.\n\nArgs:\n    endpoint: Parlot OTLP collector base URL (e.g.\n        ``https://ingest.parlot.ai``). Spans export to\n        ``{endpoint}/v1/traces``. If omitted, reads ``PARLOT_ENDPOINT``.\n    api_key: Org-scoped API key minted in Parlot **Settings \u2192 API Keys**.\n        If omitted, reads ``PARLOT_API_KEY``. Required for remote telemetry\n        bootstrap, recording grants, and self-diagnostics.\n    capture_genai_content: Process-wide override for LLM message bodies and\n        tool input/output payloads. If ``False``, payloads are omitted while\n        preserving span durations, tokens, and turn text. Precedence: job\n        metadata \u2192 this kwarg \u2192 Settings \u2192 Generative AI (default: on).\n    service_name: OpenTelemetry resource ``service.name``. Defaults to\n        ``agent_id`` or a framework-specific fallback.\n    tracer_provider: Existing OpenTelemetry ``TracerProvider`` to adopt. If\n        omitted, adapters build one with Parlot's OTLP exporter (or adopt an\n        already-registered provider when another adapter configured first).\n    agent_id: Canonical deployment identity stamped on ``session.agent_id``.\n        If omitted, adapters may derive from framework config or\n        ``PARLOT_AGENT_ID``.\n    version: Deployment version stamped on ``gen_ai.agent.version``.\n        Precedence: this kwarg \u2192 ``__main__.__version__`` / ``VERSION`` \u2192\n        ``PARLOT_AGENT_VERSION`` \u2192 local git short SHA (dev only).\n    capture_logs: Intercept Python ``logging`` during active sessions and\n        stream to the session Logs tab. Boolean or agent-id glob patterns.\n        Precedence: job metadata \u2192 this kwarg \u2192 Settings \u2192 Logs (default: on).\n    log_level: Minimum level for session log capture (e.g. ``\"INFO\"``,\n        ``\"WARNING\"``). Defaults to ``\"INFO\"``.\n    **kwargs: Framework-specific options (ignored by the shared surface)."
+              "value": "Shared keyword surface for every adapter ``configure()``.\n\nArgs:\n    endpoint: Parlot OTLP collector base URL (e.g.\n        ``https://ingest.parlot.ai``). Spans export to\n        ``{endpoint}/v1/traces``. If omitted, reads ``PARLOT_ENDPOINT``.\n    api_key: Org-scoped API key minted in Parlot **Settings \u2192 API Keys**.\n        If omitted, reads ``PARLOT_API_KEY``. Required for remote telemetry\n        bootstrap and recording grants.\n    capture_genai_content: Process-wide override for LLM message bodies and\n        tool input/output payloads. If ``False``, payloads are omitted while\n        preserving span durations, tokens, and turn text. Precedence: job\n        metadata \u2192 this kwarg \u2192 Settings \u2192 Generative AI (default: on).\n    service_name: OpenTelemetry resource ``service.name``. Defaults to\n        ``agent_id`` or a framework-specific fallback.\n    tracer_provider: Existing OpenTelemetry ``TracerProvider`` to adopt. If\n        omitted, adapters build one with Parlot's OTLP exporter (or adopt an\n        already-registered provider when another adapter configured first).\n    agent_id: Canonical deployment identity stamped on ``session.agent_id``.\n        If omitted, adapters may derive from framework config or\n        ``PARLOT_AGENT_ID``.\n    version: Deployment version stamped on ``gen_ai.agent.version``.\n        Precedence: this kwarg \u2192 ``__main__.__version__`` / ``VERSION`` \u2192\n        ``PARLOT_AGENT_VERSION`` \u2192 local git short SHA (dev only).\n    capture_logs: Intercept Python ``logging`` during active sessions and\n        stream to the session Logs tab. Boolean or agent-id glob patterns.\n        Precedence: job metadata \u2192 this kwarg \u2192 Settings \u2192 Logs (default: on).\n    log_level: Minimum level for session log capture (e.g. ``\"INFO\"``,\n        ``\"WARNING\"``). Defaults to ``\"INFO\"``.\n    **kwargs: Framework-specific options (ignored by the shared surface)."
             },
             "endlineno": 75,
             "filepath": "packages/core/src/parlot/core/configure.py",
@@ -1156,7 +1156,7 @@
           "parsed": [
             {
               "kind": "text",
-              "value": "Execute shared telemetry configuration common across all adapters.\n\nCreates a ``ParlotContext``, initializes diagnostics and session log\ncollectors, and fetches remote bootstrap into ``context.runtime``.\n\nSee ``ConfigureProtocol`` for the shared keyword surface."
+              "value": "Execute shared telemetry configuration common across all adapters.\n\nCreates a ``ParlotContext``, initializes the session log\ncollector, and fetches remote bootstrap into ``context.runtime``.\n\nSee ``ConfigureProtocol`` for the shared keyword surface."
             },
             {
               "kind": "parameters",
@@ -1342,9 +1342,9 @@
               ]
             }
           ],
-          "value": "Execute shared telemetry configuration common across all adapters.\n\nCreates a ``ParlotContext``, initializes diagnostics and session log\ncollectors, and fetches remote bootstrap into ``context.runtime``.\n\nSee ``ConfigureProtocol`` for the shared keyword surface.\n\nArgs:\n    endpoint: Parlot OTLP collector base URL. If omitted, reads\n        ``PARLOT_ENDPOINT``.\n    api_key: Org-scoped API key. If omitted, reads ``PARLOT_API_KEY``.\n    capture_genai_content: Process-wide GenAI content capture override.\n    tracer_provider: Existing ``TracerProvider`` to adopt, if any.\n    agent_id: Canonical deployment identity for ``session.agent_id``.\n    version: Deployment version for ``gen_ai.agent.version``.\n    capture_logs: Session log capture policy (bool or agent-id globs).\n    log_level: Minimum level for session log capture.\n\nReturns:\n    Resolved endpoint, credentials, provider, and capture settings for the\n    calling adapter."
+          "value": "Execute shared telemetry configuration common across all adapters.\n\nCreates a ``ParlotContext``, initializes the session log\ncollector, and fetches remote bootstrap into ``context.runtime``.\n\nSee ``ConfigureProtocol`` for the shared keyword surface.\n\nArgs:\n    endpoint: Parlot OTLP collector base URL. If omitted, reads\n        ``PARLOT_ENDPOINT``.\n    api_key: Org-scoped API key. If omitted, reads ``PARLOT_API_KEY``.\n    capture_genai_content: Process-wide GenAI content capture override.\n    tracer_provider: Existing ``TracerProvider`` to adopt, if any.\n    agent_id: Canonical deployment identity for ``session.agent_id``.\n    version: Deployment version for ``gen_ai.agent.version``.\n    capture_logs: Session log capture policy (bool or agent-id globs).\n    log_level: Minimum level for session log capture.\n\nReturns:\n    Resolved endpoint, credentials, provider, and capture settings for the\n    calling adapter."
         },
-        "endlineno": 184,
+        "endlineno": 183,
         "filepath": "packages/core/src/parlot/core/configure.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -8998,7 +8998,7 @@
       "_build_provider": {
         "analysis": "static",
         "decorators": [],
-        "endlineno": 305,
+        "endlineno": 303,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -9421,7 +9421,7 @@
       "_install_participant_escalation_hooks": {
         "analysis": "static",
         "decorators": [],
-        "endlineno": 428,
+        "endlineno": 426,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -9432,7 +9432,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "function",
-        "lineno": 388,
+        "lineno": 386,
         "name": "_install_participant_escalation_hooks",
         "parameters": [
           {
@@ -9456,8 +9456,8 @@
         "analysis": "static",
         "decorators": [],
         "docstring": {
-          "endlineno": 341,
-          "lineno": 341,
+          "endlineno": 339,
+          "lineno": 339,
           "parsed": [
             {
               "kind": "text",
@@ -9466,7 +9466,7 @@
           ],
           "value": "Compare JSONL is wired through the production metrics emit intercept."
         },
-        "endlineno": 345,
+        "endlineno": 343,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -9477,7 +9477,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "function",
-        "lineno": 340,
+        "lineno": 338,
         "name": "_install_telemetry_compare",
         "parameters": [],
         "path": "parlot.instrumentation.livekit._auto._install_telemetry_compare",
@@ -9527,7 +9527,7 @@
       "_is_sip_participant": {
         "analysis": "static",
         "decorators": [],
-        "endlineno": 385,
+        "endlineno": 383,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -9538,7 +9538,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "function",
-        "lineno": 375,
+        "lineno": 373,
         "name": "_is_sip_participant",
         "parameters": [
           {
@@ -9599,7 +9599,7 @@
       "_patch_agent_session_with_tracer": {
         "analysis": "static",
         "decorators": [],
-        "endlineno": 337,
+        "endlineno": 335,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -9610,7 +9610,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "function",
-        "lineno": 321,
+        "lineno": 319,
         "name": "_patch_agent_session_with_tracer",
         "parameters": [
           {
@@ -9629,7 +9629,7 @@
       "_patch_job_context_connect": {
         "analysis": "static",
         "decorators": [],
-        "endlineno": 372,
+        "endlineno": 370,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -9640,7 +9640,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "function",
-        "lineno": 348,
+        "lineno": 346,
         "name": "_patch_job_context_connect",
         "parameters": [],
         "path": "parlot.instrumentation.livekit._auto._patch_job_context_connect",
@@ -9652,7 +9652,7 @@
       "_register_with_livekit": {
         "analysis": "static",
         "decorators": [],
-        "endlineno": 318,
+        "endlineno": 316,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -9663,7 +9663,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "function",
-        "lineno": 308,
+        "lineno": 306,
         "name": "_register_with_livekit",
         "parameters": [
           {
@@ -10267,8 +10267,8 @@
         "analysis": "static",
         "decorators": [],
         "docstring": {
-          "endlineno": 432,
-          "lineno": 432,
+          "endlineno": 430,
+          "lineno": 430,
           "parsed": [
             {
               "kind": "text",
@@ -10277,7 +10277,7 @@
           ],
           "value": "Canonical deployment id from ``configure(agent_id=...)`` if set."
         },
-        "endlineno": 433,
+        "endlineno": 431,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -10288,7 +10288,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "function",
-        "lineno": 431,
+        "lineno": 429,
         "name": "configured_agent_id",
         "parameters": [],
         "path": "parlot.instrumentation.livekit._auto.configured_agent_id",
@@ -10305,8 +10305,8 @@
         "analysis": "static",
         "decorators": [],
         "docstring": {
-          "endlineno": 437,
-          "lineno": 437,
+          "endlineno": 435,
+          "lineno": 435,
           "parsed": [
             {
               "kind": "text",
@@ -10315,7 +10315,7 @@
           ],
           "value": "Deployment version resolved at ``configure()`` time."
         },
-        "endlineno": 438,
+        "endlineno": 436,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -10326,7 +10326,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "function",
-        "lineno": 436,
+        "lineno": 434,
         "name": "configured_agent_version",
         "parameters": [],
         "path": "parlot.instrumentation.livekit._auto.configured_agent_version",
@@ -10343,8 +10343,8 @@
         "analysis": "static",
         "decorators": [],
         "docstring": {
-          "endlineno": 447,
-          "lineno": 447,
+          "endlineno": 445,
+          "lineno": 445,
           "parsed": [
             {
               "kind": "text",
@@ -10353,7 +10353,7 @@
           ],
           "value": "Content capture override from ``configure(capture_genai_content=...)`` if set."
         },
-        "endlineno": 448,
+        "endlineno": 446,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -10364,7 +10364,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "function",
-        "lineno": 446,
+        "lineno": 444,
         "name": "configured_capture_genai_content",
         "parameters": [],
         "path": "parlot.instrumentation.livekit._auto.configured_capture_genai_content",
@@ -10386,8 +10386,8 @@
         "analysis": "static",
         "decorators": [],
         "docstring": {
-          "endlineno": 452,
-          "lineno": 452,
+          "endlineno": 450,
+          "lineno": 450,
           "parsed": [
             {
               "kind": "text",
@@ -10396,7 +10396,7 @@
           ],
           "value": "Log capture override from ``configure(capture_logs=...)`` if set."
         },
-        "endlineno": 453,
+        "endlineno": 451,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -10407,7 +10407,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "function",
-        "lineno": 451,
+        "lineno": 449,
         "name": "configured_capture_logs",
         "parameters": [],
         "path": "parlot.instrumentation.livekit._auto.configured_capture_logs",
@@ -10446,8 +10446,8 @@
         "analysis": "static",
         "decorators": [],
         "docstring": {
-          "endlineno": 462,
-          "lineno": 462,
+          "endlineno": 460,
+          "lineno": 460,
           "parsed": [
             {
               "kind": "text",
@@ -10456,7 +10456,7 @@
           ],
           "value": "``ParlotContext`` created by the last successful ``configure()``."
         },
-        "endlineno": 463,
+        "endlineno": 461,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -10467,7 +10467,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "function",
-        "lineno": 461,
+        "lineno": 459,
         "name": "configured_context",
         "parameters": [],
         "path": "parlot.instrumentation.livekit._auto.configured_context",
@@ -10489,8 +10489,8 @@
         "analysis": "static",
         "decorators": [],
         "docstring": {
-          "endlineno": 457,
-          "lineno": 457,
+          "endlineno": 455,
+          "lineno": 455,
           "parsed": [
             {
               "kind": "text",
@@ -10499,7 +10499,7 @@
           ],
           "value": "Log level override from ``configure(log_level=...)`` if set."
         },
-        "endlineno": 458,
+        "endlineno": 456,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -10510,7 +10510,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "function",
-        "lineno": 456,
+        "lineno": 454,
         "name": "configured_log_level",
         "parameters": [],
         "path": "parlot.instrumentation.livekit._auto.configured_log_level",
@@ -10532,8 +10532,8 @@
         "analysis": "static",
         "decorators": [],
         "docstring": {
-          "endlineno": 442,
-          "lineno": 442,
+          "endlineno": 440,
+          "lineno": 440,
           "parsed": [
             {
               "kind": "text",
@@ -10542,7 +10542,7 @@
           ],
           "value": "Recording override from ``configure(record=...)`` if set."
         },
-        "endlineno": 443,
+        "endlineno": 441,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -10553,7 +10553,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "function",
-        "lineno": 441,
+        "lineno": 439,
         "name": "configured_record",
         "parameters": [],
         "path": "parlot.instrumentation.livekit._auto.configured_record",
@@ -10693,8 +10693,8 @@
         "analysis": "static",
         "decorators": [],
         "docstring": {
-          "endlineno": 467,
-          "lineno": 467,
+          "endlineno": 465,
+          "lineno": 465,
           "parsed": [
             {
               "kind": "text",
@@ -10703,7 +10703,7 @@
           ],
           "value": "Test helper to install or clear the configured ``ParlotContext``."
         },
-        "endlineno": 469,
+        "endlineno": 467,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_auto.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -10714,7 +10714,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "function",
-        "lineno": 466,
+        "lineno": 464,
         "name": "set_configured_context",
         "parameters": [
           {
@@ -11026,8 +11026,8 @@
         "bases": [],
         "decorators": [],
         "docstring": {
-          "endlineno": 170,
-          "lineno": 170,
+          "endlineno": 159,
+          "lineno": 159,
           "parsed": [
             {
               "kind": "text",
@@ -11036,7 +11036,7 @@
           ],
           "value": "Subscribes to AgentSession events and drives Parlot semantic telemetry."
         },
-        "endlineno": 497,
+        "endlineno": 479,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -11047,12 +11047,12 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "class",
-        "lineno": 169,
+        "lineno": 158,
         "members": {
           "__init__": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 175,
+            "endlineno": 164,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -11063,7 +11063,7 @@
             "is_special": true,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 172,
+            "lineno": 161,
             "name": "__init__",
             "parameters": [
               {
@@ -11094,7 +11094,7 @@
           "_emit_handoff_span": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 394,
+            "endlineno": 376,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -11105,7 +11105,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 340,
+            "lineno": 322,
             "name": "_emit_handoff_span",
             "parameters": [
               {
@@ -11134,7 +11134,7 @@
           "_on_agent_state_changed": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 282,
+            "endlineno": 264,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -11145,7 +11145,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 237,
+            "lineno": 219,
             "name": "_on_agent_state_changed",
             "parameters": [
               {
@@ -11174,7 +11174,7 @@
           "_on_close": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 497,
+            "endlineno": 479,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -11185,7 +11185,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 463,
+            "lineno": 445,
             "name": "_on_close",
             "parameters": [
               {
@@ -11214,7 +11214,7 @@
           "_on_conversation_item_added": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 338,
+            "endlineno": 320,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -11225,7 +11225,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 284,
+            "lineno": 266,
             "name": "_on_conversation_item_added",
             "parameters": [
               {
@@ -11254,7 +11254,7 @@
           "_on_error": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 461,
+            "endlineno": 443,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -11265,7 +11265,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 444,
+            "lineno": 426,
             "name": "_on_error",
             "parameters": [
               {
@@ -11294,7 +11294,7 @@
           "_on_function_tools_executed": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 415,
+            "endlineno": 397,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -11305,7 +11305,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 406,
+            "lineno": 388,
             "name": "_on_function_tools_executed",
             "parameters": [
               {
@@ -11334,7 +11334,7 @@
           "_on_session_usage_updated": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 442,
+            "endlineno": 424,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -11345,7 +11345,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 417,
+            "lineno": 399,
             "name": "_on_session_usage_updated",
             "parameters": [
               {
@@ -11374,7 +11374,7 @@
           "_on_user_input_transcribed": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 404,
+            "endlineno": 386,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -11385,7 +11385,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 396,
+            "lineno": 378,
             "name": "_on_user_input_transcribed",
             "parameters": [
               {
@@ -11413,7 +11413,7 @@
           },
           "_processor": {
             "analysis": "static",
-            "endlineno": 173,
+            "endlineno": 162,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -11427,7 +11427,7 @@
             "labels": [
               "instance-attribute"
             ],
-            "lineno": 173,
+            "lineno": 162,
             "name": "_processor",
             "path": "parlot.instrumentation.livekit._events.LiveKitEventBridge._processor",
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
@@ -11451,7 +11451,7 @@
               "operator": "|",
               "right": "None"
             },
-            "endlineno": 175,
+            "endlineno": 164,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -11465,7 +11465,7 @@
             "labels": [
               "instance-attribute"
             ],
-            "lineno": 175,
+            "lineno": 164,
             "name": "_session",
             "path": "parlot.instrumentation.livekit._events.LiveKitEventBridge._session",
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
@@ -11475,7 +11475,7 @@
           },
           "_tracer": {
             "analysis": "static",
-            "endlineno": 174,
+            "endlineno": 163,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -11489,7 +11489,7 @@
             "labels": [
               "instance-attribute"
             ],
-            "lineno": 174,
+            "lineno": 163,
             "name": "_tracer",
             "path": "parlot.instrumentation.livekit._events.LiveKitEventBridge._tracer",
             "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
@@ -11504,7 +11504,7 @@
           "install": {
             "analysis": "static",
             "decorators": [],
-            "endlineno": 235,
+            "endlineno": 217,
             "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
             "is_class_private": false,
             "is_deprecated": false,
@@ -11515,7 +11515,7 @@
             "is_special": false,
             "is_wildcard_exposed": false,
             "kind": "function",
-            "lineno": 177,
+            "lineno": 166,
             "name": "install",
             "parameters": [
               {
@@ -11626,7 +11626,7 @@
       },
       "_CLOSE_REASON_MAP": {
         "analysis": "static",
-        "endlineno": 55,
+        "endlineno": 44,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -11640,7 +11640,7 @@
         "labels": [
           "module-attribute"
         ],
-        "lineno": 49,
+        "lineno": 38,
         "name": "_CLOSE_REASON_MAP",
         "path": "parlot.instrumentation.livekit._events._CLOSE_REASON_MAP",
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
@@ -11690,7 +11690,7 @@
             "implicit": true
           }
         },
-        "endlineno": 112,
+        "endlineno": 101,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -11704,7 +11704,7 @@
         "labels": [
           "module-attribute"
         ],
-        "lineno": 101,
+        "lineno": 90,
         "name": "_ITEM_METRIC_ALIASES",
         "path": "parlot.instrumentation.livekit._events._ITEM_METRIC_ALIASES",
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
@@ -11740,7 +11740,7 @@
       },
       "_ITEM_METRIC_SOURCE_KEYS": {
         "analysis": "static",
-        "endlineno": 99,
+        "endlineno": 88,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -11754,7 +11754,7 @@
         "labels": [
           "module-attribute"
         ],
-        "lineno": 86,
+        "lineno": 75,
         "name": "_ITEM_METRIC_SOURCE_KEYS",
         "path": "parlot.instrumentation.livekit._events._ITEM_METRIC_SOURCE_KEYS",
         "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
@@ -11782,7 +11782,7 @@
       "_agent_state_value": {
         "analysis": "static",
         "decorators": [],
-        "endlineno": 154,
+        "endlineno": 143,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -11793,7 +11793,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "function",
-        "lineno": 150,
+        "lineno": 139,
         "name": "_agent_state_value",
         "parameters": [
           {
@@ -11820,7 +11820,7 @@
       "_item_metrics": {
         "analysis": "static",
         "decorators": [],
-        "endlineno": 137,
+        "endlineno": 126,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -11831,7 +11831,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "function",
-        "lineno": 115,
+        "lineno": 104,
         "name": "_item_metrics",
         "parameters": [
           {
@@ -11896,7 +11896,7 @@
       "_message_text": {
         "analysis": "static",
         "decorators": [],
-        "endlineno": 83,
+        "endlineno": 72,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -11907,7 +11907,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "function",
-        "lineno": 58,
+        "lineno": 47,
         "name": "_message_text",
         "parameters": [
           {
@@ -11934,7 +11934,7 @@
       "_normalize_close_reason": {
         "analysis": "static",
         "decorators": [],
-        "endlineno": 147,
+        "endlineno": 136,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -11945,7 +11945,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "function",
-        "lineno": 140,
+        "lineno": 129,
         "name": "_normalize_close_reason",
         "parameters": [
           {
@@ -11969,60 +11969,10 @@
         },
         "runtime": true
       },
-      "_record_event_diagnostic": {
-        "analysis": "static",
-        "decorators": [],
-        "endlineno": 46,
-        "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
-        "is_class_private": false,
-        "is_deprecated": false,
-        "is_exported": false,
-        "is_imported": false,
-        "is_private": true,
-        "is_public": false,
-        "is_special": false,
-        "is_wildcard_exposed": false,
-        "kind": "function",
-        "lineno": 38,
-        "name": "_record_event_diagnostic",
-        "parameters": [
-          {
-            "annotation": "'LiveKitGenAIProcessor'",
-            "default": null,
-            "kind": "positional or keyword",
-            "name": "plugin"
-          },
-          {
-            "annotation": {
-              "cls": "ExprName",
-              "member": "_record_event_diagnostic",
-              "name": "str"
-            },
-            "default": null,
-            "kind": "positional or keyword",
-            "name": "kind"
-          },
-          {
-            "annotation": {
-              "cls": "ExprName",
-              "member": "_record_event_diagnostic",
-              "name": "BaseException"
-            },
-            "default": null,
-            "kind": "positional or keyword",
-            "name": "exc"
-          }
-        ],
-        "path": "parlot.instrumentation.livekit._events._record_event_diagnostic",
-        "relative_filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
-        "relative_package_filepath": "parlot/instrumentation/livekit/_events.py",
-        "returns": "None",
-        "runtime": true
-      },
       "_resolve_job_context": {
         "analysis": "static",
         "decorators": [],
-        "endlineno": 166,
+        "endlineno": 155,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -12033,7 +11983,7 @@
         "is_special": false,
         "is_wildcard_exposed": false,
         "kind": "function",
-        "lineno": 157,
+        "lineno": 146,
         "name": "_resolve_job_context",
         "parameters": [
           {
@@ -12142,8 +12092,8 @@
         "analysis": "static",
         "decorators": [],
         "docstring": {
-          "endlineno": 515,
-          "lineno": 505,
+          "endlineno": 497,
+          "lineno": 487,
           "parsed": [
             {
               "kind": "text",
@@ -12176,7 +12126,7 @@
           ],
           "value": "Install all AgentSession event listeners for Parlot instrumentation.\n\n``configure()`` patches ``AgentSession.__init__`` to invoke this\nautomatically. Call directly only when manually instantiating unpatched\nsessions.\n\nArgs:\n    session: LiveKit ``AgentSession`` instance to instrument.\n    processor: Span processor that owns session/turn enrichment state.\n    tracer: OpenTelemetry tracer used for Parlot contract spans."
         },
-        "endlineno": 516,
+        "endlineno": 498,
         "filepath": "packages/instrumentation-livekit/src/parlot/instrumentation/livekit/_events.py",
         "is_class_private": false,
         "is_deprecated": false,
@@ -12187,7 +12137,7 @@
         "is_special": false,
         "is_wildcard_exposed": true,
         "kind": "function",
-        "lineno": 500,
+        "lineno": 482,
         "name": "install_session_hooks",
         "parameters": [
           {

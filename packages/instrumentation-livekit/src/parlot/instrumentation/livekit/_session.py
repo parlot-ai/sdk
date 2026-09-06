@@ -277,6 +277,7 @@ def emit_parlot_session_close_span(
     attrs[ATTR_SESSION_TOTAL_OUTPUT_TOKENS] = state.total_output_tokens
     stamp_session_metadata_attrs(attrs, getattr(state, "custom_metadata", None))
     span = tracer.start_span(SPAN_PARLOT_SESSION_CLOSE, attributes=attrs)
+    stamp_session_sdk_version(span, state)
     if end_time is not None and hasattr(span, "end"):
         span.end(end_time=end_time)
     else:

@@ -31,6 +31,7 @@ from parlot.core.attrs import (
     SPAN_PARLOT_TURN,
 )
 from parlot.core.ids import new_session_id
+from parlot.core.sdk_version import stamp_session_sdk_version
 from parlot.core.turn_emit import stamp_turn_utterance_text
 from parlot.core.session import (
     SessionState,
@@ -111,7 +112,7 @@ def _ensure_atexit() -> None:
     _atexit_registered = True
 
 
-def _stamp_session_identity(span: Span, *, thread_id: str) -> None:
+def _stamp_session_identity(span: Span, *, thread_id: str, state: Any | None = None) -> None:
     span.set_attribute(ATTR_AGENT_FRAMEWORK, LANGGRAPH_FRAMEWORK)
     span.set_attribute(ATTR_SESSION_AGENT_FRAMEWORK, LANGGRAPH_FRAMEWORK)
     # Channel/modality are transport concerns — not implied by LangGraph.
@@ -129,6 +130,7 @@ def _stamp_session_identity(span: Span, *, thread_id: str) -> None:
         span.set_attribute(ATTR_SESSION_AGENT_FRAMEWORK_RAW_ID, _configured_agent_id)
     if _configured_agent_version:
         span.set_attribute(ATTR_GEN_AI_AGENT_VERSION, _configured_agent_version)
+    stamp_session_sdk_version(span, state)
 
 
 def ensure_session(thread_id: str) -> _LangGraphSessionState | None:
@@ -158,7 +160,7 @@ def ensure_session(thread_id: str) -> _LangGraphSessionState | None:
     span.set_attribute(ATTR_SESSION_ID, session_id)
     span.set_attribute(ATTR_SESSION_CONVERSATION_ID, conversation_id)
     span.set_attribute(ATTR_GEN_AI_CONVERSATION_ID, conversation_id)
-    _stamp_session_identity(span, thread_id=thread_id)
+    _stamp_session_identity(span, thread_id=thread_id, state=state)
     _sessions_by_thread[thread_id] = (span, state)
     set_active_session(span, state)
     _ensure_atexit()
@@ -227,7 +229,7 @@ def close_session(thread_id: str, *, reason: str = "completed") -> None:
         close.set_attribute(ATTR_SESSION_ID, state.session_id)
         close.set_attribute(ATTR_SESSION_CONVERSATION_ID, state.conversation_id)
         close.set_attribute("session.close_reason", reason)
-        _stamp_session_identity(close, thread_id=thread_id)
+        _stamp_session_identity(close, thread_id=thread_id, state=state)
     finally:
         close.end()
     try:

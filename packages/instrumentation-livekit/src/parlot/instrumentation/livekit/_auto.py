@@ -247,14 +247,13 @@ def _build_provider(
     from ._export import QuietOTLPSpanExporter
     from ._export_filter import EnrichingExportSpanExporter
     from ._export_sanitize import SanitizeVendorAttrsSpanExporter
+    from parlot.core.provider import build_parlot_client_headers
     from ._metrics import ParlotMetricsRecorder, build_meter_provider
     from ._processor import LiveKitGenAIProcessor
     from ._session import set_span_context_attach_enabled
     from ._turn_trace_export import TurnTraceRemappingExporter
 
-    headers = {}
-    if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
+    headers = build_parlot_client_headers(api_key)
 
     resource = build_resource(
         service_name=service_name,
@@ -275,7 +274,6 @@ def _build_provider(
     exporter = QuietOTLPSpanExporter(
         enriching_exporter,
         endpoint_label=trace_endpoint,
-        diagnostics=context.diagnostics,
     )
 
     from opentelemetry.sdk.trace import TracerProvider
@@ -288,7 +286,7 @@ def _build_provider(
     set_span_context_attach_enabled(attach_ok)
 
     meter_provider = build_meter_provider(
-        endpoint, headers, resource, diagnostics=context.diagnostics
+        endpoint, headers, resource
     )
     # Parlot metrics use a dedicated MeterProvider — do not call
     # otel_metrics.set_meter_provider() so LiveKit's lk.agents.usage.* counters
