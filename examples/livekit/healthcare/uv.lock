@@ -1499,9 +1499,26 @@ wheels = [
 ]
 
 [[package]]
-name = "parlot-core"
+name = "parlot"
 version = "0.1.1"
-source = { editable = "../../../packages/core" }
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "parlot-core" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ae/68/e380e0af208927e573e6f723c8b17056141140b9f9494b106dee8b8eb964/parlot-0.1.1.tar.gz", hash = "sha256:179277990eafec703027e40f1a6c3ef7690d790cedf870077791e335fd8df3a3", size = 2781, upload-time = "2026-08-26T20:28:58.205Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/11/b1/844e59344e2806ba700312b90b557a63a42f248ae5a6a3c2697d4094b9bd/parlot-0.1.1-py3-none-any.whl", hash = "sha256:9ee5c82312764f1a63603df62bf0f9a713c2b3fe5d35917df0981214697de4b1", size = 2790, upload-time = "2026-08-26T20:28:57.032Z" },
+]
+
+[package.optional-dependencies]
+livekit = [
+    { name = "parlot-instrumentation-livekit" },
+]
+
+[[package]]
+name = "parlot-core"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "opentelemetry-api" },
@@ -1509,17 +1526,10 @@ dependencies = [
     { name = "opentelemetry-sdk" },
     { name = "opentelemetry-semantic-conventions" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "httpx", specifier = ">=0.27.0" },
-    { name = "opentelemetry-api", specifier = ">=1.27.0" },
-    { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.27.0" },
-    { name = "opentelemetry-sdk", specifier = ">=1.27.0" },
-    { name = "opentelemetry-semantic-conventions", specifier = ">=0.48b0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+sdist = { url = "https://files.pythonhosted.org/packages/a4/86/c4844e62fc297f5fcf0b86103d37263b9fe8408083aa346ae0faed5eb14f/parlot_core-0.2.0.tar.gz", hash = "sha256:d72303549069ce812475a5118a11fc375e01bfb13ffc4be3c8554187671b61cf", size = 27521, upload-time = "2026-09-03T17:36:21.512Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7b/81/35f893998913df56a998e490f85b773278d45c919f934857793831f2f3ab/parlot_core-0.2.0-py3-none-any.whl", hash = "sha256:cc25af1d70880e76068e8d15a39dffd5ed0b081c9ff3b81cccc9d180969fc6e5", size = 37589, upload-time = "2026-09-03T17:36:20.051Z" },
 ]
-provides-extras = ["dev"]
 
 [[package]]
 name = "parlot-example-healthcare"
@@ -1527,6 +1537,7 @@ version = "0.0.0"
 source = { virtual = "." }
 dependencies = [
     { name = "livekit-agents", extra = ["silero"] },
+    { name = "parlot", extra = ["livekit"] },
     { name = "parlot-core" },
     { name = "parlot-instrumentation-livekit" },
     { name = "pydantic" },
@@ -1537,8 +1548,9 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "livekit-agents", extras = ["silero"] },
-    { name = "parlot-core", editable = "../../../packages/core" },
-    { name = "parlot-instrumentation-livekit", editable = "../../../packages/instrumentation-livekit" },
+    { name = "parlot", extras = ["livekit"], specifier = ">=0.1.1" },
+    { name = "parlot-core" },
+    { name = "parlot-instrumentation-livekit" },
     { name = "pydantic", specifier = ">=2.0" },
     { name = "python-dotenv", specifier = ">=1.0" },
     { name = "pyyaml", specifier = ">=6.0" },
@@ -1546,8 +1558,8 @@ requires-dist = [
 
 [[package]]
 name = "parlot-instrumentation-livekit"
-version = "0.1.1"
-source = { editable = "../../../packages/instrumentation-livekit" }
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "livekit-agents" },
@@ -1556,19 +1568,10 @@ dependencies = [
     { name = "opentelemetry-sdk" },
     { name = "parlot-core" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "httpx", specifier = ">=0.27.0" },
-    { name = "livekit-agents", specifier = ">=0.8.0" },
-    { name = "opentelemetry-api", specifier = ">=1.27.0" },
-    { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.27.0" },
-    { name = "opentelemetry-sdk", specifier = ">=1.27.0" },
-    { name = "parlot-core", editable = "../../../packages/core" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.24" },
+sdist = { url = "https://files.pythonhosted.org/packages/70/66/dc5bb53191ac6ed49ee00f5cc4639582b1dd3ba1e2fdd2143fb00e5907b3/parlot_instrumentation_livekit-0.2.0.tar.gz", hash = "sha256:e37c87b3a3a39a1e20de5456df2500bb39f45aad06580651b0663adb8ef5a6ec", size = 52415, upload-time = "2026-09-03T17:36:21.966Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9c/39/d77d98b20871569975d9ce8d6745d218f60f26d2729c5534b41ec0841d62/parlot_instrumentation_livekit-0.2.0-py3-none-any.whl", hash = "sha256:ea7966048e9d4c8b7aeac239eac27d06af044cc4855b9ddfa11955002a7f5e8f", size = 68765, upload-time = "2026-09-03T17:36:20.663Z" },
 ]
-provides-extras = ["dev"]
 
 [[package]]
 name = "prometheus-client"
