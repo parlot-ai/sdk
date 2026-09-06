@@ -1,0 +1,19 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": [
+    "../packages/core-ts/src/index.ts",
+    "../packages/core-ts/src/livekit.ts"
+  ],
+  "entryPointStrategy": "expand",
+  "tsconfig": "../packages/core-ts/tsconfig.json",
+  "out": "content/docs/sdk/typescript",
+  "plugin": ["typedoc-plugin-markdown", "typedoc-plugin-frontmatter"],
+  "readme": "none",
+  "fileExtension": ".mdx",
+  "gitRevision": "main",
+  "cleanOutputDir": true,
+  "outputFileStrategy": "modules",
+  "frontmatterGlobals": {
+    "title": "TypeScript SDK Reference"
+  }
+}

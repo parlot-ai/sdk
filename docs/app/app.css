@@ -1,0 +1,88 @@
+@import 'tailwindcss';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/600.css';
+@import '@fontsource/jetbrains-mono/700.css';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+@theme {
+  --color-fd-background: #f4f8fc;
+  --color-fd-foreground: #00012f;
+  --color-fd-muted: #eef4fa;
+  --color-fd-muted-foreground: #4a5d78;
+  --color-fd-popover: #ffffff;
+  --color-fd-popover-foreground: #00012f;
+  --color-fd-card: #ffffff;
+  --color-fd-card-foreground: #00012f;
+  --color-fd-border: #d5e0ec;
+  --color-fd-primary: #007ab8;
+  --color-fd-primary-foreground: #ffffff;
+  --color-fd-secondary: #eef4fa;
+  --color-fd-secondary-foreground: #00012f;
+  --color-fd-accent: #e2ebf5;
+  --color-fd-accent-foreground: #00012f;
+  --color-fd-ring: #00a9f9;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.dark, [data-theme='dark'] {
+  --color-fd-background: #060b16;
+  --color-fd-foreground: #e8eef8;
+  --color-fd-muted: #1a2438;
+  --color-fd-muted-foreground: #a8b8d0;
+  --color-fd-popover: #0c1424;
+  --color-fd-popover-foreground: #e8eef8;
+  --color-fd-card: #0c1424;
+  --color-fd-card-foreground: #e8eef8;
+  --color-fd-border: #243044;
+  --color-fd-primary: #3db8f5;
+  --color-fd-primary-foreground: #001528;
+  --color-fd-secondary: #121c30;
+  --color-fd-secondary-foreground: #e8eef8;
+  --color-fd-accent: #1e2b42;
+  --color-fd-accent-foreground: #e8eef8;
+  --color-fd-ring: #3db8f5;
+}
+
+button[data-search-full] {
+  border: 1px solid var(--color-fd-border) !important;
+  background-color: var(--color-fd-secondary) !important;
+  color: var(--color-fd-muted-foreground) !important;
+}
+
+button[data-search-full]:hover {
+  background-color: var(--color-fd-accent) !important;
+  color: var(--color-fd-foreground) !important;
+}
+
+button[data-search-full] kbd {
+  border: 1px solid var(--color-fd-border) !important;
+  background-color: var(--color-fd-card) !important;
+  color: var(--color-fd-muted-foreground) !important;
+}
+
+button[data-search-full]:hover kbd {
+  background-color: var(--color-fd-background) !important;
+  color: var(--color-fd-foreground) !important;
+  border-color: var(--color-fd-border) !important;
+}
+
+html {
+  scrollbar-gutter: stable;
+  font-family: var(--font-sans);
+}
+
+code, kbd, samp, pre {
+  font-family: var(--font-mono);
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}

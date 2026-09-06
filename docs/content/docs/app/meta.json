@@ -1,0 +1,8 @@
+{
+  "title": "App Guide",
+  "root": true,
+  "pages": [
+    "index",
+    "conversation-boundaries"
+  ]
+}
