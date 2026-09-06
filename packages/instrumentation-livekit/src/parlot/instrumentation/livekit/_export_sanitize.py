@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Sequence
+from typing import Sequence, cast
 
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter, SpanExportResult
@@ -45,7 +45,7 @@ class SanitizeVendorAttrsSpanExporter(SpanExporter):
         if not spans:
             return SpanExportResult.SUCCESS
         cleaned = [_SanitizedReadableSpan(span) for span in spans]
-        return self._exporter.export(cleaned)
+        return self._exporter.export(cast(Sequence[ReadableSpan], cleaned))
 
     def shutdown(self) -> None:
         self._exporter.shutdown()

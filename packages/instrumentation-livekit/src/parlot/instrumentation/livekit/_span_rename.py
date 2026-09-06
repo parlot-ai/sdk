@@ -88,22 +88,22 @@ def apply_livekit_span_rename(span: ReadableSpan) -> None:
     if exported != native:
         span._name = exported
     stage = native_stage_for_span(native)
+    span_attrs = getattr(span, "_attributes", None)
+    if span_attrs is None:
+        span_attrs = {}
+        span._attributes = span_attrs
+    if not isinstance(span_attrs, dict):
+        return
     if stage and not (attrs.get(ATTR_AGENT_STAGE)):
-        if span._attributes is None:
-            span._attributes = {}
-        span._attributes[ATTR_AGENT_STAGE] = stage
+        span_attrs[ATTR_AGENT_STAGE] = stage
     if native in NATIVE_LLM_SPANS:
-        if span._attributes is None:
-            span._attributes = {}
-        span._attributes[ATTR_GEN_AI_OP_NAME] = GEN_AI_OP_CHAT
+        span_attrs[ATTR_GEN_AI_OP_NAME] = GEN_AI_OP_CHAT
     elif native in NATIVE_TOOL_SPANS:
-        if span._attributes is None:
-            span._attributes = {}
-        span._attributes[ATTR_GEN_AI_OP_NAME] = GEN_AI_OP_EXECUTE_TOOL
+        span_attrs[ATTR_GEN_AI_OP_NAME] = GEN_AI_OP_EXECUTE_TOOL
         tool = str(
             attrs.get(ATTR_GEN_AI_TOOL_NAME)
             or attrs.get(ATTR_LK_FNC_TOOL_NAME)
             or ""
         ).strip()
         if tool:
-            span._attributes[ATTR_GEN_AI_TOOL_NAME] = tool
+            span_attrs[ATTR_GEN_AI_TOOL_NAME] = tool

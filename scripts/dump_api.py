@@ -47,6 +47,9 @@ def dump_api(output_path: Path) -> None:
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     serialized = json.dumps(data, cls=JSONEncoder, full=True, sort_keys=True, indent=2)
+    # Strip local workspace root paths so committed snapshot is deterministic across machines
+    root_prefix = str(REPO_ROOT).replace("\\", "/").rstrip("/") + "/"
+    serialized = serialized.replace(root_prefix, "")
     output_path.write_text(serialized + "\n", encoding="utf-8")
     print(f"Dumped API snapshot to {output_path.relative_to(REPO_ROOT)}")
 

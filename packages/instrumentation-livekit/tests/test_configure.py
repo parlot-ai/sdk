@@ -171,8 +171,6 @@ class TestDevWatchParentSkip:
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
         monkeypatch.setattr(sys, "argv", ["-m", "livekit.agents", "start", "--dev"])
 
-        import multiprocessing
-
         class _SpawnProcess:
             name = "SpawnProcess-1"
 

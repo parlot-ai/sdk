@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Optional
 
-from opentelemetry import metrics
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource

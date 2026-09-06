@@ -302,7 +302,7 @@ def install_emit_compare_intercept() -> None:
     original_emit = AgentSession.emit
 
     def _patched_emit(self, event_name: str, ev: Any) -> None:
-        original_emit(self, event_name, ev)
+        original_emit(self, event_name, ev)  # type: ignore[arg-type]
         if event_name != "metrics_collected":
             return
         try:
@@ -318,6 +318,6 @@ def install_emit_compare_intercept() -> None:
         except Exception:
             logger.debug("emit compare intercept failed", exc_info=True)
 
-    AgentSession.emit = _patched_emit
-    AgentSession._parlot_emit_compare_patched = True
+    setattr(AgentSession, "emit", _patched_emit)
+    setattr(AgentSession, "_parlot_emit_compare_patched", True)
     logger.debug("Patched AgentSession.emit for telemetry compare (plugins.jsonl)")

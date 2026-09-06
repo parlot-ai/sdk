@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-import pytest
 from opentelemetry.sdk.metrics.export import MetricExportResult
 from opentelemetry.sdk.trace.export import SpanExportResult
 

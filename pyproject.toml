@@ -13,8 +13,10 @@ dependencies = [
 [dependency-groups]
 dev = [
     "griffe>=2.2.0",
+    "mypy>=1.15.0",
     "pytest>=8.0",
     "pytest-asyncio>=0.24",
+    "ruff>=0.9.0",
 ]
 
 [tool.uv]
@@ -42,3 +44,23 @@ testpaths = [
     "packages/instrumentation-livekit/tests",
     "packages/instrumentation-langgraph/tests",
 ]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "B007"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"examples/**" = ["E402"]
+"packages/instrumentation-livekit/src/parlot/instrumentation/livekit/attrs.py" = ["F401"]
+
+[tool.mypy]
+python_version = "3.12"
+mypy_path = "packages/core/src:packages/instrumentation-livekit/src:packages/instrumentation-langgraph/src"
+explicit_package_bases = true
+check_untyped_defs = true
+packages = ["parlot.core", "parlot.instrumentation.livekit", "parlot.instrumentation.langgraph"]
+

@@ -64,7 +64,7 @@ def stamp_platform_refs(
     _write(ATTR_PLATFORM_KIND, kind)
     _write(ATTR_PLATFORM_VALUE, val)
 
-    for fw_i, kind_i, val_i in refs:
+    for _fw_i, kind_i, val_i in refs:
         _write(platform_ref_flat_key(kind_i), val_i)
 
 

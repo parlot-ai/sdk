@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import logging
 from types import SimpleNamespace
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -33,7 +32,6 @@ from parlot.core.attrs import (
     ATTR_SESSION_AMD,
     ATTR_SESSION_CONVERSATION_ID,
     ATTR_SESSION_ID,
-    ATTR_SESSION_TURN_COUNT,
     ATTR_TURN_AGENT_TEXT,
     ATTR_TURN_INDEX,
     ATTR_TURN_USER_TEXT,

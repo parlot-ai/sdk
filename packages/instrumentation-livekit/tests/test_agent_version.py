@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-import os
 import sys
 import types
-
-import pytest
 
 from parlot.instrumentation.livekit._agent_version import resolve_agent_version
 

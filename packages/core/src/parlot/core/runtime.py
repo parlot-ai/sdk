@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping
 
 from parlot.core.logs_capture import DEFAULT_LOGS_MIN_LEVEL, normalize_log_level
 

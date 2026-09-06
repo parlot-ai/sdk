@@ -104,10 +104,10 @@ def _resolve_session_fields(
         except Exception:
             pass
     state = get_active_session()
-    if state is not None and getattr(state, "session_id", ""):
+    if state is not None and state.session_id:
         # Prefer LiveKit-style parlot_session_id when present.
         sid = str(
-            getattr(state, "parlot_session_id", "") or getattr(state, "session_id", "")
+            getattr(state, "parlot_session_id", "") or state.session_id
         )
         if not sid:
             return None

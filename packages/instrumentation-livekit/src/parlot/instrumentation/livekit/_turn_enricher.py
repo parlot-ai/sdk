@@ -541,10 +541,13 @@ class TurnEnricher:
             self._set(span, ATTR_GEN_AI_OP_NAME, "text_to_speech")
 
         ttfb = attrs.get(ATTR_LK_RESPONSE_TTFB)
-        if ttfb is not None:
-            ttfb_s = float(ttfb)
-            self._set(span, ATTR_GEN_AI_TTS_TTFB_S, ttfb_s)
-            state.pending_tts_ttfb_s = ttfb_s
+        if isinstance(ttfb, (int, float, str)):
+            try:
+                ttfb_s = float(ttfb)
+                self._set(span, ATTR_GEN_AI_TTS_TTFB_S, ttfb_s)
+                state.pending_tts_ttfb_s = ttfb_s
+            except (ValueError, TypeError):
+                pass
 
     def enrich_tts_request(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
@@ -619,7 +622,7 @@ class TurnEnricher:
         if span.end_time is not None and span.start_time is not None:
             self._set(span, ATTR_GEN_AI_TOOL_DURATION_MS, duration_ms)
 
-        is_handoff = self._handoff.apply_function_tool_handoff(
+        self._handoff.apply_function_tool_handoff(
             span, state, tool_name=tool_name, tool_output=tool_output
         )
 
