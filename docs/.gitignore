@@ -7,6 +7,9 @@
 # Generated files
 .docusaurus
 .cache-loader
+.react-router
+.source
+dist
 
 # Misc
 .DS_Store

@@ -1,0 +1,48 @@
+---
+title: Python SDK Reference
+description: Python SDK documentation and API reference for Parlot.
+---
+
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Python SDK Reference
+
+The Parlot Python SDK provides automatic telemetry, tracing, and session management for conversational AI agents.
+
+<Callout type="info" title="Full API Reference">
+  Looking for comprehensive class, function, and module signatures? Explore the full interactive [Python API Reference](/docs/ref/python/).
+</Callout>
+
+## Key Packages
+
+<Cards>
+  <Card
+    title="parlot.core"
+    description="Core telemetry primitives, session configuration, context propagation, and span lifecycle."
+    href="/docs/ref/python/parlot/core.html"
+  />
+  <Card
+    title="parlot.instrumentation.livekit"
+    description="Real-time voice agent instrumentation, turn detection, audio metrics, and participant spans."
+    href="/docs/ref/python/parlot/instrumentation/livekit.html"
+  />
+  <Card
+    title="parlot.instrumentation.langgraph"
+    description="LangGraph workflow tracing, checkpoint monitoring, node execution metrics, and streaming."
+    href="/docs/ref/python/parlot/instrumentation/langgraph.html"
+  />
+</Cards>
+
+## Installation
+
+```bash
+uv add parlot
+# Or with specific instrumentations:
+uv add parlot-instrumentation-livekit
+uv add parlot-instrumentation-langgraph
+```
+
+## Interactive API Explorer
+
+Browse all modules, functions, parameters, and type annotations directly in the [Interactive Python Reference](/docs/ref/python/).

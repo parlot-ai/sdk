@@ -1,0 +1,13 @@
+{
+  "title": "SDK Documentation",
+  "root": true,
+  "pages": [
+    "index",
+    "get-started",
+    "guides",
+    "python",
+    "typescript",
+    "env-vars",
+    "changelog"
+  ]
+}
