@@ -4,6 +4,7 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OUTPUT_DIR="${REPO_ROOT}/dist/reference/python"
 DOCS_PUBLIC_DIR="${REPO_ROOT}/docs/public/ref/python"
+TEMPLATE_DIR="${REPO_ROOT}/docs/pdoc-template"
 
 echo "Building Python API reference with pdoc..."
 mkdir -p "${OUTPUT_DIR}"
@@ -11,6 +12,8 @@ cd "${REPO_ROOT}"
 
 uv run pdoc parlot parlot.instrumentation.livekit parlot.instrumentation.langgraph \
   --output-directory "${OUTPUT_DIR}" \
+  --template-directory "${TEMPLATE_DIR}" \
+  --favicon "/docs/img/favicon.ico" \
   --docformat google
 
 echo "Copying reference to docs public directory: ${DOCS_PUBLIC_DIR}"

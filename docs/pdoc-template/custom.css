@@ -1,0 +1,29 @@
+nav.pdoc .pdoc-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.35rem 0;
+    margin-bottom: 1.25rem;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+    width: calc(100% - var(--pad));
+    border-bottom: 1px solid var(--accent2);
+    padding-bottom: 0.75rem;
+    transition: opacity 150ms ease;
+}
+
+nav.pdoc .pdoc-brand:hover {
+    opacity: 0.75;
+    color: var(--text);
+}
+
+nav.pdoc .pdoc-brand img.pdoc-logo {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
