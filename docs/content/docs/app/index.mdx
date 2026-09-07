@@ -1,6 +1,50 @@
 ---
-title: Introduction
-description: Documentation for the Parlot web application and dashboard.
+title: App Guide
+description: User documentation for the Parlot dashboard is currently under construction.
 ---
 
-Learn how to configure conversation boundary policies, analyze session recordings, and manage evaluations.
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# App Guide
+
+<Callout type="info" title="Under Construction">
+  User documentation for the Parlot web application and dashboard is currently under construction. We are actively expanding guides and reference material for the dashboard interface.
+</Callout>
+
+In the meantime, explore our SDK documentation, integration guides, and API reference to instrument and observe your voice AI agents.
+
+## SDK Resources
+
+<Cards>
+  <Card
+    title="SDK Quick Start"
+    description="Install the parlot SDK, configure OpenTelemetry export, and verify traces."
+    href="/sdk/get-started/quick-start"
+  />
+  <Card
+    title="LiveKit Agents Guide"
+    description="Auto-instrument LiveKit agents with room session tracking, speech turns, and audio correlation."
+    href="/sdk/guides/livekit"
+  />
+  <Card
+    title="LangGraph Workflows Guide"
+    description="Monitor LangGraph workflow execution, node latency, state transitions, and checkpoints."
+    href="/sdk/guides/langgraph"
+  />
+  <Card
+    title="Python API Reference"
+    description="Browse class and function signatures generated from Python docstrings via pdoc."
+    href="/docs/ref/python/"
+  />
+</Cards>
+
+## Upcoming Dashboard Guides
+
+Comprehensive walkthroughs and workflows for the Parlot web app will be published soon, covering:
+
+- **Session Analysis & Audio Replay**: Inspecting real-time participant audio waveforms, turn-by-turn latency waterfalls, and transcripts.
+- **Conversation Boundaries**: Configuring idle timeouts and duration caps across voice, SMS, webchat, and WhatsApp channels.
+- **Evaluations**: Setting up automated LLM-as-a-judge scorers and custom evaluation criteria for voice sessions.
+- **API Keys & Integrations**: Managing workspace credentials, webhook destinations, and cloud storage providers.
+- **Organization & Member Management**: Role-based access controls, team workspaces, and usage analytics.
