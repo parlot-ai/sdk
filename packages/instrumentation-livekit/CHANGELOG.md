@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.2.1](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.2.0...instrumentation-livekit-v0.2.1) (2026-09-07)
+
+
+### Features
+
+* **core:** implement multi-layer SDK versioning and remove diagnostics ([#47](https://github.com/parlot-ai/sdk/issues/47)) ([2e021bb](https://github.com/parlot-ai/sdk/commit/2e021bb2495ce1ae08e7d4aebb497c789e9e154b))
+
+
+### Bug Fixes
+
+* **livekit:** mutate readable span attributes safely and mock simulation job context ([#45](https://github.com/parlot-ai/sdk/issues/45)) ([36175c6](https://github.com/parlot-ai/sdk/commit/36175c675b25c1f88a370c821890bb9f40ffebc9))
+* log descriptive sdk errors without dumping tracebacks ([#46](https://github.com/parlot-ai/sdk/issues/46)) ([06275e2](https://github.com/parlot-ai/sdk/commit/06275e2c6110295739e0971976d2fe2943457d14))
+
+
+### Documentation
+
+* generate shared configure() API from Python docstrings ([#41](https://github.com/parlot-ai/sdk/issues/41)) ([8ae405f](https://github.com/parlot-ai/sdk/commit/8ae405feab794e6f39e41146b91b73daaa95cf35))
+
 ## [0.2.0](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.1.1...instrumentation-livekit-v0.2.0) (2026-09-03)
 
 

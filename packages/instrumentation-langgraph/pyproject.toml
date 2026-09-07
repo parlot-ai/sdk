@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "parlot-instrumentation-langgraph"
-version = "0.2.0"
+version = "0.2.1"
 description = "Parlot turn-model instrumentation for LangGraph / LangChain (same debugger as voice)"
 readme = "README.md"
 license = "MIT"
