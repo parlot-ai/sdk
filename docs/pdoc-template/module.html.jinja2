@@ -7,3 +7,77 @@
     </a>
     {{ super() }}
 {% endblock %}
+
+{% block nav_submodules %}
+    {% if module.modulename == "parlot" %}
+        <h2>Modules</h2>
+        <ul>
+            <li><a href="parlot/core.html">parlot.core</a></li>
+            <li><a href="parlot/instrumentation/livekit.html">parlot.instrumentation.livekit</a></li>
+            <li><a href="parlot/instrumentation/langgraph.html">parlot.instrumentation.langgraph</a></li>
+        </ul>
+    {% else %}
+        {{ super() }}
+    {% endif %}
+{% endblock %}
+
+{% block module_info %}
+    {{ super() }}
+    {% if module.modulename == "parlot" %}
+        <div class="pdoc-landing">
+            <p class="pdoc-lead">
+                Production voice AI observability — MIT OpenTelemetry instrumentation for LiveKit Agents and LangGraph.
+            </p>
+            <p>
+                The Parlot Python SDK provides automated turn detection, audio metrics, and session contract tracking.
+                Explore the reference documentation for the available modules below:
+            </p>
+
+            <div class="pdoc-cards">
+                <div class="pdoc-card pdoc-card-featured">
+                    <div class="pdoc-card-header">
+                        <span class="pdoc-badge">Core Foundation</span>
+                        <h3><a href="parlot/core.html">parlot.core</a></h3>
+                    </div>
+                    <p>
+                        Shared telemetry conventions, base span processor, runtime context resolution, and session contract helpers:
+                        <code>base_configure</code>, <code>ParlotContext</code>, <code>ParlotRuntimeContext</code>, <code>SessionLogsCollector</code>,
+                        <code>record_human_rep</code>, <code>set_session_metadata</code>, and <code>add_platform_ref</code>.
+                    </p>
+                    <a class="pdoc-card-link" href="parlot/core.html">View parlot.core Reference &rarr;</a>
+                </div>
+
+                <div class="pdoc-card">
+                    <div class="pdoc-card-header">
+                        <span class="pdoc-badge">LiveKit</span>
+                        <h3><a href="parlot/instrumentation/livekit.html">parlot.instrumentation.livekit</a></h3>
+                    </div>
+                    <p>
+                        Voice agent telemetry for LiveKit Agents: turn tracking, audio latency metrics, participant spans,
+                        SIP caller metadata, and audio stream egress.
+                    </p>
+                    <a class="pdoc-card-link" href="parlot/instrumentation/livekit.html">View LiveKit Reference &rarr;</a>
+                </div>
+
+                <div class="pdoc-card">
+                    <div class="pdoc-card-header">
+                        <span class="pdoc-badge">LangGraph</span>
+                        <h3><a href="parlot/instrumentation/langgraph.html">parlot.instrumentation.langgraph</a></h3>
+                    </div>
+                    <p>
+                        OpenTelemetry callback handler and automatic configuration for LangGraph and LangChain agent workflows.
+                    </p>
+                    <a class="pdoc-card-link" href="parlot/instrumentation/langgraph.html">View LangGraph Reference &rarr;</a>
+                </div>
+            </div>
+
+            <div class="pdoc-guides-callout">
+                <h4>Looking for guides and tutorials?</h4>
+                <p>
+                    Visit the <a href="https://parlot.ai/docs/sdk">Parlot SDK Guides</a> or start with the
+                    <a href="https://parlot.ai/docs/sdk/get-started/quick-start">Quick Start Guide</a>.
+                </p>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

@@ -27,3 +27,98 @@ nav.pdoc .pdoc-brand img.pdoc-logo {
     object-fit: contain;
     flex-shrink: 0;
 }
+
+/* Landing page styles */
+.pdoc-landing {
+    margin-top: 1.5rem;
+}
+
+.pdoc-lead {
+    font-size: 1.15rem;
+    color: var(--text);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.pdoc-cards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    margin: 2rem 0;
+}
+
+.pdoc-card {
+    border: 1px solid var(--accent2);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    background: var(--code);
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.pdoc-card:hover {
+    border-color: var(--link);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.pdoc-card-featured {
+    border-color: var(--link);
+    background: var(--accent);
+}
+
+.pdoc-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.pdoc-card-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.pdoc-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    background: var(--link);
+    color: #fff;
+}
+
+.pdoc-card p {
+    margin: 0.5rem 0 1rem 0;
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.pdoc-card-link {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--link);
+}
+
+.pdoc-guides-callout {
+    margin-top: 2rem;
+    padding: 1.25rem;
+    border-radius: 8px;
+    border-left: 4px solid var(--link);
+    background: var(--code);
+}
+
+.pdoc-guides-callout h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.05rem;
+}
+
+.pdoc-guides-callout p {
+    margin: 0;
+    color: var(--muted);
+}
