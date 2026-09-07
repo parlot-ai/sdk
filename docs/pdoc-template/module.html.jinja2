@@ -1,0 +1,9 @@
+{% extends "default/module.html.jinja2" %}
+
+{% block nav %}
+    <a class="pdoc-brand" href="https://parlot.ai" title="parlot.ai">
+        <img src="/docs/img/logo.webp" class="pdoc-logo" alt="Parlot" width="28" height="28"/>
+        <span class="pdoc-brand-text">parlot.ai</span>
+    </a>
+    {{ super() }}
+{% endblock %}
