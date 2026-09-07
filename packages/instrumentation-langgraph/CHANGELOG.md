@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.1](https://github.com/parlot-ai/sdk/compare/instrumentation-langgraph-v0.2.0...instrumentation-langgraph-v0.2.1) (2026-09-07)
+
+
+### Features
+
+* **core:** implement multi-layer SDK versioning and remove diagnostics ([#47](https://github.com/parlot-ai/sdk/issues/47)) ([2e021bb](https://github.com/parlot-ai/sdk/commit/2e021bb2495ce1ae08e7d4aebb497c789e9e154b))
+
+
+### Documentation
+
+* generate shared configure() API from Python docstrings ([#41](https://github.com/parlot-ai/sdk/issues/41)) ([8ae405f](https://github.com/parlot-ai/sdk/commit/8ae405feab794e6f39e41146b91b73daaa95cf35))
+
 ## [0.2.0](https://github.com/parlot-ai/sdk/compare/instrumentation-langgraph-v0.1.1...instrumentation-langgraph-v0.2.0) (2026-09-03)
 
 
