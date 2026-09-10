@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/parlot-ai/sdk/compare/core-v0.2.1...core-v0.3.0) (2026-09-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* import and call parlotize() instead of configure().
+
+### Features
+
+* **core:** export session logs as OTLP Logs protobuf ([#52](https://github.com/parlot-ai/sdk/issues/52)) ([27497dc](https://github.com/parlot-ai/sdk/commit/27497dc51127cb05f384d3bcec8ac82801005bab))
+* rename configure() to parlotize() ([#54](https://github.com/parlot-ai/sdk/issues/54)) ([30d4579](https://github.com/parlot-ai/sdk/commit/30d4579922043d2c508d48f15eb80a3632e8ff6f))
+
 ## [0.2.1](https://github.com/parlot-ai/sdk/compare/core-v0.2.0...core-v0.2.1) (2026-09-07)
 
 
