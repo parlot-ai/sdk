@@ -99,7 +99,7 @@ def parlotize(
     runtime = res.context.runtime
     capture = should_capture_genai_content(
         _configured_agent_id or "",
-        parlotize_capture_genai_content=res.capture_genai_content,
+        capture_genai_content_config=res.capture_genai_content,
         bootstrap_globs=list(runtime.capture_genai_content_globs) if runtime else None,
         bootstrap_agents=runtime.capture_genai_content_agents_map() if runtime else None,
         bootstrap_present=bool(runtime and runtime.capture_genai_content_policy_present),

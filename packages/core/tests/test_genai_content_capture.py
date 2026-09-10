@@ -55,7 +55,7 @@ class TestShouldCaptureGenAIContent:
         assert (
             should_capture_genai_content(
                 "foo",
-                parlotize_capture_genai_content=False,
+                capture_genai_content_config=False,
                 bootstrap_globs=["*"],
                 bootstrap_present=True,
             )
@@ -66,7 +66,7 @@ class TestShouldCaptureGenAIContent:
         assert (
             should_capture_genai_content(
                 "foo",
-                parlotize_capture_genai_content=True,
+                capture_genai_content_config=True,
                 bootstrap_globs=[],
                 bootstrap_present=True,
             )

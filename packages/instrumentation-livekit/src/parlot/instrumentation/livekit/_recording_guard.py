@@ -95,7 +95,7 @@ def should_record(ctx: Any, *, context: ParlotContext | None = None) -> bool:
     return should_record_policy(
         recording_agent_id_from_ctx(ctx),
         metadata_record=metadata_record_flag(ctx),
-        parlotize_record=configured_record(),
+        record_config=configured_record(),
         bootstrap_globs=list(runtime.recording_globs) if runtime else None,
         bootstrap_agents=runtime.recording_agents_map() if runtime else None,
     )
@@ -154,7 +154,7 @@ def should_capture_genai_content(
     return should_capture_genai_content_policy(
         resolved_agent,
         metadata_capture_genai_content=metadata_flag,
-        parlotize_capture_genai_content=configured_capture_genai_content(),
+        capture_genai_content_config=configured_capture_genai_content(),
         bootstrap_globs=list(runtime.capture_genai_content_globs) if runtime else None,
         bootstrap_agents=runtime.capture_genai_content_agents_map() if runtime else None,
         bootstrap_present=bool(runtime and runtime.capture_genai_content_policy_present),

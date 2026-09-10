@@ -158,7 +158,7 @@ def base_parlotize(
     resolved_log_level = log_level.strip().upper() if log_level else None
 
     context = ParlotContext()
-    context.session_logs.set_capture_logs_parlotize(
+    context.session_logs.set_capture_logs_config(
         resolved_capture_logs,
         log_level=resolved_log_level,
     )

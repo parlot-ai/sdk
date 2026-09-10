@@ -47,7 +47,7 @@ def should_capture_logs(
     agent_name: str,
     *,
     metadata_capture_logs: Optional[bool] = None,
-    parlotize_capture_logs: CaptureLogsConfig = None,
+    capture_logs_config: CaptureLogsConfig = None,
     bootstrap_globs: Optional[Sequence[str]] = None,
     bootstrap_agents: Optional[Mapping[str, bool]] = None,
     bootstrap_present: bool = False,
@@ -63,10 +63,10 @@ def should_capture_logs(
     if metadata_capture_logs is True:
         return True
 
-    if parlotize_capture_logs is not None:
-        if isinstance(parlotize_capture_logs, bool):
-            return parlotize_capture_logs
-        return matches_allowlist(agent_name, list(parlotize_capture_logs))
+    if capture_logs_config is not None:
+        if isinstance(capture_logs_config, bool):
+            return capture_logs_config
+        return matches_allowlist(agent_name, list(capture_logs_config))
 
     agents = bootstrap_agents or {}
     if agent_name in agents:

@@ -30,7 +30,7 @@ def should_capture_genai_content(
     agent_name: str,
     *,
     metadata_capture_genai_content: Optional[bool] = None,
-    parlotize_capture_genai_content: Optional[bool] = None,
+    capture_genai_content_config: Optional[bool] = None,
     bootstrap_globs: Optional[Sequence[str]] = None,
     bootstrap_agents: Optional[Mapping[str, bool]] = None,
     bootstrap_present: bool = False,
@@ -46,8 +46,8 @@ def should_capture_genai_content(
     if metadata_capture_genai_content is True:
         return True
 
-    if parlotize_capture_genai_content is not None:
-        return bool(parlotize_capture_genai_content)
+    if capture_genai_content_config is not None:
+        return bool(capture_genai_content_config)
 
     agents = bootstrap_agents or {}
     if agent_name in agents:

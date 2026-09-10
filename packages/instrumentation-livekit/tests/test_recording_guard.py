@@ -78,7 +78,7 @@ class TestLiveKitRecordingGuard:
             is True
         )
 
-    def test_parlotize_record_true(self) -> None:
+    def test_record_config_true(self) -> None:
         _auto._configured_record = True
         assert should_record(_ctx()) is True
 

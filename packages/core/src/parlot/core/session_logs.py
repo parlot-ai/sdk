@@ -253,8 +253,8 @@ class SessionLogsCollector:
         self._handler: Optional[SessionLogHandler] = None
         self._installed = False
         self._atexit_registered = False
-        self._parlotize_capture_logs: CaptureLogsConfig = None
-        self._parlotize_log_level: Optional[str] = None
+        self._capture_logs_config: CaptureLogsConfig = None
+        self._capture_logs_level: Optional[str] = None
         self._session_resolver: Optional[SessionResolver] = None
         self._agent_id_resolver: Optional[Callable[[], str]] = None
         self._metadata_resolver: Optional[Callable[[], Optional[bool]]] = None
@@ -267,15 +267,15 @@ class SessionLogsCollector:
         ctx = self._context_ref() if self._context_ref is not None else None
         return ctx.runtime if ctx is not None else None
 
-    def set_capture_logs_parlotize(
+    def set_capture_logs_config(
         self,
         capture_logs: CaptureLogsConfig = None,
         *,
         log_level: Optional[str] = None,
     ) -> None:
-        self._parlotize_capture_logs = capture_logs
+        self._capture_logs_config = capture_logs
         if log_level is not None:
-            self._parlotize_log_level = normalize_log_level(log_level)
+            self._capture_logs_level = normalize_log_level(log_level)
 
     def set_resolvers(
         self,
@@ -293,8 +293,8 @@ class SessionLogsCollector:
             self._metadata_resolver = metadata_resolver
 
     def _resolve_min_level(self) -> str:
-        if self._parlotize_log_level:
-            return self._parlotize_log_level
+        if self._capture_logs_level:
+            return self._capture_logs_level
         runtime = self._runtime()
         if runtime is not None:
             agent_id = ""
@@ -328,7 +328,7 @@ class SessionLogsCollector:
         return should_capture_logs(
             name,
             metadata_capture_logs=metadata,
-            parlotize_capture_logs=self._parlotize_capture_logs,
+            capture_logs_config=self._capture_logs_config,
             bootstrap_globs=list(runtime.logs_globs) if runtime else None,
             bootstrap_agents=runtime.logs_agents_map() if runtime else None,
             bootstrap_present=runtime is not None and runtime.logs_policy_present,

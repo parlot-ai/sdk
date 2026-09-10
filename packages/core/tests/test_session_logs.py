@@ -15,7 +15,7 @@ from parlot.core.session_logs import SessionLogHandler
 @pytest.fixture
 def ctx() -> ParlotContext:
     context = ParlotContext()
-    context.session_logs.set_capture_logs_parlotize(True, log_level="DEBUG")
+    context.session_logs.set_capture_logs_config(True, log_level="DEBUG")
     clear_active_session()
     yield context
     clear_active_session()
@@ -62,7 +62,7 @@ def test_handler_drops_without_session(ctx: ParlotContext) -> None:
 
 
 def test_handler_respects_min_level(ctx: ParlotContext) -> None:
-    ctx.session_logs.set_capture_logs_parlotize(True, log_level="WARNING")
+    ctx.session_logs.set_capture_logs_config(True, log_level="WARNING")
     state = SessionState(session_id="sess")
     set_active_session(None, state)
     handler = SessionLogHandler(ctx.session_logs)
@@ -92,7 +92,7 @@ def test_handler_respects_min_level(ctx: ParlotContext) -> None:
 
 
 def test_handler_noops_when_policy_off(ctx: ParlotContext) -> None:
-    ctx.session_logs.set_capture_logs_parlotize(False)
+    ctx.session_logs.set_capture_logs_config(False)
     state = SessionState(session_id="sess")
     set_active_session(None, state)
     handler = SessionLogHandler(ctx.session_logs)
@@ -158,8 +158,8 @@ def test_shutdown_flushes_remaining_logs(
 def test_two_contexts_isolate_session_logs() -> None:
     a = ParlotContext()
     b = ParlotContext()
-    a.session_logs.set_capture_logs_parlotize(True, log_level="DEBUG")
-    b.session_logs.set_capture_logs_parlotize(True, log_level="DEBUG")
+    a.session_logs.set_capture_logs_config(True, log_level="DEBUG")
+    b.session_logs.set_capture_logs_config(True, log_level="DEBUG")
     set_active_session(None, SessionState(session_id="sess"))
     try:
         SessionLogHandler(a.session_logs).emit(

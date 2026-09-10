@@ -28,7 +28,7 @@ def should_record(
     agent_name: str,
     *,
     metadata_record: Optional[bool] = None,
-    parlotize_record: RecordConfig = None,
+    record_config: RecordConfig = None,
     bootstrap_globs: Optional[Sequence[str]] = None,
     bootstrap_agents: Optional[Mapping[str, bool]] = None,
 ) -> bool:
@@ -41,10 +41,10 @@ def should_record(
     if metadata_record is True:
         return True
 
-    if parlotize_record is not None:
-        if isinstance(parlotize_record, bool):
-            return parlotize_record
-        return matches_allowlist(agent_name, list(parlotize_record))
+    if record_config is not None:
+        if isinstance(record_config, bool):
+            return record_config
+        return matches_allowlist(agent_name, list(record_config))
 
     agents = bootstrap_agents or {}
     if agent_name in agents:

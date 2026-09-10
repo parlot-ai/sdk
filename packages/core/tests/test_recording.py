@@ -45,17 +45,17 @@ class TestShouldRecord:
         assert should_record("") is False
 
     def test_parlotize_bool_true(self) -> None:
-        assert should_record("foo", parlotize_record=True) is True
+        assert should_record("foo", record_config=True) is True
 
     def test_parlotize_bool_false_beats_bootstrap(self) -> None:
         assert (
-            should_record("foo", parlotize_record=False, bootstrap_globs=["*"])
+            should_record("foo", record_config=False, bootstrap_globs=["*"])
             is False
         )
 
     def test_parlotize_allowlist(self) -> None:
-        assert should_record("foo", parlotize_record=["foo"]) is True
-        assert should_record("bar", parlotize_record=["foo"]) is False
+        assert should_record("foo", record_config=["foo"]) is True
+        assert should_record("bar", record_config=["foo"]) is False
 
     def test_bootstrap_agent_toggle_true(self) -> None:
         assert (
@@ -90,7 +90,7 @@ class TestShouldRecord:
         assert (
             should_record(
                 "receptionist",
-                parlotize_record=True,
+                record_config=True,
                 bootstrap_agents={"receptionist": False},
             )
             is True
