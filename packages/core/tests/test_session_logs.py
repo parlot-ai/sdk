@@ -190,3 +190,28 @@ def test_two_contexts_isolate_session_logs() -> None:
         clear_active_session()
         a.shutdown()
         b.shutdown()
+
+
+def test_encode_otlp_logs_protobuf() -> None:
+    from parlot.core.session_logs import SessionLogRecord, _encode_otlp_logs
+
+    payload = _encode_otlp_logs(
+        [
+            SessionLogRecord(
+                session_id="s1",
+                conversation_id="c1",
+                ts="2026-01-01 12:00:00.123",
+                level="INFO",
+                logger_name="my.agent",
+                message="hello otlp",
+                turn_index=3,
+                trace_id="aabbccddeeff00112233445566778899",
+                span_id="1122334455667788",
+                attributes={"pathname": "agent.py"},
+            )
+        ]
+    )
+    assert isinstance(payload, (bytes, bytearray))
+    assert len(payload) > 40
+    assert b"hello otlp" in payload
+    assert b"session.id" in payload or b"s1" in payload

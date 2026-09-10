@@ -65,6 +65,7 @@ class SessionLogRecord:
     attributes: dict[str, str] = field(default_factory=dict)
 
     def to_payload(self) -> dict[str, Any]:
+        """Legacy dict shape — prefer OTLP encoding via ``_post_events``."""
         return {
             "session_id": self.session_id,
             "conversation_id": self.conversation_id,
@@ -124,6 +125,117 @@ def _resolve_session_fields(
             "turn_index": turn_index,
         }
     return None
+
+
+def _severity_number(level: str):
+    from opentelemetry._logs import SeverityNumber
+
+    key = (level or "INFO").upper()
+    mapping = {
+        "TRACE": SeverityNumber.TRACE,
+        "DEBUG": SeverityNumber.DEBUG,
+        "INFO": SeverityNumber.INFO,
+        "WARN": SeverityNumber.WARN,
+        "WARNING": SeverityNumber.WARN,
+        "ERROR": SeverityNumber.ERROR,
+        "FATAL": SeverityNumber.FATAL,
+        "CRITICAL": SeverityNumber.FATAL,
+    }
+    return mapping.get(key, SeverityNumber.INFO)
+
+
+def _encode_otlp_logs(events: list[SessionLogRecord]) -> bytes:
+    """Encode session log events as OTLP ``ExportLogsServiceRequest`` protobuf."""
+    from opentelemetry.context import Context
+    from opentelemetry.exporter.otlp.proto.common._log_encoder import encode_logs
+    from opentelemetry.sdk._logs import LoggerProvider
+    from opentelemetry.sdk._logs.export import (
+        LogRecordExporter,
+        LogRecordExportResult,
+        SimpleLogRecordProcessor,
+    )
+    from opentelemetry.sdk.resources import Resource
+    from opentelemetry.trace import (
+        NonRecordingSpan,
+        SpanContext,
+        TraceFlags,
+        set_span_in_context,
+    )
+
+    class _Capture(LogRecordExporter):
+        def __init__(self) -> None:
+            self.batch: list[Any] = []
+
+        def export(self, batch: Any) -> LogRecordExportResult:  # type: ignore[override]
+            self.batch.extend(list(batch))
+            return LogRecordExportResult.SUCCESS
+
+        def shutdown(self) -> None:
+            return None
+
+        def force_flush(self, timeout_millis: int = 30000) -> bool:
+            return True
+
+    by_scope: dict[str, list[SessionLogRecord]] = {}
+    for event in events:
+        scope = (event.logger_name or "parlot.session").strip() or "parlot.session"
+        by_scope.setdefault(scope, []).append(event)
+
+    captured: list[Any] = []
+    for scope_name, scope_events in by_scope.items():
+        provider = LoggerProvider(resource=Resource.create({}))
+        capture = _Capture()
+        provider.add_log_record_processor(SimpleLogRecordProcessor(capture))
+        logger = provider.get_logger(scope_name)
+        for event in scope_events:
+            ctx: Context | None = None
+            if event.trace_id and event.span_id:
+                try:
+                    tid = int(event.trace_id, 16)
+                    sid = int(event.span_id, 16)
+                    span_ctx = SpanContext(
+                        trace_id=tid,
+                        span_id=sid,
+                        is_remote=False,
+                        trace_flags=TraceFlags(0x01),
+                    )
+                    ctx = set_span_in_context(NonRecordingSpan(span_ctx))
+                except ValueError:
+                    ctx = None
+            attrs: dict[str, Any] = {
+                "session.id": event.session_id,
+                "session.conversation_id": event.conversation_id or event.session_id,
+                "turn.index": int(event.turn_index or 0),
+            }
+            for k, v in (event.attributes or {}).items():
+                if k and v is not None:
+                    attrs[str(k)[:128]] = str(v)[:1024]
+            ts_ns: int | None = None
+            try:
+                dt = datetime.strptime(event.ts[:23], "%Y-%m-%d %H:%M:%S.%f")
+                ts_ns = int(
+                    dt.replace(tzinfo=timezone.utc).timestamp() * 1_000_000_000
+                )
+            except Exception:
+                ts_ns = None
+            logger.emit(
+                timestamp=ts_ns,
+                context=ctx,
+                severity_number=_severity_number(event.level),
+                severity_text=(event.level or "INFO").upper(),
+                body=event.message[:_MAX_MESSAGE_LEN],
+                attributes=attrs,
+            )
+        captured.extend(capture.batch)
+        try:
+            provider.shutdown()
+        except Exception:
+            pass
+
+    if not captured:
+        return b""
+    request = encode_logs(captured)
+    return request.SerializeToString()
 
 
 class SessionLogHandler(logging.Handler):
@@ -359,15 +471,21 @@ class SessionLogsCollector:
             return False
 
         url = f"{self._endpoint}/v1/logs"
-        payload = {"logs": [e.to_payload() for e in events[:_MAX_BATCH]]}
+        try:
+            payload = _encode_otlp_logs(events[:_MAX_BATCH])
+        except Exception:
+            return False
+        if not payload:
+            return True
         from parlot.core.provider import build_parlot_client_headers
 
         headers = build_parlot_client_headers(self._api_key)
+        headers["Content-Type"] = "application/x-protobuf"
         try:
             with httpx.Client(timeout=3.0) as client:
                 res = client.post(
                     url,
-                    json=payload,
+                    content=payload,
                     headers=headers,
                 )
                 return 200 <= res.status_code < 300
