@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.0](https://github.com/parlot-ai/sdk/compare/instrumentation-langgraph-v0.2.1...instrumentation-langgraph-v0.3.0) (2026-09-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* import and call parlotize() instead of configure().
+
+### Features
+
+* rename configure() to parlotize() ([#54](https://github.com/parlot-ai/sdk/issues/54)) ([30d4579](https://github.com/parlot-ai/sdk/commit/30d4579922043d2c508d48f15eb80a3632e8ff6f))
+
 ## [0.2.1](https://github.com/parlot-ai/sdk/compare/instrumentation-langgraph-v0.2.0...instrumentation-langgraph-v0.2.1) (2026-09-07)
 
 

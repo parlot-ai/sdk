@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "parlot-core"
-version = "0.2.1"
+version = "0.3.0"
 description = "Shared semantic conventions and processors for Parlot production voice AI observability"
 readme = "README.md"
 license = "MIT"
