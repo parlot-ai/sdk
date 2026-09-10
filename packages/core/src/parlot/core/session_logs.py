@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from parlot.core.logs_capture import (
     DEFAULT_LOGS_MIN_LEVEL,
-    ParlotizeCaptureLogs,
+    CaptureLogsConfig,
     level_at_least,
     normalize_log_level,
     should_capture_logs,
@@ -253,7 +253,7 @@ class SessionLogsCollector:
         self._handler: Optional[SessionLogHandler] = None
         self._installed = False
         self._atexit_registered = False
-        self._parlotize_capture_logs: ParlotizeCaptureLogs = None
+        self._parlotize_capture_logs: CaptureLogsConfig = None
         self._parlotize_log_level: Optional[str] = None
         self._session_resolver: Optional[SessionResolver] = None
         self._agent_id_resolver: Optional[Callable[[], str]] = None
@@ -269,7 +269,7 @@ class SessionLogsCollector:
 
     def set_capture_logs_parlotize(
         self,
-        capture_logs: ParlotizeCaptureLogs = None,
+        capture_logs: CaptureLogsConfig = None,
         *,
         log_level: Optional[str] = None,
     ) -> None:

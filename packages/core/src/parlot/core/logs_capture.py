@@ -11,7 +11,7 @@ from typing import Optional, Union
 
 from parlot.core.recording import matches_allowlist
 
-ParlotizeCaptureLogs = Union[bool, Sequence[str], None]
+CaptureLogsConfig = Union[bool, Sequence[str], None]
 
 DEFAULT_LOGS_GLOBS: tuple[str, ...] = ("*",)
 DEFAULT_LOGS_MIN_LEVEL = "INFO"
@@ -47,7 +47,7 @@ def should_capture_logs(
     agent_name: str,
     *,
     metadata_capture_logs: Optional[bool] = None,
-    parlotize_capture_logs: ParlotizeCaptureLogs = None,
+    parlotize_capture_logs: CaptureLogsConfig = None,
     bootstrap_globs: Optional[Sequence[str]] = None,
     bootstrap_agents: Optional[Mapping[str, bool]] = None,
     bootstrap_present: bool = False,

@@ -6,7 +6,7 @@ import fnmatch
 from collections.abc import Mapping, Sequence
 from typing import Optional, Union
 
-ParlotizeRecord = Union[bool, Sequence[str], None]
+RecordConfig = Union[bool, Sequence[str], None]
 
 
 def matches_allowlist(agent_name: str, allowlist: Sequence[str]) -> bool:
@@ -28,7 +28,7 @@ def should_record(
     agent_name: str,
     *,
     metadata_record: Optional[bool] = None,
-    parlotize_record: ParlotizeRecord = None,
+    parlotize_record: RecordConfig = None,
     bootstrap_globs: Optional[Sequence[str]] = None,
     bootstrap_agents: Optional[Mapping[str, bool]] = None,
 ) -> bool:
