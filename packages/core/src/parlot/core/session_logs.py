@@ -64,21 +64,6 @@ class SessionLogRecord:
     span_id: str = ""
     attributes: dict[str, str] = field(default_factory=dict)
 
-    def to_payload(self) -> dict[str, Any]:
-        """Legacy dict shape — prefer OTLP encoding via ``_post_events``."""
-        return {
-            "session_id": self.session_id,
-            "conversation_id": self.conversation_id,
-            "ts": self.ts,
-            "level": self.level,
-            "logger_name": self.logger_name[:256],
-            "message": self.message[:_MAX_MESSAGE_LEN],
-            "turn_index": int(self.turn_index or 0),
-            "trace_id": self.trace_id,
-            "span_id": self.span_id,
-            "attributes": self.attributes,
-        }
-
 
 def _current_trace_span() -> tuple[str, str]:
     try:
