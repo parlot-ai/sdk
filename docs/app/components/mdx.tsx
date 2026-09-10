@@ -5,6 +5,7 @@ import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import { Card, Cards } from 'fumadocs-ui/components/card';
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 import CustomLink from '@/components/link';
+import { Mermaid } from '@/components/mermaid';
 
 export function getMDXComponents(components?: MDXComponents) {
   return {
@@ -21,6 +22,7 @@ export function getMDXComponents(components?: MDXComponents) {
     DocBanner: Callout,
     TabItem: Tab,
     TypeTable,
+    Mermaid,
     ...components,
   } satisfies MDXComponents;
 }
