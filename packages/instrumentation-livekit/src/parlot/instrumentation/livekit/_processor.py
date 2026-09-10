@@ -168,6 +168,12 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
     def on_start(self, span, parent_context=None) -> None:
         super().on_start(span, parent_context)
+        # Capture turn.index while open_agent_turn_index is still set — child
+        # llm/tts spans often end after conversation_item_added clears it.
+        bootstrap = get_job_bootstrap()
+        if bootstrap is None or not bootstrap.state.parlot_session_id:
+            return
+        self._turns.stamp_turn_index_at_start(span, bootstrap.state)
 
     def on_end(self, span: ReadableSpan) -> None:
         super().on_end(span)

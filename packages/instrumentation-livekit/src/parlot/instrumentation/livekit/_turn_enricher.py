@@ -442,20 +442,60 @@ class TurnEnricher:
     def active_turn_index(
         self, state: _LiveKitSessionState, span_name: str
     ) -> Optional[int]:
+        """Resolve ``turn.index`` for an in-flight LiveKit span.
+
+        Agent pipeline spans (``llm_*``, ``tts_*``, tools, ``agent_turn``, …)
+        must track the *open* agent turn — the same index
+        :meth:`commit_agent_message` will use. Falling back to ``turn_count``
+        (last *completed* turn) dumps later TTS/LLM rows onto turn 1 after the
+        greeting commits and clears ``open_agent_turn_index``.
+
+        Prefer stamping at ``on_start`` (see :meth:`stamp_turn_index_at_start`)
+        so children keep the index even if the agent message commits (and
+        clears ``open_agent_turn_index``) before they end.
+        """
         if span_name == "job_entrypoint":
             return None
         user_turn_index = self.user_turn_index_for_events(state, span_name)
         if user_turn_index is not None:
             return user_turn_index
         if (
-            state.open_agent_turn_index is not None
-            and span_name in _AGENT_PIPELINE_SPANS
+            span_name in _AGENT_PIPELINE_SPANS
             and span_name not in _USER_TURN_SPAN_NAMES
         ):
-            return state.open_agent_turn_index
+            if state.open_agent_turn_index is not None:
+                return state.open_agent_turn_index
+            # Match commit_agent_message: next agent turn when none is open
+            # (greeting, consecutive agent reply, or race before events open).
+            return state.turn_count + 1
         if state.turn_count:
             return state.turn_count
         return None
+
+    def stamp_turn_index_at_start(
+        self, span: Any, state: _LiveKitSessionState
+    ) -> None:
+        """Stamp ``turn.index`` while the agent turn is still open.
+
+        LiveKit ends child ``tts_node`` / ``llm_*`` spans after
+        ``conversation_item_added`` may have already cleared
+        ``open_agent_turn_index``. Capturing the index at start avoids the
+        stale ``turn_count`` fallback on ``on_end``.
+        """
+        name = getattr(span, "name", None) or ""
+        if name not in _AGENT_PIPELINE_SPANS or name in _USER_TURN_SPAN_NAMES:
+            return
+        attrs = getattr(span, "attributes", None) or {}
+        if attrs.get(ATTR_TURN_INDEX) is not None:
+            return
+        active = self.active_turn_index(state, name)
+        if active is None:
+            return
+        set_attr = getattr(span, "set_attribute", None)
+        if callable(set_attr):
+            set_attr(ATTR_TURN_INDEX, active)
+        else:
+            self._set(span, ATTR_TURN_INDEX, active)
 
     def enrich_llm_node(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
@@ -701,9 +741,13 @@ class TurnEnricher:
             self._stamp_agent_turn_timing_attrs(span, attrs)
             if attrs.get(ATTR_LK_INTERRUPTED):
                 self._set(span, ATTR_TURN_INTERRUPTED, True)
+            # Prefer index stamped at on_start (open turn). Recompute via the
+            # same rules as pipeline children — never trust a missing index.
             turn_index_raw = (span.attributes or {}).get(ATTR_TURN_INDEX)
             if turn_index_raw is None:
-                resolved_turn_index = state.open_agent_turn_index or (state.turn_count + 1)
+                resolved_turn_index = self.active_turn_index(state, "agent_turn") or (
+                    state.open_agent_turn_index or (state.turn_count + 1)
+                )
             else:
                 resolved_turn_index = attr_int(span.attributes or {}, ATTR_TURN_INDEX)
             if resolved_turn_index:
