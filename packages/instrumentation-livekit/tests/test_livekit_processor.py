@@ -100,6 +100,9 @@ class _SpanStub:
     def end_time(self) -> int:
         return self._end_time
 
+    def set_attribute(self, key: str, value) -> None:
+        self._attributes[key] = value
+
 
 def _make_span(
     name: str,
@@ -233,7 +236,8 @@ class TestLlmNodeEnrichment:
 
         span = _make_span("llm_node")
         proc.on_end(span)
-        assert span._attributes[ATTR_TURN_INDEX] == 2
+        # Open agent turn is turn_count+1 (same as commit_agent_message).
+        assert span._attributes[ATTR_TURN_INDEX] == 3
         assert state.turn_count == 2
 
     def test_op_name_defaulted(self) -> None:
@@ -734,6 +738,78 @@ class TestHandoffSpanEnrichment:
         })
         proc.on_end(span)
         assert state.agent_label == "get_email_task"
+
+
+class TestPipelineTurnIndex:
+    """Regression: later TTS/LLM must not collapse onto turn 1 after greeting."""
+
+    def test_greeting_pipeline_uses_turn_1_when_nothing_open(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
+        state = get_job_bootstrap().state
+        assert state.turn_count == 0
+        assert state.open_agent_turn_index is None
+
+        tts = _make_span("tts_node")
+        proc.on_end(tts)
+        assert tts._attributes[ATTR_TURN_INDEX] == 1
+
+        llm = _make_span("llm_node")
+        proc.on_end(llm)
+        assert llm._attributes[ATTR_TURN_INDEX] == 1
+
+    def test_pipeline_uses_open_agent_turn_not_completed_turn_count(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
+        state = get_job_bootstrap().state
+        # Greeting already committed; next user opened agent turn 3.
+        state.turn_count = 2
+        state.open_agent_turn_index = 3
+
+        tts = _make_span("tts_node")
+        proc.on_end(tts)
+        assert tts._attributes[ATTR_TURN_INDEX] == 3
+
+    def test_pipeline_after_open_cleared_uses_next_turn_not_stale_count(self) -> None:
+        """Consecutive agent reply (handoff on_enter) with open cleared."""
+        proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
+        state = get_job_bootstrap().state
+        state.turn_count = 3
+        state.open_agent_turn_index = None
+
+        tts = _make_span("tts_node")
+        proc.on_end(tts)
+        # Must not reuse completed turn 3 (the bug that piled spans onto turn 1
+        # when turn_count stayed at 1 after the greeting).
+        assert tts._attributes[ATTR_TURN_INDEX] == 4
+
+    def test_on_start_keeps_index_after_agent_commit_clears_open(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
+        state = get_job_bootstrap().state
+        state.turn_count = 2
+        state.open_agent_turn_index = 3
+
+        tts = _make_span("tts_node")
+        proc.on_start(tts)
+        assert tts._attributes[ATTR_TURN_INDEX] == 3
+
+        # conversation_item_added commits the agent turn and clears open.
+        state.turn_count = 3
+        state.open_agent_turn_index = None
+
+        proc.on_end(tts)
+        assert tts._attributes[ATTR_TURN_INDEX] == 3
+
+    def test_active_turn_index_matches_commit_agent_message(self) -> None:
+        proc = LiveKitGenAIProcessor()
+        _bootstrap_proc(proc)
+        state = get_job_bootstrap().state
+        state.turn_count = 1
+        state.open_agent_turn_index = None
+        assert proc._turns.active_turn_index(state, "tts_node") == 2
+        assert proc._turns.active_turn_index(state, "llm_request_run") == 2
 
 
 def test_processor_on_end_failure_logs_descriptively_without_traceback(caplog) -> None:
