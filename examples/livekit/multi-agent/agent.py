@@ -14,9 +14,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from parlot.instrumentation.livekit import configure
+from parlot.instrumentation.livekit import parlotize
 
-configure()
+parlotize()
 
 from livekit import api
 from livekit.agents import (

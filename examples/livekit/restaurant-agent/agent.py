@@ -17,9 +17,9 @@ from pydantic import Field
 
 load_dotenv()
 
-from parlot.instrumentation.livekit import configure
+from parlot.instrumentation.livekit import parlotize
 
-configure(agent_id="restaurant-agent", version="0.1.0")
+parlotize(agent_id="restaurant-agent", version="0.1.0")
 
 from livekit.agents import Agent, AgentServer, AgentSession, JobContext, RunContext, cli, inference
 from livekit.agents.llm import function_tool

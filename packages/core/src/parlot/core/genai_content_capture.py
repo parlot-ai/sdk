@@ -12,7 +12,7 @@ text (``turn.user_text`` / ``turn.agent_text``).
 
 Not in scope: audio recording, session logs, or instruction excerpts.
 
-Precedence: job metadata > ``configure(capture_genai_content=…)`` > Settings bootstrap > on.
+Precedence: job metadata > ``parlotize(capture_genai_content=…)`` > Settings bootstrap > on.
 Default ON when bootstrap is missing. Explicit empty globs = off.
 """
 
@@ -30,14 +30,14 @@ def should_capture_genai_content(
     agent_name: str,
     *,
     metadata_capture_genai_content: Optional[bool] = None,
-    configure_capture_genai_content: Optional[bool] = None,
+    parlotize_capture_genai_content: Optional[bool] = None,
     bootstrap_globs: Optional[Sequence[str]] = None,
     bootstrap_agents: Optional[Mapping[str, bool]] = None,
     bootstrap_present: bool = False,
 ) -> bool:
     """Return True when generative AI / tool content bodies should be captured.
 
-    Precedence: job metadata > ``configure(capture_genai_content=…)`` > bootstrap (UI).
+    Precedence: job metadata > ``parlotize(capture_genai_content=…)`` > bootstrap (UI).
     When bootstrap is absent (``bootstrap_present=False``) or globs are unset,
     default is **on**. Explicit empty globs means off.
     """
@@ -46,8 +46,8 @@ def should_capture_genai_content(
     if metadata_capture_genai_content is True:
         return True
 
-    if configure_capture_genai_content is not None:
-        return bool(configure_capture_genai_content)
+    if parlotize_capture_genai_content is not None:
+        return bool(parlotize_capture_genai_content)
 
     agents = bootstrap_agents or {}
     if agent_name in agents:

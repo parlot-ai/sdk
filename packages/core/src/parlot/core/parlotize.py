@@ -1,6 +1,6 @@
-"""Shared ``configure()`` keyword surface and base configuration helper.
+"""Shared ``parlotize()`` keyword surface and base configuration helper.
 
-All adapter ``configure()`` entrypoints are keyword-only so the shape can
+All adapter ``parlotize()`` entrypoints are keyword-only so the shape can
 evolve without breaking positional call sites.
 """
 
@@ -16,12 +16,12 @@ if TYPE_CHECKING:
 
 from parlot.core.context import ParlotContext
 
-logger = logging.getLogger("parlot.core.configure")
+logger = logging.getLogger("parlot.core.parlotize")
 
 
 @runtime_checkable
-class ConfigureProtocol(Protocol):
-    """Common kwargs every adapter ``configure()`` must accept.
+class ParlotizeProtocol(Protocol):
+    """Common kwargs every adapter ``parlotize()`` must accept.
 
     Framework packages may add extra keyword-only parameters (e.g. LiveKit
     ``record=`` / ``auto_escalate_sip=``).
@@ -41,7 +41,7 @@ class ConfigureProtocol(Protocol):
         log_level: Optional[str] = None,
         **kwargs: Any,
     ) -> ParlotContext:
-        """Shared keyword surface for every adapter ``configure()``.
+        """Shared keyword surface for every adapter ``parlotize()``.
 
         Args:
             endpoint: Parlot OTLP collector base URL (e.g.
@@ -76,8 +76,8 @@ class ConfigureProtocol(Protocol):
 
 
 @dataclass
-class BaseConfigureResult:
-    """Resolved context from ``base_configure`` for framework adapters."""
+class BaseParlotizeResult:
+    """Resolved context from ``base_parlotize`` for framework adapters."""
 
     context: ParlotContext
     endpoint: str
@@ -98,7 +98,7 @@ def configure_parlot_logging() -> None:
         logging.basicConfig(level=level)
 
 
-def base_configure(
+def base_parlotize(
     *,
     endpoint: Optional[str] = None,
     api_key: Optional[str] = None,
@@ -108,13 +108,13 @@ def base_configure(
     version: Optional[str] = None,
     capture_logs: bool | list[str] | None = None,
     log_level: Optional[str] = None,
-) -> BaseConfigureResult:
+) -> BaseParlotizeResult:
     """Execute shared telemetry configuration common across all adapters.
 
     Creates a ``ParlotContext``, initializes the session log
     collector, and fetches remote bootstrap into ``context.runtime``.
 
-    See ``ConfigureProtocol`` for the shared keyword surface.
+    See ``ParlotizeProtocol`` for the shared keyword surface.
 
     Args:
         endpoint: Parlot OTLP collector base URL. If omitted, reads
@@ -158,7 +158,7 @@ def base_configure(
     resolved_log_level = log_level.strip().upper() if log_level else None
 
     context = ParlotContext()
-    context.session_logs.set_capture_logs_configure(
+    context.session_logs.set_capture_logs_parlotize(
         resolved_capture_logs,
         log_level=resolved_log_level,
     )
@@ -170,7 +170,7 @@ def base_configure(
     if tracer_provider is None:
         tracer_provider = adopt_existing_tracer_provider()
 
-    return BaseConfigureResult(
+    return BaseParlotizeResult(
         context=context,
         endpoint=resolved_endpoint,
         api_key=resolved_api_key,

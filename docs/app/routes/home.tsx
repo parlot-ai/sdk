@@ -72,7 +72,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-lg font-bold text-fd-foreground mb-1">SDK Quick Start</h3>
                 <p className="text-sm text-fd-muted-foreground">
-                  Install parlot, call configure(), and export OpenTelemetry traces and metrics.
+                  Install parlot, call parlotize(), and export OpenTelemetry traces and metrics.
                 </p>
               </div>
             </Link>

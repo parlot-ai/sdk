@@ -334,7 +334,7 @@ async def _run_scenario(
         print(f"\nclosed scenario={label!r} parlot_session_id={session_id or '(unknown)'}")
         if not session_id:
             raise RuntimeError(
-                "Parlot session id was not set — configure()/bootstrap may have failed"
+                "Parlot session id was not set — parlotize()/bootstrap may have failed"
             )
         return session_id
     finally:

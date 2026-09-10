@@ -9,12 +9,12 @@ from parlot.core import (
     stamp_platform_refs,
 )
 
-from ._auto import configure
+from ._auto import parlotize
 from ._events import install_session_hooks
 from ._processor import LiveKitGenAIProcessor
 
 __all__ = [
-    "configure",
+    "parlotize",
     "install_session_hooks",
     "LiveKitGenAIProcessor",
     "add_platform_ref",

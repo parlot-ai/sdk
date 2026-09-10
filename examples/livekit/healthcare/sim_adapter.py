@@ -21,7 +21,7 @@ PERSONA_ROLE = (
 
 
 async def open_run() -> SimRun:
-    import agent as healthcare_agent  # noqa: F401 — triggers configure()
+    import agent as healthcare_agent  # noqa: F401 — triggers parlotize()
     from fake_database import FakeDatabase
 
     db = FakeDatabase()

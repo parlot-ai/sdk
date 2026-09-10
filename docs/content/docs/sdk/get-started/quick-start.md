@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # Quick Start
 
-**Know if your voice agent is actually working.** Parlot’s MIT `configure()` sidecar instruments [LiveKit Agents](https://docs.livekit.io/agents/) — Cloud, self-hosted, or [LiveKit on Telnyx](https://telnyx.com/products/livekit-on-telnyx) — and models each call as turns: timeline, multi-agent graph, and goal completion with an evidence trail to the proving turns and audio.
+**Know if your voice agent is actually working.** Parlot’s MIT `parlotize()` sidecar instruments [LiveKit Agents](https://docs.livekit.io/agents/) — Cloud, self-hosted, or [LiveKit on Telnyx](https://telnyx.com/products/livekit-on-telnyx) — and models each call as turns: timeline, multi-agent graph, and goal completion with an evidence trail to the proving turns and audio.
 
 ## Install
 
@@ -23,12 +23,12 @@ pip install "parlot[livekit]"
 
 ## Instrument
 
-Call `configure()` before constructing `AgentSession`, then `await ctx.connect()` before `session.start()`:
+Call `parlotize()` before constructing `AgentSession`, then `await ctx.connect()` before `session.start()`:
 
 ```python
-from parlot.instrumentation.livekit import configure
+from parlot.instrumentation.livekit import parlotize
 
-configure()
+parlotize()
 
 from livekit.agents import AgentSession, JobContext, WorkerOptions, cli
 
@@ -47,7 +47,7 @@ export PARLOT_ENDPOINT=https://ingest.parlot.ai
 export PARLOT_API_KEY=<org-scoped-key>
 ```
 
-Mint the API key in Parlot **Settings → API Keys**. For recording, enable Settings → Recording (or `configure(record=True)`). Audio uploads to R2 and confirms when you open the session (lazy R2 HEAD reconcile).
+Mint the API key in Parlot **Settings → API Keys**. For recording, enable Settings → Recording (or `parlotize(record=True)`). Audio uploads to R2 and confirms when you open the session (lazy R2 HEAD reconcile).
 
 ## Next
 

@@ -20,11 +20,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from parlot.instrumentation.livekit import configure
+from parlot.instrumentation.livekit import parlotize
 
 __version__ = "0.1.0"
 
-configure(agent_id="hotel-receptionist", version=__version__)
+parlotize(agent_id="hotel-receptionist", version=__version__)
 
 from benchmark import build_expected, diff_databases
 from common import Userdata

@@ -19,7 +19,7 @@ _configured_agent_version: str = ""
 _parlot_context: ParlotContext | None = None
 
 
-def configure(
+def parlotize(
     *,
     endpoint: Optional[str] = None,
     api_key: Optional[str] = None,
@@ -33,7 +33,7 @@ def configure(
     capture_logs: bool | list[str] | None = None,
     log_level: Optional[str] = None,
 ) -> ParlotContext:
-    """Configure Parlot LangGraph instrumentation and OTLP export.
+    """Parlotize LangGraph instrumentation and OTLP export.
 
     Registers a global LangChain callback handler (LangSmith-style) so
     ``invoke`` / ``ainvoke`` / ``astream`` emit GenAI spans without per-call
@@ -46,7 +46,7 @@ def configure(
     Shared kwargs (``endpoint``, ``api_key``, ``agent_id``, ``version``,
     ``capture_genai_content``, ``capture_logs``, ``log_level``,
     ``service_name``, ``tracer_provider``) match every adapter — see
-    ``parlot.core.ConfigureProtocol``.
+    ``parlot.core.ParlotizeProtocol``.
 
     Args:
         endpoint: Shared — Parlot OTLP base URL (or ``PARLOT_ENDPOINT``).
@@ -77,14 +77,14 @@ def configure(
         assert _parlot_context is not None
         return _parlot_context
 
-    from parlot.core import base_configure
+    from parlot.core import base_parlotize
     from parlot.core.genai_content_capture import should_capture_genai_content
     from parlot.core.sdk_version import resolve_parlot_sdk_version
 
     _configured_agent_id = agent_id.strip() if agent_id else None
     _configured_agent_version = (version or os.environ.get("PARLOT_AGENT_VERSION") or "").strip()
 
-    res = base_configure(
+    res = base_parlotize(
         endpoint=endpoint,
         api_key=api_key,
         capture_genai_content=capture_genai_content,
@@ -99,7 +99,7 @@ def configure(
     runtime = res.context.runtime
     capture = should_capture_genai_content(
         _configured_agent_id or "",
-        configure_capture_genai_content=res.capture_genai_content,
+        parlotize_capture_genai_content=res.capture_genai_content,
         bootstrap_globs=list(runtime.capture_genai_content_globs) if runtime else None,
         bootstrap_agents=runtime.capture_genai_content_agents_map() if runtime else None,
         bootstrap_present=bool(runtime and runtime.capture_genai_content_policy_present),
@@ -132,14 +132,14 @@ def configure(
     )
 
     from ._callbacks import ParlotLangGraphCallbackHandler
-    from ._hooks import install_configure_hook
+    from ._hooks import install_parlotize_hook
     from ._session import set_channel_modality, set_identity, set_tracer
 
     set_identity(_configured_agent_id or "", _configured_agent_version)
     set_channel_modality(channel=channel or "", modality=modality or "")
     set_tracer(tracer)
     handler = ParlotLangGraphCallbackHandler(tracer, capture_genai_content=capture)
-    install_configure_hook(handler)
+    install_parlotize_hook(handler)
 
     _configured = True
     logger.debug(

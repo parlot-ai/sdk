@@ -117,7 +117,7 @@ def _stamp_session_identity(span: Span, *, thread_id: str, state: Any | None = N
     span.set_attribute(ATTR_SESSION_AGENT_FRAMEWORK, LANGGRAPH_FRAMEWORK)
     # Channel/modality are transport concerns — not implied by LangGraph.
     # LiveKit-owned sessions never reach here; standalone agents should pass
-    # channel= (and optionally modality=) to configure().
+    # channel= (and optionally modality=) to parlotize().
     if _configured_channel:
         span.set_attribute(ATTR_CONVERSATION_CHANNEL, _configured_channel)
     modality = _resolved_modality()

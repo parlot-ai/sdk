@@ -23,7 +23,7 @@ SEARCH_PATHS = [
 ]
 
 DOCUMENTED_MODULES = [
-    "parlot.core.configure",
+    "parlot.core.parlotize",
     "parlot.core.metadata",
     "parlot.core.platform_refs",
     "parlot.core.escalation",

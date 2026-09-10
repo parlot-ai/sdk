@@ -78,11 +78,11 @@ class TestLiveKitRecordingGuard:
             is True
         )
 
-    def test_configure_record_true(self) -> None:
+    def test_parlotize_record_true(self) -> None:
         _auto._configured_record = True
         assert should_record(_ctx()) is True
 
-    def test_configure_agent_id_uses_bootstrap_agents_map(self) -> None:
+    def test_parlotize_agent_id_uses_bootstrap_agents_map(self) -> None:
         _auto._configured_agent_id = "custom-id"
         context = _parlot_ctx(recording_agents=(("custom-id", True),))
         _auto.set_configured_context(context)
@@ -137,7 +137,7 @@ class TestLiveKitGenAIContentCaptureGuard:
         _auto.set_configured_context(context)
         assert should_capture_genai_content(_ctx(), context=context) is False
 
-    def test_metadata_and_configure_overrides(self) -> None:
+    def test_metadata_and_parlotize_overrides(self) -> None:
         context = _parlot_ctx(
             capture_genai_content_globs=(),
             capture_genai_content_policy_present=True,

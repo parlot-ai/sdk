@@ -1,7 +1,7 @@
 [project]
 name = "parlot-example-langgraph-minimal"
 version = "0.1.0"
-description = "Minimal LangGraph agent with Parlot configure()"
+description = "Minimal LangGraph agent with Parlot parlotize()"
 requires-python = ">=3.11"
 dependencies = [
     "parlot-core",

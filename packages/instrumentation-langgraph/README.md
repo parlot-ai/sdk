@@ -11,9 +11,9 @@ pip install parlot-instrumentation-langgraph
 ```
 
 ```python
-from parlot.instrumentation.langgraph import configure
+from parlot.instrumentation.langgraph import parlotize
 
-configure(agent_id="support-bot", version="0.1.0", channel="webchat")
+parlotize(agent_id="support-bot", version="0.1.0", channel="webchat")
 
 # Normal LangGraph usage — no per-call callbacks required
 graph.invoke(
@@ -32,13 +32,13 @@ derived from channel (`webchat`/`sms`/`whatsapp` → text, `voice` → voice).
 Set `PARLOT_ENDPOINT` and `PARLOT_API_KEY`. Generative AI content capture
 (message bodies / tool payloads; default on) is documented in
 [Concepts](https://parlot.ai/docs/concepts#generative-ai-content-capture).
-Override with `configure(capture_genai_content=False)`.
+Override with `parlotize(capture_genai_content=False)`.
 
 Session application logs (Python `logging`, default on) follow Settings → Logs /
-`configure(capture_logs=…, log_level=…)`. Not `print()`. Treat content like stdout for PII.
+`parlotize(capture_logs=…, log_level=…)`. Not `print()`. Treat content like stdout for PII.
 
 When used inside a LiveKit voice agent that already called
-`parlot.instrumentation.livekit.configure()`, this package nests GenAI
+`parlot.instrumentation.livekit.parlotize()`, this package nests GenAI
 operational spans under the active LiveKit session and does **not** emit
 duplicate `parlot.session` / `parlot.turn` spans — LiveKit owns channel and
 modality.

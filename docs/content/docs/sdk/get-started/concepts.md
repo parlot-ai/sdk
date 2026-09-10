@@ -16,7 +16,7 @@ Parlot treats production voice agents as **event systems** first and traces seco
 |---------|------|
 | `parlot-core` | Semantic conventions (GenAI v1.41 + Conversation Contract + voice), base processor, shared provider helpers |
 | `parlot-instrumentation-livekit` | LiveKit Agents OTel instrumentation, egress hooks, platform refs |
-| `parlot-instrumentation-langgraph` | LangGraph / LangChain `configure()` via global callbacks |
+| `parlot-instrumentation-langgraph` | LangGraph / LangChain `parlotize()` via global callbacks |
 
 Contract helpers (`record_human_rep`, `set_session_metadata`, `add_platform_ref`, …) live in `parlot.core`. Framework packages re-export them for convenience — prefer those re-exports in agent code. See the [Python API Reference](/sdk/python) and [Interactive API Docs](/docs/ref/python/).
 
@@ -34,8 +34,8 @@ Vendor span and attribute maps live in each framework guide. See [LangGraph](/sd
 
 - A **session** is one bounded interaction (a call / job).
 - Today LiveKit voice sets `conversation_id` equal to `session_id` (1:1) as a placeholder until multi-session conversations are modeled.
-- `configure(agent_id=..., version=...)` stamps deployment identity used by the Parlot Agents portfolio.
-- Version resolution order: `configure(version=)` → `__main__.__version__` → `PARLOT_AGENT_VERSION` → local git SHA (dev only).
+- `parlotize(agent_id=..., version=...)` stamps deployment identity used by the Parlot Agents portfolio.
+- Version resolution order: `parlotize(version=)` → `__main__.__version__` → `PARLOT_AGENT_VERSION` → local git SHA (dev only).
 
 Parlot stamps framework-agnostic session attributes on `parlot.session`:
 
@@ -53,7 +53,7 @@ Each framework guide documents how those attributes are sourced from the vendor 
 
 - **Telemetry** (turns, handoffs, close, usage) always goes over OTLP to `PARLOT_ENDPOINT`.
 - **Audio recording** is optional and framework-specific. On LiveKit it uses Room Composite Egress to R2; opening the session confirms upload via R2 HEAD reconcile. Telemetry does not depend on recording confirmation.
-- **Application logs** (Python `logging` only — not `print()`) are captured on by default during an active session and shown on the session **Logs** tab. They export as **OTLP Logs** (`POST /v1/logs`, protobuf) with `session.id` on each record. Policy mirrors recording (Settings → Logs + `configure(capture_logs=…)`), except the fallback is on. Treat log content like stdout for PII.
+- **Application logs** (Python `logging` only — not `print()`) are captured on by default during an active session and shown on the session **Logs** tab. They export as **OTLP Logs** (`POST /v1/logs`, protobuf) with `session.id` on each record. Policy mirrors recording (Settings → Logs + `parlotize(capture_logs=…)`), except the fallback is on. Treat log content like stdout for PII.
 - **Generative AI content** (LLM/tool bodies) is a separate policy — see [Generative AI content capture](#generative-ai-content-capture).
 
 See the [LiveKit guide](/sdk/guides/livekit) for egress, policy, and troubleshooting.
@@ -73,10 +73,10 @@ Not in scope: audio recording, session application logs, or instruction excerpts
 
 Precedence (same ladder as recording/logs; fallback is **on**):
 
-job metadata `capture_genai_content` → `configure(capture_genai_content=…)` → Settings → Generative AI (bootstrap) → on
+job metadata `capture_genai_content` → `parlotize(capture_genai_content=…)` → Settings → Generative AI (bootstrap) → on
 
 - **UI:** Parlot → **Settings → Generative AI** / agent Settings tab — globs (default `*`) and per-agent toggles. Empty globs turns capture off org-wide for new agents.
-- **Code:** `configure(capture_genai_content=True|False)` overrides bootstrap for the process.
+- **Code:** `parlotize(capture_genai_content=True|False)` overrides bootstrap for the process.
 - **Dispatch:** job metadata `{ "capture_genai_content": true|false }` (where the framework supports job metadata).
 
 Resolved at span emit time from bootstrap so per-agent Settings toggles apply; restart is not required for new jobs after Settings changes (already-running processes keep their bootstrap cache until restart).

@@ -2,7 +2,7 @@
 
 **Production voice AI observability** for teams shipping LiveKit Agents.
 
-Know if your voice agent is actually working — not just that the pipeline returned 200s. This MIT Python SDK is a thin `configure()` sidecar: call it once at startup and Parlot models each call as **turns**, not flat traces. You get a turn timeline, multi-agent handoff graph, and goal completion with a clickable evidence trail to the proving turns and audio.
+Know if your voice agent is actually working — not just that the pipeline returned 200s. This MIT Python SDK is a thin `parlotize()` sidecar: call it once at startup and Parlot models each call as **turns**, not flat traces. You get a turn timeline, multi-agent handoff graph, and goal completion with a clickable evidence trail to the proving turns and audio.
 
 Works with LiveKit Cloud, self-hosted media, and [LiveKit on Telnyx](https://telnyx.com/products/livekit-on-telnyx).
 
@@ -31,12 +31,12 @@ pip install "parlot[livekit]"
 
 ## Instrument
 
-Call `configure()` before constructing `AgentSession`, then `await ctx.connect()` before `session.start()`:
+Call `parlotize()` before constructing `AgentSession`, then `await ctx.connect()` before `session.start()`:
 
 ```python
-from parlot.instrumentation.livekit import configure
+from parlot.instrumentation.livekit import parlotize
 
-configure()
+parlotize()
 
 from livekit.agents import AgentSession, JobContext, WorkerOptions, cli
 
@@ -60,8 +60,8 @@ Mint the API key in Parlot **Settings → API Keys**. Full checklist (recording,
 - **LiveKit-native** — AgentSession lifecycle and pipeline spans (STT / LLM / TTS / tools), including fully self-hosted media where [LiveKit Agent Insights](https://docs.livekit.io/deploy/observability/insights/) does not run.
 - **Conversational turns** — caller, AI agents, and human reps as first-class turns on one timeline.
 - **Graph + waterfall** — handoffs with edge latency; STT / LLM TTFT / TTS / end-to-end timing per turn.
-- **Optional recording** — egress to object storage when enabled in Settings or `configure(record=…)`.
-- **OTLP-native and removable** — standard export; remove `configure()` and the agent still works.
+- **Optional recording** — egress to object storage when enabled in Settings or `parlotize(record=…)`.
+- **OTLP-native and removable** — standard export; remove `parlotize()` and the agent still works.
 
 ## Examples
 
@@ -74,11 +74,11 @@ Mint the API key in Parlot **Settings → API Keys**. Full checklist (recording,
 | [`examples/livekit/healthcare/`](examples/livekit/healthcare/) | Front desk (intake, appointments, billing) + persona sims |
 | [`examples/livekit/drive-thru/`](examples/livekit/drive-thru/) | Ordering with dynamic tools + persona sims |
 | [`examples/livekit/persona_sim/`](examples/livekit/persona_sim/) | Shared persona-LLM text session driver |
-| [`examples/langgraph/minimal-agent/`](examples/langgraph/minimal-agent/) | Standalone LangGraph + `configure()` |
+| [`examples/langgraph/minimal-agent/`](examples/langgraph/minimal-agent/) | Standalone LangGraph + `parlotize()` |
 
 ## LangGraph / text agents
 
-Already running voice **and** LangGraph / LangChain? Keep one debugger — same turn model for calls and background agent runs. Install `parlot-instrumentation-langgraph` (or `pip install "parlot[langgraph]"`) and call `configure()`; see the [instrumentation-langgraph README](packages/instrumentation-langgraph/README.md).
+Already running voice **and** LangGraph / LangChain? Keep one debugger — same turn model for calls and background agent runs. Install `parlot-instrumentation-langgraph` (or `pip install "parlot[langgraph]"`) and call `parlotize()`; see the [instrumentation-langgraph README](packages/instrumentation-langgraph/README.md).
 
 ## License
 
@@ -103,9 +103,9 @@ Parlot stamps `gen_ai.agent.version` on each session when a deployment version i
 
 #### Resolution Order
 
-`configure(version=...)` resolves once at startup (first non-empty wins):
+`parlotize(version=...)` resolves once at startup (first non-empty wins):
 
-1. `version=` kwarg passed to `configure()`
+1. `version=` kwarg passed to `parlotize()`
 2. `__version__` or `VERSION` on the agent entry module (`__main__`)
 3. `PARLOT_AGENT_VERSION` environment variable (runtime override)
 4. Local git short SHA when a `.git` directory is present (dev convenience only)
@@ -116,13 +116,13 @@ If none resolve, the attribute is omitted.
 
 - **Example / single-file agents:** set `__version__ = "1.2.3"` at the top of your entrypoint and bump on release. See [`examples/livekit/restaurant-agent/agent.py`](examples/livekit/restaurant-agent/agent.py).
 - **Runtime override:** set `PARLOT_AGENT_VERSION` when the deploy label must differ from the code's `__version__` (canary, injected build metadata).
-- **Explicit:** pass `configure(version="2026.03.26")` for tests or special cases.
+- **Explicit:** pass `parlotize(version="2026.03.26")` for tests or special cases.
 
 CI commit env vars (`GITHUB_SHA`, etc.) and installed package metadata are **not** consulted — they are unreliable in production containers.
 
 #### LiveKit Caveat
 
-Under LiveKit `dev` / spawned `job_proc` workers, `__main__` is often not your agent file, so `__version__` on the entrypoint may not resolve. Prefer `configure(version=...)` or `PARLOT_AGENT_VERSION`. See [instrumentation-livekit README — What to expect for version](packages/instrumentation-livekit/README.md#what-to-expect-for-version).
+Under LiveKit `dev` / spawned `job_proc` workers, `__main__` is often not your agent file, so `__version__` on the entrypoint may not resolve. Prefer `parlotize(version=...)` or `PARLOT_AGENT_VERSION`. See [instrumentation-livekit README — What to expect for version](packages/instrumentation-livekit/README.md#what-to-expect-for-version).
 
 ### Send telemetry to Parlot
 

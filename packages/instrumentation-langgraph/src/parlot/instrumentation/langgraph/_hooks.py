@@ -1,4 +1,4 @@
-"""Register / uninstall the global LangChain configure hook."""
+"""Register / uninstall the global LangChain parlotize hook."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ _handler_var: ContextVar[Any] = ContextVar("parlot_langgraph_handler", default=N
 _hook_registered = False
 
 
-def install_configure_hook(handler: Any) -> None:
+def install_parlotize_hook(handler: Any) -> None:
     """Register ``handler`` so every LangChain callback manager inherits it."""
     global _hook_registered
     _handler_var.set(handler)
@@ -31,7 +31,7 @@ def install_configure_hook(handler: Any) -> None:
         inheritable=True,
     )
     _hook_registered = True
-    logger.debug("Registered Parlot LangGraph configure hook")
+    logger.debug("Registered Parlot LangGraph parlotize hook")
 
 
 def get_handler() -> Any:

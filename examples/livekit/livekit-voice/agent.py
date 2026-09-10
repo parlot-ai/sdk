@@ -1,7 +1,7 @@
 """
 Minimal Parlot-instrumented LiveKit voice agent.
 
-This file shows the complete integration — configure() at import. Parlot
+This file shows the complete integration — parlotize() at import. Parlot
 binds the session when AgentSession reaches the listening state
 (initializing→listening), not via OTEL spans.
 
@@ -21,9 +21,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ── Parlot instrumentation ────────────────────────────────────────────────
-from parlot.instrumentation.livekit import configure
+from parlot.instrumentation.livekit import parlotize
 
-configure()
+parlotize()
 # ─────────────────────────────────────────────────────────────────────────
 
 import livekit.agents as agents

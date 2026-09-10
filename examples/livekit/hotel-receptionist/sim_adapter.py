@@ -21,7 +21,7 @@ PERSONA_ROLE = (
 
 
 async def open_run() -> SimRun:
-    import agent as hotel_agent  # noqa: F401 — triggers configure()
+    import agent as hotel_agent  # noqa: F401 — triggers parlotize()
     from common import Userdata
     from fake_data.seed import build_seed_bytes
     from hotel_db import TODAY, HotelDB

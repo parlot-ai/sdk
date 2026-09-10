@@ -13,9 +13,9 @@ pip install parlot-instrumentation-livekit
 ```
 
 ```python
-from parlot.instrumentation.livekit import configure
+from parlot.instrumentation.livekit import parlotize
 
-configure()
+parlotize()
 ```
 
 **Docs:** [LiveKit guide](https://parlot.ai/docs/guides/livekit) · [Concepts](https://parlot.ai/docs/concepts) · [Quick Start](https://parlot.ai/docs/quick-start) · [parlot.ai](https://parlot.ai)
@@ -24,30 +24,30 @@ configure()
 
 Two steps are required for full Parlot behavior. All SDK examples follow this pattern.
 
-### 1. `configure()` at import (required)
+### 1. `parlotize()` at import (required)
 
 Call before constructing `AgentSession` — patches `AgentSession.__init__`, sets up OTLP export to `PARLOT_ENDPOINT`, and installs turn/handoff/close event hooks.
 
 ```python
-from parlot.instrumentation.livekit import configure
+from parlot.instrumentation.livekit import parlotize
 
-configure()
+parlotize()
 ```
 
 Optional: `agent_id=` for canonical deployment identity and `version=` for deployment version. Full resolution order is in the [SDK README](../../README.md#agent-deployment-version).
 
 #### What to expect for version
 
-`configure(version=...)` resolves once at startup (first non-empty wins): `version=` kwarg → `__main__.__version__` / `VERSION` → `PARLOT_AGENT_VERSION` → local git short SHA (only when cwd has a `.git` directory).
+`parlotize(version=...)` resolves once at startup (first non-empty wins): `version=` kwarg → `__main__.__version__` / `VERSION` → `PARLOT_AGENT_VERSION` → local git short SHA (only when cwd has a `.git` directory).
 
 If none resolve, `gen_ai.agent.version` is omitted. The platform Versions tab then stays empty (it filters `agent_version != ''`).
 
-**LiveKit job processes:** with `lk agent dev` (or spawned `job_proc` workers), `__main__` is LiveKit’s IPC entrypoint, not your agent file. A module-level `__version__` on `agent.py` often does **not** resolve. The parent `dev` watcher also skips `configure()` via `_is_livekit_dev_watch_parent`, so instrumentation runs in the child where `__main__` is not your entrypoint. Example dirs like `examples/livekit/restaurant-agent` usually have no `.git`, so the git SHA fallback also fails.
+**LiveKit job processes:** with `lk agent dev` (or spawned `job_proc` workers), `__main__` is LiveKit’s IPC entrypoint, not your agent file. A module-level `__version__` on `agent.py` often does **not** resolve. The parent `dev` watcher also skips `parlotize()` via `_is_livekit_dev_watch_parent`, so instrumentation runs in the child where `__main__` is not your entrypoint. Example dirs like `examples/livekit/restaurant-agent` usually have no `.git`, so the git SHA fallback also fails.
 
 **Reliable patterns for LiveKit:**
 
 ```python
-configure(agent_id="restaurant-agent", version="0.1.0")
+parlotize(agent_id="restaurant-agent", version="0.1.0")
 ```
 
 or set `PARLOT_AGENT_VERSION=0.1.0` at deploy/runtime.
@@ -76,17 +76,17 @@ Always call `ctx.connect()` in production agents and in all Parlot examples.
 
 ## Environment
 
-Set `PARLOT_ENDPOINT` and `PARLOT_API_KEY`. The API key is **org-scoped** — mint it in Parlot **Settings → API Keys** (shown once on create). Recording needs Settings → Recording (or `configure(record=…)` / job metadata) plus agent `LIVEKIT_*` credentials. Recordings upload to R2 and confirm via lazy R2 reconcile when the session is opened.
+Set `PARLOT_ENDPOINT` and `PARLOT_API_KEY`. The API key is **org-scoped** — mint it in Parlot **Settings → API Keys** (shown once on create). Recording needs Settings → Recording (or `parlotize(record=…)` / job metadata) plus agent `LIVEKIT_*` credentials. Recordings upload to R2 and confirm via lazy R2 reconcile when the session is opened.
 
-Recording policy (precedence: job metadata → `configure(record=…)` → Settings → Recording via bootstrap):
+Recording policy (precedence: job metadata → `parlotize(record=…)` → Settings → Recording via bootstrap):
 
 - **UI:** Parlot → Settings → Recording (per-agent toggles + globs for unseen agents)
-- **Code:** `configure(record=True)`, `configure(record=False)`, or `configure(record=["my-agent*"])`
+- **Code:** `parlotize(record=True)`, `parlotize(record=False)`, or `parlotize(record=["my-agent*"])`
 - **Dispatch:** job metadata `{ "record": true|false }`
 
-Session application logs (Python `logging`, default on) use the same control path via Settings → Logs / `configure(capture_logs=…)` / job `capture_logs`. Not `print()`. Treat content like stdout for PII.
+Session application logs (Python `logging`, default on) use the same control path via Settings → Logs / `parlotize(capture_logs=…)` / job `capture_logs`. Not `print()`. Treat content like stdout for PII.
 
-Generative AI content capture (message bodies / tool payloads; default on) is documented in [Concepts](https://parlot.ai/docs/concepts#generative-ai-content-capture). Override with `configure(capture_genai_content=True|False)`.
+Generative AI content capture (message bodies / tool payloads; default on) is documented in [Concepts](https://parlot.ai/docs/concepts#generative-ai-content-capture). Override with `parlotize(capture_genai_content=True|False)`.
 
 ## Examples
 

@@ -62,7 +62,7 @@ def _configure_parlot_logging() -> None:
         logging.basicConfig(level=level)
 
 
-def configure(
+def parlotize(
     *,
     endpoint: Optional[str] = None,
     api_key: Optional[str] = None,
@@ -77,7 +77,7 @@ def configure(
     capture_logs: bool | list[str] | None = None,
     log_level: Optional[str] = None,
 ) -> ParlotContext:
-    """Configure Parlot LiveKit instrumentation and OTLP export.
+    """Parlotize LiveKit instrumentation and OTLP export.
 
     Call before constructing ``AgentSession``. Builds a ``TracerProvider`` with
     an OTLP exporter, registers it with ``livekit.agents.telemetry``, fetches
@@ -88,7 +88,7 @@ def configure(
     Shared kwargs (``endpoint``, ``api_key``, ``agent_id``, ``version``,
     ``capture_genai_content``, ``capture_logs``, ``log_level``,
     ``service_name``, ``tracer_provider``) match every adapter — see
-    ``parlot.core.ConfigureProtocol``.
+    ``parlot.core.ParlotizeProtocol``.
 
     Under LiveKit ``dev`` / job workers, ``__main__`` is often LiveKit's IPC
     entrypoint, not your agent file — prefer explicit ``agent_id=`` /
@@ -136,8 +136,8 @@ def configure(
 
     if _is_livekit_dev_watch_parent():
         logger.debug(
-            "Skipping parlot-instrumentation.livekit configure in LiveKit dev "
-            "watcher parent (worker child will configure)"
+            "Skipping parlot-instrumentation.livekit parlotize in LiveKit dev "
+            "watcher parent (worker child will parlotize)"
         )
         return ParlotContext()
 
@@ -164,9 +164,9 @@ def configure(
     from ._agent_version import resolve_agent_version
     _configured_agent_version = resolve_agent_version(version)
 
-    from parlot.core import base_configure
+    from parlot.core import base_parlotize
 
-    res = base_configure(
+    res = base_parlotize(
         endpoint=endpoint,
         api_key=api_key,
         capture_genai_content=capture_genai_content,
@@ -427,37 +427,37 @@ def _install_participant_escalation_hooks(job_ctx: Any) -> None:
 
 
 def configured_agent_id() -> str:
-    """Canonical deployment id from ``configure(agent_id=...)`` if set."""
+    """Canonical deployment id from ``parlotize(agent_id=...)`` if set."""
     return _configured_agent_id or ""
 
 
 def configured_agent_version() -> str:
-    """Deployment version resolved at ``configure()`` time."""
+    """Deployment version resolved at ``parlotize()`` time."""
     return _configured_agent_version
 
 
 def configured_record() -> bool | list[str] | None:
-    """Recording override from ``configure(record=...)`` if set."""
+    """Recording override from ``parlotize(record=...)`` if set."""
     return _configured_record
 
 
 def configured_capture_genai_content() -> bool | None:
-    """Content capture override from ``configure(capture_genai_content=...)`` if set."""
+    """Content capture override from ``parlotize(capture_genai_content=...)`` if set."""
     return _configured_capture_genai_content
 
 
 def configured_capture_logs() -> bool | list[str] | None:
-    """Log capture override from ``configure(capture_logs=...)`` if set."""
+    """Log capture override from ``parlotize(capture_logs=...)`` if set."""
     return _configured_capture_logs
 
 
 def configured_log_level() -> str | None:
-    """Log level override from ``configure(log_level=...)`` if set."""
+    """Log level override from ``parlotize(log_level=...)`` if set."""
     return _configured_log_level
 
 
 def configured_context() -> ParlotContext | None:
-    """``ParlotContext`` created by the last successful ``configure()``."""
+    """``ParlotContext`` created by the last successful ``parlotize()``."""
     return _parlot_context
 
 

@@ -1,4 +1,4 @@
-"""Tests for configure() provider setup and AgentSession patch."""
+"""Tests for parlotize() provider setup and AgentSession patch."""
 
 from __future__ import annotations
 
@@ -47,8 +47,8 @@ def _install_livekit_stub():
     sys.modules["livekit.agents.telemetry"] = _Telemetry  # type: ignore[assignment]
 
 
-def _reset_configure():
-    """Reset the _configured flag so configure() runs fresh each test."""
+def _reset_parlotize():
+    """Reset the _configured flag so parlotize() runs fresh each test."""
     import parlot.instrumentation.livekit._auto as _auto
 
     _auto._configured = False
@@ -68,41 +68,41 @@ def _reset_configure():
 class TestConfigureProviderSetup:
     def setup_method(self):
         _install_livekit_stub()
-        _reset_configure()
+        _reset_parlotize()
 
     def test_raises_without_endpoint(self):
-        from parlot.instrumentation.livekit import configure
+        from parlot.instrumentation.livekit import parlotize
 
         with pytest.raises(ValueError, match="PARLOT_ENDPOINT"):
-            configure()
+            parlotize()
 
     def test_env_var_endpoint(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
-        from parlot.instrumentation.livekit import configure
+        from parlot.instrumentation.livekit import parlotize
 
-        configure()
+        parlotize()
 
     def test_idempotent_on_double_call(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
-        from parlot.instrumentation.livekit import configure
+        from parlot.instrumentation.livekit import parlotize
 
-        configure()
-        configure()
+        parlotize()
+        parlotize()
 
     def test_agent_id_override(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
-        from parlot.instrumentation.livekit import configure
+        from parlot.instrumentation.livekit import parlotize
         import parlot.instrumentation.livekit._auto as _auto
 
-        configure(agent_id="custom-deployment")
+        parlotize(agent_id="custom-deployment")
         assert _auto.configured_agent_id() == "custom-deployment"
 
     def test_version_override(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
-        from parlot.instrumentation.livekit import configure
+        from parlot.instrumentation.livekit import parlotize
         import parlot.instrumentation.livekit._auto as _auto
 
-        configure(version="2.0.0")
+        parlotize(version="2.0.0")
         assert _auto.configured_agent_version() == "2.0.0"
 
     def test_version_from_env_when_not_passed(self, monkeypatch):
@@ -112,23 +112,23 @@ class TestConfigureProviderSetup:
         import types
 
         monkeypatch.setitem(sys.modules, "__main__", types.ModuleType("__main__"))
-        from parlot.instrumentation.livekit import configure
+        from parlot.instrumentation.livekit import parlotize
         import parlot.instrumentation.livekit._auto as _auto
 
-        configure()
+        parlotize()
         assert _auto.configured_agent_version() == "env-1.0"
 
 
 class TestAgentSessionPatch:
     def setup_method(self):
         _install_livekit_stub()
-        _reset_configure()
+        _reset_parlotize()
 
     def test_agent_session_marked_patched(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
-        from parlot.instrumentation.livekit import configure
+        from parlot.instrumentation.livekit import parlotize
 
-        configure()
+        parlotize()
 
         import livekit.agents as lk
 
@@ -138,17 +138,17 @@ class TestAgentSessionPatch:
 class TestDevWatchParentSkip:
     def setup_method(self):
         _install_livekit_stub()
-        _reset_configure()
+        _reset_parlotize()
 
-    def test_skips_configure_in_dev_watch_parent(self, monkeypatch):
+    def test_skips_parlotize_in_dev_watch_parent(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
         # ``lk agent dev`` → ``python -m livekit.agents start --dev``
         monkeypatch.setattr(sys, "argv", ["-m", "livekit.agents", "start", "--dev"])
 
-        from parlot.instrumentation.livekit import configure
+        from parlot.instrumentation.livekit import parlotize
         import parlot.instrumentation.livekit._auto as _auto
 
-        configure()
+        parlotize()
 
         assert _auto._configured is False
 
@@ -156,18 +156,18 @@ class TestDevWatchParentSkip:
 
         assert lk.AgentSession._parlot_patched is False
 
-    def test_skips_configure_in_legacy_dev_subcommand(self, monkeypatch):
+    def test_skips_parlotize_in_legacy_dev_subcommand(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
         monkeypatch.setattr(sys, "argv", ["agent.py", "dev"])
 
-        from parlot.instrumentation.livekit import configure
+        from parlot.instrumentation.livekit import parlotize
         import parlot.instrumentation.livekit._auto as _auto
 
-        configure()
+        parlotize()
 
         assert _auto._configured is False
 
-    def test_configures_in_dev_worker_child(self, monkeypatch):
+    def test_parlotizes_in_dev_worker_child(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
         monkeypatch.setattr(sys, "argv", ["-m", "livekit.agents", "start", "--dev"])
 
@@ -179,20 +179,20 @@ class TestDevWatchParentSkip:
             lambda: _SpawnProcess(),
         )
 
-        from parlot.instrumentation.livekit import configure
+        from parlot.instrumentation.livekit import parlotize
         import parlot.instrumentation.livekit._auto as _auto
 
-        configure()
+        parlotize()
 
         assert _auto._configured is True
 
-    def test_configures_in_dev_no_reload(self, monkeypatch):
+    def test_parlotizes_in_dev_no_reload(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
         monkeypatch.setattr(sys, "argv", ["agent.py", "dev", "--no-reload"])
 
-        from parlot.instrumentation.livekit import configure
+        from parlot.instrumentation.livekit import parlotize
         import parlot.instrumentation.livekit._auto as _auto
 
-        configure()
+        parlotize()
 
         assert _auto._configured is True
