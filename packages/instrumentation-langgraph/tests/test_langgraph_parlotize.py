@@ -1,4 +1,4 @@
-"""Tests for langgraph configure() and callback spans."""
+"""Tests for langgraph parlotize() and callback spans."""
 
 from __future__ import annotations
 

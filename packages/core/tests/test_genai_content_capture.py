@@ -51,22 +51,22 @@ class TestShouldCaptureGenAIContent:
             is False
         )
 
-    def test_configure_bool_false_beats_bootstrap(self) -> None:
+    def test_parlotize_bool_false_beats_bootstrap(self) -> None:
         assert (
             should_capture_genai_content(
                 "foo",
-                configure_capture_genai_content=False,
+                capture_genai_content_config=False,
                 bootstrap_globs=["*"],
                 bootstrap_present=True,
             )
             is False
         )
 
-    def test_configure_bool_true_beats_empty_globs(self) -> None:
+    def test_parlotize_bool_true_beats_empty_globs(self) -> None:
         assert (
             should_capture_genai_content(
                 "foo",
-                configure_capture_genai_content=True,
+                capture_genai_content_config=True,
                 bootstrap_globs=[],
                 bootstrap_present=True,
             )

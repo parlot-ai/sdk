@@ -73,23 +73,23 @@ class TestShouldCaptureLogs:
             is False
         )
 
-    def test_configure_bool_false_beats_bootstrap(self) -> None:
+    def test_parlotize_bool_false_beats_bootstrap(self) -> None:
         assert (
             should_capture_logs(
                 "foo",
-                configure_capture_logs=False,
+                capture_logs_config=False,
                 bootstrap_globs=["*"],
                 bootstrap_present=True,
             )
             is False
         )
 
-    def test_configure_allowlist(self) -> None:
+    def test_parlotize_allowlist(self) -> None:
         assert (
-            should_capture_logs("foo", configure_capture_logs=["foo"]) is True
+            should_capture_logs("foo", capture_logs_config=["foo"]) is True
         )
         assert (
-            should_capture_logs("bar", configure_capture_logs=["foo"]) is False
+            should_capture_logs("bar", capture_logs_config=["foo"]) is False
         )
 
     def test_bootstrap_agent_toggle_false_beats_globs(self) -> None:
@@ -103,23 +103,23 @@ class TestShouldCaptureLogs:
             is False
         )
 
-    def test_configure_beats_bootstrap(self) -> None:
+    def test_parlotize_beats_bootstrap(self) -> None:
         assert (
             should_capture_logs(
                 "receptionist",
-                configure_capture_logs=True,
+                capture_logs_config=True,
                 bootstrap_agents={"receptionist": False},
                 bootstrap_present=True,
             )
             is True
         )
 
-    def test_metadata_beats_configure(self) -> None:
+    def test_metadata_beats_parlotize(self) -> None:
         assert (
             should_capture_logs(
                 "receptionist",
                 metadata_capture_logs=False,
-                configure_capture_logs=True,
+                capture_logs_config=True,
             )
             is False
         )

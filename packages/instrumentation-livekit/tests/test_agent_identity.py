@@ -35,7 +35,7 @@ class _Span:
         self.attributes[key] = value
 
 
-def test_resolve_canonical_agent_id_prefers_configure_override(monkeypatch):
+def test_resolve_canonical_agent_id_prefers_parlotize_override(monkeypatch):
     monkeypatch.setattr(
         "parlot.instrumentation.livekit._agent_identity.configured_agent_id",
         lambda: "configured-id",

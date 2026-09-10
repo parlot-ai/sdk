@@ -486,7 +486,7 @@ def install_session_hooks(
 ) -> None:
     """Install all AgentSession event listeners for Parlot instrumentation.
 
-    ``configure()`` patches ``AgentSession.__init__`` to invoke this
+    ``parlotize()`` patches ``AgentSession.__init__`` to invoke this
     automatically. Call directly only when manually instantiating unpatched
     sessions.
 

@@ -1,6 +1,6 @@
 ---
 title: LangGraph instrumentation
-description: configure() for LangGraph / LangChain agents.
+description: parlotize() for LangGraph / LangChain agents.
 sidebar_position: 3
 sidebar_custom_props:
   eyebrow: LangGraph
@@ -16,9 +16,9 @@ spans plus OTel GenAI operational spans.
 ## Quick start
 
 ```python
-from parlot.instrumentation.langgraph import configure, close_session
+from parlot.instrumentation.langgraph import parlotize, close_session
 
-configure(agent_id="support-bot", version="0.1.0")
+parlotize(agent_id="support-bot", version="0.1.0")
 
 graph.invoke(
     {"messages": [("user", "Hello")]},
@@ -29,19 +29,19 @@ close_session("demo-1")  # optional; also flushed on process exit
 ```
 
 Environment: `PARLOT_ENDPOINT`, `PARLOT_API_KEY` — see [Environment Variables](/sdk/env-vars).
-Shared `configure()` options: [Python SDK Reference](/sdk/python). LangGraph-only
+Shared `parlotize()` options: [Python SDK Reference](/sdk/python). LangGraph-only
 kwargs (`channel`, `modality`) and `close_session`: [Interactive API Reference](/docs/ref/python/parlot/instrumentation/langgraph.html).
 
 For standalone (non-LiveKit) sessions, set `channel=` (e.g. `"webchat"`) and
 optionally `modality=` so ingest does not assume voice:
 
 ```python
-configure(agent_id="support-bot", version="0.1.0", channel="webchat", modality="text")
+parlotize(agent_id="support-bot", version="0.1.0", channel="webchat", modality="text")
 ```
 
 Generative AI content capture is shared across adapters — see
 [Concepts → Generative AI content capture](/sdk/get-started/concepts#generative-ai-content-capture).
-Override for the process with `configure(capture_genai_content=False)`.
+Override for the process with `parlotize(capture_genai_content=False)`.
 
 See [`examples/langgraph/minimal-agent`](https://github.com/parlot-ai/sdk/tree/main/examples/langgraph/minimal-agent).
 
@@ -60,11 +60,11 @@ is omitted, Parlot mints one automatically (`anon-…`) for the process lifetime
 When a LiveKit voice agent uses `livekit.plugins.langchain.LLMAdapter`, call **both**:
 
 ```python
-from parlot.instrumentation.livekit import configure as configure_livekit
-from parlot.instrumentation.langgraph import configure as configure_langgraph
+from parlot.instrumentation.livekit import parlotize as parlotize_livekit
+from parlot.instrumentation.langgraph import parlotize as parlotize_langgraph
 
-configure_livekit(agent_id="voice-bot", version="0.1.0")
-configure_langgraph()  # adopts LiveKit TracerProvider when already set
+parlotize_livekit(agent_id="voice-bot", version="0.1.0")
+parlotize_langgraph()  # adopts LiveKit TracerProvider when already set
 ```
 
 - LiveKit owns `parlot.session` / `parlot.turn` (voice).

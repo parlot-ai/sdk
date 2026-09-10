@@ -6,10 +6,10 @@ Parlot-instrumented drive-thru ordering agent based on the
 Keeps full upstream voice behavior (STT/LLM/TTS, ambient `bg_noise.mp3`, cart RPC,
 idle nudges) for playground / phone test calls. Persona sims are text-only.
 
-Integration requirements (`configure()` + `await ctx.connect()`): see
+Integration requirements (`parlotize()` + `await ctx.connect()`): see
 [instrumentation-livekit README](../../../packages/instrumentation-livekit/README.md#integration-checklist).
 
-Recording follows Parlot **Settings → Recording** (telemetry bootstrap). Override per job with `{ "record": true|false }` in dispatch metadata or `configure(record=…)` in code.
+Recording follows Parlot **Settings → Recording** (telemetry bootstrap). Override per job with `{ "record": true|false }` in dispatch metadata or `parlotize(record=…)` in code.
 
 ## Setup
 

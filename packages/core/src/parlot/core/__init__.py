@@ -21,7 +21,7 @@ from .provider import (
     INGESTION_PROTOCOL_VERSION,
 )
 from .bootstrap import fetch_telemetry_bootstrap
-from .configure import BaseConfigureResult, ConfigureProtocol, base_configure, configure_parlot_logging
+from .parlotize import BaseParlotizeResult, ParlotizeProtocol, base_parlotize, configure_parlot_logging
 from .genai_content_capture import should_capture_genai_content
 from .export import ExportFilterSpanExporter
 from .intent import derive_intent
@@ -41,12 +41,12 @@ from .topology import SessionTopology
 from .turn_emit import stamp_turn_utterance_text
 
 __all__ = [
-    "BaseConfigureResult",
-    "ConfigureProtocol",
+    "BaseParlotizeResult",
+    "ParlotizeProtocol",
     "ParlotContext",
     "ParlotRuntimeContext",
     "SessionLogsCollector",
-    "base_configure",
+    "base_parlotize",
     "configure_parlot_logging",
     "ExportFilterSpanExporter",
     "ParlotBaseProcessor",

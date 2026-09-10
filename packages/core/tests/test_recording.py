@@ -1,4 +1,4 @@
-"""Recording policy: metadata > configure > bootstrap."""
+"""Recording policy: metadata > parlotize > bootstrap."""
 
 from __future__ import annotations
 
@@ -44,18 +44,18 @@ class TestShouldRecord:
     def test_empty_agent_name_without_allowlist(self) -> None:
         assert should_record("") is False
 
-    def test_configure_bool_true(self) -> None:
-        assert should_record("foo", configure_record=True) is True
+    def test_parlotize_bool_true(self) -> None:
+        assert should_record("foo", record_config=True) is True
 
-    def test_configure_bool_false_beats_bootstrap(self) -> None:
+    def test_parlotize_bool_false_beats_bootstrap(self) -> None:
         assert (
-            should_record("foo", configure_record=False, bootstrap_globs=["*"])
+            should_record("foo", record_config=False, bootstrap_globs=["*"])
             is False
         )
 
-    def test_configure_allowlist(self) -> None:
-        assert should_record("foo", configure_record=["foo"]) is True
-        assert should_record("bar", configure_record=["foo"]) is False
+    def test_parlotize_allowlist(self) -> None:
+        assert should_record("foo", record_config=["foo"]) is True
+        assert should_record("bar", record_config=["foo"]) is False
 
     def test_bootstrap_agent_toggle_true(self) -> None:
         assert (
@@ -86,11 +86,11 @@ class TestShouldRecord:
             is True
         )
 
-    def test_configure_beats_bootstrap(self) -> None:
+    def test_parlotize_beats_bootstrap(self) -> None:
         assert (
             should_record(
                 "receptionist",
-                configure_record=True,
+                record_config=True,
                 bootstrap_agents={"receptionist": False},
             )
             is True

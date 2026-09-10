@@ -25,7 +25,7 @@ def resolve_api_key(api_key: Optional[str] = None) -> str:
 
 
 def resolve_capture_genai_content(capture_genai_content: Optional[bool] = None) -> Optional[bool]:
-    """Return the explicit ``configure(capture_genai_content=)`` override, or None.
+    """Return the explicit ``parlotize(capture_genai_content=)`` override, or None.
 
     When None, callers should resolve via ``should_capture_genai_content`` against
     bootstrap policy (default on).

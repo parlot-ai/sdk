@@ -2,13 +2,13 @@
 
 Shared semantic conventions, base span processor, and utilities for Parlot instrumentation packages — the MIT foundation behind [Parlot](https://parlot.ai) **production voice AI observability**.
 
-Install [`parlot-instrumentation-livekit`](https://pypi.org/project/parlot-instrumentation-livekit/) (or `parlot[livekit]`) in agent code. This package is pulled in as a dependency; it is not the public `configure()` entrypoint.
+Install [`parlot-instrumentation-livekit`](https://pypi.org/project/parlot-instrumentation-livekit/) (or `parlot[livekit]`) in agent code. This package is pulled in as a dependency; it is not the public `parlotize()` entrypoint.
 
 ## Contents
 
 - `parlot.core.attrs` — GenAI semconv v1.41 pin, Conversation Contract / GenAI / voice span names, `ATTR_*` constants; TypeScript mirror in `@parlot/core` (`packages/core-ts`, run `uv run python scripts/generate_attrs_ts.py` after edits). Pin surface: `packages/core/genai_semconv.lock.json` (bump lock with `GENAI_SEMCONV_VERSION`)
 - `parlot.core.export` — shared `ExportFilterSpanExporter` (contract ∪ GenAI ∪ voice allowlist)
-- `parlot.core.configure` — `ConfigureProtocol` (keyword-only shared kwargs)
+- `parlot.core.parlotize` — `ParlotizeProtocol` (keyword-only shared kwargs)
 - `parlot.core.session` — `SessionState`, `get_active_session()` / `session_owned()` for cross-package coexistence
 - `parlot.core.provider` — shared endpoint/api_key resolve + TracerProvider/OTLP bootstrap helpers
 - `parlot.core.bootstrap` — `GET /v1/telemetry/bootstrap` → `ParlotRuntimeContext`

@@ -1,7 +1,7 @@
 """Session log capture policy helpers shared across Parlot integrations.
 
 Default ON when bootstrap is missing or globs are unset. Empty globs = off.
-Precedence: job metadata > ``configure(capture_logs=…)`` > Settings bootstrap > on.
+Precedence: job metadata > ``parlotize(capture_logs=…)`` > Settings bootstrap > on.
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ from typing import Optional, Union
 
 from parlot.core.recording import matches_allowlist
 
-ConfigureCaptureLogs = Union[bool, Sequence[str], None]
+CaptureLogsConfig = Union[bool, Sequence[str], None]
 
 DEFAULT_LOGS_GLOBS: tuple[str, ...] = ("*",)
 DEFAULT_LOGS_MIN_LEVEL = "INFO"
@@ -47,14 +47,14 @@ def should_capture_logs(
     agent_name: str,
     *,
     metadata_capture_logs: Optional[bool] = None,
-    configure_capture_logs: ConfigureCaptureLogs = None,
+    capture_logs_config: CaptureLogsConfig = None,
     bootstrap_globs: Optional[Sequence[str]] = None,
     bootstrap_agents: Optional[Mapping[str, bool]] = None,
     bootstrap_present: bool = False,
 ) -> bool:
     """Return True when application logs should be captured for this job.
 
-    Precedence: job metadata > ``configure(capture_logs=…)`` > bootstrap (UI).
+    Precedence: job metadata > ``parlotize(capture_logs=…)`` > bootstrap (UI).
     When bootstrap is absent (``bootstrap_present=False``) or globs are unset,
     default is **on**. Explicit empty globs means off.
     """
@@ -63,10 +63,10 @@ def should_capture_logs(
     if metadata_capture_logs is True:
         return True
 
-    if configure_capture_logs is not None:
-        if isinstance(configure_capture_logs, bool):
-            return configure_capture_logs
-        return matches_allowlist(agent_name, list(configure_capture_logs))
+    if capture_logs_config is not None:
+        if isinstance(capture_logs_config, bool):
+            return capture_logs_config
+        return matches_allowlist(agent_name, list(capture_logs_config))
 
     agents = bootstrap_agents or {}
     if agent_name in agents:

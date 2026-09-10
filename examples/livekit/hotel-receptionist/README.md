@@ -4,10 +4,10 @@ Parlot-instrumented boutique-hotel front desk agent (room bookings, restaurant
 reservations, cancellations, invoices, disputes, policy FAQs) backed by an
 in-memory SQLite seed database.
 
-Integration requirements (`configure()` + `await ctx.connect()` for LiveKit
+Integration requirements (`parlotize()` + `await ctx.connect()` for LiveKit
 jobs): see [instrumentation-livekit README](../../packages/instrumentation-livekit/README.md#integration-checklist).
 
-Recording follows Parlot **Settings → Recording** (telemetry bootstrap). Override per job with `{ "record": true|false }` in dispatch metadata or `configure(record=…)` in code.
+Recording follows Parlot **Settings → Recording** (telemetry bootstrap). Override per job with `{ "record": true|false }` in dispatch metadata or `parlotize(record=…)` in code.
 
 ## Setup
 
@@ -73,7 +73,7 @@ lk agent dev
 ## Architecture
 
 ```
-agent.py             — HotelReceptionistAgent + Parlot configure()
+agent.py             — HotelReceptionistAgent + Parlot parlotize()
 sim_adapter.py       — hooks for shared persona-sim driver
 ../persona_sim/      — shared persona-LLM guest + AgentSession.run() driver
 sim_scenarios.yaml   — curated PERSONA scenarios (default)

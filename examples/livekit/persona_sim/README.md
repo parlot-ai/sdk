@@ -30,7 +30,7 @@ DEFAULT_SCENARIOS = Path(__file__).parent / "sim_scenarios.yaml"
 PERSONA_ROLE = "You are the PHONE CALLER in a … conversation simulation."
 
 async def open_run() -> SimRun:
-    import agent  # triggers configure()
+    import agent  # triggers parlotize()
     return SimRun(agent=agent.MyAgent(), userdata=..., agent_speaker="Receptionist")
 ```
 

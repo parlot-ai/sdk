@@ -15,7 +15,7 @@ bun run check:leak # after build — private-content leak guard
 `prestart` / `prebuild` run:
 
 - `scripts/sync-changelog.sh` — package CHANGELOGs → `docs/reference/changelog.md`
-- `scripts/generate-api.ts` — extracts from `docs-data/api.json` → `docs/docs/api/{configure,livekit,langgraph,core}.md`
+- `scripts/generate-api.ts` — extracts from `docs-data/api.json` → `docs/docs/api/{parlotize,livekit,langgraph,core}.md`
 
 Regenerate API docs alone with `bun run sync-api`.
 

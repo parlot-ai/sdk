@@ -1,4 +1,4 @@
-"""Minimal LangGraph agent instrumented with Parlot configure()."""
+"""Minimal LangGraph agent instrumented with Parlot parlotize()."""
 
 from __future__ import annotations
 
@@ -11,9 +11,9 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 
-from parlot.instrumentation.langgraph import close_session, configure
+from parlot.instrumentation.langgraph import close_session, parlotize
 
-configure(agent_id="langgraph-minimal", version="0.1.0", channel="webchat")
+parlotize(agent_id="langgraph-minimal", version="0.1.0", channel="webchat")
 
 
 class State(TypedDict):

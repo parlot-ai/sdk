@@ -9,11 +9,11 @@ from parlot.core import (
     stamp_platform_refs,
 )
 
-from ._auto import close_session, configure
+from ._auto import close_session, parlotize
 from ._callbacks import ParlotLangGraphCallbackHandler
 
 __all__ = [
-    "configure",
+    "parlotize",
     "close_session",
     "ParlotLangGraphCallbackHandler",
     "add_platform_ref",

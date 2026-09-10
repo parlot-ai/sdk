@@ -7,10 +7,10 @@ Keeps full upstream voice behavior (STT/LLM/TTS, AgentTasks, idle nudges) plus o
 SIP warm-transfer for human escalation on live calls. Persona sims stay in-bot and do
 not require SIP.
 
-Integration requirements (`configure()` + `await ctx.connect()`): see
+Integration requirements (`parlotize()` + `await ctx.connect()`): see
 [instrumentation-livekit README](../../../packages/instrumentation-livekit/README.md#integration-checklist).
 
-Recording follows Parlot **Settings → Recording** (telemetry bootstrap). Override per job with `{ "record": true|false }` in dispatch metadata or `configure(record=…)` in code.
+Recording follows Parlot **Settings → Recording** (telemetry bootstrap). Override per job with `{ "record": true|false }` in dispatch metadata or `parlotize(record=…)` in code.
 
 ## Setup
 

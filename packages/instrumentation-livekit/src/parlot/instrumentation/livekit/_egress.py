@@ -44,7 +44,7 @@ def _stamp_recording_webhook_error(bootstrap: Any, error: str) -> None:
 
 
 def _stamp_recording_disabled(bootstrap: Any, reason: str) -> None:
-    """Record why egress was not started (Settings / configure / job metadata)."""
+    """Record why egress was not started (Settings / parlotize / job metadata)."""
     session_span = bootstrap.session_span
     if session_span is not None and hasattr(session_span, "is_recording"):
         if session_span.is_recording():

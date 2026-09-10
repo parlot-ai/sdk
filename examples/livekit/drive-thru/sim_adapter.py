@@ -21,7 +21,7 @@ PERSONA_ROLE = (
 
 
 async def open_run() -> SimRun:
-    import agent as drive_thru_agent  # noqa: F401 — triggers configure()
+    import agent as drive_thru_agent  # noqa: F401 — triggers parlotize()
 
     userdata = await drive_thru_agent.new_userdata()
     return SimRun(

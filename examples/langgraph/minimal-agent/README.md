@@ -1,6 +1,6 @@
 # Minimal LangGraph agent (Parlot)
 
-Standalone text agent that calls `parlot.instrumentation.langgraph.configure()`
+Standalone text agent that calls `parlot.instrumentation.langgraph.parlotize()`
 and runs a tiny StateGraph with one tool.
 
 ## Setup

@@ -25,7 +25,7 @@ You will see OTel spans exported to `PARLOT_ENDPOINT` after a job connects.
 
 See the [instrumentation-livekit integration checklist](../../packages/instrumentation-livekit/README.md#integration-checklist):
 
-1. `configure()` at import
+1. `parlotize()` at import
 2. `await ctx.connect()` before `session.start()`
 
 You can remove the Parlot calls and the agent works as before — just without telemetry.

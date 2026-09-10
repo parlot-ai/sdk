@@ -43,8 +43,8 @@ def test_runtime_parses_logs_agent_objects() -> None:
 
 def test_handler_uses_agent_min_level_from_bootstrap() -> None:
     context = ParlotContext()
-    context.session_logs.set_capture_logs_configure(None)
-    context.session_logs._configure_log_level = None
+    context.session_logs.set_capture_logs_config(None)
+    context.session_logs._capture_logs_level = None
     context.session_logs.set_resolvers(agent_id_resolver=lambda: "on-debug")
     context.runtime = runtime_from_bootstrap(
         "https://ingest.test",

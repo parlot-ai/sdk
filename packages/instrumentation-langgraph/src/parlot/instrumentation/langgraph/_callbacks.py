@@ -132,7 +132,7 @@ class ParlotLangGraphCallbackHandler(BaseCallbackHandler):
     invocations, chain runs) into OpenTelemetry GenAI spans
     (``invoke_agent``, ``invoke_workflow``, ``chat``, ``execute_tool``).
 
-    ``configure()`` registers this handler via LangChain configuration hooks,
+    ``parlotize()`` registers this handler via LangChain configuration hooks,
     so manual ``callbacks=[...]`` attachment is not required. When LiveKit
     owns the active session, contract spans are suppressed and GenAI ops nest
     under the current OTel context.

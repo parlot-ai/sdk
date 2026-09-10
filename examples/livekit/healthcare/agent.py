@@ -12,11 +12,11 @@ from pydantic import Field
 
 load_dotenv()
 
-from parlot.instrumentation.livekit import configure
+from parlot.instrumentation.livekit import parlotize
 
 __version__ = "0.1.0"
 
-configure(agent_id="healthcare", version=__version__, auto_escalate_sip=True)
+parlotize(agent_id="healthcare", version=__version__, auto_escalate_sip=True)
 
 from livekit.agents import (
     Agent,

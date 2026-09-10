@@ -10,20 +10,20 @@ sidebar_custom_props:
 
 Parlot stays **OpenTelemetry–first**: agent telemetry uses **OTLP** and standard / Parlot semantic attributes. Session **audio** is stored in **Cloudflare R2** via **LiveKit Room Composite Egress**; Parlot confirms uploads with **lazy R2 HEAD reconcile** when you open the session.
 
-> Session transcript, turns, waterfall, usage, and close outcome come from **OTLP** (agent `configure()`). Audio confirmation (`audio_available`) happens when you open `GET /v1/sessions/:id` and the object already exists in R2.
+> Session transcript, turns, waterfall, usage, and close outcome come from **OTLP** (agent `parlotize()`). Audio confirmation (`audio_available`) happens when you open `GET /v1/sessions/:id` and the object already exists in R2.
 
 ## Get instrumentation working
 
 Two steps are required for full Parlot behavior.
 
-### 1. `configure()` at import (required)
+### 1. `parlotize()` at import (required)
 
 Call before constructing `AgentSession` — patches `AgentSession.__init__`, sets up OTLP export to `PARLOT_ENDPOINT`, and installs turn/handoff/close event hooks.
 
 ```python
-from parlot.instrumentation.livekit import configure
+from parlot.instrumentation.livekit import parlotize
 
-configure()
+parlotize()
 
 from livekit.agents import AgentSession, JobContext, WorkerOptions, cli
 
@@ -35,7 +35,7 @@ async def entrypoint(ctx: JobContext):
     await session.start(agent=..., room=ctx.room)
 ```
 
-`configure()` builds a `TracerProvider` with an OTLP exporter, registers it with `livekit.agents.telemetry`, fetches **`GET /v1/telemetry/bootstrap`** (when `PARLOT_API_KEY` is set), patches `JobContext.connect` to refresh room metadata and **start egress** when recording is enabled, and auto-installs **AgentSession event hooks** (semantic/commit layer) plus span processing (pipeline/waterfall layer).
+`parlotize()` builds a `TracerProvider` with an OTLP exporter, registers it with `livekit.agents.telemetry`, fetches **`GET /v1/telemetry/bootstrap`** (when `PARLOT_API_KEY` is set), patches `JobContext.connect` to refresh room metadata and **start egress** when recording is enabled, and auto-installs **AgentSession event hooks** (semantic/commit layer) plus span processing (pipeline/waterfall layer).
 
 Session bootstrap runs on LiveKit **`agent_state_changed`** when the agent transitions **`initializing → listening`** (the Starting phase of [AgentSession lifecycle](https://docs.livekit.io/agents/logic/sessions/)). That mints one Parlot **`session.id`**, starts a **`parlot.session`** span for ingestion, and stamps **`platform.ref.*`** keys. Room metadata refresh and egress run after bootstrap (or immediately on `JobContext.connect` if bootstrap already completed). The session closes via the AgentSession **`close`** event.
 
@@ -44,7 +44,7 @@ Optional: `agent_id=` for canonical deployment identity and `version=` for deplo
 **Reliable patterns for LiveKit job processes:**
 
 ```python
-configure(agent_id="restaurant-agent", version="0.1.0")
+parlotize(agent_id="restaurant-agent", version="0.1.0")
 ```
 
 or set `PARLOT_AGENT_VERSION=0.1.0` at deploy/runtime. Under LiveKit `dev` / job workers, prefer those explicit forms — `__main__` is often LiveKit’s IPC entrypoint, not your agent file.
@@ -53,7 +53,7 @@ or set `PARLOT_AGENT_VERSION=0.1.0` at deploy/runtime. Under LiveKit `dev` / job
 
 | Attribute | LiveKit source |
 |-----------|----------------|
-| `session.agent_id` | `WorkerOptions.agent_name` / job `agent_name`, overridable via `configure(agent_id="…")` |
+| `session.agent_id` | `WorkerOptions.agent_name` / job `agent_name`, overridable via `parlotize(agent_id="…")` |
 | `session.agent_framework` | `"livekit"` |
 | `session.agent_framework_raw_id` | LiveKit job id (`lk.job_id`) |
 | `session.agent_chain` | Deployment id plus runtime routing (`hotel-receptionist → Orchestrator → cancel_task`) |
@@ -63,7 +63,7 @@ LiveKit voice currently uses `conversation_id === session_id` (1:1) as a placeho
 
 ### Named worker dispatch (`agent_name`)
 
-This is LiveKit’s **dispatch name** (which jobs are eligible for which rooms). It is separate from Parlot `configure(agent_id=…)` / `session.agent_id`, which is the canonical product identity stamped on telemetry.
+This is LiveKit’s **dispatch name** (which jobs are eligible for which rooms). It is separate from Parlot `parlotize(agent_id=…)` / `session.agent_id`, which is the canonical product identity stamped on telemetry.
 
 Prefer an explicit name on the RTC session entrypoint:
 
@@ -101,18 +101,18 @@ Without `ctx.connect()` you may still see basic telemetry if you pass `room=ctx.
 
 | Variable | Role |
 |----------|------|
-| `PARLOT_ENDPOINT` | Parlot ingest base URL (OTLP, bootstrap, upload-grant). Exporter uses `/v1/traces`. **Required** unless you pass `endpoint=` into `configure()`. |
+| `PARLOT_ENDPOINT` | Parlot ingest base URL (OTLP, bootstrap, upload-grant). Exporter uses `/v1/traces`. **Required** unless you pass `endpoint=` into `parlotize()`. |
 | `PARLOT_API_KEY` | **Required for recording / bootstrap.** Org-scoped Bearer token minted in Parlot **Settings → API Keys**. |
 | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | Standard LiveKit Agents credentials (also used to **start** egress). |
 
-Full env reference: [Environment Variables](/sdk/env-vars). Shared `configure()` options: [Python SDK Reference](/sdk/python).
+Full env reference: [Environment Variables](/sdk/env-vars). Shared `parlotize()` options: [Python SDK Reference](/sdk/python).
 
 ### Recording policy (LiveKit)
 
-Precedence: job metadata → `configure(record=…)` → Settings → Recording via bootstrap:
+Precedence: job metadata → `parlotize(record=…)` → Settings → Recording via bootstrap:
 
 - **UI:** Parlot → **Settings → Recording** — per-agent toggles for known deployments, plus globs (`*` or `receptionist*,cal-*`) for agents not yet ingested
-- **Code:** `configure(record=True)`, `configure(record=False)`, or `configure(record=["my-agent*"])`
+- **Code:** `parlotize(record=True)`, `parlotize(record=False)`, or `parlotize(record=["my-agent*"])`
 - **Dispatch:** job metadata `{ "record": true }` or `{ "record": false }`
 
 Generative AI content capture (message bodies and tool payloads; default on) is shared across adapters — see [Concepts → Generative AI content capture](/sdk/get-started/concepts#generative-ai-content-capture). LiveKit job metadata: `{ "capture_genai_content": true|false }`.
@@ -123,10 +123,10 @@ Python `logging` from instrumented agents is captured **on by default** while a 
 
 Precedence (same ladder as recording, but the fallback is **on**):
 
-job metadata `capture_logs` → `configure(capture_logs=…)` → Settings → Logs (bootstrap) → on
+job metadata `capture_logs` → `parlotize(capture_logs=…)` → Settings → Logs (bootstrap) → on
 
 - **UI:** Parlot → **Settings → Logs** — globs (default `*`), min level (default `INFO`), per-agent toggles. Empty globs turns capture off org-wide.
-- **Code:** `configure(capture_logs=True|False)` or `configure(capture_logs=["my-agent*"], log_level="WARNING")`
+- **Code:** `parlotize(capture_logs=True|False)` or `parlotize(capture_logs=["my-agent*"], log_level="WARNING")`
 - **Dispatch (LiveKit):** job metadata `{ "capture_logs": true|false }`
 - Messages are stored as emitted (treat like stdout for PII). Missing bootstrap / old collectors still capture.
 
@@ -151,15 +151,15 @@ Recording uses **Room Composite Egress** (OGG, audio-only) to R2. Flow:
 
 1. LiveKit Cloud → **Settings → Keys** → create an API key with **`roomRecord`** (needed on the **agent** to start egress via `LIVEKIT_*`).
 2. Parlot → **Settings → API Keys** — mint a key for the same org; set it as `PARLOT_API_KEY` on the agent.
-3. Enable recording in Parlot → **Settings → Recording** (toggle the agent, or set globs / `*` for new agents), or call `configure(record=True)` / place `{ "record": true }` in job metadata for unnamed dispatches.
+3. Enable recording in Parlot → **Settings → Recording** (toggle the agent, or set globs / `*` for new agents), or call `parlotize(record=True)` / place `{ "record": true }` in job metadata for unnamed dispatches.
 
 ### If recording stays “processing”
 
 | Symptom | Likely cause |
 |---------|----------------|
-| No egress started | Settings → Recording / `configure(record=…)` / job `{ "record": true }`; agent `LIVEKIT_*`; R2 on collector (`503 r2_not_configured`) |
+| No egress started | Settings → Recording / `parlotize(record=…)` / job `{ "record": true }`; agent `LIVEKIT_*`; R2 on collector (`503 r2_not_configured`) |
 | `audio_available=false` until opened | Expected — open the session to trigger R2 HEAD reconcile |
-| No URI in session | Egress failed — check agent logs; grant expired; Settings → Recording / `configure(record=…)` / metadata |
+| No URI in session | Egress failed — check agent logs; grant expired; Settings → Recording / `parlotize(record=…)` / metadata |
 | Delayed confirmation | Parlot **R2 HEAD reconcile** on `GET /v1/sessions/:id` flips `audio_available` after the object lands in R2 |
 
 ---
@@ -246,7 +246,7 @@ Primary emission: `AgentSession.on("close")` via event hooks.
 
 ### AgentSession events (semantic / commit layer)
 
-When `configure()` patches `AgentSession`, Parlot subscribes to LiveKit events for **turn boundaries and session aggregates**. Operational waterfall detail stays on OTel spans.
+When `parlotize()` patches `AgentSession`, Parlot subscribes to LiveKit events for **turn boundaries and session aggregates**. Operational waterfall detail stays on OTel spans.
 
 | LiveKit event | Parlot output |
 |---|---|
@@ -284,15 +284,15 @@ record_human_rep("support_rep_jane", label="Jane")
 If you use `WarmTransferTask` (or any flow that opens a second agent room), set a named LiveKit [`agent_name`](#named-worker-dispatch-agent_name) on `@server.rtc_session` so the briefing room does not auto-dispatch another copy of your worker and mint a duplicate Parlot session.
 
 ```python
-from parlot.instrumentation.livekit import configure
+from parlot.instrumentation.livekit import parlotize
 
-configure(auto_escalate_sip=True)
+parlotize(auto_escalate_sip=True)
 ```
 
 Or match participant metadata:
 
 ```python
-configure(
+parlotize(
     escalation_metadata_match={
         "type": "agent_transfer",
         "is_human": "true",
@@ -336,13 +336,13 @@ Call after the session has started (`agent_state_changed` → listening). LiveKi
 
 ## LiveKit observability (OTEL): enabled vs disabled
 
-This section describes what Parlot stores and surfaces when LiveKit Agents **pipeline tracing** is active vs when it is not. It is **not** about whether the agent calls `parlot.configure()` — Parlot instrumentation must stay on for any ingest.
+This section describes what Parlot stores and surfaces when LiveKit Agents **pipeline tracing** is active vs when it is not. It is **not** about whether the agent calls `parlot.parlotize()` — Parlot instrumentation must stay on for any ingest.
 
 ### Terminology
 
 | Setting | Meaning |
 |---------|---------|
-| **`parlot.configure()` on** | Required. Parlot registers a `TracerProvider` with `livekit.agents.telemetry`, exports OTLP to Parlot, and installs AgentSession event hooks. |
+| **`parlot.parlotize()` on** | Required. Parlot registers a `TracerProvider` with `livekit.agents.telemetry`, exports OTLP to Parlot, and installs AgentSession event hooks. |
 | **LiveKit pipeline OTEL on** | LiveKit emits internal spans (`user_turn`, `agent_turn`, `llm_node`, `tts_node`, `function_tool`, `eou_detection`, `amd`, …) into the active tracer. With Parlot configured, those spans are enriched and exported. |
 | **LiveKit pipeline OTEL off** | LiveKit does not emit pipeline spans (or tracing is a noop). Parlot still exports **event-sourced** spans (`parlot.session`, `parlot.turn`, `parlot.agent.handoff`, `parlot.session.close`) and any spans Parlot creates itself. |
 
@@ -394,11 +394,11 @@ Both sessions received a **full semantic session record** and a **non-empty wate
 | **Fleet interaction graph / per-agent latency edges** | Degraded — few operational edges | Yes — needs LLM/tool span graph |
 | Session recording (R2 egress) | Yes — independent of pipeline OTEL | Yes |
 
-\*When `parlot.configure()` registers the tracer provider, LiveKit may still emit pipeline spans even if LiveKit Cloud observability is toggled off elsewhere. Treat “OTEL off” as **no pipeline spans reaching Parlot**, not merely disabling a cloud dashboard.
+\*When `parlot.parlotize()` registers the tracer provider, LiveKit may still emit pipeline spans even if LiveKit Cloud observability is toggled off elsewhere. Treat “OTEL off” as **no pipeline spans reaching Parlot**, not merely disabling a cloud dashboard.
 
 ### What Parlot can promise without LiveKit pipeline OTEL
 
-With **`parlot.configure()` only** (events + Parlot OTLP, no LiveKit pipeline spans):
+With **`parlot.parlotize()` only** (events + Parlot OTLP, no LiveKit pipeline spans):
 
 - **Episode record** — paste session id → read the call: turns, roles, text, close outcome, coarse usage, handoffs, intent label.
 - **Session list / search** — metadata, end state, token totals, participant count.
@@ -416,9 +416,9 @@ With **`parlot.configure()` only** (events + Parlot OTLP, no LiveKit pipeline sp
 
 ### Recommendation
 
-- **Debugging / SRE / latency work:** keep LiveKit pipeline OTEL active and `parlot.configure()` on. The waterfall, error attribution, and latency histograms depend on it.
-- **Transcript-only / compliance / eval workflows:** `parlot.configure()` + AgentSession events are sufficient for the semantic session record; do not expect a populated debugger waterfall.
-- **Never disable all tracing** if you still call `parlot.configure()` — Parlot replaces the provider. “Turn off OTEL” should mean disabling LiveKit’s pipeline span emission or not routing it to Parlot, not removing Parlot instrumentation.
+- **Debugging / SRE / latency work:** keep LiveKit pipeline OTEL active and `parlot.parlotize()` on. The waterfall, error attribution, and latency histograms depend on it.
+- **Transcript-only / compliance / eval workflows:** `parlot.parlotize()` + AgentSession events are sufficient for the semantic session record; do not expect a populated debugger waterfall.
+- **Never disable all tracing** if you still call `parlot.parlotize()` — Parlot replaces the provider. “Turn off OTEL” should mean disabling LiveKit’s pipeline span emission or not routing it to Parlot, not removing Parlot instrumentation.
 
 ---
 
@@ -428,7 +428,7 @@ With **`parlot.configure()` only** (events + Parlot OTLP, no LiveKit pipeline sp
 
 | Source | Configured by | Carries |
 |--------|----------------|--------|
-| **OTLP** | Agent (`PARLOT_*`, `configure()`) | Traces, refs, optimistic `session.recording.audio_uri`, anchor, `session.recording.egress_id`, or `session.recording.webhook_error` |
+| **OTLP** | Agent (`PARLOT_*`, `parlotize()`) | Traces, refs, optimistic `session.recording.audio_uri`, anchor, `session.recording.egress_id`, or `session.recording.webhook_error` |
 | **Upload grant** | Agent → collector | Scoped temp R2 creds (`session_token`) for LiveKit egress |
 | **R2 reconcile** | Session API (lazy) | Confirms upload → `audio_available=true` when the object exists |
 

@@ -23,9 +23,9 @@ def agent_name_from_ctx(ctx: Any) -> str:
 
     Does **not** fall back to ``job.dispatch_id`` (``AD_…``). Those are
     per-job dispatch identifiers and must not become topology agent names.
-    Unnamed workers return ``\"\"``; use ``configure(agent_id=…)`` and/or
+    Unnamed workers return ``\"\"``; use ``parlotize(agent_id=…)`` and/or
     ``lk.agent_label`` for graph identity, and recording policy via
-    ``configure(record=…)`` or Settings → Recording.
+    ``parlotize(record=…)`` or Settings → Recording.
     """
     job = getattr(ctx, "job", None)
     agent_name = getattr(job, "agent_name", None) if job is not None else None
@@ -95,7 +95,7 @@ def should_record(ctx: Any, *, context: ParlotContext | None = None) -> bool:
     return should_record_policy(
         recording_agent_id_from_ctx(ctx),
         metadata_record=metadata_record_flag(ctx),
-        configure_record=configured_record(),
+        record_config=configured_record(),
         bootstrap_globs=list(runtime.recording_globs) if runtime else None,
         bootstrap_agents=runtime.recording_agents_map() if runtime else None,
     )
@@ -109,9 +109,9 @@ def recording_disabled_reason(
     if metadata is False:
         return "job_metadata"
 
-    configure = configured_record()
-    if configure is False:
-        return "configure"
+    record_override = configured_record()
+    if record_override is False:
+        return "parlotize"
 
     runtime = _resolve_runtime(context)
     agent = recording_agent_id_from_ctx(ctx)
@@ -119,8 +119,8 @@ def recording_disabled_reason(
     if agent in agents and not agents[agent]:
         return "agent_override"
 
-    if isinstance(configure, (list, tuple)) and configure:
-        return "configure"
+    if isinstance(record_override, (list, tuple)) and record_override:
+        return "parlotize"
 
     return "policy"
 
@@ -154,7 +154,7 @@ def should_capture_genai_content(
     return should_capture_genai_content_policy(
         resolved_agent,
         metadata_capture_genai_content=metadata_flag,
-        configure_capture_genai_content=configured_capture_genai_content(),
+        capture_genai_content_config=configured_capture_genai_content(),
         bootstrap_globs=list(runtime.capture_genai_content_globs) if runtime else None,
         bootstrap_agents=runtime.capture_genai_content_agents_map() if runtime else None,
         bootstrap_present=bool(runtime and runtime.capture_genai_content_policy_present),

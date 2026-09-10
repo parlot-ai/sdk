@@ -22,11 +22,11 @@ from pydantic import Field
 
 load_dotenv()
 
-from parlot.instrumentation.livekit import configure
+from parlot.instrumentation.livekit import parlotize
 
 __version__ = "0.1.0"
 
-configure(agent_id="drive-thru", version=__version__)
+parlotize(agent_id="drive-thru", version=__version__)
 
 from livekit.agents import (
     Agent,
