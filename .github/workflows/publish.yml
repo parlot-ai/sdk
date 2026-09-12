@@ -40,7 +40,7 @@ jobs:
       github.event_name == 'release' && startsWith(github.event.release.tag_name, 'parlot-v')
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.1.0
         with:
           enable-cache: true
       - name: Build parlot
@@ -67,7 +67,7 @@ jobs:
       github.event_name == 'release' && startsWith(github.event.release.tag_name, 'core-v')
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.1.0
         with:
           enable-cache: true
       - name: Build parlot-core
@@ -94,7 +94,7 @@ jobs:
       github.event_name == 'release' && startsWith(github.event.release.tag_name, 'instrumentation-livekit-v')
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.1.0
         with:
           enable-cache: true
       - name: Build parlot-instrumentation-livekit
@@ -121,7 +121,7 @@ jobs:
       github.event_name == 'release' && startsWith(github.event.release.tag_name, 'instrumentation-langgraph-v')
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.1.0
         with:
           enable-cache: true
       - name: Build parlot-instrumentation-langgraph
