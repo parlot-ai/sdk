@@ -39,8 +39,8 @@ jobs:
       github.event_name == 'workflow_dispatch' && (github.event.inputs.package == 'all' || github.event.inputs.package == 'parlot') ||
       github.event_name == 'release' && startsWith(github.event.release.tag_name, 'parlot-v')
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
         with:
           enable-cache: true
       - name: Build parlot
@@ -66,8 +66,8 @@ jobs:
       github.event_name == 'workflow_dispatch' && (github.event.inputs.package == 'all' || github.event.inputs.package == 'parlot-core') ||
       github.event_name == 'release' && startsWith(github.event.release.tag_name, 'core-v')
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
         with:
           enable-cache: true
       - name: Build parlot-core
@@ -93,8 +93,8 @@ jobs:
       github.event_name == 'workflow_dispatch' && (github.event.inputs.package == 'all' || github.event.inputs.package == 'parlot-instrumentation-livekit') ||
       github.event_name == 'release' && startsWith(github.event.release.tag_name, 'instrumentation-livekit-v')
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
         with:
           enable-cache: true
       - name: Build parlot-instrumentation-livekit
@@ -120,8 +120,8 @@ jobs:
       github.event_name == 'workflow_dispatch' && (github.event.inputs.package == 'all' || github.event.inputs.package == 'parlot-instrumentation-langgraph') ||
       github.event_name == 'release' && startsWith(github.event.release.tag_name, 'instrumentation-langgraph-v')
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
         with:
           enable-cache: true
       - name: Build parlot-instrumentation-langgraph

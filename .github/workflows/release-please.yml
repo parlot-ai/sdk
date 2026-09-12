@@ -13,7 +13,7 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@v5
         with:
           # Org policy blocks GITHUB_TOKEN from creating PRs; use the cross-repo PAT.
           token: ${{ secrets.PARLOT_CROSS_REPO_TOKEN }}
