@@ -19,11 +19,12 @@ bun run check:leak # after build — private-content leak guard
 
 Regenerate API docs alone with `bun run sync-api`.
 
-Production publishes automatically: on push to `main` under `docs/**` (or `docs-data/api.json`), the Docs
+Staging publishes automatically: on push to `main` under `docs/**`, the Docs
 workflow dispatches `sdk-docs-updated` to `parlot-ai/platform`, which runs
-**Deploy website** (builds this site into Worker assets at `/docs/`). Requires
-repo secret `PARLOT_CROSS_REPO_TOKEN` (fine-grained PAT on platform with
-Contents: Read and write). Manual fallback: Actions → Deploy website → Run workflow.
+**Deploy website** to `stg.parlot.ai` (embeds this site under `/docs/`). Production
+requires platform **Promote website**. Requires repo secret `PARLOT_CROSS_REPO_TOKEN`
+(fine-grained PAT on platform with Contents: Read and write). Manual fallback:
+Actions → Deploy website → Run workflow.
 
 Theme is vendored under `vendor/docs-theme` (copy of platform `@parlot/docs-theme`).
 Standalone clones use the vendored copy as-is. When developing next to a
