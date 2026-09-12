@@ -50,10 +50,11 @@ jobs:
       - name: Leak check
         run: bash scripts/check-public-leak.sh
 
-      # Cross-repo: platform Deploy website listens for event_type sdk-docs-updated.
+      # Cross-repo: platform Deploy website listens for event_type sdk-docs-updated
+      # and deploys staging (stg.parlot.ai) only. Promote website ships production.
       # Secret: repo PARLOT_CROSS_REPO_TOKEN — fine-grained PAT on parlot-ai/platform
       # with Contents: Read and write (required for repository_dispatch).
-      - name: Dispatch Deploy website
+      - name: Dispatch Deploy website (staging)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         working-directory: ${{ github.workspace }}
         env:
@@ -62,7 +63,7 @@ jobs:
           set +x
           set -euo pipefail
           if [[ -z "${GH_TOKEN:-}" ]]; then
-            echo "error: PARLOT_CROSS_REPO_TOKEN is required to publish docs to parlot.ai/docs" >&2
+            echo "error: PARLOT_CROSS_REPO_TOKEN is required to publish docs staging" >&2
             exit 1
           fi
           gh api --method POST /repos/parlot-ai/platform/dispatches \
