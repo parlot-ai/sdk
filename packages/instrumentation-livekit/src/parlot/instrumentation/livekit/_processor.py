@@ -459,6 +459,10 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             agent_id = self._active_agent_id(
                 state, resolved, label_override=label_override
             )
+            if agent_id == "unknown":
+                from parlot.instrumentation.livekit._auto import configured_agent_id
+
+                agent_id = configured_agent_id() or "unknown"
             if agent_id != "unknown":
                 self._set(span, ATTR_GEN_AI_AGENT_NAME, agent_id)
         from parlot.instrumentation.livekit._auto import configured_agent_version

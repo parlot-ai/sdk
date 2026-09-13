@@ -99,30 +99,13 @@ Use `uv run` from the repo root rather than `pip install` / bare `python -m pyte
 
 ### Agent Deployment Version
 
-Parlot stamps `gen_ai.agent.version` on each session when a deployment version is configured. This powers version tracking on the Agents portfolio and per-session attributes in the platform UI.
+Parlot stamps `gen_ai.agent.version` on each session from `parlotize(version=...)`. If you omit `version=` (or pass blank), the attribute is `"unknown"`.
 
-#### Resolution Order
+```python
+parlotize(agent_id="restaurant-agent", version="0.1.0")
+```
 
-`parlotize(version=...)` resolves once at startup (first non-empty wins):
-
-1. `version=` kwarg passed to `parlotize()`
-2. `__version__` or `VERSION` on the agent entry module (`__main__`)
-3. `PARLOT_AGENT_VERSION` environment variable (runtime override)
-4. Local git short SHA when a `.git` directory is present (dev convenience only)
-
-If none resolve, the attribute is omitted.
-
-#### Recommended Patterns
-
-- **Example / single-file agents:** set `__version__ = "1.2.3"` at the top of your entrypoint and bump on release. See [`examples/livekit/restaurant-agent/agent.py`](examples/livekit/restaurant-agent/agent.py).
-- **Runtime override:** set `PARLOT_AGENT_VERSION` when the deploy label must differ from the code's `__version__` (canary, injected build metadata).
-- **Explicit:** pass `parlotize(version="2026.03.26")` for tests or special cases.
-
-CI commit env vars (`GITHUB_SHA`, etc.) and installed package metadata are **not** consulted — they are unreliable in production containers.
-
-#### LiveKit Caveat
-
-Under LiveKit `dev` / spawned `job_proc` workers, `__main__` is often not your agent file, so `__version__` on the entrypoint may not resolve. Prefer `parlotize(version=...)` or `PARLOT_AGENT_VERSION`. See [instrumentation-livekit README — What to expect for version](packages/instrumentation-livekit/README.md#what-to-expect-for-version).
+This powers version tracking on the Agents portfolio and per-session attributes in the platform UI.
 
 ### Send telemetry to Parlot
 

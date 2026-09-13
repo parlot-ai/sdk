@@ -47,7 +47,7 @@ Optional: `agent_id=` for canonical deployment identity and `version=` for deplo
 parlotize(agent_id="restaurant-agent", version="0.1.0")
 ```
 
-or set `PARLOT_AGENT_VERSION=0.1.0` at deploy/runtime. Under LiveKit `dev` / job workers, prefer those explicit forms — `__main__` is often LiveKit’s IPC entrypoint, not your agent file.
+Pass `version=` when you want a real deployment label; otherwise Parlot stamps `"unknown"`.
 
 ### Canonical agent identity (LiveKit sources)
 
