@@ -34,23 +34,15 @@ from parlot.instrumentation.livekit import parlotize
 parlotize()
 ```
 
-Optional: `agent_id=` for canonical deployment identity and `version=` for deployment version. Full resolution order is in the [SDK README](../../README.md#agent-deployment-version).
+Optional: `agent_id=` for canonical deployment identity and `version=` for deployment version.
 
 #### What to expect for version
 
-`parlotize(version=...)` resolves once at startup (first non-empty wins): `version=` kwarg → `__main__.__version__` / `VERSION` → `PARLOT_AGENT_VERSION` → local git short SHA (only when cwd has a `.git` directory).
-
-If none resolve, `gen_ai.agent.version` is omitted. The platform Versions tab then stays empty (it filters `agent_version != ''`).
-
-**LiveKit job processes:** with `lk agent dev` (or spawned `job_proc` workers), `__main__` is LiveKit’s IPC entrypoint, not your agent file. A module-level `__version__` on `agent.py` often does **not** resolve. The parent `dev` watcher also skips `parlotize()` via `_is_livekit_dev_watch_parent`, so instrumentation runs in the child where `__main__` is not your entrypoint. Example dirs like `examples/livekit/restaurant-agent` usually have no `.git`, so the git SHA fallback also fails.
-
-**Reliable patterns for LiveKit:**
+Pass `parlotize(version=...)` to stamp a deployment version on `gen_ai.agent.version`. If omitted (or blank), Parlot stamps `"unknown"`.
 
 ```python
 parlotize(agent_id="restaurant-agent", version="0.1.0")
 ```
-
-or set `PARLOT_AGENT_VERSION=0.1.0` at deploy/runtime.
 
 ### 2. `await ctx.connect()` before `session.start()` (required)
 

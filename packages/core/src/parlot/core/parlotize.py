@@ -63,8 +63,7 @@ class ParlotizeProtocol(Protocol):
                 If omitted, adapters may derive from framework config or
                 ``PARLOT_AGENT_ID``.
             version: Deployment version stamped on ``gen_ai.agent.version``.
-                Precedence: this kwarg → ``__main__.__version__`` / ``VERSION`` →
-                ``PARLOT_AGENT_VERSION`` → local git short SHA (dev only).
+                Pass ``version=`` to set it; otherwise ``\"unknown\"``.
             capture_logs: Intercept Python ``logging`` during active sessions and
                 stream to the session Logs tab. Boolean or agent-id glob patterns.
                 Precedence: job metadata → this kwarg → Settings → Logs (default: on).
@@ -123,7 +122,8 @@ def base_parlotize(
         capture_genai_content: Process-wide GenAI content capture override.
         tracer_provider: Existing ``TracerProvider`` to adopt, if any.
         agent_id: Canonical deployment identity for ``session.agent_id``.
-        version: Deployment version for ``gen_ai.agent.version``.
+        version: Deployment version for ``gen_ai.agent.version``. Defaults to
+            ``\"unknown\"`` when omitted or blank.
         capture_logs: Session log capture policy (bool or agent-id globs).
         log_level: Minimum level for session log capture.
 
@@ -147,7 +147,7 @@ def base_parlotize(
         if agent_id
         else (os.environ.get("PARLOT_AGENT_ID") or "").strip() or None
     )
-    resolved_version = (version or os.environ.get("PARLOT_AGENT_VERSION") or "").strip()
+    resolved_version = (version or "").strip() or "unknown"
     resolved_endpoint = resolve_endpoint(endpoint)
     resolved_api_key = resolve_api_key(api_key)
     resolved_capture_content = resolve_capture_genai_content(capture_genai_content)

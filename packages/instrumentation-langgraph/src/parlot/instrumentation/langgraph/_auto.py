@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import os
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
@@ -58,7 +57,8 @@ def parlotize(
         tracer_provider: Shared — existing ``TracerProvider``. If LiveKit
             already initialized one in-process, this call adopts it.
         agent_id: Shared — canonical ``session.agent_id``.
-        version: Shared — ``gen_ai.agent.version``.
+        version: Shared — ``gen_ai.agent.version``. Pass ``version=`` to set it;
+            otherwise ``\"unknown\"``.
         channel: Communication channel for standalone LangGraph sessions
             (e.g. ``"webchat"``, ``"slack"``, ``"sms"``). Defaults to
             ``"text"``. Ignored when LiveKit owns the session.
@@ -82,7 +82,7 @@ def parlotize(
     from parlot.core.sdk_version import resolve_parlot_sdk_version
 
     _configured_agent_id = agent_id.strip() if agent_id else None
-    _configured_agent_version = (version or os.environ.get("PARLOT_AGENT_VERSION") or "").strip()
+    _configured_agent_version = (version or "").strip() or "unknown"
 
     res = base_parlotize(
         endpoint=endpoint,

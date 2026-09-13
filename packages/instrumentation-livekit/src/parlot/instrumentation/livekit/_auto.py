@@ -92,9 +92,8 @@ def parlotize(
     ``parlot.core.ParlotizeProtocol``.
 
     Under LiveKit ``dev`` / job workers, ``__main__`` is often LiveKit's IPC
-    entrypoint, not your agent file — prefer explicit ``agent_id=`` /
-    ``version=`` (or ``PARLOT_AGENT_VERSION``) over relying on
-    ``__main__.__version__``.
+    entrypoint, not your agent file — pass ``agent_id=`` / ``version=``
+    explicitly when you care about stable deployment identity.
 
     Args:
         endpoint: Shared — Parlot OTLP base URL (or ``PARLOT_ENDPOINT``).
@@ -112,9 +111,8 @@ def parlotize(
         agent_id: Shared — canonical ``session.agent_id``. If omitted, falls
             back to ``PARLOT_AGENT_ID``, then LiveKit ``WorkerOptions.agent_name``
             / job ``agent_name``, then a process-stable mint (``agent-<6hex>``).
-        version: Shared — ``gen_ai.agent.version``. Precedence: this kwarg →
-            ``__main__.__version__`` / ``VERSION`` → ``PARLOT_AGENT_VERSION`` →
-            local git SHA (dev only).
+        version: Shared — ``gen_ai.agent.version``. Pass ``version=`` to set it;
+            otherwise stamped as ``\"unknown\"``.
         record: Audio recording policy. Boolean or agent-id glob patterns
             (e.g. ``["support-*", "billing"]``). Precedence: LiveKit job
             metadata ``record`` → this kwarg → Settings → Recording.

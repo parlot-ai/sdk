@@ -137,18 +137,14 @@ class TestConfigureProviderSetup:
         parlotize(version="2.0.0")
         assert _auto.configured_agent_version() == "2.0.0"
 
-    def test_version_from_env_when_not_passed(self, monkeypatch):
+    def test_version_defaults_to_unknown_when_omitted(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
-        monkeypatch.setenv("PARLOT_AGENT_VERSION", "env-1.0")
-        import sys
-        import types
-
-        monkeypatch.setitem(sys.modules, "__main__", types.ModuleType("__main__"))
+        monkeypatch.delenv("PARLOT_AGENT_VERSION", raising=False)
         from parlot.instrumentation.livekit import parlotize
         import parlot.instrumentation.livekit._auto as _auto
 
         parlotize()
-        assert _auto.configured_agent_version() == "env-1.0"
+        assert _auto.configured_agent_version() == "unknown"
 
 
 class TestAgentSessionPatch:

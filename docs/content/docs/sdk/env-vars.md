@@ -17,7 +17,6 @@ The Parlot SDK can be configured via environment variables or explicitly through
 | `PARLOT_ENDPOINT`      | **Yes\*** | _None_    | Base URL of the Parlot OTLP collector (e.g. `https://ingest.parlot.ai`). Spans are exported to `{PARLOT_ENDPOINT}/v1/traces`. <br/>_\*Required unless `endpoint=` is passed to `parlotize()`._ |
 | `PARLOT_API_KEY`       | **Yes**   | _None_    | Bearer authentication token minted under Parlot **Settings → API Keys**.                                                                                                                                                                   |
 | `PARLOT_AGENT_ID`      | Optional  | _Derived_ | Canonical deployment identifier stamped on `session.agent_id`. In LiveKit, defaults to `WorkerOptions.agent_name` or `parlotize(agent_id=...)`.                                                                                            |
-| `PARLOT_AGENT_VERSION` | Optional  | _Derived_ | Deployment version stamped on `gen_ai.agent.version`. Used to track changes across deployments in the Parlot UI.                                                                                                                           |
 
 ---
 
