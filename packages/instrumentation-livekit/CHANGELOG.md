@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.3.0...instrumentation-livekit-v0.3.1) (2026-09-13)
+
+
+### Bug Fixes
+
+* **livekit:** mint agent identity when parlotize omits agent_id ([#62](https://github.com/parlot-ai/sdk/issues/62)) ([b14fe0d](https://github.com/parlot-ai/sdk/commit/b14fe0d3b0848b752b0d4f487a4af71595bff1ea))
+* **livekit:** stamp pipeline turn.index at start, not stale turn_count ([#55](https://github.com/parlot-ai/sdk/issues/55)) ([21db3fd](https://github.com/parlot-ai/sdk/commit/21db3fd708b702872bb984ae602276bc483cf3db))
+
 ## [0.3.0](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.2.1...instrumentation-livekit-v0.3.0) (2026-09-10)
 
 
