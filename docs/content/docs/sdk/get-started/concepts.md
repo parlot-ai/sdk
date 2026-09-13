@@ -52,8 +52,8 @@ Each framework guide documents how those attributes are sourced from the vendor 
 ## Recording vs telemetry
 
 - **Telemetry** (turns, handoffs, close, usage) always goes over OTLP to `PARLOT_ENDPOINT`.
-- **Audio recording** is optional and framework-specific. On LiveKit it uses Room Composite Egress to R2; opening the session confirms upload via R2 HEAD reconcile. Telemetry does not depend on recording confirmation.
-- **Application logs** (Python `logging` only — not `print()`) are captured on by default during an active session and shown on the session **Logs** tab. They export as **OTLP Logs** (`POST /v1/logs`, protobuf) with `session.id` on each record. Policy mirrors recording (Settings → Logs + `parlotize(capture_logs=…)`), except the fallback is on. Treat log content like stdout for PII.
+- **Audio recording** is framework-specific and **on by default** for new tenants (Settings → Recording allowlist `*`). On LiveKit it uses Room Composite Egress to R2; opening the session confirms upload via R2 HEAD reconcile. Telemetry does not depend on recording confirmation. Clear the allowlist or use `parlotize(record=False)` to disable.
+- **Application logs** (Python `logging` only — not `print()`) are captured on by default during an active session and shown on the session **Logs** tab. They export as **OTLP Logs** (`POST /v1/logs`, protobuf) with `session.id` on each record. Policy mirrors recording (Settings → Logs + `parlotize(capture_logs=…)`; fallback on). Treat log content like stdout for PII.
 - **Generative AI content** (LLM/tool bodies) is a separate policy — see [Generative AI content capture](#generative-ai-content-capture).
 
 See the [LiveKit guide](/sdk/guides/livekit) for egress, policy, and troubleshooting.
