@@ -109,9 +109,9 @@ Full env reference: [Environment Variables](/sdk/env-vars). Shared `parlotize()`
 
 ### Recording policy (LiveKit)
 
-Precedence: job metadata → `parlotize(record=…)` → Settings → Recording via bootstrap:
+Recording is **on by default** for new tenants (allowlist `*`). Precedence: job metadata → `parlotize(record=…)` → Settings → Recording via bootstrap:
 
-- **UI:** Parlot → **Settings → Recording** — per-agent toggles for known deployments, plus globs (`*` or `receptionist*,cal-*`) for agents not yet ingested
+- **UI:** Parlot → **Settings → Recording** — globs (default `*`), per-agent toggles for known deployments. Empty globs turns recording off org-wide for new agents.
 - **Code:** `parlotize(record=True)`, `parlotize(record=False)`, or `parlotize(record=["my-agent*"])`
 - **Dispatch:** job metadata `{ "record": true }` or `{ "record": false }`
 
@@ -121,7 +121,7 @@ Generative AI content capture (message bodies and tool payloads; default on) is 
 
 Python `logging` from instrumented agents is captured **on by default** while a Parlot session is active (not `print()` / stdout). Rows appear on the session **Logs** tab.
 
-Precedence (same ladder as recording, but the fallback is **on**):
+Precedence (same ladder as recording; fallback is **on**):
 
 job metadata `capture_logs` → `parlotize(capture_logs=…)` → Settings → Logs (bootstrap) → on
 
@@ -138,7 +138,7 @@ Turn-level **`has_error`** is derived at query time — see [Concepts](/sdk/get-
 
 ---
 
-## Enable session recording
+## Session recording
 
 Recording uses **Room Composite Egress** (OGG, audio-only) to R2. Flow:
 
@@ -151,7 +151,7 @@ Recording uses **Room Composite Egress** (OGG, audio-only) to R2. Flow:
 
 1. LiveKit Cloud → **Settings → Keys** → create an API key with **`roomRecord`** (needed on the **agent** to start egress via `LIVEKIT_*`).
 2. Parlot → **Settings → API Keys** — mint a key for the same org; set it as `PARLOT_API_KEY` on the agent.
-3. Enable recording in Parlot → **Settings → Recording** (toggle the agent, or set globs / `*` for new agents), or call `parlotize(record=True)` / place `{ "record": true }` in job metadata for unnamed dispatches.
+3. New tenants record by default (Settings → Recording allowlist `*`). Clear the allowlist or use `parlotize(record=False)` / `{ "record": false }` in job metadata to disable; use globs or per-agent toggles to narrow which agents record.
 
 ### If recording stays “processing”
 

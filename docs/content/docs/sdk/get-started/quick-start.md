@@ -47,7 +47,7 @@ export PARLOT_ENDPOINT=https://ingest.parlot.ai
 export PARLOT_API_KEY=<org-scoped-key>
 ```
 
-Mint the API key in Parlot **Settings → API Keys**. For recording, enable Settings → Recording (or `parlotize(record=True)`). Audio uploads to R2 and confirms when you open the session (lazy R2 HEAD reconcile).
+Mint the API key in Parlot **Settings → API Keys**. New tenants record session audio by default (Settings → Recording allowlist `*`); clear the allowlist or use `parlotize(record=False)` to disable. Audio uploads to R2 and confirms when you open the session (lazy R2 HEAD reconcile).
 
 ## Next
 
