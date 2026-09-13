@@ -59,3 +59,31 @@ def test_resolve_ignores_ci_env_vars(monkeypatch, tmp_path):
 
 def test_resolve_truncates_long_values():
     assert len(resolve_agent_version("x" * 100)) == 64
+
+
+def test_resolve_uses_caller_module_version(monkeypatch):
+    """When __main__ has no version (LiveKit IPC), use the calling module."""
+    monkeypatch.delenv("PARLOT_AGENT_VERSION", raising=False)
+    monkeypatch.setitem(sys.modules, "__main__", types.ModuleType("__main__"))
+
+    # Simulate agent.py defining __version__ then calling resolve via a helper
+    # that lives in a non-parlot module name on the stack.
+    agent_mod = types.ModuleType("drive_thru_agent")
+    agent_mod.__version__ = "0.1.0"
+    monkeypatch.setitem(sys.modules, "drive_thru_agent", agent_mod)
+
+    def _agent_entrypoint():
+        return resolve_agent_version(None)
+
+    agent_mod.resolve = _agent_entrypoint  # type: ignore[attr-defined]
+    # Bind globals so stack walk sees drive_thru_agent.__version__
+    _agent_entrypoint.__globals__.clear()  # type: ignore[attr-defined]
+    # Can't clear real function globals; instead exec in module dict:
+    ns = agent_mod.__dict__
+    exec(
+        "def _call():\n"
+        "    from parlot.instrumentation.livekit._agent_version import resolve_agent_version\n"
+        "    return resolve_agent_version(None)\n",
+        ns,
+    )
+    assert ns["_call"]() == "0.1.0"

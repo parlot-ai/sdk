@@ -19,6 +19,7 @@ _configured = False
 _auto_escalate_sip = False
 _escalation_metadata_match: dict[str, str] | None = None
 _configured_agent_id: str | None = None
+_minted_agent_id: str = ""
 _configured_agent_version: str = ""
 _configured_record: bool | list[str] | None = None
 _configured_capture_genai_content: bool | None = None
@@ -109,8 +110,8 @@ def parlotize(
         escalation_metadata_match: Participant metadata key/value pairs that
             classify joining participants as human representatives.
         agent_id: Shared — canonical ``session.agent_id``. If omitted, falls
-            back to LiveKit ``WorkerOptions.agent_name`` / job ``agent_name`` or
-            ``PARLOT_AGENT_ID``.
+            back to ``PARLOT_AGENT_ID``, then LiveKit ``WorkerOptions.agent_name``
+            / job ``agent_name``, then a process-stable mint (``agent-<6hex>``).
         version: Shared — ``gen_ai.agent.version``. Precedence: this kwarg →
             ``__main__.__version__`` / ``VERSION`` → ``PARLOT_AGENT_VERSION`` →
             local git SHA (dev only).
@@ -126,7 +127,8 @@ def parlotize(
         already configured).
     """
     global _configured, _auto_escalate_sip, _escalation_metadata_match
-    global _configured_agent_id, _configured_agent_version, _configured_record
+    global _configured_agent_id, _minted_agent_id, _configured_agent_version
+    global _configured_record
     global _configured_capture_genai_content, _configured_capture_logs, _configured_log_level
     global _parlot_context
     if _configured:
@@ -145,7 +147,6 @@ def parlotize(
     _escalation_metadata_match = (
         dict(escalation_metadata_match) if escalation_metadata_match else None
     )
-    _configured_agent_id = agent_id.strip() if agent_id else None
     if isinstance(record, list):
         _configured_record = [str(item).strip() for item in record if str(item).strip()]
     else:
@@ -177,6 +178,19 @@ def parlotize(
         log_level=log_level,
     )
     _parlot_context = res.context
+    # Explicit/env from base_parlotize; otherwise mint a process-stable fallback.
+    if res.agent_id:
+        _configured_agent_id = res.agent_id
+        _minted_agent_id = ""
+    else:
+        from ._agent_identity import mint_fallback_agent_id
+
+        _configured_agent_id = None
+        _minted_agent_id = mint_fallback_agent_id()
+        logger.info(
+            "parlotize: no agent_id / PARLOT_AGENT_ID — minted %s",
+            _minted_agent_id,
+        )
 
     from ._recording_guard import (
         current_job_capture_logs_metadata,
@@ -193,7 +207,7 @@ def parlotize(
                 return recording_agent_id_from_ctx(ctx)
         except Exception:
             pass
-        return _configured_agent_id or ""
+        return _configured_agent_id or _minted_agent_id or ""
 
     res.context.session_logs.set_resolvers(
         session_resolver=livekit_session_log_fields,
@@ -426,9 +440,14 @@ def _install_participant_escalation_hooks(job_ctx: Any) -> None:
     room.on("participant_connected", _on_participant_connected)
 
 
-def configured_agent_id() -> str:
-    """Canonical deployment id from ``parlotize(agent_id=...)`` if set."""
+def explicit_agent_id() -> str:
+    """Deployment id from ``parlotize(agent_id=...)`` or ``PARLOT_AGENT_ID`` only."""
     return _configured_agent_id or ""
+
+
+def configured_agent_id() -> str:
+    """Canonical deployment id: explicit/env, else process-minted ``agent-<6hex>``."""
+    return _configured_agent_id or _minted_agent_id or ""
 
 
 def configured_agent_version() -> str:

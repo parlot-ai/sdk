@@ -142,7 +142,11 @@ def base_parlotize(
 
     configure_parlot_logging()
 
-    resolved_agent_id = agent_id.strip() if agent_id else None
+    resolved_agent_id = (
+        agent_id.strip()
+        if agent_id
+        else (os.environ.get("PARLOT_AGENT_ID") or "").strip() or None
+    )
     resolved_version = (version or os.environ.get("PARLOT_AGENT_VERSION") or "").strip()
     resolved_endpoint = resolve_endpoint(endpoint)
     resolved_api_key = resolve_api_key(api_key)

@@ -665,14 +665,19 @@ class TestAgentIdentity:
         state.worker_agent_name = "AD_NrRASAvBPGAx"
         state.agent_label = ""
 
+        import parlot.instrumentation.livekit._auto as _auto
+
+        _auto._configured_agent_id = None
+        _auto._minted_agent_id = "agent-f1e2d3"
+
         span = _make_span("function_tool", {
             ATTR_LK_AGENT_NAME: "AD_NrRASAvBPGAx",
             ATTR_LK_FNC_TOOL_NAME: "to_reservation",
             ATTR_LK_FNC_TOOL_OUTPUT: "ok",
         })
         proc.on_end(span)
-        # No topology identity available — leave unset rather than stamp AD_*.
-        assert ATTR_GEN_AI_AGENT_NAME not in span._attributes
+        # No topology identity from LiveKit — use process mint, never AD_*.
+        assert span._attributes[ATTR_GEN_AI_AGENT_NAME] == "agent-f1e2d3"
 
     def test_function_tool_uses_label_attr_for_unnamed_worker(self) -> None:
         proc = LiveKitGenAIProcessor()

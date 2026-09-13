@@ -54,6 +54,7 @@ def _reset_parlotize():
     _auto._configured = False
     _auto._parlot_context = None
     _auto._configured_agent_id = None
+    _auto._minted_agent_id = ""
     _auto._configured_agent_version = ""
     _auto._configured_record = None
 
@@ -96,6 +97,37 @@ class TestConfigureProviderSetup:
 
         parlotize(agent_id="custom-deployment")
         assert _auto.configured_agent_id() == "custom-deployment"
+        assert _auto.explicit_agent_id() == "custom-deployment"
+        assert _auto._minted_agent_id == ""
+
+    def test_agent_id_from_env(self, monkeypatch):
+        monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
+        monkeypatch.setenv("PARLOT_AGENT_ID", "env-agent")
+        from parlot.instrumentation.livekit import parlotize
+        import parlot.instrumentation.livekit._auto as _auto
+
+        parlotize()
+        assert _auto.configured_agent_id() == "env-agent"
+        assert _auto.explicit_agent_id() == "env-agent"
+        assert _auto._minted_agent_id == ""
+
+    def test_bare_parlotize_mints_stable_agent_id(self, monkeypatch):
+        monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
+        monkeypatch.delenv("PARLOT_AGENT_ID", raising=False)
+        from parlot.instrumentation.livekit import parlotize
+        import parlot.instrumentation.livekit._auto as _auto
+        from parlot.instrumentation.livekit._agent_identity import (
+            is_minted_fallback_agent_id,
+        )
+
+        parlotize()
+        minted = _auto.configured_agent_id()
+        assert is_minted_fallback_agent_id(minted)
+        assert _auto.explicit_agent_id() == ""
+        assert _auto._minted_agent_id == minted
+        # Idempotent: second call keeps the same mint.
+        parlotize()
+        assert _auto.configured_agent_id() == minted
 
     def test_version_override(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")

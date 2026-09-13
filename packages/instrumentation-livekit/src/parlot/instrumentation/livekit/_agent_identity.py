@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import secrets
 from typing import TYPE_CHECKING, Any
 
 from parlot.core.attrs import (
@@ -11,7 +12,11 @@ from parlot.core.attrs import (
     ATTR_SESSION_AGENT_FRAMEWORK_RAW_ID,
     ATTR_SESSION_AGENT_ID,
 )
-from parlot.instrumentation.livekit._auto import configured_agent_id, configured_agent_version
+from parlot.instrumentation.livekit._auto import (
+    configured_agent_id,
+    configured_agent_version,
+    explicit_agent_id,
+)
 
 if TYPE_CHECKING:
     from ._session_state import _LiveKitSessionState
@@ -20,6 +25,17 @@ LIVEKIT_FRAMEWORK = "livekit"
 
 # LiveKit Agent Dispatch IDs (protocol guid.AgentDispatchPrefix).
 _LIVEKIT_DISPATCH_ID_RE = re.compile(r"^AD_[A-Za-z0-9]+$")
+_MINTED_AGENT_ID_RE = re.compile(r"^agent-[0-9a-f]{6}$")
+
+
+def mint_fallback_agent_id() -> str:
+    """Return a process-unique last-resort deployment id (``agent-<6hex>``)."""
+    return f"agent-{secrets.token_hex(3)}"
+
+
+def is_minted_fallback_agent_id(name: str | None) -> bool:
+    """Return True when *name* matches the ``agent-<6hex>`` mint pattern."""
+    return bool(_MINTED_AGENT_ID_RE.match(str(name or "").strip()))
 
 
 def is_livekit_dispatch_id(name: str | None) -> bool:
@@ -40,10 +56,22 @@ def topology_agent_name(name: str | None) -> str:
 
 
 def resolve_canonical_agent_id(state: "_LiveKitSessionState") -> str:
-    configured = configured_agent_id()
-    if configured:
-        return configured
-    return topology_agent_name(state.worker_agent_name)
+    """Resolve deployment identity for session + topology seeding.
+
+    Precedence: explicit ``parlotize(agent_id=)`` / ``PARLOT_AGENT_ID`` →
+    worker ``agent_name`` → runtime ``agent_label`` → process mint
+    (``agent-<6hex>``).
+    """
+    explicit = explicit_agent_id()
+    if explicit:
+        return explicit
+    worker = topology_agent_name(state.worker_agent_name)
+    if worker:
+        return worker
+    label = topology_agent_name(getattr(state, "agent_label", None) or "")
+    if label:
+        return label
+    return configured_agent_id()
 
 
 def ensure_agent_chain_seeded(state: "_LiveKitSessionState") -> None:

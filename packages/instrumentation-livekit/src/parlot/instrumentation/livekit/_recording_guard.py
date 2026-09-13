@@ -34,10 +34,18 @@ def agent_name_from_ctx(ctx: Any) -> str:
 
 def recording_agent_id_from_ctx(ctx: Any) -> str:
     """Agent id used for recording policy (matches ``session.agent_id``)."""
-    configured = configured_agent_id()
-    if configured:
-        return configured
-    return agent_name_from_ctx(ctx)
+    from parlot.instrumentation.livekit._auto import (
+        configured_agent_id,
+        explicit_agent_id,
+    )
+
+    explicit = explicit_agent_id()
+    if explicit:
+        return explicit
+    worker = agent_name_from_ctx(ctx)
+    if worker:
+        return worker
+    return configured_agent_id()
 
 
 def _job_metadata_dict(ctx: Any) -> Optional[dict[str, Any]]:
