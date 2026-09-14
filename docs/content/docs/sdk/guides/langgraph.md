@@ -64,7 +64,7 @@ from parlot.instrumentation.livekit import parlotize as parlotize_livekit
 from parlot.instrumentation.langgraph import parlotize as parlotize_langgraph
 
 parlotize_livekit(agent_id="voice-bot", version="0.1.0")
-parlotize_langgraph()  # adopts LiveKit TracerProvider when already set
+parlotize_langgraph(agent_id="voice-bot")  # adopts LiveKit TracerProvider when already set
 ```
 
 - LiveKit owns `parlot.session` / `parlot.turn` (voice).

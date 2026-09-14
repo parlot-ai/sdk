@@ -15,7 +15,7 @@ pip install parlot-instrumentation-livekit
 ```python
 from parlot.instrumentation.livekit import parlotize
 
-parlotize()
+parlotize(agent_id="my-agent")
 ```
 
 **Docs:** [LiveKit guide](https://parlot.ai/docs/guides/livekit) · [Concepts](https://parlot.ai/docs/concepts) · [Quick Start](https://parlot.ai/docs/quick-start) · [parlot.ai](https://parlot.ai)
@@ -31,10 +31,10 @@ Call before constructing `AgentSession` — patches `AgentSession.__init__`, set
 ```python
 from parlot.instrumentation.livekit import parlotize
 
-parlotize()
+parlotize(agent_id="my-agent")
 ```
 
-Optional: `agent_id=` for canonical deployment identity and `version=` for deployment version.
+`agent_id=` is required for canonical deployment identity. Pass `version=` for deployment version.
 
 #### What to expect for version
 

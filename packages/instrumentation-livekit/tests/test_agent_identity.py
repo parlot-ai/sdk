@@ -14,8 +14,6 @@ from parlot.instrumentation.livekit._agent_identity import (
     append_agent_chain_step,
     ensure_agent_chain_seeded,
     is_livekit_dispatch_id,
-    is_minted_fallback_agent_id,
-    mint_fallback_agent_id,
     resolve_canonical_agent_id,
     stamp_session_agent_identity,
     topology_agent_name,
@@ -38,12 +36,6 @@ class _Span:
         self.attributes[key] = value
 
 
-def test_mint_fallback_agent_id_format():
-    minted = mint_fallback_agent_id()
-    assert is_minted_fallback_agent_id(minted)
-    assert minted != mint_fallback_agent_id()
-
-
 def test_resolve_canonical_agent_id_prefers_parlotize_override(monkeypatch):
     monkeypatch.setattr(
         "parlot.instrumentation.livekit._agent_identity.explicit_agent_id",
@@ -64,20 +56,20 @@ def test_resolve_canonical_agent_id_falls_back_to_worker_name(monkeypatch):
     )
     monkeypatch.setattr(
         "parlot.instrumentation.livekit._agent_identity.configured_agent_id",
-        lambda: "agent-aaaaaa",
+        lambda: "fallback-id",
     )
     state = _State(worker_agent_name="hotel-receptionist")
     assert resolve_canonical_agent_id(state) == "hotel-receptionist"
 
 
-def test_resolve_canonical_prefers_worker_over_mint(monkeypatch):
+def test_resolve_canonical_prefers_worker_over_configured(monkeypatch):
     monkeypatch.setattr(
         "parlot.instrumentation.livekit._agent_identity.explicit_agent_id",
         lambda: "",
     )
     monkeypatch.setattr(
         "parlot.instrumentation.livekit._agent_identity.configured_agent_id",
-        lambda: "agent-bbbbbb",
+        lambda: "fallback-id",
     )
     state = _State(worker_agent_name="drive-thru")
     assert resolve_canonical_agent_id(state) == "drive-thru"
@@ -90,23 +82,23 @@ def test_resolve_canonical_falls_back_to_agent_label(monkeypatch):
     )
     monkeypatch.setattr(
         "parlot.instrumentation.livekit._agent_identity.configured_agent_id",
-        lambda: "agent-cccccc",
+        lambda: "fallback-id",
     )
     state = _State(worker_agent_name="", agent_label="DriveThruAgent")
     assert resolve_canonical_agent_id(state) == "DriveThruAgent"
 
 
-def test_resolve_canonical_falls_back_to_mint(monkeypatch):
+def test_resolve_canonical_falls_back_to_configured(monkeypatch):
     monkeypatch.setattr(
         "parlot.instrumentation.livekit._agent_identity.explicit_agent_id",
         lambda: "",
     )
     monkeypatch.setattr(
         "parlot.instrumentation.livekit._agent_identity.configured_agent_id",
-        lambda: "agent-dddddd",
+        lambda: "configured-id",
     )
     state = _State(worker_agent_name="", agent_label="")
-    assert resolve_canonical_agent_id(state) == "agent-dddddd"
+    assert resolve_canonical_agent_id(state) == "configured-id"
 
 
 def test_ensure_agent_chain_seeds_canonical_deployment(monkeypatch):
@@ -184,10 +176,10 @@ def test_resolve_canonical_ignores_dispatch_id_worker_name(monkeypatch):
     )
     monkeypatch.setattr(
         "parlot.instrumentation.livekit._agent_identity.configured_agent_id",
-        lambda: "agent-eeeeee",
+        lambda: "configured-id",
     )
     state = _State(worker_agent_name="AD_GAJ5UrwGKqsZ")
-    assert resolve_canonical_agent_id(state) == "agent-eeeeee"
+    assert resolve_canonical_agent_id(state) == "configured-id"
 
 
 def test_append_agent_chain_step_skips_dispatch_ids(monkeypatch):

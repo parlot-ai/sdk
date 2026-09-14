@@ -35,7 +35,7 @@ class ParlotizeProtocol(Protocol):
         capture_genai_content: Optional[bool] = None,
         service_name: Optional[str] = None,
         tracer_provider: TracerProvider | None = None,
-        agent_id: Optional[str] = None,
+        agent_id: str,
         version: Optional[str] = None,
         capture_logs: bool | list[str] | None = None,
         log_level: Optional[str] = None,
@@ -59,9 +59,8 @@ class ParlotizeProtocol(Protocol):
             tracer_provider: Existing OpenTelemetry ``TracerProvider`` to adopt. If
                 omitted, adapters build one with Parlot's OTLP exporter (or adopt an
                 already-registered provider when another adapter configured first).
-            agent_id: Canonical deployment identity stamped on ``session.agent_id``.
-                If omitted, adapters may derive from framework config or
-                ``PARLOT_AGENT_ID``.
+            agent_id: Required canonical deployment identity stamped on
+                ``session.agent_id``. Must be non-empty after stripping whitespace.
             version: Deployment version stamped on ``gen_ai.agent.version``.
                 Pass ``version=`` to set it; otherwise ``\"unknown\"``.
             capture_logs: Intercept Python ``logging`` during active sessions and
@@ -82,7 +81,7 @@ class BaseParlotizeResult:
     endpoint: str
     api_key: str
     tracer_provider: Any
-    agent_id: Optional[str]
+    agent_id: str
     agent_version: str
     capture_genai_content: Optional[bool]
     capture_logs: bool | list[str] | None
@@ -103,7 +102,7 @@ def base_parlotize(
     api_key: Optional[str] = None,
     capture_genai_content: Optional[bool] = None,
     tracer_provider: TracerProvider | None = None,
-    agent_id: Optional[str] = None,
+    agent_id: str,
     version: Optional[str] = None,
     capture_logs: bool | list[str] | None = None,
     log_level: Optional[str] = None,
@@ -121,7 +120,7 @@ def base_parlotize(
         api_key: Org-scoped API key. If omitted, reads ``PARLOT_API_KEY``.
         capture_genai_content: Process-wide GenAI content capture override.
         tracer_provider: Existing ``TracerProvider`` to adopt, if any.
-        agent_id: Canonical deployment identity for ``session.agent_id``.
+        agent_id: Required canonical deployment identity for ``session.agent_id``.
         version: Deployment version for ``gen_ai.agent.version``. Defaults to
             ``\"unknown\"`` when omitted or blank.
         capture_logs: Session log capture policy (bool or agent-id globs).
@@ -142,11 +141,9 @@ def base_parlotize(
 
     configure_parlot_logging()
 
-    resolved_agent_id = (
-        agent_id.strip()
-        if agent_id
-        else (os.environ.get("PARLOT_AGENT_ID") or "").strip() or None
-    )
+    resolved_agent_id = agent_id.strip()
+    if not resolved_agent_id:
+        raise ValueError("parlotize(agent_id=...) is required")
     resolved_version = (version or "").strip() or "unknown"
     resolved_endpoint = resolve_endpoint(endpoint)
     resolved_api_key = resolve_api_key(api_key)

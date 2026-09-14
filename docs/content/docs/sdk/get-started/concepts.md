@@ -34,7 +34,7 @@ Vendor span and attribute maps live in each framework guide. See [LangGraph](/sd
 
 - A **session** is one bounded interaction (a call / job).
 - Today LiveKit voice sets `conversation_id` equal to `session_id` (1:1) as a placeholder until multi-session conversations are modeled.
-- `parlotize(agent_id=..., version=...)` stamps deployment identity used by the Parlot Agents portfolio.
+- `parlotize(agent_id=..., version=...)` stamps deployment identity used by the Parlot Agents portfolio. **`agent_id=` is required.**
 - Version: pass `parlotize(version=...)`; if omitted, `gen_ai.agent.version` is `"unknown"`.
 
 Parlot stamps framework-agnostic session attributes on `parlot.session`:

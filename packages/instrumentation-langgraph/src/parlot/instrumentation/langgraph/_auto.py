@@ -25,7 +25,7 @@ def parlotize(
     capture_genai_content: Optional[bool] = None,
     service_name: Optional[str] = None,
     tracer_provider: TracerProvider | None = None,
-    agent_id: Optional[str] = None,
+    agent_id: str,
     version: Optional[str] = None,
     channel: Optional[str] = None,
     modality: Optional[str] = None,
@@ -56,7 +56,8 @@ def parlotize(
             or ``"langgraph-agent"``).
         tracer_provider: Shared — existing ``TracerProvider``. If LiveKit
             already initialized one in-process, this call adopts it.
-        agent_id: Shared — canonical ``session.agent_id``.
+        agent_id: Shared — required canonical ``session.agent_id``. Must be
+            non-empty after stripping whitespace.
         version: Shared — ``gen_ai.agent.version``. Pass ``version=`` to set it;
             otherwise ``\"unknown\"``.
         channel: Communication channel for standalone LangGraph sessions
@@ -81,7 +82,6 @@ def parlotize(
     from parlot.core.genai_content_capture import should_capture_genai_content
     from parlot.core.sdk_version import resolve_parlot_sdk_version
 
-    _configured_agent_id = agent_id.strip() if agent_id else None
     _configured_agent_version = (version or "").strip() or "unknown"
 
     res = base_parlotize(
@@ -95,10 +95,11 @@ def parlotize(
         log_level=log_level,
     )
     _parlot_context = res.context
+    _configured_agent_id = res.agent_id
 
     runtime = res.context.runtime
     capture = should_capture_genai_content(
-        _configured_agent_id or "",
+        _configured_agent_id,
         capture_genai_content_config=res.capture_genai_content,
         bootstrap_globs=list(runtime.capture_genai_content_globs) if runtime else None,
         bootstrap_agents=runtime.capture_genai_content_agents_map() if runtime else None,
@@ -135,7 +136,7 @@ def parlotize(
     from ._hooks import install_parlotize_hook
     from ._session import set_channel_modality, set_identity, set_tracer
 
-    set_identity(_configured_agent_id or "", _configured_agent_version)
+    set_identity(_configured_agent_id, _configured_agent_version)
     set_channel_modality(channel=channel or "", modality=modality or "")
     set_tracer(tracer)
     handler = ParlotLangGraphCallbackHandler(tracer, capture_genai_content=capture)

@@ -38,9 +38,9 @@ Session application logs (Python `logging`, default on) follow Settings → Logs
 `parlotize(capture_logs=…, log_level=…)`. Not `print()`. Treat content like stdout for PII.
 
 When used inside a LiveKit voice agent that already called
-`parlot.instrumentation.livekit.parlotize()`, this package nests GenAI
+`parlot.instrumentation.livekit.parlotize(agent_id=...)`, this package nests GenAI
 operational spans under the active LiveKit session and does **not** emit
 duplicate `parlot.session` / `parlot.turn` spans — LiveKit owns channel and
-modality.
+modality. Call LangGraph `parlotize(agent_id=...)` as well (same or related id).
 
 **Docs:** [LangGraph guide](https://parlot.ai/docs/guides/langgraph) · [Concepts](https://parlot.ai/docs/concepts) · [parlot.ai](https://parlot.ai)

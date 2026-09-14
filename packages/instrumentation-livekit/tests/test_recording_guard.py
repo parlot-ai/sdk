@@ -47,13 +47,11 @@ def _reset_recording_state():
     _auto._configured_record = None
     _auto._configured_capture_genai_content = None
     _auto._configured_agent_id = None
-    _auto._minted_agent_id = ""
     yield
     _auto.set_configured_context(None)
     _auto._configured_record = None
     _auto._configured_capture_genai_content = None
     _auto._configured_agent_id = None
-    _auto._minted_agent_id = ""
 
 
 class TestLiveKitRecordingGuard:

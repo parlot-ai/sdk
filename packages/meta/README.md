@@ -32,10 +32,10 @@ pip install parlot-instrumentation-langgraph
 ```python
 from parlot.instrumentation.livekit import parlotize
 
-parlotize()
+parlotize(agent_id="my-agent")
 ```
 
-Call `parlotize()` before constructing `AgentSession`, then `await ctx.connect()` before `session.start()`. Set `PARLOT_ENDPOINT` and `PARLOT_API_KEY` (mint in Settings → API Keys).
+Call `parlotize(agent_id=...)` before constructing `AgentSession`, then `await ctx.connect()` before `session.start()`. Set `PARLOT_ENDPOINT` and `PARLOT_API_KEY` (mint in Settings → API Keys).
 
 Full checklist: [LiveKit guide](https://parlot.ai/docs/guides/livekit) · [Quick Start](https://parlot.ai/docs/quick-start)
 
