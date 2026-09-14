@@ -23,7 +23,7 @@ def agent_name_from_ctx(ctx: Any) -> str:
 
     Does **not** fall back to ``job.dispatch_id`` (``AD_…``). Those are
     per-job dispatch identifiers and must not become topology agent names.
-    Unnamed workers return ``\"\"``; use ``parlotize(agent_id=…)`` and/or
+    Unnamed workers return ``\"\"``; use ``parlotize(agent_id)`` and/or
     ``lk.agent_label`` for graph identity, and recording policy via
     ``parlotize(record=…)`` or Settings → Recording.
     """
@@ -34,18 +34,9 @@ def agent_name_from_ctx(ctx: Any) -> str:
 
 def recording_agent_id_from_ctx(ctx: Any) -> str:
     """Agent id used for recording policy (matches ``session.agent_id``)."""
-    from parlot.instrumentation.livekit._auto import (
-        configured_agent_id,
-        explicit_agent_id,
-    )
+    from parlot.instrumentation.livekit._auto import explicit_agent_id
 
-    explicit = explicit_agent_id()
-    if explicit:
-        return explicit
-    worker = agent_name_from_ctx(ctx)
-    if worker:
-        return worker
-    return configured_agent_id()
+    return explicit_agent_id()
 
 
 def _job_metadata_dict(ctx: Any) -> Optional[dict[str, Any]]:

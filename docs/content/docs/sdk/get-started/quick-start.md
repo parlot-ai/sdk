@@ -23,12 +23,12 @@ pip install "parlot[livekit]"
 
 ## Instrument
 
-Call `parlotize(agent_id=...)` before constructing `AgentSession`, then `await ctx.connect()` before `session.start()`:
+Call `parlotize("…")` before constructing `AgentSession`, then `await ctx.connect()` before `session.start()`:
 
 ```python
 from parlot.instrumentation.livekit import parlotize
 
-parlotize(agent_id="my-agent")
+parlotize("my-agent")
 
 from livekit.agents import AgentSession, JobContext, WorkerOptions, cli
 

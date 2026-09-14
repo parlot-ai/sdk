@@ -14,7 +14,6 @@ from parlot.instrumentation.livekit._agent_identity import (
     append_agent_chain_step,
     ensure_agent_chain_seeded,
     is_livekit_dispatch_id,
-    resolve_canonical_agent_id,
     stamp_session_agent_identity,
     topology_agent_name,
 )
@@ -36,81 +35,12 @@ class _Span:
         self.attributes[key] = value
 
 
-def test_resolve_canonical_agent_id_prefers_parlotize_override(monkeypatch):
+def test_ensure_agent_chain_seeds_from_parlotize(monkeypatch):
     monkeypatch.setattr(
         "parlot.instrumentation.livekit._agent_identity.explicit_agent_id",
-        lambda: "configured-id",
+        lambda: "hotel-receptionist",
     )
-    monkeypatch.setattr(
-        "parlot.instrumentation.livekit._agent_identity.configured_agent_id",
-        lambda: "configured-id",
-    )
-    state = _State(worker_agent_name="worker-name")
-    assert resolve_canonical_agent_id(state) == "configured-id"
-
-
-def test_resolve_canonical_agent_id_falls_back_to_worker_name(monkeypatch):
-    monkeypatch.setattr(
-        "parlot.instrumentation.livekit._agent_identity.explicit_agent_id",
-        lambda: "",
-    )
-    monkeypatch.setattr(
-        "parlot.instrumentation.livekit._agent_identity.configured_agent_id",
-        lambda: "fallback-id",
-    )
-    state = _State(worker_agent_name="hotel-receptionist")
-    assert resolve_canonical_agent_id(state) == "hotel-receptionist"
-
-
-def test_resolve_canonical_prefers_worker_over_configured(monkeypatch):
-    monkeypatch.setattr(
-        "parlot.instrumentation.livekit._agent_identity.explicit_agent_id",
-        lambda: "",
-    )
-    monkeypatch.setattr(
-        "parlot.instrumentation.livekit._agent_identity.configured_agent_id",
-        lambda: "fallback-id",
-    )
-    state = _State(worker_agent_name="drive-thru")
-    assert resolve_canonical_agent_id(state) == "drive-thru"
-
-
-def test_resolve_canonical_falls_back_to_agent_label(monkeypatch):
-    monkeypatch.setattr(
-        "parlot.instrumentation.livekit._agent_identity.explicit_agent_id",
-        lambda: "",
-    )
-    monkeypatch.setattr(
-        "parlot.instrumentation.livekit._agent_identity.configured_agent_id",
-        lambda: "fallback-id",
-    )
-    state = _State(worker_agent_name="", agent_label="DriveThruAgent")
-    assert resolve_canonical_agent_id(state) == "DriveThruAgent"
-
-
-def test_resolve_canonical_falls_back_to_configured(monkeypatch):
-    monkeypatch.setattr(
-        "parlot.instrumentation.livekit._agent_identity.explicit_agent_id",
-        lambda: "",
-    )
-    monkeypatch.setattr(
-        "parlot.instrumentation.livekit._agent_identity.configured_agent_id",
-        lambda: "configured-id",
-    )
-    state = _State(worker_agent_name="", agent_label="")
-    assert resolve_canonical_agent_id(state) == "configured-id"
-
-
-def test_ensure_agent_chain_seeds_canonical_deployment(monkeypatch):
-    monkeypatch.setattr(
-        "parlot.instrumentation.livekit._agent_identity.explicit_agent_id",
-        lambda: "",
-    )
-    monkeypatch.setattr(
-        "parlot.instrumentation.livekit._agent_identity.configured_agent_id",
-        lambda: "",
-    )
-    state = _State(worker_agent_name="hotel-receptionist")
+    state = _State(worker_agent_name="ignored-worker")
     ensure_agent_chain_seeded(state)
     assert state.agent_chain == ["hotel-receptionist"]
 
@@ -118,13 +48,9 @@ def test_ensure_agent_chain_seeds_canonical_deployment(monkeypatch):
 def test_append_agent_chain_step_builds_routing_path(monkeypatch):
     monkeypatch.setattr(
         "parlot.instrumentation.livekit._agent_identity.explicit_agent_id",
-        lambda: "",
+        lambda: "hotel-receptionist",
     )
-    monkeypatch.setattr(
-        "parlot.instrumentation.livekit._agent_identity.configured_agent_id",
-        lambda: "",
-    )
-    state = _State(worker_agent_name="hotel-receptionist")
+    state = _State()
     append_agent_chain_step(state, "Orchestrator")
     append_agent_chain_step(state, "cancel_task")
     assert state.agent_chain == [
@@ -137,18 +63,14 @@ def test_append_agent_chain_step_builds_routing_path(monkeypatch):
 def test_stamp_session_agent_identity(monkeypatch):
     monkeypatch.setattr(
         "parlot.instrumentation.livekit._agent_identity.explicit_agent_id",
-        lambda: "",
-    )
-    monkeypatch.setattr(
-        "parlot.instrumentation.livekit._agent_identity.configured_agent_id",
-        lambda: "",
+        lambda: "hotel-receptionist",
     )
     monkeypatch.setattr(
         "parlot.instrumentation.livekit._agent_identity.configured_agent_version",
         lambda: "1.2.3",
     )
     span = _Span()
-    state = _State(worker_agent_name="hotel-receptionist", session_id="job-123")
+    state = _State(worker_agent_name="ignored-worker", session_id="job-123")
     stamp_session_agent_identity(span, state)
     assert span.attributes[ATTR_SESSION_AGENT_ID] == "hotel-receptionist"
     assert span.attributes[ATTR_SESSION_AGENT_FRAMEWORK] == "livekit"
@@ -169,26 +91,9 @@ def test_topology_agent_name_strips_dispatch_ids():
     assert topology_agent_name("greeter") == "greeter"
 
 
-def test_resolve_canonical_ignores_dispatch_id_worker_name(monkeypatch):
-    monkeypatch.setattr(
-        "parlot.instrumentation.livekit._agent_identity.explicit_agent_id",
-        lambda: "",
-    )
-    monkeypatch.setattr(
-        "parlot.instrumentation.livekit._agent_identity.configured_agent_id",
-        lambda: "configured-id",
-    )
-    state = _State(worker_agent_name="AD_GAJ5UrwGKqsZ")
-    assert resolve_canonical_agent_id(state) == "configured-id"
-
-
 def test_append_agent_chain_step_skips_dispatch_ids(monkeypatch):
     monkeypatch.setattr(
         "parlot.instrumentation.livekit._agent_identity.explicit_agent_id",
-        lambda: "restaurant-agent",
-    )
-    monkeypatch.setattr(
-        "parlot.instrumentation.livekit._agent_identity.configured_agent_id",
         lambda: "restaurant-agent",
     )
     state = _State()

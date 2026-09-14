@@ -73,10 +73,10 @@ from ._platform_refs import lookup_room_context, stamp_livekit_platform_refs
 from ._agent_identity import (
     append_agent_chain_step,
     ensure_agent_chain_seeded,
-    resolve_canonical_agent_id,
     stamp_session_agent_identity,
     topology_agent_name,
 )
+from ._auto import configured_agent_id, configured_agent_version, explicit_agent_id
 from ._session import (
     get_job_bootstrap,
     handle_conversation_session_on_end,
@@ -414,7 +414,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         label = topology_agent_name(label_str) or topology_agent_name(name_str)
         if label:
             self._maybe_update(state, "agent_label", label)
-            canonical = resolve_canonical_agent_id(state)
+            canonical = explicit_agent_id()
             if label != canonical:
                 append_agent_chain_step(state, label)
 
@@ -435,7 +435,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             state.agent_label,
             attrs.get(ATTR_LK_AGENT_NAME),
             state.worker_agent_name,
-            resolve_canonical_agent_id(state),
+            explicit_agent_id(),
             state.agent_chain[-1] if state.agent_chain else "",
         ):
             cand_str = candidate if isinstance(candidate, str) else None
@@ -460,13 +460,9 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
                 state, resolved, label_override=label_override
             )
             if agent_id == "unknown":
-                from parlot.instrumentation.livekit._auto import configured_agent_id
-
                 agent_id = configured_agent_id() or "unknown"
             if agent_id != "unknown":
                 self._set(span, ATTR_GEN_AI_AGENT_NAME, agent_id)
-        from parlot.instrumentation.livekit._auto import configured_agent_version
-
         version = configured_agent_version()
         if version and not resolved.get(ATTR_GEN_AI_AGENT_VERSION):
             self._set(span, ATTR_GEN_AI_AGENT_VERSION, version)

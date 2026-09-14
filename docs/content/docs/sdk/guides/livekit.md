@@ -23,7 +23,7 @@ Call before constructing `AgentSession` — patches `AgentSession.__init__`, set
 ```python
 from parlot.instrumentation.livekit import parlotize
 
-parlotize(agent_id="my-agent")
+parlotize("my-agent")
 
 from livekit.agents import AgentSession, JobContext, WorkerOptions, cli
 
@@ -39,12 +39,12 @@ async def entrypoint(ctx: JobContext):
 
 Session bootstrap runs on LiveKit **`agent_state_changed`** when the agent transitions **`initializing → listening`** (the Starting phase of [AgentSession lifecycle](https://docs.livekit.io/agents/logic/sessions/)). That mints one Parlot **`session.id`**, starts a **`parlot.session`** span for ingestion, and stamps **`platform.ref.*`** keys. Room metadata refresh and egress run after bootstrap (or immediately on `JobContext.connect` if bootstrap already completed). The session closes via the AgentSession **`close`** event.
 
-`agent_id=` is **required** — a stable deployment identity stamped on `session.agent_id`. Pass `version=` for deployment version. Shared kwargs are documented in [Python SDK Reference](/sdk/python); LiveKit-only options (`record`, `auto_escalate_sip`, …) are on the [Interactive API Reference](/docs/ref/python/parlot/instrumentation/livekit.html). See also [Concepts](/sdk/get-started/concepts#session-and-agent-identity).
+`agent_id` is a **required** positional argument — a stable deployment identity stamped on `session.agent_id`. Pass `version=` for deployment version. Shared kwargs are documented in [Python SDK Reference](/sdk/python); LiveKit-only options (`record`, `auto_escalate_sip`, …) are on the [Interactive API Reference](/docs/ref/python/parlot/instrumentation/livekit.html). See also [Concepts](/sdk/get-started/concepts#session-and-agent-identity).
 
 **Reliable patterns for LiveKit job processes:**
 
 ```python
-parlotize(agent_id="restaurant-agent", version="0.1.0")
+parlotize("restaurant-agent", version="0.1.0")
 ```
 
 For per-tenant or per-region deploys without a code change, pass the id from your manifest:
@@ -52,7 +52,7 @@ For per-tenant or per-region deploys without a code change, pass the id from you
 ```python
 import os
 
-parlotize(agent_id=os.environ["PARLOT_AGENT_ID"])
+parlotize(os.environ["PARLOT_AGENT_ID"])
 ```
 
 Pass `version=` when you want a real deployment label; otherwise Parlot stamps `"unknown"`.
@@ -61,7 +61,7 @@ Pass `version=` when you want a real deployment label; otherwise Parlot stamps `
 
 | Attribute | LiveKit source |
 |-----------|----------------|
-| `session.agent_id` | Required `parlotize(agent_id="…")` |
+| `session.agent_id` | Required `parlotize("…")` |
 | `session.agent_framework` | `"livekit"` |
 | `session.agent_framework_raw_id` | LiveKit job id (`lk.job_id`) |
 | `session.agent_chain` | Deployment id plus runtime routing (`hotel-receptionist → Orchestrator → cancel_task`) |
@@ -71,7 +71,7 @@ LiveKit voice currently uses `conversation_id === session_id` (1:1) as a placeho
 
 ### Named worker dispatch (`agent_name`)
 
-This is LiveKit’s **dispatch name** (which jobs are eligible for which rooms). It is separate from Parlot `parlotize(agent_id=…)` / `session.agent_id`, which is the canonical product identity stamped on telemetry.
+This is LiveKit’s **dispatch name** (which jobs are eligible for which rooms). It is separate from Parlot `parlotize("…")` / `session.agent_id`, which is the canonical product identity stamped on telemetry.
 
 Prefer an explicit name on the RTC session entrypoint:
 
@@ -294,14 +294,14 @@ If you use `WarmTransferTask` (or any flow that opens a second agent room), set 
 ```python
 from parlot.instrumentation.livekit import parlotize
 
-parlotize(agent_id="my-agent", auto_escalate_sip=True)
+parlotize("my-agent", auto_escalate_sip=True)
 ```
 
 Or match participant metadata:
 
 ```python
 parlotize(
-    agent_id="my-agent",
+    "my-agent",
     escalation_metadata_match={
         "type": "agent_transfer",
         "is_human": "true",

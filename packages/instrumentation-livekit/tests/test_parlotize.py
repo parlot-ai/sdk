@@ -74,7 +74,7 @@ class TestConfigureProviderSetup:
         from parlot.instrumentation.livekit import parlotize
 
         with pytest.raises(ValueError, match="PARLOT_ENDPOINT"):
-            parlotize(agent_id="test-agent")
+            parlotize("test-agent")
 
     def test_raises_without_agent_id(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
@@ -88,27 +88,27 @@ class TestConfigureProviderSetup:
         from parlot.instrumentation.livekit import parlotize
 
         with pytest.raises(ValueError, match="agent_id"):
-            parlotize(agent_id="   ")
+            parlotize("   ")
 
     def test_env_var_endpoint(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
         from parlot.instrumentation.livekit import parlotize
 
-        parlotize(agent_id="test-agent")
+        parlotize("test-agent")
 
     def test_idempotent_on_double_call(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
         from parlot.instrumentation.livekit import parlotize
 
-        parlotize(agent_id="test-agent")
-        parlotize(agent_id="test-agent")
+        parlotize("test-agent")
+        parlotize("test-agent")
 
     def test_agent_id_required(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
         from parlot.instrumentation.livekit import parlotize
         import parlot.instrumentation.livekit._auto as _auto
 
-        parlotize(agent_id="custom-deployment")
+        parlotize("custom-deployment")
         assert _auto.configured_agent_id() == "custom-deployment"
         assert _auto.explicit_agent_id() == "custom-deployment"
 
@@ -117,7 +117,7 @@ class TestConfigureProviderSetup:
         from parlot.instrumentation.livekit import parlotize
         import parlot.instrumentation.livekit._auto as _auto
 
-        parlotize(agent_id="test-agent", version="2.0.0")
+        parlotize("test-agent", version="2.0.0")
         assert _auto.configured_agent_version() == "2.0.0"
 
     def test_version_defaults_to_unknown_when_omitted(self, monkeypatch):
@@ -126,7 +126,7 @@ class TestConfigureProviderSetup:
         from parlot.instrumentation.livekit import parlotize
         import parlot.instrumentation.livekit._auto as _auto
 
-        parlotize(agent_id="test-agent")
+        parlotize("test-agent")
         assert _auto.configured_agent_version() == "unknown"
 
 
@@ -139,7 +139,7 @@ class TestAgentSessionPatch:
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
         from parlot.instrumentation.livekit import parlotize
 
-        parlotize(agent_id="test-agent")
+        parlotize("test-agent")
 
         import livekit.agents as lk
 
@@ -159,7 +159,7 @@ class TestDevWatchParentSkip:
         from parlot.instrumentation.livekit import parlotize
         import parlot.instrumentation.livekit._auto as _auto
 
-        parlotize(agent_id="test-agent")
+        parlotize("test-agent")
 
         assert _auto._configured is False
 
@@ -174,7 +174,7 @@ class TestDevWatchParentSkip:
         from parlot.instrumentation.livekit import parlotize
         import parlot.instrumentation.livekit._auto as _auto
 
-        parlotize(agent_id="test-agent")
+        parlotize("test-agent")
 
         assert _auto._configured is False
 
@@ -193,7 +193,7 @@ class TestDevWatchParentSkip:
         from parlot.instrumentation.livekit import parlotize
         import parlot.instrumentation.livekit._auto as _auto
 
-        parlotize(agent_id="test-agent")
+        parlotize("test-agent")
 
         assert _auto._configured is True
 
@@ -204,6 +204,6 @@ class TestDevWatchParentSkip:
         from parlot.instrumentation.livekit import parlotize
         import parlot.instrumentation.livekit._auto as _auto
 
-        parlotize(agent_id="test-agent")
+        parlotize("test-agent")
 
         assert _auto._configured is True

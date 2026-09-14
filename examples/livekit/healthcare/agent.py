@@ -16,7 +16,7 @@ from parlot.instrumentation.livekit import parlotize
 
 __version__ = "0.1.0"
 
-parlotize(agent_id="healthcare", version=__version__, auto_escalate_sip=True)
+parlotize("healthcare", version=__version__, auto_escalate_sip=True)
 
 from livekit.agents import (
     Agent,

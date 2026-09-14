@@ -13,7 +13,7 @@ pip install parlot-instrumentation-langgraph
 ```python
 from parlot.instrumentation.langgraph import parlotize
 
-parlotize(agent_id="support-bot", version="0.1.0", channel="webchat")
+parlotize("support-bot", version="0.1.0", channel="webchat")
 
 # Normal LangGraph usage — no per-call callbacks required
 graph.invoke(
@@ -38,9 +38,9 @@ Session application logs (Python `logging`, default on) follow Settings → Logs
 `parlotize(capture_logs=…, log_level=…)`. Not `print()`. Treat content like stdout for PII.
 
 When used inside a LiveKit voice agent that already called
-`parlot.instrumentation.livekit.parlotize(agent_id=...)`, this package nests GenAI
+`parlot.instrumentation.livekit.parlotize("…")`, this package nests GenAI
 operational spans under the active LiveKit session and does **not** emit
 duplicate `parlot.session` / `parlot.turn` spans — LiveKit owns channel and
-modality. Call LangGraph `parlotize(agent_id=...)` as well (same or related id).
+modality. Call LangGraph `parlotize("…")` as well (same or related id).
 
 **Docs:** [LangGraph guide](https://parlot.ai/docs/guides/langgraph) · [Concepts](https://parlot.ai/docs/concepts) · [parlot.ai](https://parlot.ai)

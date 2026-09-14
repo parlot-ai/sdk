@@ -112,6 +112,7 @@ class TestLiveKitGenAIContentCaptureGuard:
         assert should_capture_genai_content(_ctx()) is True
 
     def test_bootstrap_agent_override(self) -> None:
+        _auto._configured_agent_id = "receptionist"
         context = _parlot_ctx(
             capture_genai_content_globs=("*",),
             capture_genai_content_agents=(("receptionist", False),),
@@ -120,12 +121,13 @@ class TestLiveKitGenAIContentCaptureGuard:
         _auto.set_configured_context(context)
         assert (
             should_capture_genai_content(
-                _ctx(agent_name="receptionist"), context=context
+                _ctx(agent_name="ignored-worker"), context=context
             )
             is False
         )
+        _auto._configured_agent_id = "other"
         assert (
-            should_capture_genai_content(_ctx(agent_name="other"), context=context)
+            should_capture_genai_content(_ctx(agent_name="ignored-worker"), context=context)
             is True
         )
 

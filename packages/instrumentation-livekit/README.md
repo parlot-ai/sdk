@@ -15,7 +15,7 @@ pip install parlot-instrumentation-livekit
 ```python
 from parlot.instrumentation.livekit import parlotize
 
-parlotize(agent_id="my-agent")
+parlotize("my-agent")
 ```
 
 **Docs:** [LiveKit guide](https://parlot.ai/docs/guides/livekit) · [Concepts](https://parlot.ai/docs/concepts) · [Quick Start](https://parlot.ai/docs/quick-start) · [parlot.ai](https://parlot.ai)
@@ -31,17 +31,17 @@ Call before constructing `AgentSession` — patches `AgentSession.__init__`, set
 ```python
 from parlot.instrumentation.livekit import parlotize
 
-parlotize(agent_id="my-agent")
+parlotize("my-agent")
 ```
 
-`agent_id=` is required for canonical deployment identity. Pass `version=` for deployment version.
+`agent_id` is a required positional argument for canonical deployment identity. Pass `version=` for deployment version.
 
 #### What to expect for version
 
 Pass `parlotize(version=...)` to stamp a deployment version on `gen_ai.agent.version`. If omitted (or blank), Parlot stamps `"unknown"`.
 
 ```python
-parlotize(agent_id="restaurant-agent", version="0.1.0")
+parlotize("restaurant-agent", version="0.1.0")
 ```
 
 ### 2. `await ctx.connect()` before `session.start()` (required)

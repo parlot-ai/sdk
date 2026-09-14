@@ -12,7 +12,6 @@ from parlot.core.attrs import (
     ATTR_SESSION_AGENT_ID,
 )
 from parlot.instrumentation.livekit._auto import (
-    configured_agent_id,
     configured_agent_version,
     explicit_agent_id,
 )
@@ -43,26 +42,8 @@ def topology_agent_name(name: str | None) -> str:
     return cleaned
 
 
-def resolve_canonical_agent_id(state: "_LiveKitSessionState") -> str:
-    """Resolve deployment identity for session + topology seeding.
-
-    Precedence: explicit ``parlotize(agent_id=)`` → worker ``agent_name`` →
-    runtime ``agent_label`` → ``configured_agent_id()``.
-    """
-    explicit = explicit_agent_id()
-    if explicit:
-        return explicit
-    worker = topology_agent_name(state.worker_agent_name)
-    if worker:
-        return worker
-    label = topology_agent_name(getattr(state, "agent_label", None) or "")
-    if label:
-        return label
-    return configured_agent_id()
-
-
 def ensure_agent_chain_seeded(state: "_LiveKitSessionState") -> None:
-    canonical = resolve_canonical_agent_id(state)
+    canonical = explicit_agent_id()
     if not canonical:
         return
     if not state.agent_chain:
@@ -83,7 +64,7 @@ def append_agent_chain_step(state: "_LiveKitSessionState", agent: str) -> None:
 def stamp_session_agent_identity(session_span: Any, state: "_LiveKitSessionState") -> None:
     if session_span is None or not hasattr(session_span, "set_attribute"):
         return
-    agent_id = resolve_canonical_agent_id(state)
+    agent_id = explicit_agent_id()
     if agent_id:
         session_span.set_attribute(ATTR_SESSION_AGENT_ID, agent_id)
     session_span.set_attribute(ATTR_SESSION_AGENT_FRAMEWORK, LIVEKIT_FRAMEWORK)

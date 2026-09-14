@@ -63,6 +63,7 @@ def _configure_parlot_logging() -> None:
 
 
 def parlotize(
+    agent_id: str,
     *,
     endpoint: Optional[str] = None,
     api_key: Optional[str] = None,
@@ -71,7 +72,6 @@ def parlotize(
     tracer_provider: TracerProvider | None = None,
     auto_escalate_sip: bool = False,
     escalation_metadata_match: dict[str, str] | None = None,
-    agent_id: str,
     version: Optional[str] = None,
     record: bool | list[str] | None = None,
     capture_logs: bool | list[str] | None = None,
@@ -85,16 +85,18 @@ def parlotize(
     ``JobContext.connect`` / ``AgentSession.__init__``, and installs session
     event hooks.
 
-    Shared kwargs (``endpoint``, ``api_key``, ``agent_id``, ``version``,
-    ``capture_genai_content``, ``capture_logs``, ``log_level``,
+    Shared parameters (``agent_id``, plus keyword-only ``endpoint``, ``api_key``,
+    ``version``, ``capture_genai_content``, ``capture_logs``, ``log_level``,
     ``service_name``, ``tracer_provider``) match every adapter — see
     ``parlot.core.ParlotizeProtocol``.
 
     Under LiveKit ``dev`` / job workers, ``__main__`` is often LiveKit's IPC
-    entrypoint, not your agent file — pass ``agent_id=`` / ``version=``
+    entrypoint, not your agent file — pass ``agent_id`` / ``version=``
     explicitly when you care about stable deployment identity.
 
     Args:
+        agent_id: Shared — required canonical ``session.agent_id``. Must be
+            non-empty after stripping whitespace.
         endpoint: Shared — Parlot OTLP base URL (or ``PARLOT_ENDPOINT``).
         api_key: Shared — org API key (or ``PARLOT_API_KEY``).
         capture_genai_content: Shared — GenAI payload capture override.
@@ -107,8 +109,6 @@ def parlotize(
             participant joins the room.
         escalation_metadata_match: Participant metadata key/value pairs that
             classify joining participants as human representatives.
-        agent_id: Shared — required canonical ``session.agent_id``. Must be
-            non-empty after stripping whitespace.
         version: Shared — ``gen_ai.agent.version``. Pass ``version=`` to set it;
             otherwise stamped as ``\"unknown\"``.
         record: Audio recording policy. Boolean or agent-id glob patterns
@@ -164,11 +164,11 @@ def parlotize(
     from parlot.core import base_parlotize
 
     res = base_parlotize(
+        agent_id,
         endpoint=endpoint,
         api_key=api_key,
         capture_genai_content=capture_genai_content,
         tracer_provider=tracer_provider,
-        agent_id=agent_id,
         version=_configured_agent_version,
         capture_logs=capture_logs,
         log_level=log_level,
@@ -425,12 +425,12 @@ def _install_participant_escalation_hooks(job_ctx: Any) -> None:
 
 
 def explicit_agent_id() -> str:
-    """Deployment id from ``parlotize(agent_id=...)``."""
+    """Deployment id from ``parlotize(agent_id)``."""
     return _configured_agent_id or ""
 
 
 def configured_agent_id() -> str:
-    """Canonical deployment id from ``parlotize(agent_id=...)``."""
+    """Canonical deployment id from ``parlotize(agent_id)``."""
     return _configured_agent_id or ""
 
 
