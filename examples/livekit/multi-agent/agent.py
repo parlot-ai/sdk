@@ -16,7 +16,7 @@ load_dotenv()
 
 from parlot.instrumentation.livekit import parlotize
 
-parlotize()
+parlotize("multi-agent")
 
 from livekit import api
 from livekit.agents import (

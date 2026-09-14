@@ -19,13 +19,13 @@ _parlot_context: ParlotContext | None = None
 
 
 def parlotize(
+    agent_id: str,
     *,
     endpoint: Optional[str] = None,
     api_key: Optional[str] = None,
     capture_genai_content: Optional[bool] = None,
     service_name: Optional[str] = None,
     tracer_provider: TracerProvider | None = None,
-    agent_id: Optional[str] = None,
     version: Optional[str] = None,
     channel: Optional[str] = None,
     modality: Optional[str] = None,
@@ -42,12 +42,14 @@ def parlotize(
     (e.g. ``webchat``) and optionally ``modality`` so ingest does not assume
     voice.
 
-    Shared kwargs (``endpoint``, ``api_key``, ``agent_id``, ``version``,
-    ``capture_genai_content``, ``capture_logs``, ``log_level``,
+    Shared parameters (``agent_id``, plus keyword-only ``endpoint``, ``api_key``,
+    ``version``, ``capture_genai_content``, ``capture_logs``, ``log_level``,
     ``service_name``, ``tracer_provider``) match every adapter — see
     ``parlot.core.ParlotizeProtocol``.
 
     Args:
+        agent_id: Shared — required canonical ``session.agent_id``. Must be
+            non-empty after stripping whitespace.
         endpoint: Shared — Parlot OTLP base URL (or ``PARLOT_ENDPOINT``).
         api_key: Shared — org API key (or ``PARLOT_API_KEY``).
         capture_genai_content: Shared — GenAI payload capture override.
@@ -56,7 +58,6 @@ def parlotize(
             or ``"langgraph-agent"``).
         tracer_provider: Shared — existing ``TracerProvider``. If LiveKit
             already initialized one in-process, this call adopts it.
-        agent_id: Shared — canonical ``session.agent_id``.
         version: Shared — ``gen_ai.agent.version``. Pass ``version=`` to set it;
             otherwise ``\"unknown\"``.
         channel: Communication channel for standalone LangGraph sessions
@@ -81,24 +82,24 @@ def parlotize(
     from parlot.core.genai_content_capture import should_capture_genai_content
     from parlot.core.sdk_version import resolve_parlot_sdk_version
 
-    _configured_agent_id = agent_id.strip() if agent_id else None
     _configured_agent_version = (version or "").strip() or "unknown"
 
     res = base_parlotize(
+        agent_id,
         endpoint=endpoint,
         api_key=api_key,
         capture_genai_content=capture_genai_content,
         tracer_provider=tracer_provider,
-        agent_id=agent_id,
         version=_configured_agent_version,
         capture_logs=capture_logs,
         log_level=log_level,
     )
     _parlot_context = res.context
+    _configured_agent_id = res.agent_id
 
     runtime = res.context.runtime
     capture = should_capture_genai_content(
-        _configured_agent_id or "",
+        _configured_agent_id,
         capture_genai_content_config=res.capture_genai_content,
         bootstrap_globs=list(runtime.capture_genai_content_globs) if runtime else None,
         bootstrap_agents=runtime.capture_genai_content_agents_map() if runtime else None,
@@ -135,7 +136,7 @@ def parlotize(
     from ._hooks import install_parlotize_hook
     from ._session import set_channel_modality, set_identity, set_tracer
 
-    set_identity(_configured_agent_id or "", _configured_agent_version)
+    set_identity(_configured_agent_id, _configured_agent_version)
     set_channel_modality(channel=channel or "", modality=modality or "")
     set_tracer(tracer)
     handler = ParlotLangGraphCallbackHandler(tracer, capture_genai_content=capture)

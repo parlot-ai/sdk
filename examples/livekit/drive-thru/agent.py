@@ -26,7 +26,7 @@ from parlot.instrumentation.livekit import parlotize
 
 __version__ = "0.1.0"
 
-parlotize()
+parlotize("drive-thru", version=__version__)
 
 from livekit.agents import (
     Agent,

@@ -31,12 +31,12 @@ pip install "parlot[livekit]"
 
 ## Instrument
 
-Call `parlotize()` before constructing `AgentSession`, then `await ctx.connect()` before `session.start()`:
+Call `parlotize("…")` before constructing `AgentSession`, then `await ctx.connect()` before `session.start()`:
 
 ```python
 from parlot.instrumentation.livekit import parlotize
 
-parlotize()
+parlotize("my-agent")
 
 from livekit.agents import AgentSession, JobContext, WorkerOptions, cli
 
@@ -102,7 +102,7 @@ Use `uv run` from the repo root rather than `pip install` / bare `python -m pyte
 Parlot stamps `gen_ai.agent.version` on each session from `parlotize(version=...)`. If you omit `version=` (or pass blank), the attribute is `"unknown"`.
 
 ```python
-parlotize(agent_id="restaurant-agent", version="0.1.0")
+parlotize("restaurant-agent", version="0.1.0")
 ```
 
 This powers version tracking on the Agents portfolio and per-session attributes in the platform UI.

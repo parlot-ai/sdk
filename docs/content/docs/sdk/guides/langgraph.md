@@ -18,7 +18,7 @@ spans plus OTel GenAI operational spans.
 ```python
 from parlot.instrumentation.langgraph import parlotize, close_session
 
-parlotize(agent_id="support-bot", version="0.1.0")
+parlotize("support-bot", version="0.1.0")
 
 graph.invoke(
     {"messages": [("user", "Hello")]},
@@ -36,7 +36,7 @@ For standalone (non-LiveKit) sessions, set `channel=` (e.g. `"webchat"`) and
 optionally `modality=` so ingest does not assume voice:
 
 ```python
-parlotize(agent_id="support-bot", version="0.1.0", channel="webchat", modality="text")
+parlotize("support-bot", version="0.1.0", channel="webchat", modality="text")
 ```
 
 Generative AI content capture is shared across adapters — see
@@ -63,8 +63,8 @@ When a LiveKit voice agent uses `livekit.plugins.langchain.LLMAdapter`, call **b
 from parlot.instrumentation.livekit import parlotize as parlotize_livekit
 from parlot.instrumentation.langgraph import parlotize as parlotize_langgraph
 
-parlotize_livekit(agent_id="voice-bot", version="0.1.0")
-parlotize_langgraph()  # adopts LiveKit TracerProvider when already set
+parlotize_livekit("voice-bot", version="0.1.0")
+parlotize_langgraph("voice-bot")  # adopts LiveKit TracerProvider when already set
 ```
 
 - LiveKit owns `parlot.session` / `parlot.turn` (voice).
