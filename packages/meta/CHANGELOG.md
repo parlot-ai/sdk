@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.0](https://github.com/parlot-ai/sdk/compare/parlot-v0.2.0...parlot-v0.3.0) (2026-09-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* require agent_id on parlotize() ([#63](https://github.com/parlot-ai/sdk/issues/63))
+
+### Features
+
+* require agent_id on parlotize() ([#63](https://github.com/parlot-ai/sdk/issues/63)) ([ce42357](https://github.com/parlot-ai/sdk/commit/ce4235730b514606e0cfe7f08aa61b78b408d75b))
+
 ## [0.2.0](https://github.com/parlot-ai/sdk/compare/parlot-v0.1.1...parlot-v0.2.0) (2026-09-10)
 
 
