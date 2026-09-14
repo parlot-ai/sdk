@@ -1,23 +1,27 @@
 # Parlot SDK docs
 
-Public Docusaurus site for the Parlot SDK. Canonical URL: **https://parlot.ai/docs**.
+Public [Fumadocs](https://fumadocs.dev) site for the Parlot SDK. Canonical URL:
+**https://parlot.ai/docs**.
 
-Layout uses an Obsidian Flux–aligned `@parlot/docs-theme` shell (Inter + JetBrains Mono, shared brand hexes, section tabs, cards, local search) so `/docs` feels continuous with the marketing site.
+Built with Fumadocs UI + React Router. Typography and colors follow the Obsidian
+Flux system used on the marketing site so `/docs` feels continuous with
+`parlot.ai`.
 
 ```bash
 cd docs
 bun install
-bun start          # http://127.0.0.1:3000/docs/
+bun run dev          # local docs site
 bun run build
-bun run check:leak # after build — private-content leak guard
+bun run check:leak   # after build — private-content leak guard
 ```
 
-`prestart` / `prebuild` run:
+`prebuild` / `predev` run:
 
-- `scripts/sync-changelog.sh` — package CHANGELOGs → `docs/reference/changelog.md`
-- `scripts/generate-api.ts` — extracts from `docs-data/api.json` → `docs/docs/api/{parlotize,livekit,langgraph,core}.md`
+- `scripts/sync-changelog.sh` — package CHANGELOGs → docs content
+- `scripts/build-pdoc.sh` — Python API reference
+- `scripts/build-typedoc.sh` — TypeScript API reference (`@parlot/core`)
 
-Regenerate API docs alone with `bun run sync-api`.
+Regenerate TypeScript reference alone with `bun run build:ts`.
 
 Staging publishes automatically: on push to `main` under `docs/**`, the Docs
 workflow dispatches `sdk-docs-updated` to `parlot-ai/platform`, which runs
@@ -26,12 +30,5 @@ requires platform **Promote website**. Requires repo secret `PARLOT_CROSS_REPO_T
 (fine-grained PAT on platform with Contents: Read and write). Manual fallback:
 Actions → Deploy website → Run workflow.
 
-Theme is vendored under `vendor/docs-theme` (copy of platform `@parlot/docs-theme`).
-Standalone clones use the vendored copy as-is. When developing next to a
-`platform` checkout, refresh with:
-
-```bash
-bun run sync-theme   # also refreshes node_modules copy
-```
-
-CI: `.github/workflows/docs.yml` builds and runs the leak check. Local Compose serves this site at http://127.0.0.1:3000/docs/ (see platform `docker-compose.yml`).
+CI: `.github/workflows/docs.yml` builds and runs the leak check. Local Compose
+serves this site at http://127.0.0.1:3000/docs/ (see platform `docker-compose.yml`).

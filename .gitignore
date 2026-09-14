@@ -54,8 +54,9 @@ examples/**/compare/**
 # Node
 node_modules/
 
-# Docs site
+# Docs site (Fumadocs / React Router)
 docs/build/
-docs/.docusaurus/
+docs/.react-router/
+docs/.source/
 docs/package-lock.json
 
