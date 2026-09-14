@@ -5,7 +5,6 @@
 /build
 
 # Generated files
-.docusaurus
 .cache-loader
 .react-router
 .source
