@@ -100,3 +100,18 @@ def test_append_agent_chain_step_skips_dispatch_ids(monkeypatch):
     append_agent_chain_step(state, "AD_NrRASAvBPGAx")
     append_agent_chain_step(state, "greeter")
     assert state.agent_chain == ["restaurant-agent", "greeter"]
+
+
+def test_append_agent_chain_step_respects_max_steps(monkeypatch):
+    from parlot.core.topology import MAX_AGENT_CHAIN_STEPS
+
+    monkeypatch.setattr(
+        "parlot.instrumentation.livekit._agent_identity.explicit_agent_id",
+        lambda: "canonical",
+    )
+    state = _State()
+    for i in range(MAX_AGENT_CHAIN_STEPS + 15):
+        append_agent_chain_step(state, f"agent-{i}")
+    assert len(state.agent_chain) == MAX_AGENT_CHAIN_STEPS
+    assert state.agent_chain[0] == "canonical"
+    assert state.agent_chain[-1] == f"agent-{MAX_AGENT_CHAIN_STEPS + 14}"

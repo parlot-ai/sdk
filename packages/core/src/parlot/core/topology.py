@@ -8,14 +8,23 @@ from typing import Any
 
 from parlot.core.attrs import (
     ATTR_SESSION_AGENT_CHAIN,
+    ATTR_SESSION_AGENT_CHAIN_TRUNCATED,
     ATTR_SESSION_INTENT_SEQUENCE,
+    ATTR_SESSION_INTENT_SEQUENCE_TRUNCATED,
     ATTR_SESSION_TOPOLOGY_AGENTS,
+    ATTR_SESSION_TOPOLOGY_AGENTS_TRUNCATED,
     ATTR_SESSION_TOPOLOGY_BOOTSTRAP_INSTRUCTIONS,
 )
 from parlot.core.intent import derive_intent
 
 INSTRUCTIONS_PREVIEW = 2000
 MAX_JSON_CHARS = 64_000
+
+# Independent retention windows — must not be assumed to match after both caps fire.
+# Under long ping-pong handoffs, agent_chain may keep the last 64 steps while
+# intent_segments keeps the last 128 closed segments.
+MAX_AGENT_CHAIN_STEPS = 64
+MAX_INTENT_SEGMENTS = 128
 
 
 def _truncate(text: str, limit: int) -> str:
@@ -24,14 +33,65 @@ def _truncate(text: str, limit: int) -> str:
     return f"{text[: limit - 3]}..."
 
 
-def _json_dumps_cap(payload: list[dict[str, Any]]) -> str:
-    items = list(payload)
-    while items:
-        raw = json.dumps(items, separators=(",", ":"))
+def _json_dumps_cap(payload: list[dict[str, Any]]) -> tuple[str, bool]:
+    """Serialize ``payload`` under ``MAX_JSON_CHARS``, keeping the newest items.
+
+    Returns ``(json_str, truncated)``. Drops from the front when oversized.
+    """
+    if not payload:
+        return "[]", False
+    full = json.dumps(payload, separators=(",", ":"))
+    if len(full) <= MAX_JSON_CHARS:
+        return full, False
+
+    # Binary search largest k such that payload[-k:] fits.
+    lo, hi = 0, len(payload)
+    best = "[]"
+    while lo < hi:
+        mid = (lo + hi + 1) // 2
+        raw = json.dumps(payload[-mid:], separators=(",", ":"))
         if len(raw) <= MAX_JSON_CHARS:
-            return raw
-        items = items[:-1]
-    return "[]"
+            best = raw
+            lo = mid
+        else:
+            hi = mid - 1
+    return best, True
+
+
+def trim_agent_chain(chain: list[str], *, max_steps: int = MAX_AGENT_CHAIN_STEPS) -> None:
+    """Keep first (canonical) step + most recent ``max_steps - 1`` steps in place."""
+    if max_steps < 1 or len(chain) <= max_steps:
+        return
+    if max_steps == 1:
+        chain[:] = [chain[0]]
+        return
+    chain[:] = [chain[0]] + chain[-(max_steps - 1) :]
+
+
+def _agent_id_of(seg: _MutableSegment | dict[str, Any]) -> str:
+    if isinstance(seg, _MutableSegment):
+        return seg.agent_id
+    return str(seg.get("agent_id", ""))
+
+
+def _merge_same_agent_into(
+    prev: _MutableSegment | dict[str, Any],
+    nxt: _MutableSegment | dict[str, Any],
+) -> bool:
+    """If same agent_id, extend prev.to_turn and copy missing instructions_excerpt."""
+    if _agent_id_of(prev) != _agent_id_of(nxt):
+        return False
+    if isinstance(prev, _MutableSegment) and isinstance(nxt, _MutableSegment):
+        prev.to_turn = nxt.to_turn if nxt.to_turn is not None else prev.to_turn
+        if nxt.instructions_excerpt and not prev.instructions_excerpt:
+            prev.instructions_excerpt = nxt.instructions_excerpt
+        return True
+    if isinstance(prev, dict) and isinstance(nxt, dict):
+        prev["to_turn"] = nxt.get("to_turn", prev.get("to_turn"))
+        if nxt.get("instructions_excerpt") and not prev.get("instructions_excerpt"):
+            prev["instructions_excerpt"] = nxt["instructions_excerpt"]
+        return True
+    return False
 
 
 @dataclass
@@ -58,6 +118,7 @@ class SessionTopology:
 
     prompts_by_agent: dict[str, str] = field(default_factory=dict)
     intent_by_agent: dict[str, dict[str, str]] = field(default_factory=dict)
+    # Expected to be a small fixed agent roster (not session-/user-suffixed ids).
     agents_seen: dict[str, dict[str, Any]] = field(default_factory=dict)
     intent_segments: list[_MutableSegment] = field(default_factory=list)
     active_segment: _MutableSegment | None = None
@@ -66,6 +127,7 @@ class SessionTopology:
     agent_chain: list[str] = field(default_factory=list)
     handoff_count: int = 0
     _handoff_keys: set[str] = field(default_factory=set)
+    _handoff_keys_turn: int | None = None
 
     def upsert_agent(self, agent_id: str) -> None:
         aid = agent_id.strip()
@@ -77,6 +139,7 @@ class SessionTopology:
             self.agents_seen[aid] = {"id": aid, "role": "agent"}
 
     def record_instructions(self, agent_id: str, text: str) -> None:
+        # Keep the longer excerpt so a later shorter capture does not shrink the preview.
         aid = agent_id.strip()
         if not aid or not text.strip():
             return
@@ -93,6 +156,7 @@ class SessionTopology:
             return
         if not self.agent_chain or self.agent_chain[-1] != aid:
             self.agent_chain.append(aid)
+            trim_agent_chain(self.agent_chain)
 
     def open_bootstrap_segment(self, agent_id: str, from_turn: int) -> None:
         if self.active_segment is not None:
@@ -112,6 +176,9 @@ class SessionTopology:
         aid = agent_id.strip()
         if not aid:
             return
+        if self._handoff_keys_turn != turn_index:
+            self._handoff_keys.clear()
+            self._handoff_keys_turn = turn_index
         dedupe_key = f"{from_agent.strip()}->{aid}@{turn_index}"
         if dedupe_key in self._handoff_keys:
             return
@@ -134,8 +201,19 @@ class SessionTopology:
         if self.active_segment is None:
             return
         self.active_segment.to_turn = max(0, to_turn)
-        self.intent_segments.append(self.active_segment)
+        closed = self.active_segment
         self.active_segment = None
+        if self.intent_segments and _merge_same_agent_into(self.intent_segments[-1], closed):
+            self._trim_closed_segments()
+            return
+        self.intent_segments.append(closed)
+        self._trim_closed_segments()
+
+    def _trim_closed_segments(self) -> None:
+        """Drop oldest closed segments only; never touches ``active_segment``."""
+        overflow = len(self.intent_segments) - MAX_INTENT_SEGMENTS
+        if overflow > 0:
+            del self.intent_segments[:overflow]
 
     def apply_pending_from_turn_on_emit(self, turn_index: int) -> None:
         if self.active_segment is None:
@@ -205,13 +283,22 @@ class SessionTopology:
         agents = self.agents_json()
         bootstrap = self.bootstrap_instructions()
         if agents:
-            span.set_attribute(ATTR_SESSION_TOPOLOGY_AGENTS, _json_dumps_cap(agents))
+            agents_json, agents_truncated = _json_dumps_cap(agents)
+            span.set_attribute(ATTR_SESSION_TOPOLOGY_AGENTS, agents_json)
+            if agents_truncated:
+                span.set_attribute(ATTR_SESSION_TOPOLOGY_AGENTS_TRUNCATED, True)
         if bootstrap:
             span.set_attribute(ATTR_SESSION_TOPOLOGY_BOOTSTRAP_INSTRUCTIONS, bootstrap)
         if sequence:
-            span.set_attribute(ATTR_SESSION_INTENT_SEQUENCE, _json_dumps_cap(sequence))
+            seq_json, seq_truncated = _json_dumps_cap(sequence)
+            span.set_attribute(ATTR_SESSION_INTENT_SEQUENCE, seq_json)
+            if seq_truncated:
+                span.set_attribute(ATTR_SESSION_INTENT_SEQUENCE_TRUNCATED, True)
         if self.agent_chain:
-            span.set_attribute(ATTR_SESSION_AGENT_CHAIN, " → ".join(self.agent_chain))
+            chain = " → ".join(self.agent_chain)
+            span.set_attribute(ATTR_SESSION_AGENT_CHAIN, _truncate(chain, MAX_JSON_CHARS))
+            if len(chain) > MAX_JSON_CHARS:
+                span.set_attribute(ATTR_SESSION_AGENT_CHAIN_TRUNCATED, True)
 
     def _new_segment(self, agent_id: str, from_turn: int, handoff_index: int) -> _MutableSegment:
         instructions = self.prompts_by_agent.get(agent_id, "")
@@ -258,10 +345,7 @@ class SessionTopology:
                 merged.append(dict(seg))
                 continue
             prev = merged[-1]
-            if prev.get("agent_id") == seg.get("agent_id"):
-                prev["to_turn"] = seg.get("to_turn", prev.get("to_turn"))
-                if seg.get("instructions_excerpt") and not prev.get("instructions_excerpt"):
-                    prev["instructions_excerpt"] = seg["instructions_excerpt"]
+            if _merge_same_agent_into(prev, seg):
                 continue
             merged.append(dict(seg))
         for idx, seg in enumerate(merged):

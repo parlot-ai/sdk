@@ -11,6 +11,7 @@ from parlot.core.attrs import (
     ATTR_SESSION_AGENT_FRAMEWORK_RAW_ID,
     ATTR_SESSION_AGENT_ID,
 )
+from parlot.core.topology import trim_agent_chain
 from parlot.instrumentation.livekit._auto import (
     configured_agent_version,
     explicit_agent_id,
@@ -59,6 +60,7 @@ def append_agent_chain_step(state: "_LiveKitSessionState", agent: str) -> None:
     ensure_agent_chain_seeded(state)
     if not state.agent_chain or state.agent_chain[-1] != agent:
         state.agent_chain.append(agent)
+        trim_agent_chain(state.agent_chain)
 
 
 def stamp_session_agent_identity(session_span: Any, state: "_LiveKitSessionState") -> None:
