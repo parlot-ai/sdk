@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from contextvars import ContextVar, Token
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
@@ -59,6 +60,64 @@ _parlot_job_bootstrap: ContextVar["_JobBootstrap | None"] = ContextVar(
 
 # Job-scoped fallback when ContextVar is not visible (async task / OTEL context isolation).
 _vendor_job_bootstraps: dict[str, "_JobBootstrap"] = {}
+
+# Closed-session correlation for post-close evaluation LLM spans (JudgeGroup).
+# Never substitutes for an active bootstrap — cleared on next bootstrap / TTL.
+_STICKY_TTL_S = 30 * 60
+
+
+@dataclass(frozen=True)
+class _StickyClosedSession:
+    session_id: str
+    conversation_id: str
+    closed_at: float  # time.monotonic()
+
+
+_sticky_closed_sessions: dict[str, _StickyClosedSession] = {}
+
+
+def clear_sticky_closed_session(vendor_job_id: str) -> None:
+    """Drop sticky entry for a job (call before minting a new session)."""
+    jid = str(vendor_job_id or "").strip()
+    if jid:
+        _sticky_closed_sessions.pop(jid, None)
+
+
+def remember_sticky_closed_session(
+    vendor_job_id: str,
+    *,
+    session_id: str,
+    conversation_id: str,
+) -> None:
+    """Retain closed session ids for late evaluation enrich (survives bootstrap cleanup)."""
+    jid = str(vendor_job_id or "").strip()
+    sid = str(session_id or "").strip()
+    if not jid or not sid:
+        return
+    _sticky_closed_sessions[jid] = _StickyClosedSession(
+        session_id=sid,
+        conversation_id=str(conversation_id or sid).strip() or sid,
+        closed_at=time.monotonic(),
+    )
+
+
+def get_sticky_closed_session(vendor_job_id: str) -> _StickyClosedSession | None:
+    """Return sticky closed session for job_id if present and not expired."""
+    jid = str(vendor_job_id or "").strip()
+    if not jid:
+        return None
+    sticky = _sticky_closed_sessions.get(jid)
+    if sticky is None:
+        return None
+    if time.monotonic() - sticky.closed_at > _STICKY_TTL_S:
+        _sticky_closed_sessions.pop(jid, None)
+        return None
+    return sticky
+
+
+def clear_all_sticky_closed_sessions() -> None:
+    """Test / process-shutdown helper."""
+    _sticky_closed_sessions.clear()
 
 
 @dataclass
@@ -119,6 +178,10 @@ def bootstrap_session(
     room_name = str(room_name or "").strip()
     room_sid = str(room_sid or "").strip()
     worker_agent_name = str(worker_agent_name or "").strip()
+
+    # Isolation: never let a prior closed session's sticky id leak into a new one.
+    if vendor_job_id:
+        clear_sticky_closed_session(vendor_job_id)
 
     from ._session_state import _LiveKitSessionState
 
@@ -374,6 +437,14 @@ def finalize_session_close_from_hook(
         from ._telemetry_compare import get_compare_logger
 
         get_compare_logger().finalize_session(bootstrap.state.parlot_session_id)
+    # Remember closed session for post-close JudgeGroup LLM spans before cleanup.
+    vendor_job_id = str(bootstrap.state.session_id or "").strip()
+    if vendor_job_id and bootstrap.session_id:
+        remember_sticky_closed_session(
+            vendor_job_id,
+            session_id=bootstrap.session_id,
+            conversation_id=bootstrap.state.conversation_id or bootstrap.session_id,
+        )
     _cleanup_job_bootstrap(bootstrap.processor, bootstrap, end_time=end_time)
 
 
