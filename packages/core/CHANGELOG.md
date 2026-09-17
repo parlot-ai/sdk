@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.1](https://github.com/parlot-ai/sdk/compare/core-v0.4.0...core-v0.4.1) (2026-09-17)
+
+
+### Bug Fixes
+
+* bound SessionTopology handoff and agent-chain memory growth ([#67](https://github.com/parlot-ai/sdk/issues/67)) ([ae474ce](https://github.com/parlot-ai/sdk/commit/ae474cebe1caddb0e502da436590bc8533428c52))
+* **livekit:** sticky session id for post-close evaluation LLM spans ([#69](https://github.com/parlot-ai/sdk/issues/69)) ([a0475b7](https://github.com/parlot-ai/sdk/commit/a0475b7d88733ea4e035b4d62c50c6ddd353077a))
+
 ## [0.4.0](https://github.com/parlot-ai/sdk/compare/core-v0.3.1...core-v0.4.0) (2026-09-14)
 
 
