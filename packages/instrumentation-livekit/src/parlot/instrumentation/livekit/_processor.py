@@ -48,7 +48,7 @@ from parlot.core.attrs import (
     ATTR_SESSION_TURN_COUNT,
     ATTR_SESSION_USER_ID,
     ATTR_TURN_INDEX,
-    GEN_AI_OP_EVALUATE,
+    PARLOT_SPAN_KIND_EVALUATION,
     SPAN_AGENT_HANDOFF,
     SPAN_CONVERSATION_SESSION,
     SPAN_PARLOT_SESSION_CLOSE,
@@ -614,8 +614,8 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         self._set(span, ATTR_GEN_AI_CONVERSATION_ID, sticky.conversation_id)
         self._set(span, ATTR_LK_JOB_ID, str(job_id))
         self._set(span, ATTR_AGENT_FRAMEWORK, "livekit")
-        self._set(span, ATTR_GEN_AI_OP_NAME, GEN_AI_OP_EVALUATE)
-        self._set(span, ATTR_PARLOT_SPAN_KIND, "evaluation")
+        # Evaluation is a Parlot Layer-3 signal (parlot.span.kind), not a GenAI op.
+        self._set(span, ATTR_PARLOT_SPAN_KIND, PARLOT_SPAN_KIND_EVALUATION)
         stage = livekit_agent_stage_for_span(span.name or "")
         if stage and not attrs.get(ATTR_AGENT_STAGE):
             self._set(span, ATTR_AGENT_STAGE, stage)

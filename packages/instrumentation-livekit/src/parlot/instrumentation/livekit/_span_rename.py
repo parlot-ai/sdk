@@ -14,8 +14,10 @@ from parlot.core.attrs import (
     ATTR_GEN_AI_TOOL_NAME,
     ATTR_PARLOT_SPAN_KIND,
     GEN_AI_OP_CHAT,
-    GEN_AI_OP_EVALUATE,
     GEN_AI_OP_EXECUTE_TOOL,
+    PARLOT_EVAL_OP_EVALUATE,
+    PARLOT_EVAL_OP_JUDGE,
+    PARLOT_SPAN_KIND_EVALUATION,
     SPAN_GEN_AI_INVOKE_AGENT,
     SPAN_VOICE_AMD,
     SPAN_VOICE_EOU,
@@ -96,9 +98,13 @@ def apply_livekit_span_rename(span: ReadableSpan) -> None:
     if native in NATIVE_LLM_SPANS:
         existing_op = str(attrs.get(ATTR_GEN_AI_OP_NAME) or "").strip().lower()
         kind = str(attrs.get(ATTR_PARLOT_SPAN_KIND) or "").strip().lower()
-        if existing_op in ("evaluate", "judge") or kind == "evaluation":
-            if existing_op not in ("evaluate", "judge"):
-                ParlotBaseProcessor._set(span, ATTR_GEN_AI_OP_NAME, GEN_AI_OP_EVALUATE)
+        # Do not invent GenAI ops for evaluation; leave vendor/legacy op alone
+        # and rely on parlot.span.kind=evaluation.
+        if (
+            existing_op in (PARLOT_EVAL_OP_EVALUATE, PARLOT_EVAL_OP_JUDGE)
+            or kind == PARLOT_SPAN_KIND_EVALUATION
+        ):
+            pass
         else:
             ParlotBaseProcessor._set(span, ATTR_GEN_AI_OP_NAME, GEN_AI_OP_CHAT)
     elif native in NATIVE_TOOL_SPANS:

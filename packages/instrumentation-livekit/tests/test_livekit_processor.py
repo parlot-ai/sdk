@@ -41,7 +41,7 @@ from parlot.core.attrs import (
     ATTR_TOOL_OUTPUT_PAYLOAD_PREVIEW,
     EVENT_GEN_AI_ASSISTANT_MESSAGE,
     EVENT_GEN_AI_USER_MESSAGE,
-    GEN_AI_OP_EVALUATE,
+    PARLOT_SPAN_KIND_EVALUATION,
 )
 from parlot.instrumentation.livekit.attrs import (
     ATTR_AMD_CATEGORY,
@@ -550,7 +550,7 @@ class TestRootSpanAggregates:
         assert all(r.levelno == logging.DEBUG for r in bootstrap_msgs)
         assert not any(r.levelno >= logging.ERROR for r in bootstrap_msgs)
 
-    def test_late_llm_after_close_uses_sticky_session_as_evaluate(self) -> None:
+    def test_late_llm_after_close_uses_sticky_session_as_evaluation(self) -> None:
         clear_all_sticky_closed_sessions()
         proc = LiveKitGenAIProcessor()
         job_id = "AJ_sticky_eval"
@@ -575,8 +575,9 @@ class TestRootSpanAggregates:
         )
         proc.on_end(span)
         assert span._attributes.get(ATTR_SESSION_ID) == closed_sid
-        assert span._attributes.get(ATTR_GEN_AI_OP_NAME) == GEN_AI_OP_EVALUATE
-        assert span._attributes.get(ATTR_PARLOT_SPAN_KIND) == "evaluation"
+        assert span._attributes.get(ATTR_PARLOT_SPAN_KIND) == PARLOT_SPAN_KIND_EVALUATION
+        # Evaluation uses Layer-3 parlot.span.kind — do not invent a GenAI op.
+        assert span._attributes.get(ATTR_GEN_AI_OP_NAME) != "evaluate"
         # Must not mutate closed session aggregates via sticky path.
         assert get_job_bootstrap() is None
         assert turn_count_before == 0
@@ -607,7 +608,6 @@ class TestRootSpanAggregates:
         )
         proc.on_end(span)
         assert span._attributes.get(ATTR_SESSION_ID) == sid_b
-        assert span._attributes.get(ATTR_GEN_AI_OP_NAME) != GEN_AI_OP_EVALUATE
         assert span._attributes.get(ATTR_PARLOT_SPAN_KIND) is None
 
     def test_active_bootstrap_ignores_leftover_sticky(self) -> None:

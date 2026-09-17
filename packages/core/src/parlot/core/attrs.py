@@ -50,11 +50,6 @@ GEN_AI_OP_CHAT = "chat"
 GEN_AI_OP_EXECUTE_TOOL = "execute_tool"
 GEN_AI_OP_INVOKE_AGENT = "invoke_agent"
 GEN_AI_OP_INVOKE_WORKFLOW = "invoke_workflow"
-# Parlot / LiveKit evaluation convention (not yet in OTel GenAI semconv).
-# LiveKit ChatMessageAssert.judge sets ``judge``; Parlot stamps ``evaluate`` for
-# post-session JudgeGroup LLM spans.
-GEN_AI_OP_EVALUATE = "evaluate"
-GEN_AI_OP_JUDGE = "judge"
 
 # OTel GenAI Agent Spans spec (Development status, May 2026)
 ATTR_GEN_AI_AGENT_ID        = "gen_ai.agent.id"
@@ -311,6 +306,12 @@ ATTR_EVAL_EXPLANATION = "eval.explanation"
 ATTR_PARLOT_SPAN_KIND = "parlot.span.kind"
 # Values: evaluation | (omit for conversation / default)
 PARLOT_SPAN_KIND_EVALUATION = "evaluation"
+# Evaluation signals sometimes seen on gen_ai.operation.name — not OTel GenAI
+# semconv. Stamp ``parlot.span.kind=evaluation`` instead of writing these as
+# GenAI ops. LiveKit ChatMessageAssert.judge emits ``judge``; ``evaluate`` is
+# a legacy Parlot value retained for recognition only.
+PARLOT_EVAL_OP_JUDGE = "judge"
+PARLOT_EVAL_OP_EVALUATE = "evaluate"
 
 # -- Platform external references (session resolve / debug linking) --------
 ATTR_PLATFORM_REF_PREFIX = "platform.ref."  # append kind for flat ref keys
