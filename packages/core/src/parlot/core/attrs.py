@@ -302,6 +302,17 @@ ATTR_EVAL_RESULT      = "eval.result"
 ATTR_EVAL_SCORE       = "eval.score"
 ATTR_EVAL_EXPLANATION = "eval.explanation"
 
+# -- Span kind (Parlot; evaluation vs conversation) -----------------------
+ATTR_PARLOT_SPAN_KIND = "parlot.span.kind"
+# Values: evaluation | (omit for conversation / default)
+PARLOT_SPAN_KIND_EVALUATION = "evaluation"
+# Evaluation signals sometimes seen on gen_ai.operation.name — not OTel GenAI
+# semconv. Stamp ``parlot.span.kind=evaluation`` instead of writing these as
+# GenAI ops. LiveKit ChatMessageAssert.judge emits ``judge``; ``evaluate`` is
+# a legacy Parlot value retained for recognition only.
+PARLOT_EVAL_OP_JUDGE = "judge"
+PARLOT_EVAL_OP_EVALUATE = "evaluate"
+
 # -- Platform external references (session resolve / debug linking) --------
 ATTR_PLATFORM_REF_PREFIX = "platform.ref."  # append kind for flat ref keys
 ATTR_PLATFORM_FRAMEWORK = "platform.ref.framework"

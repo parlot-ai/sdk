@@ -31,9 +31,11 @@ from parlot.core.attrs import (
     ATTR_GEN_AI_AGENT_VERSION,
     ATTR_GEN_AI_CONVERSATION_ID,
     ATTR_GEN_AI_MODEL,
+    ATTR_GEN_AI_OP_NAME,
     ATTR_GEN_AI_PROVIDER,
     ATTR_GEN_AI_RESPONSE_MODEL,
     ATTR_GEN_AI_SYSTEM,
+    ATTR_PARLOT_SPAN_KIND,
     ATTR_SESSION_AMD,
     ATTR_SESSION_CONVERSATION_ID,
     ATTR_SESSION_HANDOFF_COUNT,
@@ -46,6 +48,7 @@ from parlot.core.attrs import (
     ATTR_SESSION_TURN_COUNT,
     ATTR_SESSION_USER_ID,
     ATTR_TURN_INDEX,
+    PARLOT_SPAN_KIND_EVALUATION,
     SPAN_AGENT_HANDOFF,
     SPAN_CONVERSATION_SESSION,
     SPAN_PARLOT_SESSION_CLOSE,
@@ -79,6 +82,7 @@ from ._agent_identity import (
 from ._auto import configured_agent_id, configured_agent_version, explicit_agent_id
 from ._session import (
     get_job_bootstrap,
+    get_sticky_closed_session,
     handle_conversation_session_on_end,
 )
 from parlot.core.processor import ParlotBaseProcessor
@@ -510,6 +514,9 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         attrs = span.attributes or {}
         state = self._resolve_session_state(span, attrs)
         if state is None:
+            # Post-close JudgeGroup LLM: sticky closed session only — no aggregates.
+            if name in ("llm_request", "llm_request_run", "llm_node"):
+                self._enrich_late_evaluation_llm(span, attrs)
             return
 
         explicit_job = attrs.get(ATTR_LK_JOB_ID) or attrs.get(METADATA_JOB_ID)
@@ -580,6 +587,39 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
 
         if name in _AGENT_PIPELINE_SPANS:
             self._stamp_error_status_if_needed(span)
+
+    def _enrich_late_evaluation_llm(
+        self,
+        span: ReadableSpan,
+        attrs: Mapping[str, AttributeValue],
+    ) -> None:
+        """Stamp closed-session ids + evaluation attrs; do not mutate turn/token state."""
+        job_id = attrs.get(ATTR_LK_JOB_ID) or attrs.get(METADATA_JOB_ID)
+        if not job_id:
+            try:
+                from livekit.agents.job import get_job_context
+
+                ctx = get_job_context()
+                if ctx is not None:
+                    job_id = str(ctx.job.id)
+            except Exception:
+                job_id = None
+        if not job_id:
+            return
+        sticky = get_sticky_closed_session(str(job_id))
+        if sticky is None:
+            return
+        self._set(span, ATTR_SESSION_ID, sticky.session_id)
+        self._set(span, ATTR_SESSION_CONVERSATION_ID, sticky.conversation_id)
+        self._set(span, ATTR_GEN_AI_CONVERSATION_ID, sticky.conversation_id)
+        self._set(span, ATTR_LK_JOB_ID, str(job_id))
+        self._set(span, ATTR_AGENT_FRAMEWORK, "livekit")
+        # Evaluation is a Parlot Layer-3 signal (parlot.span.kind), not a GenAI op.
+        self._set(span, ATTR_PARLOT_SPAN_KIND, PARLOT_SPAN_KIND_EVALUATION)
+        stage = livekit_agent_stage_for_span(span.name or "")
+        if stage and not attrs.get(ATTR_AGENT_STAGE):
+            self._set(span, ATTR_AGENT_STAGE, stage)
+        self._stamp_error_status_if_needed(span)
 
     def _enrich_llm_request(
         self, span: ReadableSpan, state: _LiveKitSessionState

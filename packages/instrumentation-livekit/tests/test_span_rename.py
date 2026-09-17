@@ -6,8 +6,11 @@ from parlot.core.attrs import (
     ATTR_GEN_AI_MODEL,
     ATTR_GEN_AI_OP_NAME,
     ATTR_GEN_AI_TOOL_NAME,
+    ATTR_PARLOT_SPAN_KIND,
     GEN_AI_OP_CHAT,
     GEN_AI_OP_EXECUTE_TOOL,
+    PARLOT_EVAL_OP_JUDGE,
+    PARLOT_SPAN_KIND_EVALUATION,
     SPAN_VOICE_TTS,
     is_exportable_span_name,
 )
@@ -49,6 +52,33 @@ def test_apply_rename_mutates_span() -> None:
     apply_livekit_span_rename(span)  # type: ignore[arg-type]
     assert span.name == "chat gpt-4o-mini"
     assert span.attributes[ATTR_GEN_AI_OP_NAME] == GEN_AI_OP_CHAT
+
+
+def test_apply_rename_preserves_evaluation_kind_without_inventing_genai_op() -> None:
+    span = _FakeSpan(
+        "llm_request",
+        {
+            ATTR_GEN_AI_MODEL: "gpt-4.1-mini",
+            ATTR_PARLOT_SPAN_KIND: PARLOT_SPAN_KIND_EVALUATION,
+        },
+    )
+    apply_livekit_span_rename(span)  # type: ignore[arg-type]
+    assert span.name == "chat gpt-4.1-mini"
+    assert ATTR_GEN_AI_OP_NAME not in span.attributes
+    assert span.attributes[ATTR_PARLOT_SPAN_KIND] == PARLOT_SPAN_KIND_EVALUATION
+
+
+def test_apply_rename_preserves_livekit_judge_vendor_op() -> None:
+    span = _FakeSpan(
+        "llm_request",
+        {
+            ATTR_GEN_AI_MODEL: "gpt-4.1-mini",
+            ATTR_GEN_AI_OP_NAME: PARLOT_EVAL_OP_JUDGE,
+            ATTR_PARLOT_SPAN_KIND: PARLOT_SPAN_KIND_EVALUATION,
+        },
+    )
+    apply_livekit_span_rename(span)  # type: ignore[arg-type]
+    assert span.attributes[ATTR_GEN_AI_OP_NAME] == PARLOT_EVAL_OP_JUDGE
 
 
 def test_apply_tool_rename() -> None:

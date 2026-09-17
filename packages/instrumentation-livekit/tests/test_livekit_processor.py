@@ -30,6 +30,7 @@ from parlot.core.attrs import (
     ATTR_GEN_AI_SYSTEM,
     ATTR_GEN_AI_TOOL_DURATION_MS,
     ATTR_GEN_AI_TOOL_IS_HANDOFF,
+    ATTR_PARLOT_SPAN_KIND,
     ATTR_SESSION_AMD,
     ATTR_SESSION_CONVERSATION_ID,
     ATTR_SESSION_ID,
@@ -40,6 +41,7 @@ from parlot.core.attrs import (
     ATTR_TOOL_OUTPUT_PAYLOAD_PREVIEW,
     EVENT_GEN_AI_ASSISTANT_MESSAGE,
     EVENT_GEN_AI_USER_MESSAGE,
+    PARLOT_SPAN_KIND_EVALUATION,
 )
 from parlot.instrumentation.livekit.attrs import (
     ATTR_AMD_CATEGORY,
@@ -59,8 +61,10 @@ from opentelemetry.trace import StatusCode
 from parlot.core.processor import assert_sync_span_processors
 from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
 from parlot.instrumentation.livekit._session import (
+    clear_all_sticky_closed_sessions,
     finalize_session_close_from_hook,
     get_job_bootstrap,
+    get_sticky_closed_session,
 )
 from opentelemetry.sdk.trace import TracerProvider
 from bootstrap_helpers import bootstrap_via_agent_state
@@ -545,6 +549,95 @@ class TestRootSpanAggregates:
         assert bootstrap_msgs
         assert all(r.levelno == logging.DEBUG for r in bootstrap_msgs)
         assert not any(r.levelno >= logging.ERROR for r in bootstrap_msgs)
+
+    def test_late_llm_after_close_uses_sticky_session_as_evaluation(self) -> None:
+        clear_all_sticky_closed_sessions()
+        proc = LiveKitGenAIProcessor()
+        job_id = "AJ_sticky_eval"
+        _bootstrap_proc(proc, job_id)
+        bootstrap = get_job_bootstrap()
+        assert bootstrap is not None
+        closed_sid = bootstrap.session_id
+        turn_count_before = bootstrap.state.turn_count
+        tokens_before = bootstrap.state.total_input_tokens
+        finalize_session_close_from_hook(bootstrap, close_reason="clean_close")
+        sticky = get_sticky_closed_session(job_id)
+        assert sticky is not None
+        assert sticky.session_id == closed_sid
+
+        span = _make_span(
+            "llm_request",
+            {
+                ATTR_LK_JOB_ID: job_id,
+                ATTR_GEN_AI_MODEL: "gpt-4.1-mini",
+                ATTR_GEN_AI_IN_TOKENS: 10,
+            },
+        )
+        proc.on_end(span)
+        assert span._attributes.get(ATTR_SESSION_ID) == closed_sid
+        assert span._attributes.get(ATTR_PARLOT_SPAN_KIND) == PARLOT_SPAN_KIND_EVALUATION
+        # Evaluation uses Layer-3 parlot.span.kind — do not invent a GenAI op.
+        assert span._attributes.get(ATTR_GEN_AI_OP_NAME) != "evaluate"
+        # Must not mutate closed session aggregates via sticky path.
+        assert get_job_bootstrap() is None
+        assert turn_count_before == 0
+        assert tokens_before == 0
+
+    def test_new_bootstrap_clears_sticky_and_does_not_leak_prior_session(self) -> None:
+        clear_all_sticky_closed_sessions()
+        proc = LiveKitGenAIProcessor()
+        job_id = "AJ_sticky_isolation"
+        _bootstrap_proc(proc, job_id)
+        bootstrap_a = get_job_bootstrap()
+        assert bootstrap_a is not None
+        sid_a = bootstrap_a.session_id
+        finalize_session_close_from_hook(bootstrap_a, close_reason="clean_close")
+        assert get_sticky_closed_session(job_id) is not None
+        assert get_sticky_closed_session(job_id).session_id == sid_a
+
+        _bootstrap_proc(proc, job_id)
+        bootstrap_b = get_job_bootstrap()
+        assert bootstrap_b is not None
+        sid_b = bootstrap_b.session_id
+        assert sid_b != sid_a
+        assert get_sticky_closed_session(job_id) is None
+
+        span = _make_span(
+            "llm_request",
+            {ATTR_LK_JOB_ID: job_id, ATTR_GEN_AI_MODEL: "gpt-4o"},
+        )
+        proc.on_end(span)
+        assert span._attributes.get(ATTR_SESSION_ID) == sid_b
+        assert span._attributes.get(ATTR_PARLOT_SPAN_KIND) is None
+
+    def test_active_bootstrap_ignores_leftover_sticky(self) -> None:
+        clear_all_sticky_closed_sessions()
+        proc = LiveKitGenAIProcessor()
+        job_id = "AJ_sticky_active"
+        _bootstrap_proc(proc, job_id)
+        bootstrap = get_job_bootstrap()
+        assert bootstrap is not None
+        sid_a = bootstrap.session_id
+        finalize_session_close_from_hook(bootstrap, close_reason="clean_close")
+
+        # Simulate sticky still present while a new session is active (should not happen
+        # after clear-on-bootstrap, but active bootstrap must win).
+        from parlot.instrumentation.livekit._session import remember_sticky_closed_session
+
+        _bootstrap_proc(proc, job_id)
+        bootstrap_b = get_job_bootstrap()
+        assert bootstrap_b is not None
+        sid_b = bootstrap_b.session_id
+        remember_sticky_closed_session(
+            job_id, session_id=sid_a, conversation_id=sid_a
+        )
+        span = _make_span(
+            "llm_request",
+            {ATTR_LK_JOB_ID: job_id, ATTR_GEN_AI_MODEL: "gpt-4o"},
+        )
+        proc.on_end(span)
+        assert span._attributes.get(ATTR_SESSION_ID) == sid_b
+        assert span._attributes.get(ATTR_PARLOT_SPAN_KIND) is None
 
 
 class TestGenAIContentCapture:

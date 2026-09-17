@@ -149,6 +149,7 @@ export const ATTR_EVAL_NAME = "eval.name" as const;
 export const ATTR_EVAL_RESULT = "eval.result" as const;
 export const ATTR_EVAL_SCORE = "eval.score" as const;
 export const ATTR_EVAL_EXPLANATION = "eval.explanation" as const;
+export const ATTR_PARLOT_SPAN_KIND = "parlot.span.kind" as const;
 export const ATTR_PLATFORM_REF_PREFIX = "platform.ref." as const;
 export const ATTR_PLATFORM_FRAMEWORK = "platform.ref.framework" as const;
 export const ATTR_PLATFORM_KIND = "platform.ref.kind" as const;
