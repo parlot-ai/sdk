@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/parlot-ai/sdk/compare/parlot-v0.3.0...parlot-v0.3.1) (2026-09-20)
+
+
+### Bug Fixes
+
+* **parlot:** raise install floors to match parlotize API ([#71](https://github.com/parlot-ai/sdk/issues/71)) ([fe3a01e](https://github.com/parlot-ai/sdk/commit/fe3a01e745e80c0272708b3bcb1f50bcd2ae92f5))
+
 ## [0.3.0](https://github.com/parlot-ai/sdk/compare/parlot-v0.2.0...parlot-v0.3.0) (2026-09-14)
 
 
