@@ -11,6 +11,10 @@ Public open-source SDK. Stay inside this repository.
 
 Before starting any new implementation work, create a fresh branch from up-to-date `main` (`git fetch origin && git checkout main && git pull && git checkout -b <branch>`). Do not continue on an unrelated existing branch. Never push `main`. Land via branch + PR + squash-merge. Conventional Commits feed Release Please. When the user asks to commit, push, or open a PR, load the `ship` skill (`.agents/skills/ship/SKILL.md`).
 
+## Meta package dependency floors
+
+When a breaking (or otherwise install-contract) change lands in `parlot-core` or an instrumentation adapter, bump the matching lower bounds in [`packages/meta/pyproject.toml`](packages/meta/pyproject.toml) (`parlot-core`, `livekit` / `langgraph` / `all` extras) so `"parlot[…]"` cannot resolve to pre-API wheels. Release Please will not do this automatically.
+
 ## Local collector (optional)
 
 Point an agent at a local OTLP receiver with `PARLOT_ENDPOINT` (this SDK appends `/v1/traces` and `/v1/metrics`). See [README.md](README.md).
