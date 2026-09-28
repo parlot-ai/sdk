@@ -33,17 +33,29 @@ def fetch_telemetry_bootstrap(
             resp = client.get(url, headers=headers)
         if resp.status_code >= 400:
             logger.error(
-                "parlot: telemetry bootstrap failed status=%s",
+                "parlot: telemetry bootstrap failed status=%s endpoint=%s",
                 resp.status_code,
+                endpoint.rstrip("/"),
             )
             return None
         payload = resp.json()
         if not isinstance(payload, dict):
-            logger.error("parlot: telemetry bootstrap returned non-object JSON")
+            logger.error(
+                "parlot: telemetry bootstrap returned non-object JSON endpoint=%s",
+                endpoint.rstrip("/"),
+            )
             return None
         context.runtime = runtime_from_bootstrap(endpoint, api_key, payload)
+        logger.info(
+            "parlot: telemetry bootstrap ok (endpoint=%s)",
+            endpoint.rstrip("/"),
+        )
         return payload
     except Exception as exc:
-        logger.error("parlot: telemetry bootstrap request failed — %s", exc)
+        logger.error(
+            "parlot: telemetry bootstrap request failed — %s (endpoint=%s)",
+            exc,
+            endpoint.rstrip("/"),
+        )
         logger.debug("parlot: telemetry bootstrap request failed", exc_info=True)
         return None
