@@ -165,7 +165,13 @@ def base_parlotize(
     )
     context.session_logs.init(endpoint=resolved_endpoint, api_key=resolved_api_key)
 
-    if resolved_api_key:
+    if not resolved_endpoint:
+        logger.error("parlot: PARLOT_ENDPOINT is not set")
+    if not resolved_api_key:
+        logger.error(
+            "parlot: PARLOT_API_KEY is not set; telemetry will not authenticate"
+        )
+    elif resolved_endpoint:
         fetch_telemetry_bootstrap(resolved_endpoint, resolved_api_key, context)
 
     if tracer_provider is None:
