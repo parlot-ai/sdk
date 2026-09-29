@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.2](https://github.com/parlot-ai/sdk/compare/core-v0.4.1...core-v0.4.2) (2026-09-29)
+
+
+### Bug Fixes
+
+* log clear errors when Parlot endpoint or API key is misconfigured ([#74](https://github.com/parlot-ai/sdk/issues/74)) ([345f48b](https://github.com/parlot-ai/sdk/commit/345f48b8af6e2d929800f225bdb1a2190da97a3a))
+
+
+### Documentation
+
+* simplify repo and PyPI READMEs for get-started ([#77](https://github.com/parlot-ai/sdk/issues/77)) ([279a254](https://github.com/parlot-ai/sdk/commit/279a2549b4bf78a4e0dd5117f9def389bcf53ae3))
+
 ## [0.4.1](https://github.com/parlot-ai/sdk/compare/core-v0.4.0...core-v0.4.1) (2026-09-17)
 
 
