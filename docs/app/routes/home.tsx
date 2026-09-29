@@ -87,7 +87,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-lg font-bold text-fd-foreground mb-1">LiveKit Voice Agents</h3>
                 <p className="text-sm text-fd-muted-foreground">
-                  Auto-instrument LiveKit agents with room session tracking, speech turns, and audio correlation.
+                  Is Parlot a fit for your LiveKit voice agent? What you get and how instrumentation works.
                 </p>
               </div>
             </Link>

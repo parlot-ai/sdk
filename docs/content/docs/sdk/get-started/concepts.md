@@ -28,7 +28,7 @@ All adapters export the same three layers:
 2. **OTel GenAI** (semconv v1.41.0) — `invoke_agent`, `chat`, `execute_tool {name}`, `invoke_workflow`
 3. **Voice** — `tts`, `stt`, `eou_detection`, `amd`
 
-Vendor span and attribute maps live in each framework guide. See [LangGraph](/sdk/guides/langgraph) and [LiveKit](/sdk/guides/livekit).
+Framework guides explain how each adapter attaches to this vocabulary — see [LangGraph](/sdk/guides/langgraph) and [LiveKit](/sdk/guides/livekit).
 
 ## Session and agent identity
 
@@ -47,7 +47,7 @@ Parlot stamps framework-agnostic session attributes on `parlot.session`:
 | `session.agent_chain` | Deployment id plus runtime routing |
 | `gen_ai.agent.version` | Agent deployment version |
 
-Each framework guide documents how those attributes are sourced from the vendor runtime.
+Each framework guide notes how the adapter stamps deployment identity on the live session.
 
 ## Recording vs telemetry
 
@@ -56,7 +56,7 @@ Each framework guide documents how those attributes are sourced from the vendor 
 - **Application logs** (Python `logging` only — not `print()`) are captured on by default during an active session and shown on the session **Logs** tab. They export as **OTLP Logs** (`POST /v1/logs`, protobuf) with `session.id` on each record. Policy mirrors recording (Settings → Logs + `parlotize(capture_logs=…)`; fallback on). Treat log content like stdout for PII.
 - **Generative AI content** (LLM/tool bodies) is a separate policy — see [Generative AI content capture](#generative-ai-content-capture).
 
-See the [LiveKit guide](/sdk/guides/livekit) for egress, policy, and troubleshooting.
+See the [LiveKit guide](/sdk/guides/livekit) for how egress attaches on the agent. Policy and precedence: [Environment Variables](/sdk/env-vars).
 
 ## Generative AI content capture
 
@@ -166,4 +166,4 @@ add_platform_ref("order_id", "ORD-100", framework="shopify")
 
 Failed LLM and tool work is surfaced in `spans_agent.error_flag` at ingest. Turn-level `has_error` in session detail is derived at query time: any child operational span under that turn’s `trace_id` with `error_flag = true`.
 
-You do not need a separate turn attribute — fix provider credentials or tool logic locally; Parlot shows the failed span in the waterfall once OTLP reaches the collector. Framework guides document which vendor signals map into `error_flag`.
+You do not need a separate turn attribute — fix provider credentials or tool logic locally; Parlot shows the failed span in the waterfall once OTLP reaches the collector.
