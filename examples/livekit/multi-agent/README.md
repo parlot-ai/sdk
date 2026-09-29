@@ -2,7 +2,7 @@
 
 Parlot-instrumented multi-agent storytelling: IntroAgent collects name and location, then hands off to StoryAgent (OpenAI Realtime) for a personalized interactive story.
 
-Integration requirements (`parlotize()` + `await ctx.connect()`): see [instrumentation-livekit README](../../packages/instrumentation-livekit/README.md#integration-checklist).
+Integration requirements (`parlotize()` + `await ctx.connect()`): see [instrumentation-livekit README](../../../packages/instrumentation-livekit/README.md#instrument).
 
 ## Setup
  

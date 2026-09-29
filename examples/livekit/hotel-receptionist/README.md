@@ -5,7 +5,7 @@ reservations, cancellations, invoices, disputes, policy FAQs) backed by an
 in-memory SQLite seed database.
 
 Integration requirements (`parlotize()` + `await ctx.connect()` for LiveKit
-jobs): see [instrumentation-livekit README](../../packages/instrumentation-livekit/README.md#integration-checklist).
+jobs): see [instrumentation-livekit README](../../../packages/instrumentation-livekit/README.md#instrument).
 
 Recording follows Parlot **Settings → Recording** (telemetry bootstrap). Override per job with `{ "record": true|false }` in dispatch metadata or `parlotize(record=…)` in code.
 
