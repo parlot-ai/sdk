@@ -3,9 +3,6 @@
 from __future__ import annotations
 
 import logging
-import multiprocessing
-import os
-import sys
 from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
@@ -25,41 +22,6 @@ _configured_capture_genai_content: bool | None = None
 _configured_capture_logs: bool | list[str] | None = None
 _configured_log_level: str | None = None
 _parlot_context: ParlotContext | None = None
-
-
-def _is_livekit_dev_watch_parent() -> bool:
-    """True when this process is LiveKit's dev-mode file-watcher parent.
-
-    ``lk agent dev`` maps to ``python -m livekit.agents start --dev`` (reload
-    on by default). That parent imports the agent only to watch files, then
-    spawns a child worker that re-imports and runs jobs. Instrumentation
-    belongs in the child.
-
-    The spawned child inherits ``sys.argv`` (including ``--dev`` / legacy
-    ``dev``) and, while ``agent.py`` is re-imported during
-    ``multiprocessing`` spawn setup, ``parent_process()`` is still ``None``.
-    Use the process name instead: only the top-level watcher is
-    ``MainProcess``.
-    """
-    if multiprocessing.current_process().name != "MainProcess":
-        return False
-
-    argv = sys.argv
-    # New CLI: ``start --dev``. Legacy rich CLI: ``… dev`` subcommand.
-    if "--dev" not in argv and "dev" not in argv:
-        return False
-
-    if "--no-reload" in argv:
-        return False
-
-    return True
-
-
-def _configure_parlot_logging() -> None:
-    level_name = os.getenv("PARLOT_DEBUG_LEVEL", "INFO").upper()
-    level = getattr(logging, level_name, logging.INFO)
-    if not logging.root.handlers:
-        logging.basicConfig(level=level)
 
 
 def parlotize(
@@ -132,12 +94,9 @@ def parlotize(
         assert _parlot_context is not None
         return _parlot_context
 
-    if _is_livekit_dev_watch_parent():
-        logger.debug(
-            "Skipping parlot-instrumentation.livekit parlotize in LiveKit dev "
-            "watcher parent (worker child will parlotize)"
-        )
-        return ParlotContext()
+    # Note: do not skip under ``lk agent dev`` / ``start --dev``. Hot-reload is
+    # owned by the Go CLI; this Python process *is* the worker (LiveKit removed
+    # the in-process watch parent that used to spawn a child).
 
     _auto_escalate_sip = auto_escalate_sip
     _escalation_metadata_match = (
@@ -222,7 +181,21 @@ def parlotize(
     _install_telemetry_compare()
 
     _configured = True
-    logger.debug("parlot-instrumentation.livekit configured (endpoint=%s)", res.endpoint)
+    bootstrap_ok = res.context.runtime is not None
+    if not res.endpoint or not res.api_key or not bootstrap_ok:
+        logger.warning(
+            "parlot: livekit instrumentation installed but telemetry is not ready "
+            "(agent_id=%s endpoint=%s bootstrap=%s); check PARLOT_ENDPOINT / PARLOT_API_KEY",
+            res.agent_id,
+            res.endpoint or "(unset)",
+            "ok" if bootstrap_ok else "failed",
+        )
+    else:
+        logger.info(
+            "parlot: livekit instrumentation ready (agent_id=%s endpoint=%s)",
+            res.agent_id,
+            res.endpoint,
+        )
     return res.context
 
 

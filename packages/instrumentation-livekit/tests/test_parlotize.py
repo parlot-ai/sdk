@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 import types
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -146,48 +147,19 @@ class TestAgentSessionPatch:
         assert lk.AgentSession._parlot_patched is True
 
 
-class TestDevWatchParentSkip:
+class TestDevModeParlotize:
+    """``lk agent dev`` / ``start --dev`` is the worker process (Go CLI owns reload)."""
+
     def setup_method(self):
         _install_livekit_stub()
         _reset_parlotize()
 
-    def test_skips_parlotize_in_dev_watch_parent(self, monkeypatch):
+    def test_parlotizes_under_start_dev(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
-        # ``lk agent dev`` → ``python -m livekit.agents start --dev``
-        monkeypatch.setattr(sys, "argv", ["-m", "livekit.agents", "start", "--dev"])
-
-        from parlot.instrumentation.livekit import parlotize
-        import parlot.instrumentation.livekit._auto as _auto
-
-        parlotize("test-agent")
-
-        assert _auto._configured is False
-
-        import livekit.agents as lk
-
-        assert lk.AgentSession._parlot_patched is False
-
-    def test_skips_parlotize_in_legacy_dev_subcommand(self, monkeypatch):
-        monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
-        monkeypatch.setattr(sys, "argv", ["agent.py", "dev"])
-
-        from parlot.instrumentation.livekit import parlotize
-        import parlot.instrumentation.livekit._auto as _auto
-
-        parlotize("test-agent")
-
-        assert _auto._configured is False
-
-    def test_parlotizes_in_dev_worker_child(self, monkeypatch):
-        monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
-        monkeypatch.setattr(sys, "argv", ["-m", "livekit.agents", "start", "--dev"])
-
-        class _SpawnProcess:
-            name = "SpawnProcess-1"
-
         monkeypatch.setattr(
-            "parlot.instrumentation.livekit._auto.multiprocessing.current_process",
-            lambda: _SpawnProcess(),
+            sys,
+            "argv",
+            ["-m", "livekit.agents", "start", "--dev", "--reload-addr", "127.0.0.1:1"],
         )
 
         from parlot.instrumentation.livekit import parlotize
@@ -197,9 +169,13 @@ class TestDevWatchParentSkip:
 
         assert _auto._configured is True
 
-    def test_parlotizes_in_dev_no_reload(self, monkeypatch):
+        import livekit.agents as lk
+
+        assert lk.AgentSession._parlot_patched is True
+
+    def test_parlotizes_under_legacy_dev_subcommand(self, monkeypatch):
         monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:4318")
-        monkeypatch.setattr(sys, "argv", ["agent.py", "dev", "--no-reload"])
+        monkeypatch.setattr(sys, "argv", ["agent.py", "dev"])
 
         from parlot.instrumentation.livekit import parlotize
         import parlot.instrumentation.livekit._auto as _auto
@@ -207,3 +183,57 @@ class TestDevWatchParentSkip:
         parlotize("test-agent")
 
         assert _auto._configured is True
+
+
+class TestStartupStatusLogging:
+    def setup_method(self):
+        _install_livekit_stub()
+        _reset_parlotize()
+
+    def test_warns_when_bootstrap_fails(self, monkeypatch, caplog):
+        monkeypatch.setenv("PARLOT_ENDPOINT", "http://wrong.example:8788")
+        monkeypatch.setenv("PARLOT_API_KEY", "key-123")
+
+        from parlot.instrumentation.livekit import parlotize
+
+        with (
+            patch(
+                "parlot.core.bootstrap.fetch_telemetry_bootstrap",
+                return_value=None,
+            ),
+            caplog.at_level("WARNING"),
+        ):
+            parlotize("test-agent")
+
+        warnings = [r.message for r in caplog.records if r.levelname == "WARNING"]
+        assert any(
+            "instrumentation installed but telemetry is not ready" in m
+            and "bootstrap=failed" in m
+            for m in warnings
+        )
+        assert not any("instrumentation ready" in m for m in [
+            r.message for r in caplog.records if r.levelname == "INFO"
+        ])
+
+    def test_info_when_bootstrap_ok(self, monkeypatch, caplog):
+        monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:8788")
+        monkeypatch.setenv("PARLOT_API_KEY", "key-123")
+
+        from parlot.instrumentation.livekit import parlotize
+        from parlot.core.context import ParlotContext
+
+        def _fake_bootstrap(endpoint, api_key, context: ParlotContext, **kwargs):
+            context.runtime = MagicMock()
+            return {"ok": True}
+
+        with (
+            patch(
+                "parlot.core.bootstrap.fetch_telemetry_bootstrap",
+                side_effect=_fake_bootstrap,
+            ),
+            caplog.at_level("INFO"),
+        ):
+            parlotize("test-agent")
+
+        infos = [r.message for r in caplog.records if r.levelname == "INFO"]
+        assert any("parlot: livekit instrumentation ready" in m for m in infos)
