@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/parlot-ai/sdk/compare/instrumentation-langgraph-v0.4.0...instrumentation-langgraph-v0.4.1) (2026-09-29)
+
+
+### Documentation
+
+* simplify repo and PyPI READMEs for get-started ([#77](https://github.com/parlot-ai/sdk/issues/77)) ([279a254](https://github.com/parlot-ai/sdk/commit/279a2549b4bf78a4e0dd5117f9def389bcf53ae3))
+
 ## [0.4.0](https://github.com/parlot-ai/sdk/compare/instrumentation-langgraph-v0.3.1...instrumentation-langgraph-v0.4.0) (2026-09-14)
 
 
