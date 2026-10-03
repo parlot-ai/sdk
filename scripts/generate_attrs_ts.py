@@ -37,6 +37,7 @@ def _collect_assignments(tree: ast.Module) -> list[tuple[str, str]]:
             name.startswith("ATTR_")
             or name.startswith("EVENT_")
             or name.startswith("SPAN_")
+            or name.startswith("METRIC_")
         ):
             continue
         if isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
