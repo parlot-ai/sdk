@@ -7,8 +7,6 @@ description: Multi-agent handoffs and cascading failure debugging.
 
 The **Flow** tab (`/sessions/:sessionId/flow`) visualizes how work moved between agents (and humans) during the session.
 
-Legacy bookmarks that used `/graph` redirect here.
-
 ## Why flow matters
 
 Production voice systems are rarely a single agent. A greeter may transfer to a specialist, tools may call out, and a human representative may join. Flow shows that topology so you can answer “which agent broke it?” instead of reading a flat transcript.
