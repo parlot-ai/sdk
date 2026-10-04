@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "parlot-core"
-version = "0.4.2"
+version = "0.4.3"
 description = "Shared conventions and processors for Parlot instrumentation packages"
 readme = "README.md"
 license = "MIT"

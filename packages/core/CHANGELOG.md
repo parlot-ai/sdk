@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.3](https://github.com/parlot-ai/sdk/compare/core-v0.4.2...core-v0.4.3) (2026-10-04)
+
+
+### Features
+
+* **core:** add session LLM/STT/TTS cost attribute constants ([#80](https://github.com/parlot-ai/sdk/issues/80)) ([76f0144](https://github.com/parlot-ai/sdk/commit/76f0144d43476ab7bf309c676e2422ecac92906e))
+* **core:** add session STT/TTS usage attribute constants ([#82](https://github.com/parlot-ai/sdk/issues/82)) ([978307c](https://github.com/parlot-ai/sdk/commit/978307c8fbaa02b4c8ac9e4aa83b0e57a556d266))
+
 ## [0.4.2](https://github.com/parlot-ai/sdk/compare/core-v0.4.1...core-v0.4.2) (2026-09-29)
 
 
