@@ -1,50 +1,67 @@
 ---
-title: App Guide
-description: User documentation for the Parlot dashboard is currently under construction.
+title: Introduction
+description: How the Parlot dashboard helps you observe production voice and text agents.
 ---
 
 import { Card, Cards } from 'fumadocs-ui/components/card';
-import { Callout } from 'fumadocs-ui/components/callout';
 
-# App Guide
+# Introduction
 
-<Callout type="info" title="Under Construction">
-  User documentation for the Parlot web application and dashboard is currently under construction. We are actively expanding guides and reference material for the dashboard interface.
-</Callout>
+The Parlot **App Guide** covers the web dashboard: fleet health, agent workspaces, session debugging, evaluations, exports, and organization settings.
 
-In the meantime, explore our SDK documentation, integration guides, and API reference to instrument and observe your voice AI agents.
+Instrument your agents with the [SDK Quick Start](/sdk/get-started/quick-start), then use this guide to work with the data in the product.
 
-## SDK Resources
+## What the dashboard is for
+
+Parlot answers questions that transcripts alone cannot:
+
+- Is the agent completing the caller’s goal?
+- Where did latency or cost spike in the turn pipeline?
+- Which agent in a multi-agent flow caused a failure?
+- What topics and outcomes are trending across the fleet?
+
+## Conversations and sessions
+
+Parlot uses a two-level model:
+
+- A **conversation** is the ongoing thread with a user on a channel (voice, webchat, text messaging, WhatsApp).
+- A **session** is a bounded episode inside that conversation—the unit of analysis, evaluation, and cost.
+
+Voice calls usually map one conversation to one session. Messaging channels can produce several sessions over time when idle timeouts close an episode. Configure those rules under [Conversation boundaries](/app/conversation-boundaries).
+
+## Dashboard tour
+
+| Area | What you do there |
+|------|-------------------|
+| **Overview** | Org-wide quality, speed, and cost |
+| **Agents** | Per-deployment health, topology, topics, and capture settings |
+| **Topics** | Org-wide topic groups and drill-down into sessions |
+| **Sessions** | Search, paste vendor IDs, open the session debugger |
+| **Exports** | Download session and evaluation artifacts |
+| **Evals** | Custom large language model (LLM) judges and run history |
+| **Settings** | Members, billing, recording, logs, privacy, API keys, and more |
+
+## Start here
 
 <Cards>
   <Card
-    title="SDK Quick Start"
-    description="Install the parlot SDK, configure OpenTelemetry export, and verify traces."
-    href="/sdk/get-started/quick-start"
+    title="Overview"
+    description="Fleet health, filters, and where to drill next."
+    href="/app/overview"
   />
   <Card
-    title="LiveKit Agents Guide"
-    description="Is Parlot a fit for your LiveKit voice agent? What you get and how instrumentation works."
-    href="/sdk/guides/livekit"
+    title="Sessions"
+    description="Find calls, paste LiveKit room IDs, and open a session."
+    href="/app/sessions"
   />
   <Card
-    title="LangGraph Workflows Guide"
-    description="Monitor LangGraph workflow execution, node latency, state transitions, and checkpoints."
-    href="/sdk/guides/langgraph"
+    title="Timeline"
+    description="Turns, transcript, audio, and span waterfall."
+    href="/app/timeline"
   />
   <Card
-    title="Python API Reference"
-    description="Browse class and function signatures generated from Python docstrings via pdoc."
-    href="/docs/ref/python/"
+    title="Licensing and plans"
+    description="Business Source License limits and Parlot Cloud plans."
+    href="/app/licensing-and-plans"
   />
 </Cards>
-
-## Upcoming Dashboard Guides
-
-Comprehensive walkthroughs and workflows for the Parlot web app will be published soon, covering:
-
-- **Session Analysis & Audio Replay**: Inspecting real-time participant audio waveforms, turn-by-turn latency waterfalls, and transcripts.
-- **Conversation Boundaries**: Configuring idle timeouts and duration caps across voice, SMS, webchat, and WhatsApp channels.
-- **Evaluations**: Setting up automated LLM-as-a-judge scorers and custom evaluation criteria for voice sessions.
-- **API Keys & Integrations**: Managing workspace credentials, webhook destinations, and cloud storage providers.
-- **Organization & Member Management**: Role-based access controls, team workspaces, and usage analytics.
