@@ -32,4 +32,4 @@ Filter choices apply to the cards and charts on the page. Clear or change them w
 - Open [Agents](/app/agents) when a single deployment looks unhealthy.
 - Open [Sessions](/app/sessions) when you need a specific call or chat.
 - Open [Topics](/app/topics) when you care about volume and outcomes by subject.
-- Open [Cost](/app/cost) and [Settings → Pricing and margin](/app/organization-settings#pricing-and-margin) when spend looks wrong.
+- Open [Cost & margin](/app/cost) when spend looks wrong or models need rates.
