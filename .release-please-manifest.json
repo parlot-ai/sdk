@@ -1,5 +1,5 @@
 {
-  "packages/core": "0.4.3",
+  "packages/core": "0.4.4",
   "packages/instrumentation-livekit": "0.4.2",
   "packages/instrumentation-langgraph": "0.4.1",
   "packages/meta": "0.3.2"
