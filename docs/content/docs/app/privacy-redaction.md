@@ -13,6 +13,8 @@ Parlot scrubs sensitive details such as names, addresses, dates of birth, phone 
 
 Recording policies can also beep or mute sensitive audio segments when that pipeline is enabled for your deployment.
 
+PII redaction is **experimental**. It can miss sensitive details or mis-label ordinary text. Treat redacted output as a best-effort aid, not a guarantee of full compliance. Before you export, share, or otherwise move data out of Parlot, review the content yourself and confirm it meets your legal and policy requirements.
+
 ## Fail-closed behavior
 
 The product copy matches the intended policy: if redaction cannot be completed, Parlot does **not** show the raw data. That fail-closed / withhold behavior protects healthcare and financial contexts when the privacy filter is unavailable or errors.
