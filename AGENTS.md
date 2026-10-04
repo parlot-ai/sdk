@@ -7,6 +7,12 @@ Public open-source SDK. Stay inside this repository.
 - Python workspace: **uv** (`uv sync --group dev`, `uv run pytest` from the repo root). Do not use pip or poetry for packages.
 - Docs site: **Bun** (`cd docs && bun start`).
 
+## Documentation
+
+In user-facing docs (under `docs/content/docs/`):
+- Minimize jargon; use clear, accessible product language.
+- Never use acronyms without introducing and expanding them on first use (e.g. "personally identifiable information (PII)" before using "PII"). Prefer common, widely understood terms over obscure acronyms (e.g. PII redaction rather than DLP).
+
 ## Git
 
 Before starting any new implementation work, create a fresh branch from up-to-date `main` (`git fetch origin && git checkout main && git pull && git checkout -b <branch>`). Do not continue on an unrelated existing branch. Never push `main`. Land via branch + PR + squash-merge. Conventional Commits feed Release Please. When the user asks to commit, push, or open a PR, load the `ship` skill (`.agents/skills/ship/SKILL.md`).

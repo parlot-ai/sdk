@@ -5,8 +5,9 @@ export function loader() {
   const urls = [
     baseUrl,
     ...source.getPages().map((p) => {
-      // p.url is /docs/...
-      return `https://parlot.ai${p.url}`;
+      // Page urls are site-relative (e.g. /sdk/..., /app/...) under the /docs/ basename.
+      const path = p.url.startsWith('/docs') ? p.url : `/docs${p.url.startsWith('/') ? '' : '/'}${p.url}`;
+      return `https://parlot.ai${path}`;
     }),
   ];
   const uniqueUrls = Array.from(new Set(urls)).filter((u) => !u.includes('/search'));

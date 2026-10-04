@@ -133,14 +133,6 @@ Parlot runs an automated background cleanup process to keep conversation records
    - **Quality Evaluation**: Runs automated scoring models to evaluate customer sentiment, goal completion, and agent accuracy.
    - **Metrics Aggregation**: Calculates session durations, turn counts, and cost metrics for your analytics dashboards.
 
-### System Administration for Self-Hosted Deployments
-For teams running self-hosted Parlot instances:
-- When a new organization or workspace is created, standard channel configurations are automatically provisioned.
-- Platform administrators can also run the command-line interface (CLI) seeding utility at any time to verify or backfill default rules across all organizations:
-  ```bash
-  bun run seed:conversation-configs
-  ```
-
 ---
 
 ## Best Practices & Recommendations

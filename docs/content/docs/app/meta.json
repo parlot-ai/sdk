@@ -2,6 +2,22 @@
   "title": "App Guide",
   "root": true,
   "pages": [
-    "index"
+    "index",
+    "overview",
+    "agents",
+    "topics",
+    "sessions",
+    "timeline",
+    "latency",
+    "cost",
+    "flow",
+    "session-logs",
+    "evaluations",
+    "exports-and-sharing",
+    "conversation-boundaries",
+    "privacy-redaction",
+    "recording",
+    "organization-settings",
+    "licensing-and-plans"
   ]
 }
