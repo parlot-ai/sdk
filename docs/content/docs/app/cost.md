@@ -43,6 +43,8 @@ Each rate-card row has a source:
 | **Your contract** | A rate you entered for your organization. This wins over the list price for new sessions from the moment you save it. |
 | **Unpriced** | Usage was seen, but Parlot has no list match and you have not set a rate. Cost for that usage is missing until you price it. |
 
+List rates come from the open [voice-prices](https://github.com/mahimailabs/voice-prices) community catalog (vendored into Parlot). Parlot does not mark up those rates—they are pass-through estimates of what providers charge.
+
 Past sessions keep the rate that applied when they ran. Editing a rate changes cost for **new** sessions only; it does not rewrite history.
 
 ## Pins vs contract rates
