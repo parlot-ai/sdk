@@ -31,7 +31,12 @@ def _python_constants() -> list[tuple[str, str]]:
         if not isinstance(target, ast.Name):
             continue
         name = target.id
-        if not (name.startswith("ATTR_") or name.startswith("EVENT_") or name.startswith("SPAN_")):
+        if not (
+            name.startswith("ATTR_")
+            or name.startswith("EVENT_")
+            or name.startswith("SPAN_")
+            or name.startswith("METRIC_")
+        ):
             continue
         if isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
             _record(name, node.value.value)
