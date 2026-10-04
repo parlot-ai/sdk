@@ -44,7 +44,3 @@ Paid tiers commonly unlock:
 - Multi-organization creation for a user or account
 - Event-driven custom evaluations and webhook alerting
 - Expanded data export quotas
-
-## What this page does not cover
-
-Parlot no longer ships a separate self-host Enterprise Edition license-key product. Cloud entitlements and the BSL turn grant above are the paths that matter for most users. If you need a custom commercial agreement, contact [parlot.ai](https://parlot.ai).
