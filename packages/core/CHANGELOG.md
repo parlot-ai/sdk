@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.4](https://github.com/parlot-ai/sdk/compare/core-v0.4.3...core-v0.4.4) (2026-10-04)
+
+
+### Bug Fixes
+
+* include METRIC_ constants in attrs.ts sync test ([#86](https://github.com/parlot-ai/sdk/issues/86)) ([e10e7a2](https://github.com/parlot-ai/sdk/commit/e10e7a283d2954561b741a0790a36c99a9250716))
+
 ## [0.4.3](https://github.com/parlot-ai/sdk/compare/core-v0.4.2...core-v0.4.3) (2026-10-04)
 
 
