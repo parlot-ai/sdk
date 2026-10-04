@@ -39,7 +39,7 @@ Documented in depth on their own pages:
 
 ### Cost & margin
 
-Provider rates and margin analytics live under **Observe → [Cost & margin](/app/cost)** (`/cost`). Rows appear from session usage; you can add models, set catalog or contract rates, and review recent margin after sessions close with cost attributes.
+Provider rates and margin analytics live under **Observe → [Cost & margin](/app/cost)** (`/cost`), not under Settings. See [Cost](/app/cost) for the rate card, unpriced models, telephony estimates, and margin.
 
 This is separate from **Plan & billing** (your Parlot subscription).
 
