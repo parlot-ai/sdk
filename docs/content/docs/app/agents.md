@@ -21,9 +21,9 @@ Open an agent for a deeper view. Tabs typically include:
 - **Latency** — Turn and pipeline latency for this agent.
 - **Cost** — Spend attributed to this agent.
 - **Topology / flow** — How this deployment hands off among specialized agents (see also the session [Flow](/app/flow) tab).
-- **Topics** — Topic catalog for this agent (labels, reuse versus newly minted topics).
-- **Versions** — Version history when you stamp versions in the SDK.
-- **Settings** — Overrides for log capture and related agent-scoped policies.
+- **Topics** — Topic catalog for this agent (labels, reuse versus newly created topics).
+- **Versions** — Version history when you stamp versions in the parlotize() call.
+- **Settings** — Overrides for recording, log capture and related agent-scoped policies.
 
 ## How agents appear
 
