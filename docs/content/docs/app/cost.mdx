@@ -90,9 +90,16 @@ Each row includes:
 
 - Session id, start time, end time, agent, client tag, and channel
 - Duration (minutes)
+- Usage units and effective unit prices:
+  - LLM input/output tokens and blended `$/MTok` (`llm_usd_per_mtok`)
+  - STT audio seconds and `$/1K sec` (`stt_usd_per_ksec`)
+  - TTS characters (plus audio seconds) and `$/1K chars` (`tts_usd_per_kchars`)
+  - Telephony `$/min` on phone sessions (from your rate card / catalog)
 - Stage costs: LLM, STT, and TTS
-- Model cost, telephony estimate (phone channel), and total cost
+- Model cost, telephony estimate, and total cost
 - Revenue and margin % when you have set a per-minute sell price
+
+Effective unit prices are derived from that session’s cost ÷ usage (LLM is blended across input and output tokens). They can be blank when a stage has no usage.
 
 Filenames look like `YYYYMMDD-session-cost-{range}-{hex}.csv` (for example `20261005-session-cost-30d-a3f1.csv`). Exports may warn when sell price is missing or models are still unpriced—revenue/margin can be blank and costs understated until rates are complete.
 
