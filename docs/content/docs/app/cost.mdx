@@ -1,11 +1,13 @@
 ---
 title: Cost
-description: Session spend, the rate card, unpriced models, telephony estimates, and margin.
+description: Session spend, your rate card, unpriced models, telephony estimates, and margin.
 ---
+
+import { Callout } from 'fumadocs-ui/components/callout';
 
 # Cost
 
-Parlot estimates what **providers charge you** to run voice and language models—not what you pay Parlot. Your Parlot subscription lives under **Settings → Plan & billing**.
+Parlot estimates what **providers charge you** to run voice and language models: LLMs, TTS, STT etc.
 
 You will see cost in two places:
 
@@ -39,11 +41,13 @@ Each rate-card row has a source:
 
 | Badge | Meaning |
 |-------|---------|
-| **List** | Public provider list price from Parlot’s community catalog. Useful as a default when you have not entered a contract rate. |
+| **List** | Public provider list price from the community catalog. Useful as a default when you have not entered a contract rate. |
 | **Your contract** | A rate you entered for your organization. This wins over the list price for new sessions from the moment you save it. |
 | **Unpriced** | Usage was seen, but Parlot has no list match and you have not set a rate. Cost for that usage is missing until you price it. |
 
-List rates come from the open [voice-prices](https://github.com/mahimailabs/voice-prices) community catalog (vendored into Parlot). Parlot does not mark up those rates—they are pass-through estimates of what providers charge.
+<Callout type="info">
+  List rates come from the open [voice-prices](https://github.com/mahimailabs/voice-prices) community catalog (vendored into Parlot). Parlot does not mark up those rates—they are pass-through estimates of what providers charge.
+</Callout>
 
 Past sessions keep the rate that applied when they ran. Editing a rate changes cost for **new** sessions only; it does not rewrite history.
 

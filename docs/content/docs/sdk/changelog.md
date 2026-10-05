@@ -11,6 +11,42 @@ sidebar_position: 10
 ## parlot
 
 
+### [0.3.2](https://github.com/parlot-ai/sdk/compare/parlot-v0.3.1...parlot-v0.3.2) (2026-09-29)
+
+
+#### Documentation
+
+* simplify repo and PyPI READMEs for get-started ([#77](https://github.com/parlot-ai/sdk/issues/77)) ([279a254](https://github.com/parlot-ai/sdk/commit/279a2549b4bf78a4e0dd5117f9def389bcf53ae3))
+
+### [0.3.1](https://github.com/parlot-ai/sdk/compare/parlot-v0.3.0...parlot-v0.3.1) (2026-09-20)
+
+
+#### Bug Fixes
+
+* **parlot:** raise install floors to match parlotize API ([#71](https://github.com/parlot-ai/sdk/issues/71)) ([fe3a01e](https://github.com/parlot-ai/sdk/commit/fe3a01e745e80c0272708b3bcb1f50bcd2ae92f5))
+
+### [0.3.0](https://github.com/parlot-ai/sdk/compare/parlot-v0.2.0...parlot-v0.3.0) (2026-09-14)
+
+
+#### ⚠ BREAKING CHANGES
+
+* require agent_id on parlotize() ([#63](https://github.com/parlot-ai/sdk/issues/63))
+
+#### Features
+
+* require agent_id on parlotize() ([#63](https://github.com/parlot-ai/sdk/issues/63)) ([ce42357](https://github.com/parlot-ai/sdk/commit/ce4235730b514606e0cfe7f08aa61b78b408d75b))
+
+### [0.2.0](https://github.com/parlot-ai/sdk/compare/parlot-v0.1.1...parlot-v0.2.0) (2026-09-10)
+
+
+#### ⚠ BREAKING CHANGES
+
+* import and call parlotize() instead of configure().
+
+#### Features
+
+* rename configure() to parlotize() ([#54](https://github.com/parlot-ai/sdk/issues/54)) ([30d4579](https://github.com/parlot-ai/sdk/commit/30d4579922043d2c508d48f15eb80a3632e8ff6f))
+
 ### [0.1.1](https://github.com/parlot-ai/sdk/compare/parlot-v0.1.0...parlot-v0.1.1) (2026-08-25)
 
 
@@ -25,6 +61,69 @@ sidebar_position: 10
 
 ## parlot-instrumentation-livekit
 
+
+### [0.4.2](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.1...instrumentation-livekit-v0.4.2) (2026-09-29)
+
+
+#### Documentation
+
+* simplify repo and PyPI READMEs for get-started ([#77](https://github.com/parlot-ai/sdk/issues/77)) ([279a254](https://github.com/parlot-ai/sdk/commit/279a2549b4bf78a4e0dd5117f9def389bcf53ae3))
+
+### [0.4.1](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.0...instrumentation-livekit-v0.4.1) (2026-09-17)
+
+
+#### Bug Fixes
+
+* bound SessionTopology handoff and agent-chain memory growth ([#67](https://github.com/parlot-ai/sdk/issues/67)) ([ae474ce](https://github.com/parlot-ai/sdk/commit/ae474cebe1caddb0e502da436590bc8533428c52))
+* **livekit:** sticky session id for post-close evaluation LLM spans ([#69](https://github.com/parlot-ai/sdk/issues/69)) ([a0475b7](https://github.com/parlot-ai/sdk/commit/a0475b7d88733ea4e035b4d62c50c6ddd353077a))
+
+### [0.4.0](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.3.1...instrumentation-livekit-v0.4.0) (2026-09-14)
+
+
+#### ⚠ BREAKING CHANGES
+
+* require agent_id on parlotize() ([#63](https://github.com/parlot-ai/sdk/issues/63))
+
+#### Features
+
+* require agent_id on parlotize() ([#63](https://github.com/parlot-ai/sdk/issues/63)) ([ce42357](https://github.com/parlot-ai/sdk/commit/ce4235730b514606e0cfe7f08aa61b78b408d75b))
+
+### [0.3.1](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.3.0...instrumentation-livekit-v0.3.1) (2026-09-13)
+
+
+#### Bug Fixes
+
+* **livekit:** mint agent identity when parlotize omits agent_id ([#62](https://github.com/parlot-ai/sdk/issues/62)) ([b14fe0d](https://github.com/parlot-ai/sdk/commit/b14fe0d3b0848b752b0d4f487a4af71595bff1ea))
+* **livekit:** stamp pipeline turn.index at start, not stale turn_count ([#55](https://github.com/parlot-ai/sdk/issues/55)) ([21db3fd](https://github.com/parlot-ai/sdk/commit/21db3fd708b702872bb984ae602276bc483cf3db))
+
+### [0.3.0](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.2.1...instrumentation-livekit-v0.3.0) (2026-09-10)
+
+
+#### ⚠ BREAKING CHANGES
+
+* import and call parlotize() instead of configure().
+
+#### Features
+
+* rename configure() to parlotize() ([#54](https://github.com/parlot-ai/sdk/issues/54)) ([30d4579](https://github.com/parlot-ai/sdk/commit/30d4579922043d2c508d48f15eb80a3632e8ff6f))
+
+### [0.2.1](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.2.0...instrumentation-livekit-v0.2.1) (2026-09-07)
+
+
+#### Features
+
+* **core:** implement multi-layer SDK versioning and remove diagnostics ([#47](https://github.com/parlot-ai/sdk/issues/47)) ([2e021bb](https://github.com/parlot-ai/sdk/commit/2e021bb2495ce1ae08e7d4aebb497c789e9e154b))
+
+
+#### Bug Fixes
+
+* **livekit:** mutate readable span attributes safely and mock simulation job context ([#45](https://github.com/parlot-ai/sdk/issues/45)) ([36175c6](https://github.com/parlot-ai/sdk/commit/36175c675b25c1f88a370c821890bb9f40ffebc9))
+* log descriptive sdk errors without dumping tracebacks ([#46](https://github.com/parlot-ai/sdk/issues/46)) ([06275e2](https://github.com/parlot-ai/sdk/commit/06275e2c6110295739e0971976d2fe2943457d14))
+
+
+#### Documentation
+
+* generate shared configure() API from Python docstrings ([#41](https://github.com/parlot-ai/sdk/issues/41)) ([8ae405f](https://github.com/parlot-ai/sdk/commit/8ae405feab794e6f39e41146b91b73daaa95cf35))
 
 ### [0.2.0](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.1.1...instrumentation-livekit-v0.2.0) (2026-09-03)
 
@@ -89,6 +188,54 @@ sidebar_position: 10
 ## parlot-instrumentation-langgraph
 
 
+### [0.4.1](https://github.com/parlot-ai/sdk/compare/instrumentation-langgraph-v0.4.0...instrumentation-langgraph-v0.4.1) (2026-09-29)
+
+
+#### Documentation
+
+* simplify repo and PyPI READMEs for get-started ([#77](https://github.com/parlot-ai/sdk/issues/77)) ([279a254](https://github.com/parlot-ai/sdk/commit/279a2549b4bf78a4e0dd5117f9def389bcf53ae3))
+
+### [0.4.0](https://github.com/parlot-ai/sdk/compare/instrumentation-langgraph-v0.3.1...instrumentation-langgraph-v0.4.0) (2026-09-14)
+
+
+#### ⚠ BREAKING CHANGES
+
+* require agent_id on parlotize() ([#63](https://github.com/parlot-ai/sdk/issues/63))
+
+#### Features
+
+* require agent_id on parlotize() ([#63](https://github.com/parlot-ai/sdk/issues/63)) ([ce42357](https://github.com/parlot-ai/sdk/commit/ce4235730b514606e0cfe7f08aa61b78b408d75b))
+
+### [0.3.1](https://github.com/parlot-ai/sdk/compare/instrumentation-langgraph-v0.3.0...instrumentation-langgraph-v0.3.1) (2026-09-13)
+
+
+#### Bug Fixes
+
+* **livekit:** mint agent identity when parlotize omits agent_id ([#62](https://github.com/parlot-ai/sdk/issues/62)) ([b14fe0d](https://github.com/parlot-ai/sdk/commit/b14fe0d3b0848b752b0d4f487a4af71595bff1ea))
+
+### [0.3.0](https://github.com/parlot-ai/sdk/compare/instrumentation-langgraph-v0.2.1...instrumentation-langgraph-v0.3.0) (2026-09-10)
+
+
+#### ⚠ BREAKING CHANGES
+
+* import and call parlotize() instead of configure().
+
+#### Features
+
+* rename configure() to parlotize() ([#54](https://github.com/parlot-ai/sdk/issues/54)) ([30d4579](https://github.com/parlot-ai/sdk/commit/30d4579922043d2c508d48f15eb80a3632e8ff6f))
+
+### [0.2.1](https://github.com/parlot-ai/sdk/compare/instrumentation-langgraph-v0.2.0...instrumentation-langgraph-v0.2.1) (2026-09-07)
+
+
+#### Features
+
+* **core:** implement multi-layer SDK versioning and remove diagnostics ([#47](https://github.com/parlot-ai/sdk/issues/47)) ([2e021bb](https://github.com/parlot-ai/sdk/commit/2e021bb2495ce1ae08e7d4aebb497c789e9e154b))
+
+
+#### Documentation
+
+* generate shared configure() API from Python docstrings ([#41](https://github.com/parlot-ai/sdk/issues/41)) ([8ae405f](https://github.com/parlot-ai/sdk/commit/8ae405feab794e6f39e41146b91b73daaa95cf35))
+
 ### [0.2.0](https://github.com/parlot-ai/sdk/compare/instrumentation-langgraph-v0.1.1...instrumentation-langgraph-v0.2.0) (2026-09-03)
 
 
@@ -122,6 +269,89 @@ sidebar_position: 10
 
 ## parlot-core
 
+
+### [0.4.4](https://github.com/parlot-ai/sdk/compare/core-v0.4.3...core-v0.4.4) (2026-10-04)
+
+
+#### Bug Fixes
+
+* include METRIC_ constants in attrs.ts sync test ([#86](https://github.com/parlot-ai/sdk/issues/86)) ([e10e7a2](https://github.com/parlot-ai/sdk/commit/e10e7a283d2954561b741a0790a36c99a9250716))
+
+### [0.4.3](https://github.com/parlot-ai/sdk/compare/core-v0.4.2...core-v0.4.3) (2026-10-04)
+
+
+#### Features
+
+* **core:** add session LLM/STT/TTS cost attribute constants ([#80](https://github.com/parlot-ai/sdk/issues/80)) ([76f0144](https://github.com/parlot-ai/sdk/commit/76f0144d43476ab7bf309c676e2422ecac92906e))
+* **core:** add session STT/TTS usage attribute constants ([#82](https://github.com/parlot-ai/sdk/issues/82)) ([978307c](https://github.com/parlot-ai/sdk/commit/978307c8fbaa02b4c8ac9e4aa83b0e57a556d266))
+
+### [0.4.2](https://github.com/parlot-ai/sdk/compare/core-v0.4.1...core-v0.4.2) (2026-09-29)
+
+
+#### Bug Fixes
+
+* log clear errors when Parlot endpoint or API key is misconfigured ([#74](https://github.com/parlot-ai/sdk/issues/74)) ([345f48b](https://github.com/parlot-ai/sdk/commit/345f48b8af6e2d929800f225bdb1a2190da97a3a))
+
+
+#### Documentation
+
+* simplify repo and PyPI READMEs for get-started ([#77](https://github.com/parlot-ai/sdk/issues/77)) ([279a254](https://github.com/parlot-ai/sdk/commit/279a2549b4bf78a4e0dd5117f9def389bcf53ae3))
+
+### [0.4.1](https://github.com/parlot-ai/sdk/compare/core-v0.4.0...core-v0.4.1) (2026-09-17)
+
+
+#### Bug Fixes
+
+* bound SessionTopology handoff and agent-chain memory growth ([#67](https://github.com/parlot-ai/sdk/issues/67)) ([ae474ce](https://github.com/parlot-ai/sdk/commit/ae474cebe1caddb0e502da436590bc8533428c52))
+* **livekit:** sticky session id for post-close evaluation LLM spans ([#69](https://github.com/parlot-ai/sdk/issues/69)) ([a0475b7](https://github.com/parlot-ai/sdk/commit/a0475b7d88733ea4e035b4d62c50c6ddd353077a))
+
+### [0.4.0](https://github.com/parlot-ai/sdk/compare/core-v0.3.1...core-v0.4.0) (2026-09-14)
+
+
+#### ⚠ BREAKING CHANGES
+
+* require agent_id on parlotize() ([#63](https://github.com/parlot-ai/sdk/issues/63))
+
+#### Features
+
+* require agent_id on parlotize() ([#63](https://github.com/parlot-ai/sdk/issues/63)) ([ce42357](https://github.com/parlot-ai/sdk/commit/ce4235730b514606e0cfe7f08aa61b78b408d75b))
+
+### [0.3.1](https://github.com/parlot-ai/sdk/compare/core-v0.3.0...core-v0.3.1) (2026-09-13)
+
+
+#### Bug Fixes
+
+* **livekit:** mint agent identity when parlotize omits agent_id ([#62](https://github.com/parlot-ai/sdk/issues/62)) ([b14fe0d](https://github.com/parlot-ai/sdk/commit/b14fe0d3b0848b752b0d4f487a4af71595bff1ea))
+
+### [0.3.0](https://github.com/parlot-ai/sdk/compare/core-v0.2.1...core-v0.3.0) (2026-09-10)
+
+
+#### ⚠ BREAKING CHANGES
+
+* import and call parlotize() instead of configure().
+
+#### Features
+
+* **core:** export session logs as OTLP Logs protobuf ([#52](https://github.com/parlot-ai/sdk/issues/52)) ([27497dc](https://github.com/parlot-ai/sdk/commit/27497dc51127cb05f384d3bcec8ac82801005bab))
+* rename configure() to parlotize() ([#54](https://github.com/parlot-ai/sdk/issues/54)) ([30d4579](https://github.com/parlot-ai/sdk/commit/30d4579922043d2c508d48f15eb80a3632e8ff6f))
+
+### [0.2.1](https://github.com/parlot-ai/sdk/compare/core-v0.2.0...core-v0.2.1) (2026-09-07)
+
+
+#### Features
+
+* **core:** implement multi-layer SDK versioning and remove diagnostics ([#47](https://github.com/parlot-ai/sdk/issues/47)) ([2e021bb](https://github.com/parlot-ai/sdk/commit/2e021bb2495ce1ae08e7d4aebb497c789e9e154b))
+
+
+#### Bug Fixes
+
+* **livekit:** mutate readable span attributes safely and mock simulation job context ([#45](https://github.com/parlot-ai/sdk/issues/45)) ([36175c6](https://github.com/parlot-ai/sdk/commit/36175c675b25c1f88a370c821890bb9f40ffebc9))
+* log descriptive sdk errors without dumping tracebacks ([#46](https://github.com/parlot-ai/sdk/issues/46)) ([06275e2](https://github.com/parlot-ai/sdk/commit/06275e2c6110295739e0971976d2fe2943457d14))
+
+
+#### Documentation
+
+* generate shared configure() API from Python docstrings ([#41](https://github.com/parlot-ai/sdk/issues/41)) ([8ae405f](https://github.com/parlot-ai/sdk/commit/8ae405feab794e6f39e41146b91b73daaa95cf35))
 
 ### [0.2.0](https://github.com/parlot-ai/sdk/compare/core-v0.1.1...core-v0.2.0) (2026-09-03)
 
