@@ -73,6 +73,7 @@ export const ATTR_SESSION_TOTAL_COST_USD = "session.total_cost_usd" as const;
 export const ATTR_SESSION_LLM_COST_USD = "session.llm_cost_usd" as const;
 export const ATTR_SESSION_STT_COST_USD = "session.stt_cost_usd" as const;
 export const ATTR_SESSION_TTS_COST_USD = "session.tts_cost_usd" as const;
+export const ATTR_SESSION_COST_LINE_ITEMS = "session.cost_line_items" as const;
 export const ATTR_SESSION_STT_AUDIO_DURATION_SEC = "session.stt_audio_duration_sec" as const;
 export const ATTR_SESSION_TTS_AUDIO_DURATION_SEC = "session.tts_audio_duration_sec" as const;
 export const ATTR_SESSION_TTS_CHARACTERS = "session.tts_characters" as const;

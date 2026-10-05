@@ -84,22 +84,15 @@ If sell price is empty, revenue and margin stay blank. If models are unpriced, c
 
 ### Export CSV
 
-**Export CSV** downloads one row per session in the selected date range. Use it when finance needs session-level detail rather than the on-screen agent/client rollup.
+**Export CSV** downloads **one row per priced unit** for sessions in the selected date range (defaults to the past 30 days). Use it when finance needs unit-level detail rather than the on-screen agent/client rollup.
 
 Each row includes:
 
-- Session id, start time, end time, agent, client tag, and channel
-- Duration (minutes)
-- Usage units and effective unit prices:
-  - LLM input/output tokens and blended `$/MTok` (`llm_usd_per_mtok`)
-  - STT audio seconds and `$/1K sec` (`stt_usd_per_ksec`)
-  - TTS characters (plus audio seconds) and `$/1K chars` (`tts_usd_per_kchars`)
-  - Telephony `$/min` on phone sessions (from your rate card / catalog)
-- Stage costs: LLM, STT, and TTS
-- Model cost, telephony estimate, and total cost
-- Revenue and margin % when you have set a per-minute sell price
+- Session id, start time, end time, agent, client tag, channel, and duration
+- Line item: category (LLM / STT / TTS / telephony), provider, model, unit (for example `input_mtok` vs `output_mtok`), quantity, frozen `unit_rate_usd`, `cost_usd`, and rate source
+- Session total cost, plus revenue and margin % when you have set a per-minute sell price
 
-Effective unit prices are derived from that session’s cost ÷ usage (LLM is blended across input and output tokens). They can be blank when a stage has no usage.
+Unit rates are frozen at **session close** from the same catalog/override resolution that priced the session—so LLM input and output appear as separate lines with their own rates. Older sessions closed before this existed may show aggregate stage rows with blank rates (`source=legacy_aggregate`).
 
 Filenames look like `YYYYMMDD-session-cost-{range}-{hex}.csv` (for example `20261005-session-cost-30d-a3f1.csv`). Exports may warn when sell price is missing or models are still unpriced—revenue/margin can be blank and costs understated until rates are complete.
 
