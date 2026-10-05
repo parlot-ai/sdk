@@ -30,7 +30,7 @@ Open **Observe → Cost & margin**.
 
 | Tab | Use it to |
 |-----|-----------|
-| **Margin & cost** | Set what you charge clients per minute, then compare revenue to estimated provider cost by agent or client (past 7 days). |
+| **Margin & cost** | Set what you charge clients per minute, then compare revenue to estimated provider cost by agent or client for the selected date range (defaults to the past 30 days). |
 | **Rate card** | See which models appear in usage, what rate applies, and fix unpriced rows. |
 
 The Cost & margin nav item can show a badge with how many models still need a rate. Cost views (Overview, Agents, Sessions) also warn when usage is unpriced.
@@ -78,11 +78,23 @@ On the **Margin & cost** tab:
 
 1. Set **You charge per minute** (one organization-wide sell price).
 2. Parlot multiplies that price by session minutes to estimate revenue.
-3. Margin compares that revenue to estimated provider cost for the past 7 days, grouped by agent or client.
+3. Margin compares that revenue to estimated provider cost for the selected date range (defaults to the past 30 days), grouped by agent or client.
 
 If sell price is empty, revenue and margin stay blank. If models are unpriced, cost can be understated—watch for warnings and incomplete-cost icons on rows that show near-zero cost despite real traffic.
 
-Export CSV when you need a snapshot for finance review. Exports may warn when sell price is missing or models are still unpriced.
+### Export CSV
+
+**Export CSV** downloads one row per session in the selected date range. Use it when finance needs session-level detail rather than the on-screen agent/client rollup.
+
+Each row includes:
+
+- Session id, start time, end time, agent, client tag, and channel
+- Duration (minutes)
+- Stage costs: LLM, STT, and TTS
+- Model cost, telephony estimate (phone channel), and total cost
+- Revenue and margin % when you have set a per-minute sell price
+
+Filenames look like `YYYYMMDD-session-cost-{range}-{hex}.csv` (for example `20261005-session-cost-30d-a3f1.csv`). Exports may warn when sell price is missing or models are still unpriced—revenue/margin can be blank and costs understated until rates are complete.
 
 ## Session Cost tab
 
