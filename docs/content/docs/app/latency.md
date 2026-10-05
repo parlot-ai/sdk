@@ -14,7 +14,7 @@ Depending on modality and instrumentation, you may see:
 - End-to-end turn latency
 - Large language model (LLM) time-to-first-token and generation time
 - Speech-to-text (STT) and text-to-speech (TTS) delays
-- Tool or application programming interface (API) wait time
+- Tool calls wait time
 - Dead air or gaps between turns
 
 Use the latency threshold control (when present) to highlight slow stages for quality review—without needing raw span IDs in the main list.

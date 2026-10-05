@@ -80,6 +80,18 @@ On the **Margin & cost** tab:
 2. Parlot multiplies that price by session minutes to estimate revenue.
 3. Margin compares that revenue to estimated provider cost for the selected date range (defaults to the past 30 days), grouped by agent or client.
 
+### Tag sessions with a client
+
+To group margin **by client**, stamp `client` on the session from your agent:
+
+```python
+from parlot.core import set_session_metadata
+
+set_session_metadata(client="acme-corp")
+```
+
+That becomes `session.metadata.client`. Sessions without a client tag appear as untagged in the client rollup. Call this after the session has started. Prefer short identifiers—avoid putting personally identifiable information (PII) in metadata. See [Custom metadata](/sdk/get-started/concepts#custom-metadata-and-external-references) in the SDK Concepts guide.
+
 If sell price is empty, revenue and margin stay blank. If models are unpriced, cost can be understated—watch for warnings and incomplete-cost icons on rows that show near-zero cost despite real traffic.
 
 ### Export CSV

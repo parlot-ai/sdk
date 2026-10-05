@@ -23,7 +23,7 @@ Open an agent for a deeper view. Tabs typically include:
 - **Topology / flow** — How this deployment hands off among specialized agents (see also the session [Flow](/app/flow) tab).
 - **Topics** — Topic catalog for this agent (labels, reuse versus newly created topics).
 - **Versions** — Version history when you stamp versions in the parlotize() call.
-- **Settings** — Overrides for recording, log capture and related agent-scoped policies.
+- **Settings** — Overrides for recording, log capture, and related agent-scoped policies (same [allowlist modes](/app/agent-policy-allowlists) as organization Settings).
 
 ## How agents appear
 
@@ -31,7 +31,7 @@ Agents are discovered from telemetry after instrumented traffic arrives. You do 
 
 ## Related settings
 
-Organization-wide defaults that affect agents live under Settings:
+Organization-wide defaults that affect agents live under Settings. Recording, logs, Gen AI content capture, and PII redaction share [Agent policy allowlists](/app/agent-policy-allowlists):
 
 - [Recording](/app/recording)
 - [Session logs and capture](/app/session-logs)

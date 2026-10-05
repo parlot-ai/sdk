@@ -20,7 +20,7 @@ Results surface on the session shell (Overview / Latency analysis areas) and in 
 
 ## Custom evaluations (`/evals`)
 
-Use custom evaluations when you need your own rubric—compliance phrases, brand tone, booking confirmation, and similar criteria.
+Use custom evaluations when you need your own rubric—compliance phrases, brand tone, and any custom criteria.
 
 Typical workflow:
 
@@ -33,7 +33,7 @@ Plan limits may cap how many custom definitions you can store. See [Licensing an
 
 ## Event-driven evaluations
 
-On plans that include event-driven evaluations, judges can run automatically as sessions close. On Free tier, some automatic session-close evaluation rules may be suspended—use the UI entitlements messaging when a control is disabled.
+On paid plans, custom judges can run automatically when a session closes. Free workspaces can still create evaluations and run them manually—automatic session-close rules require a paid plan. The Evals page explains when that option is unavailable; see also [Licensing and plans](/app/licensing-and-plans).
 
 ## Tips
 

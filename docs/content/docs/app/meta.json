@@ -15,6 +15,7 @@
     "evaluations",
     "exports-and-sharing",
     "conversation-boundaries",
+    "agent-policy-allowlists",
     "privacy-redaction",
     "recording",
     "organization-settings",

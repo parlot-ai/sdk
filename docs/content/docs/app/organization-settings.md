@@ -24,24 +24,18 @@ Free plans include a small internal seat allowance (three seats). Paid plans rai
 
 ### Plan & billing
 
-On **Parlot Cloud**, Settings → Plan & billing shows your Parlot subscription: plan, conversational turn usage, and Stripe-managed actions (upgrade, portal, and related flows).
+On **Parlot Cloud**, Settings → Plan & billing shows your Parlot subscription—plan, conversational turn usage, and billing managed through Stripe.
 
 Billing self-serve is a hosted Cloud capability. If you are not on Cloud, the page explains that in-app checkout is unavailable—contact [parlot.ai](https://parlot.ai) for commercial options.
 
 ## Agents (policy settings)
 
-Documented in depth on their own pages:
+Recording, logs, Gen AI content capture, and PII redaction share an [allowlist and per-agent override model](/app/agent-policy-allowlists). Each policy also has its own page:
 
 - [Recording](/app/recording)
 - [Session logs and Gen AI content capture](/app/session-logs)
 - [PII redaction](/app/privacy-redaction)
-- [Conversation boundaries](/app/conversation-boundaries)
-
-### Cost & margin
-
-Provider rates and margin analytics live under **Observe → [Cost & margin](/app/cost)** (`/cost`), not under Settings. See [Cost](/app/cost) for the rate card, unpriced models, telephony estimates, and margin.
-
-This is separate from **Plan & billing** (your Parlot subscription).
+- [Conversation boundaries](/app/conversation-boundaries) — idle timeouts and duration caps (separate from allowlists)
 
 ## Connections
 
@@ -51,4 +45,4 @@ This is separate from **Plan & billing** (your Parlot subscription).
 
 ### LLM connections
 
-**Settings → LLM Connections** stores bring-your-own-key credentials for custom [evaluations](/app/evaluations). Judges need a configured connection before custom runs succeed.
+**Settings → LLM Connections** stores bring-your-own-key (BYOK) credentials for custom [evaluations](/app/evaluations). Judges need a configured connection before custom runs succeed.

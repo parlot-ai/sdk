@@ -30,7 +30,7 @@ Sessions move through states you may see in the list or detail banner:
 
 ## Paste-to-search and command palette
 
-Operators often have a vendor identifier, not a Parlot session ID. Paste into Sessions search or the command palette (Ctrl/Cmd+K):
+Operators often have a vendor or business identifier, not a Parlot session ID. Paste into Sessions search or the command palette (Ctrl/Cmd+K):
 
 | What you paste | Typical source |
 |----------------|----------------|
@@ -38,8 +38,26 @@ Operators often have a vendor identifier, not a Parlot session ID. Paste into Se
 | LiveKit job ID | Agent worker logs |
 | OpenTelemetry trace ID (32 hex characters) | Trace backends or logs |
 | Parlot session ID (32 hex characters) | Parlot URLs and exports |
+| Your own external IDs | Values you stamped with `add_platform_ref` (see below) |
 
 Parlot resolves the paste to the matching session when an external reference was indexed at ingest. If several matches exist (for example a reused room name), the UI asks you to disambiguate.
+
+### Custom searchable IDs
+
+Framework adapters already index LiveKit room/job IDs and similar refs. To make your own identifiers paste-searchable (CRM ticket, `client_id`, order ID, and so on), stamp them from the agent with `add_platform_ref`:
+
+```python
+from parlot.core import add_platform_ref
+
+add_platform_ref("client_id", "acme-42")
+# Or: add_platform_ref("order_id", "ORD-100", framework="shopify")
+```
+
+After the session is ingested, pasting `acme-42` (or `ORD-100`) into Sessions search or the command palette opens that session. See [Custom metadata and external references](/sdk/get-started/concepts#custom-metadata-and-external-references) in the SDK Concepts guide.
+
+### Custom metadata (not paste-search)
+
+`set_session_metadata` stores key/value pairs under `session.metadata.*` for display on the session Overview (and for product features such as cost margin grouping via `session.metadata.client`). Those values are **not** indexed for paste-to-search—use `add_platform_ref` when operators need to look up a session by an ID.
 
 ## Opening a session
 
