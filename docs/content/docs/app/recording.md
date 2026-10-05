@@ -19,11 +19,9 @@ Without a recording, you still get turns, spans, and logs (when captured), but n
 
 ## Configuring agents
 
-On the Recording settings page:
+**Settings → Recording** uses the shared **New agents** allowlist and **Known agents** overrides (Allowlist, Forced on, Forced off). Recording defaults to on for new agents. See [Agent policy allowlists](/app/agent-policy-allowlists) for how those controls work, common setups, and how LiveKit `parlotize(record=…)` can override Settings.
 
-- Review the organization default
-- Toggle individual agents when you need exceptions
-- Run an instrumented agent once if the agent list is empty—Parlot discovers deployments from traffic
+If the Known agents list is empty, run an instrumented agent once so Parlot discovers the deployment.
 
 ## Privacy
 
@@ -31,5 +29,6 @@ Recordings follow your [PII redaction](/app/privacy-redaction) policy. Retention
 
 ## Related
 
+- [Agent policy allowlists](/app/agent-policy-allowlists) — New agents vs Known agents
 - [Timeline](/app/timeline) — listen and scrub
 - [Organization settings](/app/organization-settings) — broader workspace controls

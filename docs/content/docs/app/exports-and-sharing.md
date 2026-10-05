@@ -9,7 +9,7 @@ Collaborate without granting full dashboard access, or pull structured data for 
 
 ## Exports (`/exports`)
 
-The **Exports** page lists asynchronous export jobs for your organization. From a closed session you can also start an export from the session header.
+The **Exports** page lists session export jobs for your organization. From a closed session you can also start an export from the session header.
 
 Typical uses:
 
@@ -22,7 +22,7 @@ Export jobs produce downloadable artifacts that expire after a retention window 
 
 From a closed session, use **Share** to create a time-bounded link. Recipients open `/share/:token` without signing in as a full workspace member.
 
-Shared viewers can browse a read-only subset of session tabs (Overview, Timeline, Latency, Cost, Flow, Logs—labels may match the current product shell). They cannot change settings or run exports unless your product later grants those actions on the share surface.
+Recipients get a read-only view of the session—overview, timeline, quality, and related detail tabs depending on the link’s scope.
 
 Revoke or let links expire when a review is finished. Prefer share links over screenshots when reviewers need synced audio and span context.
 

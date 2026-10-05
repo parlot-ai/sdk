@@ -4,6 +4,8 @@ description: How Parlot defines, configures, and manages session boundaries acro
 sidebar_position: 1
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+
 # Conversation Boundaries & Session Lifecycles
 
 In conversational artificial intelligence (AI), determining when an interaction begins and ends is essential for accurate analytics, performance scoring, and cost tracking. Parlot handles this using a **two-level model of conversations and sessions**, governed by channel-aware boundary rules.
@@ -77,15 +79,15 @@ Different communication channels follow very different conversational rhythms. P
 
 | Channel | Idle Inactivity Timeout | Maximum Duration Cap | Rationale |
 | :--- | :--- | :--- | :--- |
-| **Voice** (`voice`) | **Disabled** (0 minutes) | **30 minutes** | Voice calls close immediately upon hangup signal. The 30-minute cap serves as an emergency safeguard against hung telephone lines. |
-| **Webchat** (`webchat`) | **15 minutes** | **12 hours** | Website visitors typically chat while actively browsing. If 15 minutes elapse without interaction, the session concludes so evaluations can run. |
-| **Text Messaging** (`sms`) | **60 minutes** (1 hour) | **12 hours** | Text messaging (SMS) is semi-asynchronous; users frequently step away and take several minutes or hours to reply between turns. |
-| **WhatsApp** (`whatsapp`) | **24 hours** (1 day) | **7 days** | Aligns with WhatsApp's standard 24-hour customer service messaging window. |
+| **Voice** | **Disabled** (0 minutes) | **30 minutes** | Voice calls close immediately upon hangup signal. The 30-minute cap serves as an emergency safeguard against hung telephone lines. |
+| **Webchat** | **15 minutes** | **12 hours** | Website visitors typically chat while actively browsing. If 15 minutes elapse without interaction, the session concludes so evaluations can run. |
+| **Text Messaging** | **60 minutes** (1 hour) | **12 hours** | Text messaging (SMS) is semi-asynchronous; users frequently step away and take several minutes or hours to reply between turns. |
+| **WhatsApp** | **24 hours** (1 day) | **7 days** | Aligns with WhatsApp's standard 24-hour customer service messaging window. |
 | **Fallback (Custom Channels)** | Matches **Voice** (Disabled) | Matches **Voice** (**30 minutes**) | Any custom or unrecognized channel identifier safely adopts the voice defaults until you explicitly customize it. |
 
-:::info Automatic Fallback Protection
-Your organization does not need to configure rules before going live. If you have not customized a specific channel, Parlot automatically applies these built-in defaults. Custom rules you save in the dashboard will take precedence immediately.
-:::
+<Callout type="info" title="Automatic Fallback Protection">
+  Your organization does not need to configure rules before going live. If you have not customized a specific channel, Parlot automatically applies these built-in defaults. Custom rules you save in the dashboard will take precedence immediately.
+</Callout>
 
 ---
 

@@ -17,7 +17,17 @@ export function CustomLink({
     href.startsWith('mailto:') ||
     href.startsWith('/docs/ref/')
   ) {
-    return <a href={href} {...props} />;
+    const isExternal =
+      href.startsWith('http://') || href.startsWith('https://');
+    return (
+      <a
+        href={href}
+        {...(isExternal
+          ? { target: '_blank', rel: 'noopener noreferrer' }
+          : {})}
+        {...props}
+      />
+    );
   }
 
   // If a link is written with the /docs prefix, strip it so React Router's

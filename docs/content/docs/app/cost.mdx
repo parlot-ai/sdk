@@ -1,11 +1,13 @@
 ---
 title: Cost
-description: Session spend, the rate card, unpriced models, telephony estimates, and margin.
+description: Session spend, your rate card, unpriced models, telephony estimates, and margin.
 ---
+
+import { Callout } from 'fumadocs-ui/components/callout';
 
 # Cost
 
-Parlot estimates what **providers charge you** to run voice and language models—not what you pay Parlot. Your Parlot subscription lives under **Settings → Plan & billing**.
+Parlot estimates what **providers charge you** to run voice and language models: LLMs, TTS, STT etc.
 
 You will see cost in two places:
 
@@ -28,7 +30,7 @@ Open **Observe → Cost & margin**.
 
 | Tab | Use it to |
 |-----|-----------|
-| **Margin & cost** | Set what you charge clients per minute, then compare revenue to estimated provider cost by agent or client (past 7 days). |
+| **Margin & cost** | Set what you charge clients per minute, then compare revenue to estimated provider cost by agent or client for the selected date range (defaults to the past 30 days). |
 | **Rate card** | See which models appear in usage, what rate applies, and fix unpriced rows. |
 
 The Cost & margin nav item can show a badge with how many models still need a rate. Cost views (Overview, Agents, Sessions) also warn when usage is unpriced.
@@ -39,11 +41,13 @@ Each rate-card row has a source:
 
 | Badge | Meaning |
 |-------|---------|
-| **List** | Public provider list price from Parlot’s community catalog. Useful as a default when you have not entered a contract rate. |
+| **List** | Public provider list price from the community catalog. Useful as a default when you have not entered a contract rate. |
 | **Your contract** | A rate you entered for your organization. This wins over the list price for new sessions from the moment you save it. |
 | **Unpriced** | Usage was seen, but Parlot has no list match and you have not set a rate. Cost for that usage is missing until you price it. |
 
-List rates come from the open [voice-prices](https://github.com/mahimailabs/voice-prices) community catalog (vendored into Parlot). Parlot does not mark up those rates—they are pass-through estimates of what providers charge.
+<Callout type="info">
+  List rates come from the open [voice-prices](https://github.com/mahimailabs/voice-prices) community catalog (vendored into Parlot). Parlot does not mark up those rates—they are pass-through estimates of what providers charge.
+</Callout>
 
 Past sessions keep the rate that applied when they ran. Editing a rate changes cost for **new** sessions only; it does not rewrite history.
 
@@ -74,11 +78,35 @@ On the **Margin & cost** tab:
 
 1. Set **You charge per minute** (one organization-wide sell price).
 2. Parlot multiplies that price by session minutes to estimate revenue.
-3. Margin compares that revenue to estimated provider cost for the past 7 days, grouped by agent or client.
+3. Margin compares that revenue to estimated provider cost for the selected date range (defaults to the past 30 days), grouped by agent or client.
+
+### Tag sessions with a client
+
+To group margin **by client**, stamp `client` on the session from your agent:
+
+```python
+from parlot.core import set_session_metadata
+
+set_session_metadata(client="acme-corp")
+```
+
+That becomes `session.metadata.client`. Sessions without a client tag appear as untagged in the client rollup. Call this after the session has started. Prefer short identifiers—avoid putting personally identifiable information (PII) in metadata. See [Custom metadata](/sdk/get-started/concepts#custom-metadata-and-external-references) in the SDK Concepts guide.
 
 If sell price is empty, revenue and margin stay blank. If models are unpriced, cost can be understated—watch for warnings and incomplete-cost icons on rows that show near-zero cost despite real traffic.
 
-Export CSV when you need a snapshot for finance review. Exports may warn when sell price is missing or models are still unpriced.
+### Export CSV
+
+**Export CSV** downloads **one row per priced unit** for sessions in the selected date range (defaults to the past 30 days). Use it when finance needs unit-level detail rather than the on-screen agent/client rollup.
+
+Each row includes:
+
+- Session id, start time, end time, agent, client tag, channel, and duration
+- Line item: category (LLM / STT / TTS / telephony), provider, model, unit (for example `input_mtok` vs `output_mtok`), quantity, frozen `unit_rate_usd`, `cost_usd`, and rate source
+- Session total cost, plus revenue and margin % when you have set a per-minute sell price
+
+Unit rates are frozen at **session close** from the same catalog/override resolution that priced the session—so LLM input and output appear as separate lines with their own rates. Older sessions closed before this existed may show aggregate stage rows with blank rates (`source=legacy_aggregate`).
+
+Filenames look like `YYYYMMDD-session-cost-{range}-{hex}.csv` (for example `20261005-session-cost-30d-a3f1.csv`). Exports may warn when sell price is missing or models are still unpriced—revenue/margin can be blank and costs understated until rates are complete.
 
 ## Session Cost tab
 
