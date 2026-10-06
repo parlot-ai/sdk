@@ -10,17 +10,20 @@ from opentelemetry.sdk.trace import TracerProvider
 
 from parlot.core.attrs import (
     ATTR_PARLOT_SDK_VERSION,
+    ATTR_SESSION_CLOSE_ERROR,
     ATTR_SESSION_CLOSE_REASON,
     ATTR_SESSION_ID,
     ATTR_SESSION_TOTAL_INPUT_TOKENS,
     ATTR_SESSION_TOTAL_OUTPUT_TOKENS,
     ATTR_SESSION_TURN_COUNT,
+    ATTR_SESSION_TURN_INDEX_MAX,
     SPAN_CONVERSATION_SESSION,
 )
 from parlot.core.processor import assert_sync_span_processors
 from parlot.core import sdk_version as sdk_version_mod
 from parlot.instrumentation.livekit._processor import LiveKitGenAIProcessor
 from parlot.instrumentation.livekit._session import (
+    CLOSE_ERROR_OTLP_FLUSH_INCOMPLETE,
     _parlot_job_bootstrap,
     bootstrap_session,
     finalize_session_close_from_hook,
@@ -194,8 +197,101 @@ class TestSessionBootstrap:
         ]
         assert len(close) == 1
         assert close[0].attributes[ATTR_SESSION_TURN_COUNT] == 1
+        assert close[0].attributes[ATTR_SESSION_TURN_INDEX_MAX] == 1
         assert close[0].attributes[ATTR_SESSION_TOTAL_INPUT_TOKENS] == 4143
         assert close[0].attributes[ATTR_SESSION_TOTAL_OUTPUT_TOKENS] == 317
+
+    def test_close_span_stamps_flush_incomplete_when_force_flush_fails(self) -> None:
+        from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+        from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+            InMemorySpanExporter,
+        )
+
+        from parlot.core.attrs import SPAN_PARLOT_SESSION_CLOSE
+
+        exporter = InMemorySpanExporter()
+        provider = TracerProvider()
+        provider.add_span_processor(SimpleSpanProcessor(exporter))
+        proc = LiveKitGenAIProcessor()
+        provider.add_span_processor(proc)
+        assert_sync_span_processors(provider)
+        proc.set_tracer(provider.get_tracer("test"))
+        _session, bootstrap = bootstrap_via_agent_state(proc, "AJ_flush_fail")
+
+        with (
+            patch(
+                "parlot.instrumentation.livekit._session._force_flush_tracer_provider",
+                return_value=False,
+            ),
+            patch("parlot.instrumentation.livekit._session.time.sleep"),
+            patch(
+                "parlot.instrumentation.livekit._session._CLOSE_FLUSH_BUDGET_S",
+                0.05,
+            ),
+            patch(
+                "parlot.instrumentation.livekit._session._CLOSE_FLUSH_BACKOFFS_S",
+                (0.01,),
+            ),
+        ):
+            finalize_session_close_from_hook(bootstrap, close_reason="clean_close")
+
+        close = [
+            s
+            for s in exporter.get_finished_spans()
+            if s.name == SPAN_PARLOT_SESSION_CLOSE
+        ]
+        assert len(close) == 1
+        assert (
+            close[0].attributes[ATTR_SESSION_CLOSE_ERROR]
+            == CLOSE_ERROR_OTLP_FLUSH_INCOMPLETE
+        )
+
+    def test_close_span_preserves_framework_close_error_over_flush_incomplete(
+        self,
+    ) -> None:
+        from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+        from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+            InMemorySpanExporter,
+        )
+
+        from parlot.core.attrs import SPAN_PARLOT_SESSION_CLOSE
+
+        exporter = InMemorySpanExporter()
+        provider = TracerProvider()
+        provider.add_span_processor(SimpleSpanProcessor(exporter))
+        proc = LiveKitGenAIProcessor()
+        provider.add_span_processor(proc)
+        assert_sync_span_processors(provider)
+        proc.set_tracer(provider.get_tracer("test"))
+        _session, bootstrap = bootstrap_via_agent_state(proc, "AJ_flush_keep")
+
+        with (
+            patch(
+                "parlot.instrumentation.livekit._session._force_flush_tracer_provider",
+                return_value=False,
+            ),
+            patch("parlot.instrumentation.livekit._session.time.sleep"),
+            patch(
+                "parlot.instrumentation.livekit._session._CLOSE_FLUSH_BUDGET_S",
+                0.05,
+            ),
+            patch(
+                "parlot.instrumentation.livekit._session._CLOSE_FLUSH_BACKOFFS_S",
+                (0.01,),
+            ),
+        ):
+            finalize_session_close_from_hook(
+                bootstrap,
+                close_reason="error",
+                close_error="room_disconnected",
+            )
+
+        close = [
+            s
+            for s in exporter.get_finished_spans()
+            if s.name == SPAN_PARLOT_SESSION_CLOSE
+        ]
+        assert close[0].attributes[ATTR_SESSION_CLOSE_ERROR] == "room_disconnected"
 
     def test_close_span_includes_close_reason(self) -> None:
         from opentelemetry.sdk.trace.export import SimpleSpanProcessor

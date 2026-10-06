@@ -144,6 +144,7 @@ ATTR_SESSION_INTENT_SEQUENCE = "session.intent.sequence"
 ATTR_SESSION_INTENT_SEQUENCE_TRUNCATED = "session.intent.sequence.truncated"
 ATTR_SESSION_AMD            = "session.amd"              # human | voicemail | ivr | unavailable | unknown
 ATTR_SESSION_TURN_COUNT     = "session.turn_count"
+ATTR_SESSION_TURN_INDEX_MAX = "session.turn_index_max"  # committed max turn.index at close
 ATTR_SESSION_TOOL_CALL_COUNT = "session.tool_call_count"
 ATTR_SESSION_HANDOFF_COUNT  = "session.handoff_count"
 ATTR_SESSION_TOTAL_INPUT_TOKENS = "session.total_input_tokens"

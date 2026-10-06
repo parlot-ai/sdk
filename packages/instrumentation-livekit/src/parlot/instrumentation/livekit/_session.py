@@ -24,6 +24,7 @@ from parlot.core.attrs import (
     ATTR_SESSION_TOTAL_INPUT_TOKENS,
     ATTR_SESSION_TOTAL_OUTPUT_TOKENS,
     ATTR_SESSION_TURN_COUNT,
+    ATTR_SESSION_TURN_INDEX_MAX,
     SPAN_CONVERSATION_SESSION,
     SPAN_PARLOT_SESSION_CLOSE,
 )
@@ -284,21 +285,85 @@ def _end_session_span(bootstrap: _JobBootstrap, end_time: int | None = None) -> 
     bootstrap.session_span_ended = True
 
 
-def _flush_otlp_before_session_close(_bootstrap: _JobBootstrap) -> None:
-    """Export pending spans before the close signal span."""
+# Close-path flush budget (~12s wall from AgentSession close) with short backoff.
+_CLOSE_FLUSH_BUDGET_S = 12.0
+_CLOSE_FLUSH_BACKOFFS_S = (1.0, 3.0, 6.0)
+_CLOSE_FLUSH_ATTEMPT_TIMEOUT_MS = 4_000
+CLOSE_ERROR_OTLP_FLUSH_INCOMPLETE = "otlp_flush_incomplete"
+
+
+def _force_flush_tracer_provider(*, timeout_millis: int) -> bool:
+    """Return True when the tracer provider reports a successful flush."""
     from opentelemetry import trace
 
     provider = trace.get_tracer_provider()
     if provider is None:
-        return
+        return True
     force_flush = getattr(provider, "force_flush", None)
     if not callable(force_flush):
-        return
-    timeout_ms = 5_000
+        return True
     try:
-        force_flush(timeout_millis=timeout_ms)
+        result = force_flush(timeout_millis=timeout_millis)
     except TypeError:
-        force_flush()
+        result = force_flush()
+    except Exception:
+        logger.warning("parlot: force_flush raised before session close", exc_info=True)
+        return False
+    if result is None:
+        # Some providers return None on success; treat as ok.
+        return True
+    return bool(result)
+
+
+def _flush_otlp_before_session_close(_bootstrap: _JobBootstrap) -> bool:
+    """Retry OTLP flush before emitting ``parlot.session.close``.
+
+    Returns True when flush confirmed within the close budget; False otherwise.
+    Backoffs are 1s / 3s / 6s inside a ~12s wall-clock budget shared with ingest.
+    """
+    started = time.monotonic()
+    attempt = 0
+    while True:
+        attempt += 1
+        remaining_s = _CLOSE_FLUSH_BUDGET_S - (time.monotonic() - started)
+        if remaining_s <= 0:
+            break
+        timeout_ms = min(
+            _CLOSE_FLUSH_ATTEMPT_TIMEOUT_MS,
+            max(1, int(remaining_s * 1000)),
+        )
+        ok = _force_flush_tracer_provider(timeout_millis=timeout_ms)
+        elapsed_ms = int((time.monotonic() - started) * 1000)
+        if ok:
+            logger.info(
+                "parlot: otlp flush before close ok attempts=%s elapsed_ms=%s",
+                attempt,
+                elapsed_ms,
+            )
+            return True
+        backoff_idx = attempt - 1
+        if backoff_idx >= len(_CLOSE_FLUSH_BACKOFFS_S):
+            break
+        backoff_s = _CLOSE_FLUSH_BACKOFFS_S[backoff_idx]
+        remaining_s = _CLOSE_FLUSH_BUDGET_S - (time.monotonic() - started)
+        if remaining_s <= 0:
+            break
+        sleep_s = min(backoff_s, remaining_s)
+        logger.warning(
+            "parlot: otlp flush before close incomplete; retrying "
+            "attempt=%s sleep_s=%.1f remaining_s=%.1f",
+            attempt,
+            sleep_s,
+            remaining_s,
+        )
+        time.sleep(sleep_s)
+    elapsed_ms = int((time.monotonic() - started) * 1000)
+    logger.warning(
+        "parlot: otlp flush before close failed attempts=%s elapsed_ms=%s",
+        attempt,
+        elapsed_ms,
+    )
+    return False
 
 
 def emit_parlot_session_close_span(
@@ -336,6 +401,7 @@ def emit_parlot_session_close_span(
                 attrs[key] = value
     # Stale snapshot on parlot.session can under-report; state is authoritative.
     attrs[ATTR_SESSION_TURN_COUNT] = state.turn_count
+    attrs[ATTR_SESSION_TURN_INDEX_MAX] = state.turn_count
     attrs[ATTR_SESSION_TOTAL_INPUT_TOKENS] = state.total_input_tokens
     attrs[ATTR_SESSION_TOTAL_OUTPUT_TOKENS] = state.total_output_tokens
     stamp_session_metadata_attrs(attrs, getattr(state, "custom_metadata", None))
@@ -423,12 +489,16 @@ def finalize_session_close_from_hook(
         return
     _finalize_session_aggregates(bootstrap)
     _end_session_span(bootstrap, end_time=end_time)
-    _flush_otlp_before_session_close(bootstrap)
+    flush_ok = _flush_otlp_before_session_close(bootstrap)
+    resolved_close_error = close_error
+    if not flush_ok:
+        # Prefer an existing close_error from the framework; otherwise stamp flush miss.
+        resolved_close_error = close_error or CLOSE_ERROR_OTLP_FLUSH_INCOMPLETE
     emit_parlot_session_close_span(
         bootstrap,
         end_time=end_time,
         close_reason=close_reason,
-        close_error=close_error,
+        close_error=resolved_close_error,
     )
     # Mark closed before cleanup so other tasks still holding this ContextVar
     # value stop resolving session attributes (close hook != attach task).
