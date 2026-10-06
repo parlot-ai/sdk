@@ -65,6 +65,7 @@ export const ATTR_SESSION_INTENT_SEQUENCE = "session.intent.sequence" as const;
 export const ATTR_SESSION_INTENT_SEQUENCE_TRUNCATED = "session.intent.sequence.truncated" as const;
 export const ATTR_SESSION_AMD = "session.amd" as const;
 export const ATTR_SESSION_TURN_COUNT = "session.turn_count" as const;
+export const ATTR_SESSION_TURN_INDEX_MAX = "session.turn_index_max" as const;
 export const ATTR_SESSION_TOOL_CALL_COUNT = "session.tool_call_count" as const;
 export const ATTR_SESSION_HANDOFF_COUNT = "session.handoff_count" as const;
 export const ATTR_SESSION_TOTAL_INPUT_TOKENS = "session.total_input_tokens" as const;
