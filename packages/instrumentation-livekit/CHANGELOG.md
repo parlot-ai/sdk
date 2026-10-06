@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.3](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.2...instrumentation-livekit-v0.4.3) (2026-10-06)
+
+
+### Features
+
+* **livekit:** retry OTLP flush before session close ([#90](https://github.com/parlot-ai/sdk/issues/90)) ([d32e603](https://github.com/parlot-ai/sdk/commit/d32e6031d8bd5d1a74584658b617f62edc659abe))
+
 ## [0.4.2](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.1...instrumentation-livekit-v0.4.2) (2026-09-29)
 
 

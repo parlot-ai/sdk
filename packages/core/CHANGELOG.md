@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.5](https://github.com/parlot-ai/sdk/compare/core-v0.4.4...core-v0.4.5) (2026-10-06)
+
+
+### Features
+
+* **livekit:** retry OTLP flush before session close ([#90](https://github.com/parlot-ai/sdk/issues/90)) ([d32e603](https://github.com/parlot-ai/sdk/commit/d32e6031d8bd5d1a74584658b617f62edc659abe))
+
+
+### Documentation
+
+* Cost CSV export and callout/link doc polish ([#88](https://github.com/parlot-ai/sdk/issues/88)) ([eadfcfd](https://github.com/parlot-ai/sdk/commit/eadfcfdc09880689f2426f37a4b06b75d0d9b5bb))
+
 ## [0.4.4](https://github.com/parlot-ai/sdk/compare/core-v0.4.3...core-v0.4.4) (2026-10-04)
 
 
