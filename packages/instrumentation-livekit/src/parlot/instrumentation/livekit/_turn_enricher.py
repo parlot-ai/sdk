@@ -306,11 +306,11 @@ class TurnEnricher:
         agent_hint = topology_agent_name(state.agent_label) or topology_agent_name(
             state.worker_agent_name
         )
-        modality = self._modality_for_user_text(text, state)
+        event_metrics = metrics or {}
+        modality = self._modality_for_user_text(text, state, event_metrics)
         turn_label = ""
         speech_wall_override: tuple[int, int] | None = None
         media_segment_override: tuple[int, int] | None = None
-        event_metrics = metrics or {}
 
         if state.pending_interrupt_speech_end_wall_ms > 0:
             speech_start_wall_ms = state.pending_interrupt_speech_end_wall_ms
@@ -410,6 +410,7 @@ class TurnEnricher:
         )
         if interrupted and metrics:
             self._stash_interrupt_boundary(state, metrics)
+        self._remember_agent_speech_end(state, metrics)
         state.turn_count = turn_index
         state.open_agent_turn_index = None
         self._record_turn_metrics_from_event(
@@ -925,27 +926,29 @@ class TurnEnricher:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _modality_for_user_text(self, text: str, state: _LiveKitSessionState) -> str:
+    def _modality_for_user_text(
+        self,
+        text: str,
+        state: _LiveKitSessionState,
+        metrics: Mapping[str, float] | None = None,
+    ) -> str:
         if state.pending_interrupt_speech_end_wall_ms > 0:
             return "voice"
         if state.pending_user_speaker_id or state.pending_user_language:
+            return "voice"
+        # ChatMessage.metrics speaking timestamps imply a voice turn even when
+        # user_input_transcribed did not stash a speaker id.
+        if metrics and metrics.get("started_speaking_at") is not None:
             return "voice"
         return "text"
 
     def _stash_interrupt_boundary(
         self, state: _LiveKitSessionState, metrics: Mapping[str, float]
     ) -> None:
-        started = metrics.get("started_speaking_at")
-        stopped = metrics.get("stopped_speaking_at")
-        if started is None or stopped is None:
+        wall = self._speech_wall_ms_from_metrics(metrics)
+        if wall is None:
             return
-        try:
-            speech_start_wall_ms = int(float(started) * 1000)
-            speech_end_wall_ms = int(float(stopped) * 1000)
-        except (TypeError, ValueError):
-            return
-        if speech_end_wall_ms <= speech_start_wall_ms:
-            return
+        speech_start_wall_ms, speech_end_wall_ms = wall
         _, media_end_ms = self._recording.media_segments_from_speech(
             state, speech_start_wall_ms, speech_end_wall_ms
         )
@@ -953,6 +956,57 @@ class TurnEnricher:
             return
         state.pending_interrupt_media_end_ms = media_end_ms
         state.pending_interrupt_speech_end_wall_ms = speech_end_wall_ms
+
+    @staticmethod
+    def _speech_wall_ms_from_metrics(
+        metrics: Mapping[str, float] | None,
+    ) -> tuple[int, int] | None:
+        if not metrics:
+            return None
+        started = metrics.get("started_speaking_at")
+        stopped = metrics.get("stopped_speaking_at")
+        if started is None or stopped is None:
+            return None
+        try:
+            speech_start_wall_ms = int(float(started) * 1000)
+            speech_end_wall_ms = int(float(stopped) * 1000)
+        except (TypeError, ValueError):
+            return None
+        if speech_end_wall_ms <= speech_start_wall_ms:
+            return None
+        return speech_start_wall_ms, speech_end_wall_ms
+
+    @staticmethod
+    def _remember_agent_speech_end(
+        state: _LiveKitSessionState, metrics: Mapping[str, float] | None
+    ) -> None:
+        wall = TurnEnricher._speech_wall_ms_from_metrics(metrics)
+        if wall is None:
+            return
+        _, end_ms = wall
+        if end_ms > state.last_agent_speech_end_wall_ms:
+            state.last_agent_speech_end_wall_ms = end_ms
+
+    @staticmethod
+    def _clamp_user_speech_wall(
+        state: _LiveKitSessionState, start_ms: int, end_ms: int
+    ) -> tuple[int, int]:
+        """Clamp user speech start to after the prior agent finished speaking.
+
+        LiveKit's ChatMessage.metrics.started_speaking_at is the first
+        voice-activity-detection (VAD) start of speech of the open user_turn —
+        when the detector first thinks the caller began talking, not necessarily
+        the burst that produced the final transcript. That start-of-speech can
+        fire before/during an agent greeting, so the reported window spans the
+        greeting and inverts timeline order.
+        """
+        floor = state.last_agent_speech_end_wall_ms
+        if floor <= 0 or start_ms >= floor:
+            return start_ms, end_ms
+        start_ms = floor
+        if end_ms <= start_ms:
+            end_ms = start_ms + 1
+        return start_ms, end_ms
 
     def _resolve_user_participant_from_state(
         self, state: _LiveKitSessionState
@@ -1144,7 +1198,7 @@ class TurnEnricher:
             return out
         wall = self._recording.speech_wall_ms_from_span(span)
         if wall is not None:
-            start_ms, end_ms = wall
+            start_ms, end_ms = self._clamp_user_speech_wall(state, *wall)
             out[ATTR_TURN_SPEECH_WALL_START_MS] = start_ms
             out[ATTR_TURN_SPEECH_WALL_END_MS] = end_ms
             media_start, media_end = self._recording.media_segments_from_speech(
@@ -1447,23 +1501,37 @@ class TurnEnricher:
         if speech_wall is None and self._speech_media_from_metrics_allowed(
             input_modality
         ):
-            started = metrics.get("started_speaking_at")
-            stopped = metrics.get("stopped_speaking_at")
-            if started is not None and stopped is not None:
-                try:
-                    speech_start_wall_ms = int(float(started) * 1000)
-                    speech_end_wall_ms = int(float(stopped) * 1000)
-                    if speech_end_wall_ms > speech_start_wall_ms:
-                        speech_wall = (speech_start_wall_ms, speech_end_wall_ms)
-                        start_time_unix_ns = speech_start_wall_ms * 1_000_000
-                        end_time_unix_ns = speech_end_wall_ms * 1_000_000
-                        media_start_ms, media_end_ms = (
-                            self._recording.media_segments_from_speech(
-                                state, speech_start_wall_ms, speech_end_wall_ms
-                            )
+            wall_from_metrics = self._speech_wall_ms_from_metrics(metrics)
+            if wall_from_metrics is not None:
+                speech_start_wall_ms, speech_end_wall_ms = wall_from_metrics
+                speech_wall = (speech_start_wall_ms, speech_end_wall_ms)
+                start_time_unix_ns = speech_start_wall_ms * 1_000_000
+                end_time_unix_ns = speech_end_wall_ms * 1_000_000
+                media_start_ms, media_end_ms = self._recording.media_segments_from_speech(
+                    state, speech_start_wall_ms, speech_end_wall_ms
+                )
+
+        # LiveKit first start-of-speech user windows can precede the prior agent greeting.
+        if (
+            role == "user"
+            and speech_wall is not None
+            and speech_start_wall_ms is not None
+            and speech_end_wall_ms is not None
+        ):
+            clamped_start, clamped_end = self._clamp_user_speech_wall(
+                state, speech_start_wall_ms, speech_end_wall_ms
+            )
+            if (clamped_start, clamped_end) != (speech_start_wall_ms, speech_end_wall_ms):
+                speech_start_wall_ms, speech_end_wall_ms = clamped_start, clamped_end
+                speech_wall = (speech_start_wall_ms, speech_end_wall_ms)
+                start_time_unix_ns = speech_start_wall_ms * 1_000_000
+                end_time_unix_ns = speech_end_wall_ms * 1_000_000
+                if media_segment_override is None:
+                    media_start_ms, media_end_ms = (
+                        self._recording.media_segments_from_speech(
+                            state, speech_start_wall_ms, speech_end_wall_ms
                         )
-                except (TypeError, ValueError):
-                    pass
+                    )
 
         trace_id, root_span_id = emit_turn_root_span(
             self._tracer,

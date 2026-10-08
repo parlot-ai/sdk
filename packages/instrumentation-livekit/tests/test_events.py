@@ -26,6 +26,8 @@ from parlot.core.attrs import (
     ATTR_TURN_LANGUAGE,
     ATTR_TURN_PARTICIPANT_LABEL,
     ATTR_TURN_PARTICIPANT_ROLE,
+    ATTR_TURN_SPEECH_WALL_END_MS,
+    ATTR_TURN_SPEECH_WALL_START_MS,
     ATTR_TURN_USER_TEXT,
     ATTR_VOICE_STT_CONFIDENCE,
     SPAN_AGENT_HANDOFF,
@@ -550,6 +552,95 @@ class TestEventBridgeTurns:
             == ATTR_DIAR_SOURCE_REALTIME_INTERRUPT
         )
         assert user_turns[0].attributes[ATTR_TURN_PARTICIPANT_LABEL] == "Caller"
+
+    def test_user_speech_start_clamped_after_prior_agent_greeting(self) -> None:
+        """LiveKit first start-of-speech can precede the agent greeting.
+
+        Regression from observability dump RM_4ZtwxwfE2QbM: ChatMessage metrics
+        use the first voice-activity-detection (VAD) start of speech for the
+        open user_turn, which can land before the greeting:
+          assistant started/stopped  …408.228 / …412.871
+          user started/stopped       …403.761 / …418.121  (spans the greeting)
+        """
+        proc, exporter = _proc_with_exporter()
+        _bootstrap(proc)
+        proc.set_turn_source("events")
+        from parlot.instrumentation.livekit._session import get_job_bootstrap
+
+        bootstrap = get_job_bootstrap()
+        # Recording starts ~2.3s after session; greeting media was ~2923.
+        anchor_wall_ms = 1_791_404_405_305
+        proc.set_recording_anchor_wall_ms(bootstrap.state, anchor_wall_ms)
+
+        agent_started = 1_791_404_408.2281
+        agent_stopped = 1_791_404_412.871083
+        user_started = 1_791_404_403.7614741
+        user_stopped = 1_791_404_418.120783
+
+        bridge = _event_bridge(proc)
+        bridge._on_user_input_transcribed(
+            SimpleNamespace(is_final=True, speaker_id="caller", language="en")
+        )
+        bridge._on_conversation_item_added(
+            SimpleNamespace(
+                item=SimpleNamespace(
+                    id="msg-greet",
+                    type="message",
+                    role="assistant",
+                    text_content=(
+                        "Hello, thanks for calling The LiveKit Hotel, "
+                        "how can I help you?"
+                    ),
+                    interrupted=False,
+                    metrics={
+                        "started_speaking_at": agent_started,
+                        "stopped_speaking_at": agent_stopped,
+                    },
+                )
+            )
+        )
+        bridge._on_conversation_item_added(
+            SimpleNamespace(
+                item=SimpleNamespace(
+                    id="msg-user1",
+                    type="message",
+                    role="user",
+                    text_content="I want to book a room",
+                    interrupted=False,
+                    metrics={
+                        "started_speaking_at": user_started,
+                        "stopped_speaking_at": user_stopped,
+                        "transcription_delay": 0.0,
+                    },
+                )
+            )
+        )
+
+        turns = _parlot_turns(exporter)
+        agent_turns = [
+            t
+            for t in turns
+            if t.attributes.get(ATTR_TURN_PARTICIPANT_ROLE) == "agent"
+        ]
+        user_turns = [
+            t
+            for t in turns
+            if t.attributes.get(ATTR_TURN_PARTICIPANT_ROLE) == "user"
+        ]
+        assert len(agent_turns) == 1
+        assert len(user_turns) == 1
+
+        agent_end_ms = int(agent_stopped * 1000)
+        user_end_ms = int(user_stopped * 1000)
+        assert user_turns[0].attributes[ATTR_TURN_SPEECH_WALL_START_MS] == agent_end_ms
+        assert user_turns[0].attributes[ATTR_TURN_SPEECH_WALL_END_MS] == user_end_ms
+        # Media must start after the greeting, not clamp to 0 before the anchor.
+        assert user_turns[0].attributes[ATTR_TURN_MEDIA_START_MS] == (
+            agent_end_ms - anchor_wall_ms
+        )
+        assert agent_turns[0].attributes[ATTR_TURN_MEDIA_START_MS] < (
+            user_turns[0].attributes[ATTR_TURN_MEDIA_START_MS]
+        )
 
 
 class TestNormalizeCloseReason:
