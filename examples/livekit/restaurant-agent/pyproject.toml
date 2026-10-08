@@ -4,16 +4,11 @@ version = "0.0.0"
 description = "Parlot + LiveKit restaurant multi-agent routing example"
 requires-python = ">=3.11"
 dependencies = [
-    "parlot-core",
-    "parlot-instrumentation-livekit",
     "livekit-agents[openai,silero]",
     "python-dotenv>=1.0",
     "pyyaml>=6.0",
+    "parlot[livekit]>=0.3.2",
 ]
 
 [tool.uv]
 package = false
-
-[tool.uv.sources]
-parlot-core = { path = "../../../packages/core", editable = true }
-parlot-instrumentation-livekit = { path = "../../../packages/instrumentation-livekit", editable = true }
