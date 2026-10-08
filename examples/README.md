@@ -16,7 +16,7 @@ This directory contains reference implementations of AI agents instrumented with
 
 ## Running examples in this repo
 
-Each example uses editable local path dependencies to `packages/*` so SDK changes are immediately available.
+Each example depends on published Parlot packages from PyPI (`parlot[livekit]` or `parlot[langgraph]`).
 
 Requires [uv](https://docs.astral.sh/uv/) and the [LiveKit CLI](https://docs.livekit.io/reference/developer-tools/livekit-cli/) (`lk`) for local agent dev/console.
 
@@ -31,15 +31,12 @@ lk agent dev
 
 ## Copying an example into your own project
 
-If you copy an example into a standalone repository or project:
-
-1. Remove the `[tool.uv.sources]` section from `pyproject.toml`.
-2. Install Parlot packages from PyPI:
+Examples already install Parlot from PyPI. To add the same dependency in your own project:
 
 ```bash
-# Using uv
-uv add parlot-instrumentation-livekit
+# Using uv (LiveKit)
+uv add "parlot[livekit]"
 
 # Or using pip
-pip install parlot-instrumentation-livekit
+pip install "parlot[livekit]"
 ```
