@@ -44,6 +44,11 @@ class _LiveKitSessionState(_BaseSessionState):
     tool_execution_ns_queue: list[int] = field(default_factory=list)
     pending_interrupt_media_end_ms: int = 0
     pending_interrupt_speech_end_wall_ms: int = 0
+    # Wall-clock ms when the last committed agent turn stopped speaking.
+    # Used to clamp LiveKit user started_speaking_at that can open on an early
+    # voice-activity-detection (VAD) start of speech before the agent greeting
+    # finishes (that first start-of-speech timestamp then spans the greeting).
+    last_agent_speech_end_wall_ms: int = 0
     # Attrs observed on native user_turn/agent_turn to stamp onto parlot.turn
     pending_turn_pipeline_attrs: dict[int, dict[str, AttributeValue]] = field(
         default_factory=dict
