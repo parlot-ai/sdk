@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.4](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.3...instrumentation-livekit-v0.4.4) (2026-10-08)
+
+
+### Bug Fixes
+
+* **livekit:** clamp user speech start after prior agent turn ([#92](https://github.com/parlot-ai/sdk/issues/92)) ([50b5591](https://github.com/parlot-ai/sdk/commit/50b5591f6d65e425f5f8040d3a805ab1d460a076))
+
 ## [0.4.3](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.2...instrumentation-livekit-v0.4.3) (2026-10-06)
 
 
