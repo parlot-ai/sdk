@@ -57,6 +57,8 @@ def _reset_parlotize():
     _auto._configured_agent_id = None
     _auto._configured_agent_version = ""
     _auto._configured_record = None
+    _auto._configured_await_recording = False
+    _auto._configured_processor = None
 
     import livekit.agents as lk
 

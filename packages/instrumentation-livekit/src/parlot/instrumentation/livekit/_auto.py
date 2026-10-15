@@ -18,10 +18,12 @@ _escalation_metadata_match: dict[str, str] | None = None
 _configured_agent_id: str | None = None
 _configured_agent_version: str = ""
 _configured_record: bool | list[str] | None = None
+_configured_await_recording: bool = False
 _configured_capture_genai_content: bool | None = None
 _configured_capture_logs: bool | list[str] | None = None
 _configured_log_level: str | None = None
 _parlot_context: ParlotContext | None = None
+_configured_processor: Any | None = None
 
 
 def parlotize(
@@ -36,6 +38,7 @@ def parlotize(
     escalation_metadata_match: dict[str, str] | None = None,
     version: Optional[str] = None,
     record: bool | list[str] | None = None,
+    await_recording: bool = False,
     capture_logs: bool | list[str] | None = None,
     log_level: Optional[str] = None,
 ) -> ParlotContext:
@@ -76,6 +79,12 @@ def parlotize(
         record: Audio recording policy. Boolean or agent-id glob patterns
             (e.g. ``["support-*", "billing"]``). Precedence: LiveKit job
             metadata ``record`` → this kwarg → Settings → Recording.
+        await_recording: When ``True`` and recording is enabled, ``ctx.connect()``
+            bootstraps the Parlot session if needed and waits until Room Composite
+            egress has started (recording timeline t=0) before returning. Use with
+            ``await ctx.connect()`` before ``session.start()`` so the first agent
+            greeting is not cut from the session recording. Default ``False``
+            preserves low connect latency (egress may start after the greeting).
         capture_logs: Shared — session log capture (bool or globs). Precedence:
             job metadata → this kwarg → Settings → Logs → on.
         log_level: Shared — minimum level for session log capture.
@@ -86,7 +95,7 @@ def parlotize(
     """
     global _configured, _auto_escalate_sip, _escalation_metadata_match
     global _configured_agent_id, _configured_agent_version
-    global _configured_record
+    global _configured_record, _configured_await_recording
     global _configured_capture_genai_content, _configured_capture_logs, _configured_log_level
     global _parlot_context
     if _configured:
@@ -106,6 +115,7 @@ def parlotize(
         _configured_record = [str(item).strip() for item in record if str(item).strip()]
     else:
         _configured_record = record
+    _configured_await_recording = bool(await_recording)
     from parlot.core.provider import resolve_capture_genai_content
 
     _configured_capture_genai_content = resolve_capture_genai_content(capture_genai_content)
@@ -288,7 +298,9 @@ def _register_with_livekit(provider) -> None:
 
 
 def _patch_agent_session_with_tracer(provider) -> None:
+    global _configured_processor
     processor = getattr(provider, "_parlot_processor", None)
+    _configured_processor = processor
     if processor is None:
         logger.debug("No Parlot processor on provider; skipping AgentSession patch")
         return
@@ -314,6 +326,48 @@ def _install_telemetry_compare() -> None:
         logger.debug("PARLOT_TELEMETRY_COMPARE enabled (events/spans via processor hooks)")
 
 
+async def _bootstrap_for_await_recording(ctx: Any) -> None:
+    """Mint ``parlot.session`` at connect time when ``await_recording`` is on."""
+    from ._platform_refs import _job_room_fields
+    from ._recording_guard import agent_name_from_ctx
+    from ._session import bootstrap_session, get_job_bootstrap
+
+    if get_job_bootstrap() is not None:
+        return
+    processor = _configured_processor
+    if processor is None:
+        logger.warning(
+            "parlot: await_recording skipped bootstrap — no LiveKitGenAIProcessor"
+        )
+        return
+    vendor_job_id, room_name, room_sid = _job_room_fields(ctx)
+    bootstrap_session(
+        processor,
+        vendor_job_id=vendor_job_id,
+        room_name=room_name,
+        room_sid=room_sid,
+        worker_agent_name=agent_name_from_ctx(ctx),
+    )
+
+
+async def _run_connect_recording_side_effects(ctx: Any) -> None:
+    """Start or await egress after ``JobContext.connect`` (recording policy)."""
+    from ._recording_guard import should_record
+    from ._session import _run_post_bootstrap_connect, get_job_bootstrap
+
+    if configured_await_recording() and should_record(
+        ctx, context=configured_context()
+    ):
+        await _bootstrap_for_await_recording(ctx)
+        if get_job_bootstrap() is not None:
+            await _run_post_bootstrap_connect(ctx)
+        return
+
+    if get_job_bootstrap() is None:
+        return
+    await _run_post_bootstrap_connect(ctx)
+
+
 def _patch_job_context_connect() -> None:
     try:
         from livekit.agents import JobContext
@@ -328,13 +382,8 @@ def _patch_job_context_connect() -> None:
 
     async def _parlot_connect(self, *args, **kwargs):
         await _orig_connect(self, *args, **kwargs)
-        from ._session import _run_post_bootstrap_connect, get_job_bootstrap
-
         _install_participant_escalation_hooks(self)
-
-        if get_job_bootstrap() is None:
-            return
-        await _run_post_bootstrap_connect(self)
+        await _run_connect_recording_side_effects(self)
 
     setattr(_parlot_connect, "_parlot_connect_patched", True)
     setattr(JobContext, "connect", _parlot_connect)
@@ -415,6 +464,11 @@ def configured_agent_version() -> str:
 def configured_record() -> bool | list[str] | None:
     """Recording override from ``parlotize(record=...)`` if set."""
     return _configured_record
+
+
+def configured_await_recording() -> bool:
+    """Whether ``ctx.connect()`` should wait for recording egress to start."""
+    return _configured_await_recording
 
 
 def configured_capture_genai_content() -> bool | None:

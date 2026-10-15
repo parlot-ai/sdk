@@ -236,6 +236,8 @@ class LiveKitEventBridge:
 
         from ._session import bootstrap_session, get_job_bootstrap, schedule_post_bootstrap_connect
 
+        # Connect-time ``await_recording=True`` may have already bootstrapped +
+        # started egress; this path remains the fallback for the default race.
         if get_job_bootstrap() is not None:
             return
 
