@@ -205,6 +205,48 @@ class TestEventBridgeTurns:
         assert turns[0].attributes[ATTR_TURN_AGENT_TEXT] == "Console reply"
         assert turns[0].attributes[ATTR_TURN_INPUT_MODALITY] == "text"
 
+    def test_spoken_agent_after_text_user_stamps_voice_media(self) -> None:
+        """Spoken agent reply after a text card entry must keep media offsets.
+
+        Regression from session 01a140658fa47e8693726f007a71d855: inheriting
+        text modality skipped speech_wall/media_segment, so the agent turn
+        sorted after a later voice barge-in on the timeline.
+        """
+        proc, exporter = _proc_with_exporter()
+        _bootstrap(proc)
+        from parlot.instrumentation.livekit._session import get_job_bootstrap
+
+        bootstrap = get_job_bootstrap()
+        assert bootstrap is not None
+        bootstrap.state.last_user_input_modality = "text"
+        bootstrap.state.open_agent_turn_index = 38
+        bootstrap.state.turn_count = 37
+        anchor_wall_ms = 1_792_081_764_207
+        proc.set_recording_anchor_wall_ms(bootstrap.state, anchor_wall_ms)
+        proc.set_turn_source("events")
+
+        agent_started = anchor_wall_ms / 1000.0 + 136.853
+        agent_stopped = anchor_wall_ms / 1000.0 + 142.135
+        proc.commit_agent_message(
+            "I'm sorry, it's still not being accepted.",
+            metrics={
+                "started_speaking_at": agent_started,
+                "stopped_speaking_at": agent_stopped,
+                "llm_ttft": 0.575,
+                "tts_ttfb": 0.167,
+            },
+        )
+
+        turns = _parlot_turns(exporter)
+        assert len(turns) == 1
+        attrs = turns[0].attributes
+        assert attrs[ATTR_TURN_INPUT_MODALITY] == "voice"
+        assert attrs[ATTR_TURN_INDEX] == 38
+        assert attrs[ATTR_TURN_MEDIA_START_MS] == 136_853
+        assert attrs[ATTR_TURN_MEDIA_END_MS] == 142_135
+        assert attrs[ATTR_TURN_SPEECH_WALL_START_MS] == int(agent_started * 1000)
+        assert attrs[ATTR_TURN_SPEECH_WALL_END_MS] == int(agent_stopped * 1000)
+
     def test_user_transcription_meta_applied_to_turn(self) -> None:
         proc, exporter = _proc_with_exporter()
         _bootstrap(proc)

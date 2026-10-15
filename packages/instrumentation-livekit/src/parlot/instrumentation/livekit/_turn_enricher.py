@@ -387,7 +387,13 @@ class TurnEnricher:
         turn_index = state.open_agent_turn_index or (state.turn_count + 1)
         state.agent_text_by_turn[turn_index] = text.strip()
         agent_id = self._active_agent_id(state, {})
+        # Inherit last user modality for console/text replies, but promote to
+        # voice when ChatMessage metrics include speaking timestamps so
+        # speech_wall_* / media_segment_* are stamped (text card dialogs
+        # followed by spoken agent replies must not lose timeline offsets).
         modality = state.last_user_input_modality or "voice"
+        if self._speech_wall_ms_from_metrics(metrics) is not None:
+            modality = "voice"
         self._emit_turn_trace(
             state,
             turn_index=turn_index,
