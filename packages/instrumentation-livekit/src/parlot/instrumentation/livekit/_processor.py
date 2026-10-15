@@ -42,6 +42,7 @@ from parlot.core.attrs import (
     ATTR_SESSION_LANGUAGES,
     ATTR_SESSION_RECORDING_ANCHOR_WALL_MS,
     ATTR_SESSION_TOOL_CALL_COUNT,
+    ATTR_SESSION_TOTAL_CACHED_TOKENS,
     ATTR_SESSION_TOTAL_INPUT_TOKENS,
     ATTR_SESSION_TOTAL_OUTPUT_TOKENS,
     ATTR_SESSION_TURN_COUNT,
@@ -308,8 +309,10 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
     def note_function_tools_executed(self, count: int) -> None:
         self._turns.note_function_tools_executed(count)
 
-    def apply_session_usage(self, total_in: int, total_out: int) -> None:
-        self._tokens.apply_session_usage(total_in, total_out)
+    def apply_session_usage(
+        self, total_in: int, total_out: int, total_cached: int = 0
+    ) -> None:
+        self._tokens.apply_session_usage(total_in, total_out, total_cached)
 
     def note_session_error(self, message: str, *, recoverable: bool) -> None:
         if not recoverable and message:
@@ -649,6 +652,9 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         )
         session_span.set_attribute(
             ATTR_SESSION_TOTAL_OUTPUT_TOKENS, state.total_output_tokens
+        )
+        session_span.set_attribute(
+            ATTR_SESSION_TOTAL_CACHED_TOKENS, state.total_cached_tokens
         )
         if state.user_id:
             session_span.set_attribute(ATTR_SESSION_USER_ID, state.user_id)
