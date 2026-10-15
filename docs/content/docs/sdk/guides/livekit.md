@@ -67,7 +67,7 @@ async def entrypoint(ctx: JobContext):
 
 `parlotize()` registers an OTLP `TracerProvider` with `livekit.agents.telemetry`, installs AgentSession event hooks, and (when recording is enabled) starts room composite egress after session bootstrap. Pass a stable deployment id; use `version=` for a real deployment label (otherwise Parlot stamps `"unknown"`).
 
-By default, egress starts in the background after the agent becomes ready, so a fast greeting can begin a second or two before the recording timeline (`t=0`). If you need the first agent turn fully on the session recording, pass **`await_recording=True`**: with `await ctx.connect()` before `session.start()`, connect waits until egress has started (upload grant + LiveKit API) before returning. That adds a little connect latency; leave it off when you prefer the lowest time-to-first-speech.
+If you need the first agent greeting on the session recording, pass **`await_recording=True`** (with `await ctx.connect()` before `session.start()`). That waits for recording to start before connect returns and may add a little latency; leave it off for the lowest time-to-first-speech.
 
 ```python
 parlotize("my-agent", version="0.1.0", await_recording=True)
