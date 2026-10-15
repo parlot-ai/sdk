@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.6](https://github.com/parlot-ai/sdk/compare/core-v0.4.5...core-v0.4.6) (2026-10-15)
+
+
+### Features
+
+* **livekit:** stamp cached tokens on LLM spans and session totals ([#96](https://github.com/parlot-ai/sdk/issues/96)) ([9fd7b8a](https://github.com/parlot-ai/sdk/commit/9fd7b8ac33b32ac3ff33472480e2f5413869ec02))
+
 ## [0.4.5](https://github.com/parlot-ai/sdk/compare/core-v0.4.4...core-v0.4.5) (2026-10-06)
 
 
