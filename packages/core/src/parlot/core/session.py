@@ -36,6 +36,7 @@ class SessionState:
 
     total_input_tokens: int = 0
     total_output_tokens: int = 0
+    total_cached_tokens: int = 0
     total_cost_usd: float = 0.0
 
     human_rep_participant_ids: set[str] = field(default_factory=set)

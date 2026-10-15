@@ -21,6 +21,7 @@ from parlot.core.attrs import (
     ATTR_SESSION_CLOSE_REASON,
     ATTR_SESSION_CONVERSATION_ID,
     ATTR_SESSION_ID,
+    ATTR_SESSION_TOTAL_CACHED_TOKENS,
     ATTR_SESSION_TOTAL_INPUT_TOKENS,
     ATTR_SESSION_TOTAL_OUTPUT_TOKENS,
     ATTR_SESSION_TURN_COUNT,
@@ -404,6 +405,7 @@ def emit_parlot_session_close_span(
     attrs[ATTR_SESSION_TURN_INDEX_MAX] = state.turn_count
     attrs[ATTR_SESSION_TOTAL_INPUT_TOKENS] = state.total_input_tokens
     attrs[ATTR_SESSION_TOTAL_OUTPUT_TOKENS] = state.total_output_tokens
+    attrs[ATTR_SESSION_TOTAL_CACHED_TOKENS] = state.total_cached_tokens
     stamp_session_metadata_attrs(attrs, getattr(state, "custom_metadata", None))
     span = tracer.start_span(SPAN_PARLOT_SESSION_CLOSE, attributes=attrs)
     stamp_session_sdk_version(span, state)

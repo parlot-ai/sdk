@@ -7,7 +7,11 @@ from unittest.mock import patch
 
 import pytest
 
-from parlot.core.attrs import ATTR_GEN_AI_IN_TOKENS, ATTR_GEN_AI_OUT_TOKENS
+from parlot.core.attrs import (
+    ATTR_GEN_AI_CACHED_TOKENS,
+    ATTR_GEN_AI_IN_TOKENS,
+    ATTR_GEN_AI_OUT_TOKENS,
+)
 from parlot.instrumentation.livekit._plugin_metrics import (
     _plugin_state,
     handle_plugin_metrics_collected,
@@ -153,6 +157,7 @@ def test_enrich_llm_node_applies_plugin_tokens() -> None:
             speech_id="",
             prompt_tokens=50,
             completion_tokens=5,
+            prompt_cached_tokens=40,
             metadata=None,
         )
         handle_plugin_metrics_collected(processor, llm)
@@ -162,6 +167,44 @@ def test_enrich_llm_node_applies_plugin_tokens() -> None:
     attrs = span._attributes or {}
     assert attrs.get(ATTR_GEN_AI_IN_TOKENS) == 50
     assert attrs.get(ATTR_GEN_AI_OUT_TOKENS) == 5
+    assert attrs.get(ATTR_GEN_AI_CACHED_TOKENS) == 40
+
+
+def test_enrich_fills_cached_when_input_output_already_present() -> None:
+    from test_platform_refs import _FakeSpan
+
+    processor = LiveKitGenAIProcessor()
+    processor._metrics = _FakeMetrics()
+    state = SimpleNamespace(parlot_session_id="sess-1")
+
+    with patch(
+        "parlot.instrumentation.livekit._session.get_job_bootstrap",
+        return_value=SimpleNamespace(state=state),
+    ):
+        handle_plugin_metrics_collected(
+            processor,
+            SimpleNamespace(
+                type="llm_metrics",
+                speech_id="sp-1",
+                prompt_tokens=100,
+                completion_tokens=10,
+                prompt_cached_tokens=80,
+                metadata=None,
+            ),
+        )
+
+    span = _FakeSpan()
+    span._attributes = {
+        ATTR_GEN_AI_IN_TOKENS: 100,
+        ATTR_GEN_AI_OUT_TOKENS: 10,
+        "lk.speech_id": "sp-1",
+    }
+    processor._apply_plugin_llm_usage_to_span(span, span._attributes)
+    assert span._attributes.get(ATTR_GEN_AI_CACHED_TOKENS) == 80
+    # Peek must not consume FIFO — still resolvable for another span.
+    usage = resolve_llm_usage_for_span(processor, speech_id="sp-1")
+    assert usage is not None
+    assert usage.prompt_cached_tokens == 80
 
 
 def test_install_emit_metrics_intercept_patches_once() -> None:

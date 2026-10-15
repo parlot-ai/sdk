@@ -403,10 +403,16 @@ class LiveKitEventBridge:
         model_usage = getattr(usage, "model_usage", None) or []
         total_in = 0
         total_out = 0
+        total_cached = 0
         for entry in model_usage:
             total_in += int(getattr(entry, "input_tokens", 0) or 0)
             total_out += int(getattr(entry, "output_tokens", 0) or 0)
-        self._processor.apply_session_usage(total_in, total_out)
+            total_cached += int(
+                getattr(entry, "input_cached_tokens", 0)
+                or getattr(entry, "prompt_cached_tokens", 0)
+                or 0
+            )
+        self._processor.apply_session_usage(total_in, total_out, total_cached)
 
         from ._session import get_job_bootstrap
         from ._telemetry_compare import get_compare_logger

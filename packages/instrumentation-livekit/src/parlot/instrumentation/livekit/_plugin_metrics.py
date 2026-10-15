@@ -18,6 +18,7 @@ _SKIP_PLUGIN_METRIC_TYPES = frozenset({"vad_metrics"})
 class _PluginLlmUsage:
     prompt_tokens: int = 0
     completion_tokens: int = 0
+    prompt_cached_tokens: int = 0
     model_name: str = ""
     model_provider: str = ""
 
@@ -40,6 +41,7 @@ def _llm_usage_from_metrics(metrics_obj: Any) -> Optional[_PluginLlmUsage]:
         return None
     prompt = int(getattr(metrics_obj, "prompt_tokens", 0) or 0)
     completion = int(getattr(metrics_obj, "completion_tokens", 0) or 0)
+    cached = int(getattr(metrics_obj, "prompt_cached_tokens", 0) or 0)
     if prompt <= 0 and completion <= 0:
         return None
     from ._metrics import _usage_metadata
@@ -48,6 +50,7 @@ def _llm_usage_from_metrics(metrics_obj: Any) -> Optional[_PluginLlmUsage]:
     return _PluginLlmUsage(
         prompt_tokens=prompt,
         completion_tokens=completion,
+        prompt_cached_tokens=max(cached, 0),
         model_name=model_name,
         model_provider=model_provider,
     )
