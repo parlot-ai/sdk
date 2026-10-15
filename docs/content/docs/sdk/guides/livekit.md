@@ -65,11 +65,17 @@ async def entrypoint(ctx: JobContext):
     await session.start(agent=..., room=ctx.room)
 ```
 
-`parlotize()` registers an OTLP `TracerProvider` with `livekit.agents.telemetry`, installs AgentSession event hooks, and (when recording is enabled) starts egress after session bootstrap. Pass a stable deployment id; use `version=` for a real deployment label (otherwise Parlot stamps `"unknown"`).
+`parlotize()` registers an OTLP `TracerProvider` with `livekit.agents.telemetry`, installs AgentSession event hooks, and (when recording is enabled) starts room composite egress after session bootstrap. Pass a stable deployment id; use `version=` for a real deployment label (otherwise Parlot stamps `"unknown"`).
+
+By default, egress starts in the background after the agent becomes ready, so a fast greeting can begin a second or two before the recording timeline (`t=0`). If you need the first agent turn fully on the session recording, pass **`await_recording=True`**: with `await ctx.connect()` before `session.start()`, connect waits until egress has started (upload grant + LiveKit API) before returning. That adds a little connect latency; leave it off when you prefer the lowest time-to-first-speech.
+
+```python
+parlotize("my-agent", version="0.1.0", await_recording=True)
+```
 
 Environment: `PARLOT_ENDPOINT`, `PARLOT_API_KEY` — see [Environment Variables](/sdk/env-vars). Recording, session logs, and generative AI content capture are on by default for new tenants; configure in Settings or via `parlotize(...)` kwargs — see [Concepts → Recording vs telemetry](/sdk/get-started/concepts#recording-vs-telemetry). LiveKit egress also needs agent `LIVEKIT_*` credentials with **`roomRecord`**.
 
-Shared `parlotize()` options: [Python SDK Reference](/sdk/python). LiveKit-only kwargs (`record`, `auto_escalate_sip`, …): [Interactive API Reference](/docs/ref/python/parlot/instrumentation/livekit.html).
+Shared `parlotize()` options: [Python SDK Reference](/sdk/python). LiveKit-only kwargs (`record`, `await_recording`, `auto_escalate_sip`, …): [Interactive API Reference](/docs/ref/python/parlot/instrumentation/livekit.html).
 
 ## Named worker dispatch (`agent_name`)
 
