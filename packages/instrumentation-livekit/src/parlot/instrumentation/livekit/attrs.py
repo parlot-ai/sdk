@@ -17,7 +17,7 @@ Do not add Parlot-invented keys here — use ``parlot.core.attrs`` for
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TypeVar
+from typing import Any
 
 from parlot.core.attrs import (
     ATTR_EXCEPTION_MESSAGE,
@@ -25,8 +25,6 @@ from parlot.core.attrs import (
     ATTR_EXCEPTION_TYPE,
     ATTR_SESSION_RECORDING_EGRESS_ID,
 )
-
-_T = TypeVar("_T")
 
 # ---------------------------------------------------------------------------
 # Mirrored from livekit-agents telemetry/trace_types.py @ 1.8.x
@@ -191,15 +189,15 @@ METADATA_ROOM_ID = "room_id"
 
 
 def attr_get(
-    attrs: Mapping[str, _T],
+    attrs: Mapping[str, Any],
     primary: str,
     *fallbacks: str,
-    default: _T | None = None,
-) -> _T | None:
+    default: Any = None,
+) -> Any:
     """Return the first present attribute among ``primary`` and ``fallbacks``.
 
     Used so span readers accept both Agents 1.7 ``lk.pii.*`` keys and legacy
-    ``lk.*`` keys from older agents.
+    ``lk.*`` keys from older agents. Accepts OTel ``AttributeValue`` maps.
     """
     if primary in attrs:
         return attrs[primary]
