@@ -8,10 +8,9 @@ sidebar_custom_props:
 
 # LangGraph instrumentation
 
-`parlot-instrumentation-langgraph` registers a global LangChain callback handler
-via LangChain’s `register_configure_hook` / `CallbackManager.configure` injection
-so every `invoke` / `ainvoke` / `astream` emits Parlot Conversation Contract
-spans plus OTel GenAI operational spans.
+`parlot-instrumentation-langgraph` registers a global LangChain callback handler via
+LangChain’s `register_configure_hook` so every `invoke` / `ainvoke` / `astream` emits
+Parlot Conversation Contract spans plus OpenTelemetry generative AI (GenAI) operational spans.
 
 ## Quick start
 
@@ -29,11 +28,11 @@ close_session("demo-1")  # optional; also flushed on process exit
 ```
 
 Environment: `PARLOT_ENDPOINT`, `PARLOT_API_KEY` — see [Environment Variables](/sdk/env-vars).
-Shared `parlotize()` options: [Python SDK Reference](/sdk/python). LangGraph-only
-kwargs (`channel`, `modality`) and `close_session`: [Interactive API Reference](/docs/ref/python/parlot/instrumentation/langgraph.html).
+`parlotize()` options: [Interactive API Reference](/docs/ref/python/parlot/instrumentation/langgraph.html)
+(LangGraph-only kwargs include `channel` and `modality`; see also `close_session`).
 
-For standalone (non-LiveKit) sessions, set `channel=` (e.g. `"webchat"`) and
-optionally `modality=` so ingest does not assume voice:
+For standalone (non-LiveKit) sessions, set `channel=` (e.g. `"webchat"`) and optionally
+`modality=` so ingest treats the session as text:
 
 ```python
 parlotize("support-bot", version="0.1.0", channel="webchat", modality="text")
@@ -50,10 +49,12 @@ See [`examples/langgraph/minimal-agent`](https://github.com/parlot-ai/sdk/tree/m
 | Layer | Spans |
 |-------|-------|
 | Contract | `parlot.session`, `parlot.turn`, `parlot.session.close` |
-| GenAI (semconv v1.41) | `invoke_agent`, `invoke_workflow`, `chat` / `chat {model}`, `execute_tool {name}` |
+| GenAI (OpenTelemetry semantic conventions v1.41) | `invoke_agent`, `invoke_workflow`, `chat` / `chat {model}`, `execute_tool {name}` |
 
-Session key is LangGraph `thread_id` (`session.modality=text`). If `thread_id`
-is omitted, Parlot mints one automatically (`anon-…`) for the process lifetime.
+Session key is LangGraph `thread_id`. `session.modality` is set when you pass `modality=`,
+or when `channel` is a messaging channel (`webchat`, `sms`, `whatsapp`) or `voice`.
+Otherwise modality stays unset. If `thread_id` is omitted, Parlot creates one automatically
+(`anon-…`) for the process lifetime.
 
 ## LiveKit + LangGraph
 
@@ -68,5 +69,5 @@ parlotize_langgraph("voice-bot")  # adopts LiveKit TracerProvider when already s
 ```
 
 - LiveKit owns `parlot.session` / `parlot.turn` (voice).
-- LangGraph emits nested GenAI ops (`chat`, `execute_tool`, `invoke_workflow`) under the active OTel context (LiveKit’s remapped `chat` span).
-- No duplicate contract spans.
+- LangGraph emits nested GenAI ops (`chat`, `execute_tool`, `invoke_workflow`) under the active OpenTelemetry context (LiveKit’s remapped `chat` span).
+- Contract spans stay on the LiveKit session (no duplicates).

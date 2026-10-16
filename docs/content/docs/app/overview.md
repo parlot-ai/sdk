@@ -11,11 +11,15 @@ The **Overview** page (`/overview`) is the home view for organization-wide healt
 
 Overview groups metrics into three lenses:
 
-- **Quality** — Outcomes such as resolved, transferred, abandoned, and error rates, plus goal and evaluation signals when available.
-- **Speed** — Handle time and turn latency trends for the selected window.
-- **Cost** — Estimated large language model (LLM), speech-to-text (STT), and text-to-speech (TTS) spend, including cost per successful outcome when data is present.
+- **Quality** — Outcomes such as resolved, abandoned, and escalated rates, plus goal and
+  evaluation signals when available. Resolved aligns with completed sessions.
+- **Speed** — End-to-end reply latency (p50 / p95), Over SLO share, and reply latency trends for
+  the selected window.
+- **Cost** — Estimated large language model (LLM), speech-to-text (STT), and text-to-speech (TTS)
+  spend, including cost per successful outcome when data is present.
 
-Charts and insight cards update with the filters you choose. Use Overview to spot regressions, then open **Agents** or **Sessions** for the underlying traffic.
+Charts and insight cards update with the filters you choose. Use Overview to spot regressions,
+then open **Agents** or **Sessions** for the underlying traffic.
 
 ## Filters
 
@@ -25,7 +29,8 @@ Narrow the fleet view by:
 - Agent (deployment)
 - Agent version
 
-Filter choices apply to the cards and charts on the page. Clear or change them when you want a wider picture.
+Filter choices apply to the cards and charts on the page. Clear or change them when you want a
+wider picture.
 
 ## Where to go next
 

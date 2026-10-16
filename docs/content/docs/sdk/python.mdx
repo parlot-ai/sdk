@@ -8,41 +8,47 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 # Python SDK Reference
 
-The Parlot Python SDK provides automatic telemetry, tracing, and session management for conversational AI agents.
+The Parlot Python SDK instruments conversational agents and exports OpenTelemetry telemetry to Parlot.
 
 <Callout type="info" title="Full API Reference">
-  Looking for comprehensive class, function, and module signatures? Explore the full interactive [Python API Reference](/docs/ref/python/).
+  Looking for class, function, and module signatures? See the interactive [Python API Reference](/docs/ref/python/).
 </Callout>
 
-## Key Packages
+## Key packages
 
 <Cards>
   <Card
     title="parlot.core"
-    description="Core telemetry primitives, session configuration, context propagation, and span lifecycle."
+    description="Core telemetry primitives, session helpers, context propagation, and span lifecycle."
     href="/docs/ref/python/parlot/core.html"
   />
   <Card
     title="parlot.instrumentation.livekit"
-    description="Real-time voice agent instrumentation, turn detection, audio metrics, and participant spans."
+    description="LiveKit Agents instrumentation: session/turns, pipeline spans, recording, and platform refs."
     href="/docs/ref/python/parlot/instrumentation/livekit.html"
   />
   <Card
     title="parlot.instrumentation.langgraph"
-    description="LangGraph workflow tracing, checkpoint monitoring, node execution metrics, and streaming."
+    description="LangGraph / LangChain instrumentation via global callbacks: Conversation Contract and GenAI spans."
     href="/docs/ref/python/parlot/instrumentation/langgraph.html"
   />
 </Cards>
 
 ## Installation
 
+Install the instrumentation package for your framework (or use the meta package extras):
+
 ```bash
-uv add parlot
-# Or with specific instrumentations:
+# LiveKit Agents
 uv add parlot-instrumentation-livekit
+# or: uv add "parlot[livekit]"
+
+# LangGraph / LangChain
 uv add parlot-instrumentation-langgraph
+# or: uv add "parlot[langgraph]"
+
+# Both
+uv add "parlot[all]"
 ```
 
-## Interactive API Explorer
-
-Browse all modules, functions, parameters, and type annotations directly in the [Interactive Python Reference](/docs/ref/python/).
+The bare `parlot` meta package pulls in `parlot-core` only. Shared helpers and `parlotize()` options live in the Interactive API pages linked above; framework guides cover adapter-specific kwargs.

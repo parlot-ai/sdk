@@ -10,45 +10,49 @@ sidebar_custom_props:
 
 The Parlot SDK can be configured via environment variables or explicitly through `parlotize()` arguments.
 
-## Core Telemetry & Ingestion
+## Core telemetry and ingestion
 
-| Variable               | Required  | Default   | Description                                                                                                                                                                                                                                |
-| ---------------------- | --------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `PARLOT_ENDPOINT`      | **Yes\*** | _None_    | Base URL of the Parlot OTLP collector (e.g. `https://ingest.parlot.ai`). Spans are exported to `{PARLOT_ENDPOINT}/v1/traces`. <br/>_\*Required unless `endpoint=` is passed to `parlotize()`._ |
-| `PARLOT_API_KEY`       | **Yes**   | _None_    | Bearer authentication token minted under Parlot **Settings → API Keys**.                                                                                                                                                                   |
-| `PARLOT_AGENT_ID`      | —         | —         | **Not read by the SDK.** Recommended convention for deploy manifests when you inject the id at the call site: `parlotize(os.environ["PARLOT_AGENT_ID"])`. `agent_id` is a required positional `parlotize()` argument. |
+| Variable          | Required  | Default | Description |
+| ----------------- | --------- | ------- | ----------- |
+| `PARLOT_ENDPOINT` | **Yes\*** | _None_  | Base URL of the Parlot OpenTelemetry Protocol (OTLP) collector (e.g. `https://ingest.parlot.ai`). The SDK appends `/v1/traces` for spans, `/v1/metrics` for metrics (LiveKit), and `/v1/logs` for session application logs. <br/>_\*Required when `endpoint=` is omitted from `parlotize()`._ |
+| `PARLOT_API_KEY`  | **Yes\*** | _None_  | Bearer token from Parlot **Settings → API keys**. Required for authenticated ingest, Settings bootstrap, and recording grants. Without it the process can start, but telemetry will not authenticate. |
+| `PARLOT_DEBUG_LEVEL` | —      | `INFO`  | Root logging level for internal SDK loggers (`parlot.core`, `parlot.instrumentation.livekit`, `parlot.instrumentation.langgraph`). Values: `DEBUG`, `INFO`, `WARNING`, `ERROR`. |
+
+### Deploy convention (not an SDK env var)
+
+Pass `agent_id` as the first argument to `parlotize()`. A common deploy-manifest pattern is:
+
+```python
+parlotize(os.environ["PARLOT_AGENT_ID"])
+```
+
+The SDK does not read `PARLOT_AGENT_ID` itself.
 
 ---
 
-## Policies & Capture Controls
+## Capture policies (no env vars)
 
-| Variable                       | Default | Values                                    | Description                                                                                                                                                                                                                                           |
-| ------------------------------ | ------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PARLOT_CAPTURE_GENAI_CONTENT` | `true`  | `true` \| `false` \| `1` \| `0`           | Controls whether LLM message bodies and tool input/output payloads are exported with GenAI spans. If `false`, payloads are redacted while preserving span metrics, token counts, and turn transcripts.                                                |
-| `PARLOT_DEBUG_LEVEL`           | `INFO`  | `DEBUG` \| `INFO` \| `WARNING` \| `ERROR` | Sets root logging level for internal SDK loggers (`parlot.core`, `parlot.instrumentation.livekit`, `parlot.instrumentation.langgraph`).                                                                                                               |
+Recording, session logs, and generative AI (GenAI) content capture are controlled by:
+
+1. **Job / context metadata** — e.g. LiveKit job metadata `record`, `capture_logs`, `capture_genai_content`
+2. **`parlotize(...)` arguments** — `record=`, `capture_logs=`, `capture_genai_content=`
+3. **Settings** — **Settings → Recording**, **Settings → Logs**, **Settings → Gen AI content capture** (loaded at bootstrap)
+4. **SDK defaults** — capture policies default to **on**
+
+When GenAI content capture is off, message and tool payloads are **omitted**; span structure, timings, token counts, and turn transcripts still export.
+
+See [Concepts → Recording vs telemetry](/sdk/get-started/concepts#recording-vs-telemetry) and [Agent policy allowlists](/app/agent-policy-allowlists).
 
 ---
 
-## Framework-Specific Variables
+## Framework-specific variables
 
 ### LiveKit Agents
 
 When using `parlot-instrumentation-livekit` with LiveKit:
 
-| Variable             | Required | Description                                                                    |
-| -------------------- | -------- | ------------------------------------------------------------------------------ |
+| Variable             | Required | Description |
+| -------------------- | -------- | ----------- |
 | `LIVEKIT_URL`        | Yes      | WebSocket URL for your LiveKit server (e.g. `wss://my-project.livekit.cloud`). |
-| `LIVEKIT_API_KEY`    | Yes      | LiveKit project API key (also used to initiate egress recordings).             |
-| `LIVEKIT_API_SECRET` | Yes      | LiveKit project API secret.                                                    |
-
----
-
-## Configuration Precedence
-
-When both environment variables and programmatic arguments are provided, the resolution precedence is:
-
-1. **Job / Context Metadata:** Dispatched parameters (e.g. LiveKit job metadata `record: true`, `capture_genai_content: false`).
-2. **Programmatic Arguments:** Arguments explicitly passed to `parlotize(...)`.
-3. **Environment Variables:** `PARLOT_*` environment variables.
-4. **Remote Telemetry Bootstrap:** Dynamic policies configured in the Parlot Web UI (**Settings → Recording**, **Settings → Logs**, **Settings → Generative AI**).
-5. **SDK Built-in Defaults:** (e.g. GenAI content capture is on by default, session logging is on by default).
+| `LIVEKIT_API_KEY`    | Yes      | LiveKit project API key (also used to start Room Composite recordings). |
+| `LIVEKIT_API_SECRET` | Yes      | LiveKit project API secret. |
