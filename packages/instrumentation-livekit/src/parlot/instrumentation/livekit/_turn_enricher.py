@@ -29,11 +29,14 @@ from parlot.core.attrs import (
     ATTR_GEN_AI_OP_NAME,
     ATTR_GEN_AI_PROVIDER,
     ATTR_GEN_AI_SYSTEM,
+    ATTR_GEN_AI_SYSTEM_INSTRUCTIONS,
     ATTR_GEN_AI_TOOL_DURATION_MS,
     ATTR_GEN_AI_TTS_TTFB_S,
     EVENT_GEN_AI_ASSISTANT_MESSAGE,
     EVENT_GEN_AI_TOOL_MESSAGE,
     EVENT_GEN_AI_USER_MESSAGE,
+    GEN_AI_PII_CONTENT_ATTR_KEYS,
+    GEN_AI_OP_GENERATE_CONTENT,
     ATTR_SESSION_AMD,
     ATTR_SESSION_CONVERSATION_ID,
     ATTR_SESSION_ID,
@@ -120,6 +123,13 @@ from ._platform_refs import stamp_livekit_platform_refs
 from ._agent_identity import topology_agent_name
 from ._session import get_job_bootstrap
 from ._session_state import _LiveKitSessionState
+from parlot.core.processor import ParlotBaseProcessor
+from ._genai_messages import (
+    has_genai_message_attrs,
+    preview_from_genai_messages,
+    system_instructions_from_attrs,
+    tool_call_payloads_from_attrs,
+)
 from ._span_util import (
     AMD_CATEGORY_TO_CONTACT_TYPE,
     _ASYNC_TOOL_MIN_DURATION_NS,
@@ -129,6 +139,7 @@ from ._span_util import (
     _TOOL_PREVIEW_CHARS,
     attr_int,
     coerce_str_sequence,
+    normalize_provider_name,
     optional_float,
     preview_from_chat_ctx,
     provider_to_system,
@@ -144,6 +155,8 @@ _AGENT_PIPELINE_SPANS: FrozenSet[str] = frozenset({
     "llm_node",
     "llm_request",
     "llm_request_run",
+    "realtime_inference",
+    "realtime_metrics",
     "tts_node",
     "tts_request_run",
     "function_tool",
@@ -504,14 +517,83 @@ class TurnEnricher:
         else:
             self._set(span, ATTR_TURN_INDEX, active)
 
+    def _normalize_provider_attrs(
+        self, span: ReadableSpan, attrs: Mapping[str, AttributeValue]
+    ) -> None:
+        raw_provider = str(attrs.get(ATTR_GEN_AI_PROVIDER, "") or "").strip()
+        if raw_provider:
+            canonical = normalize_provider_name(raw_provider)
+            if canonical and canonical != raw_provider:
+                self._set(span, ATTR_GEN_AI_PROVIDER, canonical)
+            provider_for_system = canonical or raw_provider
+        else:
+            provider_for_system = ""
+        if not (span.attributes or {}).get(ATTR_GEN_AI_SYSTEM):
+            system = provider_to_system(provider_for_system)
+            if system:
+                self._set(span, ATTR_GEN_AI_SYSTEM, system)
+
+    def _strip_genai_content_attrs(self, span: ReadableSpan) -> None:
+        """Remove GenAI content attrs LiveKit may have stamped (capture off)."""
+        attrs = span.attributes or {}
+        for key in GEN_AI_PII_CONTENT_ATTR_KEYS:
+            if key in attrs:
+                ParlotBaseProcessor._delete(span, key)
+
+    def _apply_llm_content_from_attrs(
+        self,
+        span: ReadableSpan,
+        state: _LiveKitSessionState,
+        attrs: Mapping[str, AttributeValue],
+        *,
+        emit_legacy_events: bool,
+    ) -> None:
+        """Map GenAI 1.8 messages / lk.pii chat_ctx into turn text + optional events."""
+        capture = self._genai_content_enabled(state)
+        if not capture:
+            self._strip_genai_content_attrs(span)
+            return
+
+        user_text = ""
+        assistant_text = ""
+        if has_genai_message_attrs(attrs):
+            user_text, assistant_text = preview_from_genai_messages(attrs)
+            # Passthrough: keep gen_ai.input/output.messages on the span.
+        else:
+            chat_raw = str(
+                attr_get(attrs, ATTR_LK_CHAT_CTX, ATTR_CHAT_CTX_LEGACY, default="")
+                or ""
+            )
+            user_text, assistant_text = preview_from_chat_ctx(chat_raw)
+
+        if user_text and self._turn_source != "events":
+            self._set(span, ATTR_TURN_USER_TEXT, user_text)
+        if assistant_text and self._turn_source != "events":
+            self._set(span, ATTR_TURN_AGENT_TEXT, assistant_text)
+
+        # Legacy events only when 1.8 message attrs are absent (Agents ≤1.7).
+        if (
+            emit_legacy_events
+            and not has_genai_message_attrs(attrs)
+            and self._turn_source != "events"
+        ):
+            if user_text:
+                self._add_event(
+                    span,
+                    EVENT_GEN_AI_USER_MESSAGE,
+                    {"content": user_text},
+                )
+            if assistant_text:
+                self._add_event(
+                    span,
+                    EVENT_GEN_AI_ASSISTANT_MESSAGE,
+                    {"content": assistant_text},
+                )
+
     def enrich_llm_node(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
         self._stamp_agent_identity(span, state, attrs)
-
-        if not attrs.get(ATTR_GEN_AI_SYSTEM):
-            system = provider_to_system(str(attrs.get(ATTR_GEN_AI_PROVIDER, "")))
-            if system:
-                self._set(span, ATTR_GEN_AI_SYSTEM, system)
+        self._normalize_provider_attrs(span, attrs)
 
         if not attrs.get(ATTR_GEN_AI_OP_NAME):
             self._set(span, ATTR_GEN_AI_OP_NAME, "chat")
@@ -532,20 +614,28 @@ class TurnEnricher:
             )
             or ""
         ).strip()
+        system_instructions = system_instructions_from_attrs(attrs)
+        instructions_for_excerpt = lk_instructions or system_instructions
         full_excerpt = full_instructions_excerpt(
             chat_raw,
-            lk_instructions,
+            instructions_for_excerpt,
             max_chars=_INSTRUCTIONS_EXCERPT_CHARS,
         )
         static_excerpt = static_instructions_excerpt(
             chat_raw,
-            lk_instructions,
+            instructions_for_excerpt,
             max_chars=_INSTRUCTIONS_EXCERPT_CHARS,
         )
         if full_excerpt:
             self._set(span, ATTR_AGENT_INSTRUCTIONS_EXCERPT, full_excerpt)
         if static_excerpt:
             self._set(span, ATTR_AGENT_STATIC_INSTRUCTIONS_EXCERPT, static_excerpt)
+        if (
+            self._genai_content_enabled(state)
+            and system_instructions
+            and not attrs.get(ATTR_GEN_AI_SYSTEM_INSTRUCTIONS)
+        ):
+            self._set(span, ATTR_GEN_AI_SYSTEM_INSTRUCTIONS, system_instructions)
 
         agent_id = self._active_agent_id(state, span.attributes or {})
         if static_excerpt and agent_id != "unknown":
@@ -555,27 +645,50 @@ class TurnEnricher:
         if tools:
             self._set(span, ATTR_AGENT_TOOL_NAMES, json.dumps(tools))
 
-        user_text, assistant_text = preview_from_chat_ctx(chat_raw)
-        if user_text and self._turn_source != "events":
-            self._set(span, ATTR_TURN_USER_TEXT, user_text)
-        if assistant_text and self._turn_source != "events":
-            self._set(span, ATTR_TURN_AGENT_TEXT, assistant_text)
-
-        if self._genai_content_enabled(state):
-            if user_text and self._turn_source != "events":
-                self._add_event(
-                    span,
-                    EVENT_GEN_AI_USER_MESSAGE,
-                    {"content": user_text},
-                )
-            if assistant_text and self._turn_source != "events":
-                self._add_event(
-                    span,
-                    EVENT_GEN_AI_ASSISTANT_MESSAGE,
-                    {"content": assistant_text},
-                )
+        self._apply_llm_content_from_attrs(
+            span, state, attrs, emit_legacy_events=True
+        )
 
         self._stamp_response_model_if_distinct(span, span.attributes or attrs)
+
+    def enrich_realtime_inference(
+        self, span: ReadableSpan, state: _LiveKitSessionState
+    ) -> None:
+        """Agents 1.8 realtime model generation (replaces llm_node + tts_node)."""
+        attrs = span.attributes or {}
+        self._stamp_agent_identity(span, state, attrs)
+        self._normalize_provider_attrs(span, attrs)
+
+        existing_op = str(attrs.get(ATTR_GEN_AI_OP_NAME) or "").strip().lower()
+        if not existing_op:
+            self._set(span, ATTR_GEN_AI_OP_NAME, GEN_AI_OP_GENERATE_CONTENT)
+
+        self._tokens.apply_plugin_llm_usage_to_span(span, dict(attrs))
+        self._tokens.accumulate_llm_request_tokens(span, state, span.attributes or attrs)
+
+        if not (span.attributes or {}).get(ATTR_LK_SPEECH_ID) and state.active_speech_id:
+            self._set(span, ATTR_LK_SPEECH_ID, state.active_speech_id)
+
+        system_instructions = system_instructions_from_attrs(attrs)
+        if system_instructions:
+            excerpt = system_instructions[:_INSTRUCTIONS_EXCERPT_CHARS]
+            self._set(span, ATTR_AGENT_INSTRUCTIONS_EXCERPT, excerpt)
+            self._set(span, ATTR_AGENT_STATIC_INSTRUCTIONS_EXCERPT, excerpt)
+
+        self._apply_llm_content_from_attrs(
+            span, state, attrs, emit_legacy_events=True
+        )
+        self._stamp_response_model_if_distinct(span, span.attributes or attrs)
+
+    def enrich_realtime_metrics(
+        self, span: ReadableSpan, state: _LiveKitSessionState
+    ) -> None:
+        """Late realtime usage sibling — fold tokens into session totals."""
+        attrs = span.attributes or {}
+        self._normalize_provider_attrs(span, attrs)
+        self._tokens.accumulate_llm_request_tokens(span, state, attrs)
+        if not self._genai_content_enabled(state):
+            self._strip_genai_content_attrs(span)
 
     def enrich_tts_node(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         attrs = span.attributes or {}
@@ -629,12 +742,13 @@ class TurnEnricher:
             self._set(span, ATTR_GEN_AI_OP_NAME, "execute_tool")
 
         tool_name = str(attrs.get(ATTR_LK_FNC_TOOL_NAME, ""))
+        genai_args, genai_result = tool_call_payloads_from_attrs(attrs)
         tool_output = str(
-            attr_get(
+            genai_result
+            or attr_get(
                 attrs,
                 ATTR_LK_FNC_TOOL_OUTPUT,
                 ATTR_FUNCTION_TOOL_OUTPUT_LEGACY,
-                default="",
             )
             or ""
         )
@@ -646,15 +760,16 @@ class TurnEnricher:
         if span.end_time is not None and span.start_time is not None:
             duration_ms = round((span.end_time - span.start_time) / 1_000_000, 2)
 
-        tool_args_raw = attr_get(
+        tool_args_raw = genai_args or attr_get(
             attrs,
             ATTR_LK_FNC_TOOL_ARGS,
             ATTR_FUNCTION_TOOL_ARGS_LEGACY,
-            default="",
         )
         tool_args = str(tool_args_raw) if tool_args_raw else ""
 
-        if self._genai_content_enabled(state) and tool_args:
+        if not self._genai_content_enabled(state):
+            self._strip_genai_content_attrs(span)
+        elif tool_args:
             payload = tool_args[:_MAX_TOOL_PAYLOAD_CHARS]
             self._set(span, ATTR_TOOL_INPUT_PAYLOAD, payload)
             self._set(
@@ -673,7 +788,8 @@ class TurnEnricher:
             span, state, tool_name=tool_name, tool_output=tool_output
         )
 
-        if self._genai_content_enabled(state):
+        # Legacy tool message events only when GenAI tool call attrs are absent.
+        if self._genai_content_enabled(state) and not (genai_args or genai_result):
             if tool_args:
                 self._add_event(
                     span,
@@ -836,24 +952,36 @@ class TurnEnricher:
             state.pending_tts_ttfb_s = None
 
         if self._genai_content_enabled(state):
-            user_input = attr_get(
-                attrs, ATTR_LK_USER_INPUT, ATTR_USER_INPUT_LEGACY, default=""
-            )
-            if user_input:
-                self._add_event(
-                    span,
-                    EVENT_GEN_AI_USER_MESSAGE,
-                    {"content": str(user_input)},
+            # Prefer Agents 1.8 message attrs when present; else legacy events.
+            if has_genai_message_attrs(attrs):
+                user_text, assistant_text = preview_from_genai_messages(attrs)
+                if user_text and not (span.attributes or {}).get(ATTR_TURN_USER_TEXT):
+                    self._set(span, ATTR_TURN_USER_TEXT, user_text)
+                if assistant_text and not (
+                    span.attributes or {}
+                ).get(ATTR_TURN_AGENT_TEXT):
+                    self._set(span, ATTR_TURN_AGENT_TEXT, assistant_text)
+            else:
+                user_input = attr_get(
+                    attrs, ATTR_LK_USER_INPUT, ATTR_USER_INPUT_LEGACY, default=""
                 )
-            response = attr_get(
-                attrs, ATTR_LK_RESPONSE_TEXT, ATTR_RESPONSE_TEXT_LEGACY, default=""
-            )
-            if response:
-                self._add_event(
-                    span,
-                    EVENT_GEN_AI_ASSISTANT_MESSAGE,
-                    {"content": str(response)},
+                if user_input:
+                    self._add_event(
+                        span,
+                        EVENT_GEN_AI_USER_MESSAGE,
+                        {"content": str(user_input)},
+                    )
+                response = attr_get(
+                    attrs, ATTR_LK_RESPONSE_TEXT, ATTR_RESPONSE_TEXT_LEGACY, default=""
                 )
+                if response:
+                    self._add_event(
+                        span,
+                        EVENT_GEN_AI_ASSISTANT_MESSAGE,
+                        {"content": str(response)},
+                    )
+        else:
+            self._strip_genai_content_attrs(span)
 
     def enrich_drain(self, span: ReadableSpan, state: _LiveKitSessionState) -> None:
         """Lifecycle drain only — not a conversational turn boundary."""

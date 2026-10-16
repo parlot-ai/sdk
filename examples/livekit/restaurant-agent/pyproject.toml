@@ -4,7 +4,7 @@ version = "0.0.0"
 description = "Parlot + LiveKit restaurant multi-agent routing example"
 requires-python = ">=3.11"
 dependencies = [
-    "livekit-agents[openai,silero]",
+    "livekit-agents[openai,silero]>=1.8.0",
     "python-dotenv>=1.0",
     "pyyaml>=6.0",
     "parlot[livekit]>=0.3.2",

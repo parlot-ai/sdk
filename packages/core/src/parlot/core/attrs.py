@@ -45,11 +45,39 @@ ATTR_GEN_AI_COST_USD        = "gen_ai.usage.cost_usd"
 ATTR_GEN_AI_CACHE_HIT_RATE  = "gen_ai.usage.cache_hit_rate"
 ATTR_GEN_AI_TOOL_NAME       = "gen_ai.tool.name"
 
+# OTel GenAI message / content attributes (GenAI semconv)
+ATTR_GEN_AI_INPUT_MESSAGES = "gen_ai.input.messages"
+ATTR_GEN_AI_OUTPUT_MESSAGES = "gen_ai.output.messages"
+ATTR_GEN_AI_SYSTEM_INSTRUCTIONS = "gen_ai.system_instructions"
+ATTR_GEN_AI_RESPONSE_FINISH_REASONS = "gen_ai.response.finish_reasons"
+ATTR_GEN_AI_TOOL_CALL_ARGUMENTS = "gen_ai.tool.call.arguments"
+ATTR_GEN_AI_TOOL_CALL_RESULT = "gen_ai.tool.call.result"
+ATTR_GEN_AI_TOOL_DESCRIPTION = "gen_ai.tool.description"
+ATTR_GEN_AI_TOOL_DEFINITIONS = "gen_ai.tool.definitions"
+
+# Cache-read alias; subset of input_tokens — never add to input.
+ATTR_GEN_AI_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read.input_tokens"
+# Prefer reasoning.output_tokens; alias reasoning_tokens (do not sum both).
+ATTR_GEN_AI_REASONING_OUTPUT_TOKENS = "gen_ai.usage.reasoning.output_tokens"
+ATTR_GEN_AI_REASONING_TOKENS = "gen_ai.usage.reasoning_tokens"
+
 # OTel GenAI operation.name values (Development status, semconv v1.41.0)
 GEN_AI_OP_CHAT = "chat"
 GEN_AI_OP_EXECUTE_TOOL = "execute_tool"
 GEN_AI_OP_INVOKE_AGENT = "invoke_agent"
 GEN_AI_OP_INVOKE_WORKFLOW = "invoke_workflow"
+GEN_AI_OP_GENERATE_CONTENT = "generate_content"
+
+# GenAI attributes that carry conversation / tool content (omit when capture is off).
+GEN_AI_PII_CONTENT_ATTR_KEYS: frozenset[str] = frozenset({
+    ATTR_GEN_AI_INPUT_MESSAGES,
+    ATTR_GEN_AI_OUTPUT_MESSAGES,
+    ATTR_GEN_AI_SYSTEM_INSTRUCTIONS,
+    ATTR_GEN_AI_TOOL_CALL_ARGUMENTS,
+    ATTR_GEN_AI_TOOL_CALL_RESULT,
+    ATTR_GEN_AI_TOOL_DESCRIPTION,
+    ATTR_GEN_AI_TOOL_DEFINITIONS,
+})
 
 # OTel GenAI Agent Spans spec (Development status, May 2026)
 ATTR_GEN_AI_AGENT_ID        = "gen_ai.agent.id"

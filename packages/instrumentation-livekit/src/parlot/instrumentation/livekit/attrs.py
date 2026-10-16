@@ -1,8 +1,9 @@
 """
 LiveKit Agents vendor attribute keys (mirrored from livekit-agents telemetry).
 
-Synced with livekit-agents ``telemetry/trace_types.py`` @ 1.7.0.
-On LK upgrade, diff trace_types.py and update this file.
+Synced with livekit-agents ``telemetry/trace_types.py`` @ 1.8.x
+(``lk.pii.*`` content keys from 1.7; GenAI message attrs from 1.8).
+On LK upgrade, diff trace_types.py / gen_ai helpers and update this file.
 
 Content-bearing keys use the ``lk.pii.*`` namespace (Agents 1.7+). Legacy
 ``lk.*`` strings are kept as ``*_LEGACY`` constants so readers can accept
@@ -16,7 +17,7 @@ Do not add Parlot-invented keys here — use ``parlot.core.attrs`` for
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TypeVar
+from typing import Any
 
 from parlot.core.attrs import (
     ATTR_EXCEPTION_MESSAGE,
@@ -25,10 +26,8 @@ from parlot.core.attrs import (
     ATTR_SESSION_RECORDING_EGRESS_ID,
 )
 
-_T = TypeVar("_T")
-
 # ---------------------------------------------------------------------------
-# Mirrored from livekit-agents telemetry/trace_types.py @ 1.7.0
+# Mirrored from livekit-agents telemetry/trace_types.py @ 1.8.x
 # ---------------------------------------------------------------------------
 
 ATTR_SPEECH_ID = "lk.speech_id"
@@ -106,9 +105,25 @@ ATTR_GEN_AI_USAGE_OUTPUT_TOKENS = "gen_ai.usage.output_tokens"
 ATTR_GEN_AI_USAGE_INPUT_TEXT_TOKENS = "gen_ai.usage.input_text_tokens"
 ATTR_GEN_AI_USAGE_INPUT_AUDIO_TOKENS = "gen_ai.usage.input_audio_tokens"
 ATTR_GEN_AI_USAGE_INPUT_CACHED_TOKENS = "gen_ai.usage.input_cached_tokens"
+ATTR_GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read.input_tokens"
 ATTR_GEN_AI_USAGE_OUTPUT_TEXT_TOKENS = "gen_ai.usage.output_text_tokens"
 ATTR_GEN_AI_USAGE_OUTPUT_AUDIO_TOKENS = "gen_ai.usage.output_audio_tokens"
+ATTR_GEN_AI_USAGE_REASONING_OUTPUT_TOKENS = "gen_ai.usage.reasoning.output_tokens"
+ATTR_GEN_AI_USAGE_REASONING_TOKENS = "gen_ai.usage.reasoning_tokens"
 
+# Agents 1.8+ GenAI content attributes (also in parlot.core.attrs)
+ATTR_GEN_AI_INPUT_MESSAGES = "gen_ai.input.messages"
+ATTR_GEN_AI_OUTPUT_MESSAGES = "gen_ai.output.messages"
+ATTR_GEN_AI_SYSTEM_INSTRUCTIONS = "gen_ai.system_instructions"
+ATTR_GEN_AI_RESPONSE_FINISH_REASONS = "gen_ai.response.finish_reasons"
+ATTR_GEN_AI_TOOL_CALL_ARGUMENTS = "gen_ai.tool.call.arguments"
+ATTR_GEN_AI_TOOL_CALL_RESULT = "gen_ai.tool.call.result"
+
+# Native span names (Agents 1.8 realtime)
+NATIVE_SPAN_REALTIME_INFERENCE = "realtime_inference"
+NATIVE_SPAN_REALTIME_METRICS = "realtime_metrics"
+
+# Legacy GenAI message *events* (pre-1.8); prefer attribute form above.
 EVENT_GEN_AI_SYSTEM_MESSAGE = "gen_ai.system.message"
 EVENT_GEN_AI_USER_MESSAGE = "gen_ai.user.message"
 EVENT_GEN_AI_ASSISTANT_MESSAGE = "gen_ai.assistant.message"
@@ -174,15 +189,15 @@ METADATA_ROOM_ID = "room_id"
 
 
 def attr_get(
-    attrs: Mapping[str, _T],
+    attrs: Mapping[str, Any],
     primary: str,
     *fallbacks: str,
-    default: _T | None = None,
-) -> _T | None:
+    default: Any = None,
+) -> Any:
     """Return the first present attribute among ``primary`` and ``fallbacks``.
 
     Used so span readers accept both Agents 1.7 ``lk.pii.*`` keys and legacy
-    ``lk.*`` keys from older agents.
+    ``lk.*`` keys from older agents. Accepts OTel ``AttributeValue`` maps.
     """
     if primary in attrs:
         return attrs[primary]

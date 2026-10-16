@@ -1,7 +1,8 @@
 """
 LiveKitGenAIProcessor — enriches LiveKit Agents OTel spans in-place.
 
-Turn boundaries (livekit-agents 1.7.0): ``user_turn`` and ``agent_turn``.
+Turn boundaries (livekit-agents 1.7+): ``user_turn`` and ``agent_turn``.
+Agents 1.8 adds ``realtime_inference`` / GenAI message attributes.
 ``eou_detection`` is a child model span; ``drain_agent_activity`` is lifecycle only.
 Content-bearing ``lk.pii.*`` attrs are accepted alongside legacy ``lk.*`` keys.
 
@@ -31,9 +32,7 @@ from parlot.core.attrs import (
     ATTR_GEN_AI_AGENT_VERSION,
     ATTR_GEN_AI_CONVERSATION_ID,
     ATTR_GEN_AI_MODEL,
-    ATTR_GEN_AI_PROVIDER,
     ATTR_GEN_AI_RESPONSE_MODEL,
-    ATTR_GEN_AI_SYSTEM,
     ATTR_PARLOT_SPAN_KIND,
     ATTR_SESSION_AMD,
     ATTR_SESSION_CONVERSATION_ID,
@@ -88,7 +87,6 @@ from ._session import (
 from parlot.core.processor import ParlotBaseProcessor
 from parlot.core.sdk_version import stamp_session_sdk_version
 from ._session_state import _LiveKitSessionState
-from ._span_util import provider_to_system
 from ._handoff_tracker import HandoffTracker
 from ._token_aggregator import TokenAggregator
 from ._recording_coordinator import RecordingCoordinator
@@ -517,7 +515,12 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
         state = self._resolve_session_state(span, attrs)
         if state is None:
             # Post-close JudgeGroup LLM: sticky closed session only — no aggregates.
-            if name in ("llm_request", "llm_request_run", "llm_node"):
+            if name in (
+                "llm_request",
+                "llm_request_run",
+                "llm_node",
+                "realtime_inference",
+            ):
                 self._enrich_late_evaluation_llm(span, attrs)
             return
 
@@ -563,6 +566,10 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
             self._enrich_llm_request(span, state)
         elif name == "llm_node":
             self._turns.enrich_llm_node(span, state)
+        elif name == "realtime_inference":
+            self._turns.enrich_realtime_inference(span, state)
+        elif name == "realtime_metrics":
+            self._turns.enrich_realtime_metrics(span, state)
         elif name == "tts_node":
             self._turns.enrich_tts_node(span, state)
         elif name == "tts_request_run":
@@ -628,11 +635,7 @@ class LiveKitGenAIProcessor(ParlotBaseProcessor):
     ) -> None:
         attrs = span.attributes or {}
         self._stamp_agent_identity(span, state, attrs)
-
-        if not attrs.get(ATTR_GEN_AI_SYSTEM):
-            system = provider_to_system(str(attrs.get(ATTR_GEN_AI_PROVIDER, "")))
-            if system:
-                self._set(span, ATTR_GEN_AI_SYSTEM, system)
+        self._turns._normalize_provider_attrs(span, attrs)
 
         self._tokens.accumulate_llm_request_tokens(span, state, attrs)
         self._handoff.stamp_transfer_latency_if_pending(span, state)

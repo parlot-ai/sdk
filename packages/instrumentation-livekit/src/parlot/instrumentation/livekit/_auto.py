@@ -288,6 +288,8 @@ def _register_with_livekit(provider) -> None:
     try:
         from livekit.agents import telemetry as _lk_telemetry
 
+        # Do not pass allow_pii=False — we remap content into Parlot attrs first,
+        # then SanitizeVendorAttrs strips lk.* at export.
         _lk_telemetry.set_tracer_provider(provider)
         logger.debug("Registered TracerProvider with livekit.agents.telemetry")
     except ImportError:
