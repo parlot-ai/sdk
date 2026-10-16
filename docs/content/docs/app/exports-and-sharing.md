@@ -5,28 +5,43 @@ description: Download session artifacts and share read-only session links.
 
 # Exports and sharing
 
-Collaborate without granting full dashboard access, or pull structured data for offline review.
+Share a read-only session link, or download structured data for offline review.
 
 ## Exports (`/exports`)
 
-The **Exports** page lists session export jobs for your organization. From a closed session you can also start an export from the session header.
+The **Exports** page lists session export jobs for your organization. From a closed session you
+can also start an export from the session header.
 
-Typical uses:
+Each export is **one closed session** as a downloadable ZIP. Typical contents (toggles in the
+dialog):
 
-- Download transcripts and evaluation results for a session set
-- Hand artifacts to compliance or offline analysis tools
+- Transcript
+- Recording (when available)
+- Traces
+- Logs
+- Session metadata (includes goals and evaluation results when present)
 
-Export jobs produce downloadable artifacts that expire after a retention window shown in the UI (commonly on the order of days). Re-run an export if the link has expired. Plan quotas may limit how many exports Free workspaces can create—see [Licensing and plans](/app/licensing-and-plans).
+Artifacts expire after **72 hours**. Re-run an export if the link has expired. Plan quotas may
+limit how many exports Free workspaces can create—see
+[Licensing and plans](/app/licensing-and-plans).
 
 ## Share links
 
-From a closed session, use **Share** to create a time-bounded link. Recipients open `/share/:token` without signing in as a full workspace member.
+From a closed session, use **Share** to create a time-bounded link. Recipients open
+`/share/:token` with a read-only view—no full workspace login required.
 
-Recipients get a read-only view of the session—overview, timeline, quality, and related detail tabs depending on the link’s scope.
+Scopes:
 
-Revoke or let links expire when a review is finished. Prefer share links over screenshots when reviewers need synced audio and span context.
+| Scope | What recipients see |
+|-------|---------------------|
+| **Overview + graph** (default) | Overview and [Topology](/app/topology) |
+| **Detailed** | Overview, Topology, Timeline, Quality, Latency, Cost, and Logs |
+
+Revoke or let links expire when a review is finished. Prefer share links when reviewers need
+synced audio and span context.
 
 ## Related
 
 - [Sessions](/app/sessions) — find the session to share or export
-- [Organization settings](/app/organization-settings) — members and client viewer seats for ongoing access
+- [Organization settings](/app/organization-settings) — members and client viewer seats for
+  ongoing access

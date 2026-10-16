@@ -6,7 +6,11 @@ sidebar_position: 1
 
 # Quick Start
 
-**Know if your voice agent is actually working.** Parlot’s MIT `parlotize()` sidecar instruments [LiveKit Agents](https://docs.livekit.io/agents/) — Cloud, self-hosted, or [LiveKit on Telnyx](https://telnyx.com/products/livekit-on-telnyx) — and models each call as turns: timeline, multi-agent graph, and goal completion with an evidence trail to the proving turns and audio.
+**Know if your voice agent is actually working.** Parlot’s MIT `parlotize()` instruments
+[LiveKit Agents](https://docs.livekit.io/agents/) — Cloud, self-hosted, or
+[LiveKit on Telnyx](https://telnyx.com/products/livekit-on-telnyx) — and models each call as
+turns: timeline, multi-agent graph, and goal completion with an evidence trail to the proving
+turns and audio.
 
 ## Install
 
@@ -47,7 +51,10 @@ export PARLOT_ENDPOINT=https://ingest.parlot.ai
 export PARLOT_API_KEY=<org-scoped-key>
 ```
 
-Mint the API key in Parlot **Settings → API Keys**. New tenants record session audio by default (Settings → Recording allowlist `*`); clear the allowlist or use `parlotize(record=False)` to disable. Audio uploads to R2 and confirms when you open the session (lazy R2 HEAD reconcile).
+Create the API key in Parlot **Settings → API keys**. New tenants record session audio by
+default (Settings → Recording allowlist `*`). Turn recording off with an empty allowlist or
+`parlotize(record=False)`. On LiveKit, recording uses Room Composite egress; audio is available
+when you open the session in Parlot.
 
 ## Next
 
@@ -59,4 +66,8 @@ Mint the API key in Parlot **Settings → API Keys**. New tenants record session
 
 ## License
 
-Instrumentation is **MIT**. The companion analysis platform is **BSL 1.1**: free production use up to 4,000 turns/month for your own agents and agents you operate for clients; above that, or to offer Parlot as a hosted service, requires a commercial license. Each version converts to Apache 2.0 four years after its first public release. Enterprise governance features require an EE license key.
+Instrumentation is **MIT**. The companion analysis platform is **Business Source License 1.1
+(BSL 1.1)**: free production use up to 4,000 turns/month for your own agents and agents you
+operate for clients; above that, or to offer Parlot as a hosted service, requires a commercial
+license. Each version converts to Apache 2.0 four years after its first public release.
+Enterprise governance features require an Enterprise Edition (EE) license key.

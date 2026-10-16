@@ -9,9 +9,22 @@ Public open-source SDK. Stay inside this repository.
 
 ## Documentation
 
-In user-facing docs (under `docs/content/docs/`):
-- Minimize jargon; use clear, accessible product language.
-- Never use acronyms without introducing and expanding them on first use (e.g. "personally identifiable information (PII)" before using "PII"). Prefer common, widely understood terms over obscure acronyms (e.g. PII redaction rather than DLP).
+User-facing docs live under [`docs/content/docs/`](docs/content/docs/) (App Guide + SDK docs).
+
+**Audience:** developers who already build agents on LiveKit, LangGraph, or similar frameworks.
+Keep framework and OpenTelemetry terms (`AgentSession`, Room Composite egress, OTel/OTLP, GenAI
+semconv, SIP, `parlotize()` kwargs). Skip pedantic expansions of API/UI for this audience.
+
+**Voice:**
+- Prefer clear product language; minimize Parlot-internal ingest jargon (for example “lazy R2 HEAD
+  reconcile”) and marketing contrast (“not another dashboard…”).
+- Prefer positive phrasing: state what something does. Avoid “does X, not Y” feature contrast.
+- Expand product-specific terms on first use (e.g. “personally identifiable information (PII)”
+  before “PII”). Prefer common terms over obscure acronyms (e.g. PII redaction rather than DLP).
+- Public env-var docs: only customer-facing vars. Do not document internal compare/debug switches.
+
+Skip hand-editing generated surfaces (`docs/content/docs/sdk/changelog.md`, TypeScript attr dumps
+under `docs/content/docs/sdk/typescript/`). Regenerate via docs scripts when needed.
 
 ## Git
 

@@ -62,6 +62,33 @@ sidebar_position: 10
 ## parlot-instrumentation-livekit
 
 
+### [0.4.5](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.4...instrumentation-livekit-v0.4.5) (2026-10-15)
+
+
+#### Features
+
+* **livekit:** add await_recording to keep greeting on session audio ([#97](https://github.com/parlot-ai/sdk/issues/97)) ([86bad53](https://github.com/parlot-ai/sdk/commit/86bad530d5e5ed7d9ce795f8522c6ac967d36dd0))
+* **livekit:** stamp cached tokens on LLM spans and session totals ([#96](https://github.com/parlot-ai/sdk/issues/96)) ([9fd7b8a](https://github.com/parlot-ai/sdk/commit/9fd7b8ac33b32ac3ff33472480e2f5413869ec02))
+
+
+#### Bug Fixes
+
+* **livekit:** stamp speech media on agent turns after text input ([#94](https://github.com/parlot-ai/sdk/issues/94)) ([b216356](https://github.com/parlot-ai/sdk/commit/b216356297d8c8aebec4720aa94773ee032591e9))
+
+### [0.4.4](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.3...instrumentation-livekit-v0.4.4) (2026-10-08)
+
+
+#### Bug Fixes
+
+* **livekit:** clamp user speech start after prior agent turn ([#92](https://github.com/parlot-ai/sdk/issues/92)) ([50b5591](https://github.com/parlot-ai/sdk/commit/50b5591f6d65e425f5f8040d3a805ab1d460a076))
+
+### [0.4.3](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.2...instrumentation-livekit-v0.4.3) (2026-10-06)
+
+
+#### Features
+
+* **livekit:** retry OTLP flush before session close ([#90](https://github.com/parlot-ai/sdk/issues/90)) ([d32e603](https://github.com/parlot-ai/sdk/commit/d32e6031d8bd5d1a74584658b617f62edc659abe))
+
 ### [0.4.2](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.1...instrumentation-livekit-v0.4.2) (2026-09-29)
 
 
@@ -269,6 +296,25 @@ sidebar_position: 10
 
 ## parlot-core
 
+
+### [0.4.6](https://github.com/parlot-ai/sdk/compare/core-v0.4.5...core-v0.4.6) (2026-10-15)
+
+
+#### Features
+
+* **livekit:** stamp cached tokens on LLM spans and session totals ([#96](https://github.com/parlot-ai/sdk/issues/96)) ([9fd7b8a](https://github.com/parlot-ai/sdk/commit/9fd7b8ac33b32ac3ff33472480e2f5413869ec02))
+
+### [0.4.5](https://github.com/parlot-ai/sdk/compare/core-v0.4.4...core-v0.4.5) (2026-10-06)
+
+
+#### Features
+
+* **livekit:** retry OTLP flush before session close ([#90](https://github.com/parlot-ai/sdk/issues/90)) ([d32e603](https://github.com/parlot-ai/sdk/commit/d32e6031d8bd5d1a74584658b617f62edc659abe))
+
+
+#### Documentation
+
+* Cost CSV export and callout/link doc polish ([#88](https://github.com/parlot-ai/sdk/issues/88)) ([eadfcfd](https://github.com/parlot-ai/sdk/commit/eadfcfdc09880689f2426f37a4b06b75d0d9b5bb))
 
 ### [0.4.4](https://github.com/parlot-ai/sdk/compare/core-v0.4.3...core-v0.4.4) (2026-10-04)
 

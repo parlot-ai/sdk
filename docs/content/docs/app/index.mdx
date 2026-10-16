@@ -7,13 +7,15 @@ import { Card, Cards } from 'fumadocs-ui/components/card';
 
 # Introduction
 
-The Parlot **App Guide** covers the web dashboard: fleet health, agent workspaces, session debugging, evaluations, exports, and organization settings.
+The Parlot **App Guide** covers the web dashboard: fleet health, agent workspaces, session
+debugging, evaluations, exports, and organization settings.
 
-Instrument your agents with the [SDK Quick Start](/sdk/get-started/quick-start), then use this guide to work with the data in the product.
+Instrument your agents with the [SDK Quick Start](/sdk/get-started/quick-start), then use this
+guide to work with the data in the product.
 
 ## What the dashboard is for
 
-Parlot answers questions that transcripts alone cannot:
+Parlot answers questions beyond the transcript alone:
 
 - Is the agent completing the caller’s goal?
 - Where did latency or cost spike in the turn pipeline?
@@ -24,10 +26,14 @@ Parlot answers questions that transcripts alone cannot:
 
 Parlot uses a two-level model:
 
-- A **conversation** is the ongoing thread with a user on a channel (voice, webchat, text messaging, WhatsApp).
-- A **session** is a bounded episode inside that conversation—the unit of analysis, evaluation, and cost.
+- A **conversation** is the ongoing thread with a user on a channel (voice, webchat, text
+  messaging, WhatsApp).
+- A **session** is a bounded episode inside that conversation—the unit of analysis, evaluation,
+  and cost.
 
-Voice calls usually map one conversation to one session. Messaging channels can produce several sessions over time when idle timeouts close an episode. Configure those rules under [Conversation boundaries](/app/conversation-boundaries).
+Voice calls usually map one conversation to one session. Messaging channels can produce several
+sessions over time when idle timeouts close an episode. Configure those rules under
+[Conversation boundaries](/app/conversation-boundaries).
 
 ## Dashboard tour
 
@@ -37,9 +43,10 @@ Voice calls usually map one conversation to one session. Messaging channels can 
 | **Agents** | Per-deployment health, topology, topics, and capture settings |
 | **Topics** | Org-wide topic groups and drill-down into sessions |
 | **Sessions** | Search, paste vendor IDs, open the session debugger |
-| **Exports** | Download session and evaluation artifacts |
+| **Cost & margin** | Rate card, unpriced models, and margin by agent or client |
+| **Exports** | Download session artifacts |
 | **Evals** | Custom large language model (LLM) judges and run history |
-| **Settings** | Members, billing, recording, logs, privacy, API keys, and more |
+| **Settings** | Members, plan & billing, recording, logs, privacy, API keys, and more |
 
 ## Start here
 
