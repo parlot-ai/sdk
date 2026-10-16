@@ -14,7 +14,7 @@ from parlot.core.attrs import (
     ATTR_GEN_AI_SYSTEM_INSTRUCTIONS,
     ATTR_GEN_AI_TOOL_CALL_ARGUMENTS,
     ATTR_GEN_AI_TOOL_CALL_RESULT,
-    GEN_AI_CONTENT_ATTR_KEYS,
+    GEN_AI_PII_CONTENT_ATTR_KEYS,
 )
 
 
@@ -122,4 +122,4 @@ def has_genai_message_attrs(attrs: Mapping[str, AttributeValue]) -> bool:
 def genai_content_attr_keys_present(
     attrs: Mapping[str, AttributeValue],
 ) -> list[str]:
-    return [k for k in GEN_AI_CONTENT_ATTR_KEYS if attrs.get(k) is not None]
+    return [k for k in GEN_AI_PII_CONTENT_ATTR_KEYS if attrs.get(k) is not None]

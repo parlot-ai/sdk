@@ -35,7 +35,7 @@ from parlot.core.attrs import (
     EVENT_GEN_AI_ASSISTANT_MESSAGE,
     EVENT_GEN_AI_TOOL_MESSAGE,
     EVENT_GEN_AI_USER_MESSAGE,
-    GEN_AI_CONTENT_ATTR_KEYS,
+    GEN_AI_PII_CONTENT_ATTR_KEYS,
     GEN_AI_OP_GENERATE_CONTENT,
     ATTR_SESSION_AMD,
     ATTR_SESSION_CONVERSATION_ID,
@@ -536,7 +536,7 @@ class TurnEnricher:
     def _strip_genai_content_attrs(self, span: ReadableSpan) -> None:
         """Remove GenAI content attrs LiveKit may have stamped (capture off)."""
         attrs = span.attributes or {}
-        for key in GEN_AI_CONTENT_ATTR_KEYS:
+        for key in GEN_AI_PII_CONTENT_ATTR_KEYS:
             if key in attrs:
                 ParlotBaseProcessor._delete(span, key)
 
