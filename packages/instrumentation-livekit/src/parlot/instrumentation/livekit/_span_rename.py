@@ -15,6 +15,7 @@ from parlot.core.attrs import (
     ATTR_PARLOT_SPAN_KIND,
     GEN_AI_OP_CHAT,
     GEN_AI_OP_EXECUTE_TOOL,
+    GEN_AI_OP_GENERATE_CONTENT,
     PARLOT_EVAL_OP_EVALUATE,
     PARLOT_EVAL_OP_JUDGE,
     PARLOT_SPAN_KIND_EVALUATION,
@@ -26,10 +27,17 @@ from parlot.core.attrs import (
     span_name_execute_tool,
 )
 from parlot.core.processor import ParlotBaseProcessor
-from parlot.instrumentation.livekit.attrs import ATTR_LK_FNC_TOOL_NAME
+from parlot.instrumentation.livekit.attrs import (
+    ATTR_LK_FNC_TOOL_NAME,
+    NATIVE_SPAN_REALTIME_INFERENCE,
+    NATIVE_SPAN_REALTIME_METRICS,
+)
 
 # Native LiveKit names observed internally by the processor (before rename).
 NATIVE_LLM_SPANS = frozenset({"llm_node", "llm_request", "llm_request_run"})
+NATIVE_REALTIME_SPANS = frozenset(
+    {NATIVE_SPAN_REALTIME_INFERENCE, NATIVE_SPAN_REALTIME_METRICS}
+)
 NATIVE_TTS_SPANS = frozenset({"tts_node", "tts_request_run"})
 NATIVE_TOOL_SPANS = frozenset({"function_tool"})
 NATIVE_TURN_SPANS = frozenset({"user_turn", "agent_turn"})
@@ -39,6 +47,8 @@ _NATIVE_STAGE: dict[str, str] = {
     "llm_node": "node",
     "llm_request": "request",
     "llm_request_run": "run",
+    NATIVE_SPAN_REALTIME_INFERENCE: "request",
+    NATIVE_SPAN_REALTIME_METRICS: "request",
     "tts_node": "node",
     "tts_request_run": "run",
     "function_tool": "call",
@@ -62,7 +72,11 @@ def remap_livekit_span_name(
     attrs = attrs or {}
     if native_name in NATIVE_TURN_SPANS:
         return None
-    if native_name in NATIVE_LLM_SPANS:
+    if native_name == NATIVE_SPAN_REALTIME_METRICS:
+        # Late usage sibling — keep for enrich/merge; drop from export name path
+        # by returning None after tokens are applied (see processor).
+        return None
+    if native_name in NATIVE_LLM_SPANS or native_name == NATIVE_SPAN_REALTIME_INFERENCE:
         model = str(attrs.get(ATTR_GEN_AI_MODEL) or "").strip() or None
         return span_name_chat(model)
     if native_name in NATIVE_TOOL_SPANS:
@@ -95,7 +109,22 @@ def apply_livekit_span_rename(span: ReadableSpan) -> None:
     stage = native_stage_for_span(native)
     if stage and not (attrs.get(ATTR_AGENT_STAGE)):
         ParlotBaseProcessor._set(span, ATTR_AGENT_STAGE, stage)
-    if native in NATIVE_LLM_SPANS:
+    if native == NATIVE_SPAN_REALTIME_INFERENCE:
+        existing_op = str(attrs.get(ATTR_GEN_AI_OP_NAME) or "").strip().lower()
+        kind = str(attrs.get(ATTR_PARLOT_SPAN_KIND) or "").strip().lower()
+        if (
+            existing_op in (PARLOT_EVAL_OP_EVALUATE, PARLOT_EVAL_OP_JUDGE)
+            or kind == PARLOT_SPAN_KIND_EVALUATION
+        ):
+            pass
+        elif existing_op and existing_op != GEN_AI_OP_CHAT:
+            # Preserve generate_content (and any other non-chat op LiveKit set).
+            pass
+        else:
+            ParlotBaseProcessor._set(
+                span, ATTR_GEN_AI_OP_NAME, GEN_AI_OP_GENERATE_CONTENT
+            )
+    elif native in NATIVE_LLM_SPANS:
         existing_op = str(attrs.get(ATTR_GEN_AI_OP_NAME) or "").strip().lower()
         kind = str(attrs.get(ATTR_PARLOT_SPAN_KIND) or "").strip().lower()
         # Do not invent GenAI ops for evaluation; leave vendor/legacy op alone
@@ -104,6 +133,8 @@ def apply_livekit_span_rename(span: ReadableSpan) -> None:
             existing_op in (PARLOT_EVAL_OP_EVALUATE, PARLOT_EVAL_OP_JUDGE)
             or kind == PARLOT_SPAN_KIND_EVALUATION
         ):
+            pass
+        elif existing_op == GEN_AI_OP_GENERATE_CONTENT:
             pass
         else:
             ParlotBaseProcessor._set(span, ATTR_GEN_AI_OP_NAME, GEN_AI_OP_CHAT)

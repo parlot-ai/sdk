@@ -2071,7 +2071,7 @@ provides-extras = ["livekit", "langgraph", "all"]
 
 [[package]]
 name = "parlot-core"
-version = "0.4.5"
+version = "0.4.6"
 source = { editable = "packages/core" }
 dependencies = [
     { name = "httpx" },
@@ -2133,7 +2133,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "parlot-instrumentation-livekit"
-version = "0.4.4"
+version = "0.4.5"
 source = { editable = "packages/instrumentation-livekit" }
 dependencies = [
     { name = "httpx" },
@@ -2153,7 +2153,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "httpx", specifier = ">=0.27.0" },
-    { name = "livekit-agents", specifier = ">=0.8.0" },
+    { name = "livekit-agents", specifier = ">=1.7.0" },
     { name = "opentelemetry-api", specifier = ">=1.27.0" },
     { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.27.0" },
     { name = "opentelemetry-sdk", specifier = ">=1.27.0" },

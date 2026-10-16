@@ -56,12 +56,51 @@ def optional_float(value: AttributeValue | None) -> Optional[float]:
     return None
 
 
+def normalize_provider_name(provider: str) -> str:
+    """Canonical ``gen_ai.provider.name`` (Agents 1.8 IDs + legacy aliases)."""
+    raw = (provider or "").strip()
+    if not raw:
+        return ""
+    lower = raw.lower()
+    aliases = {
+        "api.openai.com": "openai",
+        "openai": "openai",
+        "aws.bedrock": "aws.bedrock",
+        "aws bedrock": "aws.bedrock",
+        "amazon bedrock": "aws.bedrock",
+        "bedrock": "aws.bedrock",
+        "gcp.gen_ai": "gcp.gen_ai",
+        "gcp.genai": "gcp.gen_ai",
+        "google": "gcp.gen_ai",
+        "gemini": "gcp.gen_ai",
+        "vertex": "gcp.gen_ai",
+        "gcp.vertex_ai": "gcp.gen_ai",
+    }
+    if lower in aliases:
+        return aliases[lower]
+    # Substring fallbacks for vendor URLs / display names.
+    if "openai" in lower:
+        return "openai"
+    if "bedrock" in lower or lower.startswith("aws"):
+        return "aws.bedrock"
+    if "anthropic" in lower or "claude" in lower:
+        return "anthropic"
+    if "google" in lower or "gemini" in lower or "vertex" in lower:
+        return "gcp.gen_ai"
+    return raw
+
+
 def provider_to_system(provider: str) -> str:
+    """Map provider name → ``gen_ai.system`` when missing on the span."""
+    canonical = normalize_provider_name(provider)
     mapping = {
         "openai": "openai",
         "anthropic": "anthropic",
-        "google": "gcp.vertex_ai",
-        "gemini": "gcp.vertex_ai",
+        "aws.bedrock": "aws.bedrock",
+        "gcp.gen_ai": "gcp.gen_ai",
+        "gcp.vertex_ai": "gcp.gen_ai",
+        "google": "gcp.gen_ai",
+        "gemini": "gcp.gen_ai",
         "deepgram": "deepgram",
         "elevenlabs": "elevenlabs",
         "cartesia": "cartesia",
@@ -69,7 +108,9 @@ def provider_to_system(provider: str) -> str:
         "azure": "azure",
         "silero": "silero",
     }
-    p = provider.lower()
+    if canonical in mapping:
+        return mapping[canonical]
+    p = canonical.lower()
     for key, val in mapping.items():
         if key in p:
             return val

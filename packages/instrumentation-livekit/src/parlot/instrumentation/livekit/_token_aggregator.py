@@ -10,21 +10,21 @@ from opentelemetry.util.types import AttributeValue
 
 from parlot.core.attrs import (
     ATTR_GEN_AI_CACHE_HIT_RATE,
+    ATTR_GEN_AI_CACHE_READ_INPUT_TOKENS,
     ATTR_GEN_AI_CACHED_TOKENS,
     ATTR_GEN_AI_IN_TOKENS,
     ATTR_GEN_AI_MODEL,
     ATTR_GEN_AI_OUT_TOKENS,
     ATTR_GEN_AI_PROVIDER,
+    ATTR_GEN_AI_REASONING_OUTPUT_TOKENS,
+    ATTR_GEN_AI_REASONING_TOKENS,
 )
 from parlot.instrumentation.livekit.attrs import ATTR_LK_SPEECH_ID
 from ._session import get_job_bootstrap
 from ._session_state import _LiveKitSessionState
-from ._span_util import attr_int
+from ._span_util import attr_int, normalize_provider_name
 
 SetAttrFn = Callable[[ReadableSpan, str, AttributeValue], None]
-
-# LiveKit OTEL / GenAI alias for cache-read tokens (subset of input).
-_ATTR_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read.input_tokens"
 
 
 class TokenAggregator:
@@ -64,7 +64,15 @@ class TokenAggregator:
         output_tokens = attr_int(attrs, ATTR_GEN_AI_OUT_TOKENS)
         cached_tokens = attr_int(attrs, ATTR_GEN_AI_CACHED_TOKENS)
         if cached_tokens <= 0:
-            cached_tokens = attr_int(attrs, _ATTR_CACHE_READ_INPUT_TOKENS)
+            # Cache-read is a subset of input_tokens — never add to input.
+            cached_tokens = attr_int(attrs, ATTR_GEN_AI_CACHE_READ_INPUT_TOKENS)
+
+        # Prefer reasoning.output_tokens; alias reasoning_tokens (do not sum both).
+        reasoning_tokens = attr_int(attrs, ATTR_GEN_AI_REASONING_OUTPUT_TOKENS)
+        if reasoning_tokens <= 0:
+            reasoning_tokens = attr_int(attrs, ATTR_GEN_AI_REASONING_TOKENS)
+        if reasoning_tokens > 0 and not attrs.get(ATTR_GEN_AI_REASONING_OUTPUT_TOKENS):
+            self._set(span, ATTR_GEN_AI_REASONING_OUTPUT_TOKENS, reasoning_tokens)
 
         if not state.usage_from_events:
             state.total_input_tokens += input_tokens
@@ -81,6 +89,12 @@ class TokenAggregator:
                 round(cached_tokens / input_tokens, 4),
             )
 
+        raw_provider = str(attrs.get(ATTR_GEN_AI_PROVIDER, "") or "").strip()
+        if raw_provider:
+            canonical = normalize_provider_name(raw_provider)
+            if canonical and canonical != raw_provider:
+                self._set(span, ATTR_GEN_AI_PROVIDER, canonical)
+
     def apply_plugin_llm_usage_to_span(
         self,
         span: ReadableSpan,
@@ -93,7 +107,7 @@ class TokenAggregator:
         )
         has_cached = bool(
             attrs.get(ATTR_GEN_AI_CACHED_TOKENS)
-            or attrs.get(_ATTR_CACHE_READ_INPUT_TOKENS)
+            or attrs.get(ATTR_GEN_AI_CACHE_READ_INPUT_TOKENS)
         )
         if has_in_out and has_cached:
             return

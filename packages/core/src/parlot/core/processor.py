@@ -49,6 +49,18 @@ class ParlotBaseProcessor(SpanProcessor):
     # ------------------------------------------------------------------
 
     @staticmethod
+    def _mutable_attributes(span: ReadableSpan) -> dict:
+        """Return a mutable ``span._attributes`` dict (copy if needed)."""
+        attrs = span._attributes
+        if attrs is None:
+            span._attributes = {}
+            return span._attributes
+        if getattr(attrs, "_immutable", False) or not isinstance(attrs, dict):
+            span._attributes = dict(attrs)
+            return span._attributes
+        return attrs
+
+    @staticmethod
     def _set(span: ReadableSpan, key: str, value) -> None:
         """Write an attribute into a ReadableSpan after it has ended.
 
@@ -56,19 +68,24 @@ class ParlotBaseProcessor(SpanProcessor):
         by default; mutating it raises ``TypeError``. Copy to a plain dict
         when needed so enrichment can still stamp session/turn fields.
         """
-        attrs = span._attributes
-        if attrs is None:
-            span._attributes = {key: value}
-            return
-        if getattr(attrs, "_immutable", False) or not isinstance(attrs, dict):
-            span._attributes = dict(attrs)
-            span._attributes[key] = value
-            return
+        attrs = ParlotBaseProcessor._mutable_attributes(span)
         try:
             attrs[key] = value
         except TypeError:
             span._attributes = dict(attrs)
             span._attributes[key] = value
+
+    @staticmethod
+    def _delete(span: ReadableSpan, key: str) -> None:
+        """Remove an attribute from a ReadableSpan after it has ended."""
+        attrs = span._attributes
+        if not attrs or key not in attrs:
+            return
+        mutable = ParlotBaseProcessor._mutable_attributes(span)
+        try:
+            mutable.pop(key, None)
+        except TypeError:
+            span._attributes = {k: v for k, v in dict(mutable).items() if k != key}
 
     @staticmethod
     def _add_event(span: ReadableSpan, name: str, attributes: dict) -> None:

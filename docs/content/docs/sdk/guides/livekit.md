@@ -47,16 +47,29 @@ flowchart LR
    normalized close reason. This is the episode record (transcript, usage, handoffs), with or
    without pipeline spans.
 2. **OpenTelemetry spans (pipeline)** — LiveKit’s internal spans (`llm_*`, `tts_*`,
-   `function_tool`, …) are enriched, renamed to the shared GenAI / voice vocabulary, and
-   stripped of `lk.*` keys before OpenTelemetry Protocol (OTLP) export. Native turn spans
-   contribute latency onto `parlot.turn`, then are dropped from export. Pipeline spans unlock
-   the Timeline waterfall and turn latency histograms.
+   `function_tool`, `realtime_inference`, …) are enriched, renamed to the shared GenAI / voice
+   vocabulary, and stripped of `lk.*` keys before OpenTelemetry Protocol (OTLP) export. Native
+   turn spans contribute latency onto `parlot.turn`, then are dropped from export. Pipeline
+   spans unlock the Timeline waterfall and turn latency histograms.
+
+With [LiveKit Agents 1.8+](https://docs.livekit.io/testing/observability/tracing/), LiveKit
+stamps OpenTelemetry GenAI attributes on those spans (`gen_ai.input.messages`,
+`gen_ai.output.messages`, `gen_ai.system_instructions`, canonical
+`gen_ai.provider.name` values such as `openai` / `aws.bedrock` / `gcp.gen_ai`). Parlot prefers
+those attributes when present, maps utterance text onto the conversation contract
+(`turn.user_text` / `turn.agent_text`), and keeps Agents 1.7 `lk.pii.*` (and legacy `lk.*`)
+readers as a fallback. Cached prompt tokens use `gen_ai.usage.cache_read.input_tokens` (or
+`gen_ai.usage.input_cached_tokens`); that count is a subset of `gen_ai.usage.input_tokens` —
+do not add the two. Realtime model turns export as `chat {model}` with
+`gen_ai.operation.name=generate_content`.
 
 **Recording** is a separate path: after the session starts, the agent requests an upload grant
 and starts Room Composite egress (audio-only Ogg Vorbis). Session telemetry is sent on its own;
 opening the session in Parlot confirms the audio object and sets `audio_available`.
 
 Shared span layers, identity, errors, and capture policies: [Concepts](/sdk/get-started/concepts).
+Examples under `examples/livekit/` target `livekit-agents>=1.8`; the instrumentation package
+requires `livekit-agents>=1.7`.
 
 ## Add it to an existing agent
 
