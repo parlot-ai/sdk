@@ -749,7 +749,6 @@ class TurnEnricher:
                 attrs,
                 ATTR_LK_FNC_TOOL_OUTPUT,
                 ATTR_FUNCTION_TOOL_OUTPUT_LEGACY,
-                default="",
             )
             or ""
         )
@@ -765,7 +764,6 @@ class TurnEnricher:
             attrs,
             ATTR_LK_FNC_TOOL_ARGS,
             ATTR_FUNCTION_TOOL_ARGS_LEGACY,
-            default="",
         )
         tool_args = str(tool_args_raw) if tool_args_raw else ""
 
