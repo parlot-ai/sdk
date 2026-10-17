@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.6](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.5...instrumentation-livekit-v0.4.6) (2026-10-17)
+
+
+### Features
+
+* **livekit:** align tracing with Agents 1.8 GenAI conventions ([#99](https://github.com/parlot-ai/sdk/issues/99)) ([aad6db3](https://github.com/parlot-ai/sdk/commit/aad6db3d620a09494b4e739eb73e9d8def1bcf19))
+
 ## [0.4.5](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.4...instrumentation-livekit-v0.4.5) (2026-10-15)
 
 
