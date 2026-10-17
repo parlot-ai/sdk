@@ -1,6 +1,6 @@
 {
-  "packages/core": "0.4.6",
-  "packages/instrumentation-livekit": "0.4.5",
+  "packages/core": "0.4.7",
+  "packages/instrumentation-livekit": "0.4.6",
   "packages/instrumentation-langgraph": "0.4.1",
   "packages/meta": "0.3.2"
 }
