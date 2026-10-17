@@ -65,6 +65,8 @@ lk agent simulate text --scenarios scenarios.yaml -y
 
 Text mode exercises LLM, tools, and conversation logic (Parlot telemetry). Audio mode also exercises STT/TTS and is what you want when verifying session recordings in Parlot. The CLI may mint scenario `id` fields in place on first run (`-y` confirms).
 
+The curated set includes **Hostile caller demanding a free night** (`sentiment: negative`) so sample sessions exercise Parlot turn/session sentiment scoring.
+
 ## LiveKit playground / worker
 
 ```bash
