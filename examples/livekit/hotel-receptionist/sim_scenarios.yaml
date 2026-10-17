@@ -1,7 +1,8 @@
-# Curated subset of scenarios.yaml for persona-LLM sims.
-# Use --scenarios scenarios.yaml to run from the full set.
+# Curated subset of scenarios.yaml for LiveKit Agent Simulations.
+# Run: lk agent simulate text --scenarios sim_scenarios.yaml -y
+# Full set: lk agent simulate text --scenarios scenarios.yaml -y
 
-name: Parlot hotel receptionist — curated persona sims
+name: Parlot hotel receptionist — curated simulations
 
 scenarios:
 - label: Simple room booking by phone

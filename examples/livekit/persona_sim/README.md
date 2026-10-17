@@ -1,9 +1,14 @@
-# Shared persona-LLM session driver for LiveKit examples.
+# Legacy: offline persona-LLM session driver
 
-Each example that supports automated text sims provides:
+Prefer [LiveKit Agent Simulations](https://docs.livekit.io/testing/simulations/) via
+`lk agent simulate` in each example directory. This driver remains for **offline**
+local runs that do not use LiveKit Cloud (no Room Composite recording).
+
+Each example that still supports this path provides:
 
 - `sim_adapter.py` — builds the agent + userdata (`open_run`)
 - `sim_scenarios.yaml` — PERSONA / OPENING LINE / FACTS / DO scenarios
+  (same YAML is also used by `lk agent simulate` when `agent_expectations` are present)
 
 ## Run from an example directory
 
@@ -34,4 +39,5 @@ async def open_run() -> SimRun:
     return SimRun(agent=agent.MyAgent(), userdata=..., agent_speaker="Receptionist")
 ```
 
-When adding a new example, copy an existing `sim_adapter.py` and swap agent/userdata construction.
+When adding a new example, prefer adding `sim_scenarios.yaml` for
+`lk agent simulate` first. Only add `sim_adapter.py` if you need this offline driver.

@@ -1,5 +1,6 @@
-# Curated persona-LLM scenarios for the healthcare demo agent.
-name: Parlot healthcare — curated persona sims
+# Curated LiveKit Agent Simulation scenarios for the healthcare demo agent.
+# Run: lk agent simulate text --scenarios sim_scenarios.yaml -y
+name: Parlot healthcare — curated simulations
 
 scenarios:
 - label: Returning patient books appointment
@@ -18,6 +19,11 @@ scenarios:
     3. Pick a offered slot and confirm the booking.
     4. When the appointment is confirmed, say thanks and hang up.
     Do NOT ask to speak to a human or transfer.
+  agent_expectations: >
+    Authenticates Mary Jane (name + DOB), treats her as a returning patient with
+    insurance already on file, offers appointment slots (preferring Dr. Henry Jekyll
+    when available), and confirms a booked slot for an annual checkup. Must not
+    warm-transfer or invent a new insurance plan.
   tags:
     feature: schedule
     difficulty: "1"
@@ -39,6 +45,11 @@ scenarios:
     3. Book a slot they offer and confirm.
     4. Hang up once confirmed.
     Do NOT ask for a human transfer.
+  agent_expectations: >
+    Runs new-patient intake (name, DOB, phone, HealthFirst insurance), books an
+    appointment for a non-emergency sore throat with a compatible doctor, and
+    confirms the slot. Must not transfer to a human or skip intake fields the agent
+    requires.
   tags:
     feature: intake
     difficulty: "2"
@@ -57,6 +68,10 @@ scenarios:
     2. Ask for the balance and pay it with the card when prompted.
     3. Confirm payment succeeded, thank them, hang up.
     Do NOT schedule an appointment or ask for a human.
+  agent_expectations: >
+    Authenticates Peter Parker, quotes the outstanding balance, collects card details
+    securely (no unnecessary full-card read-back), and confirms payment succeeded.
+    Must not schedule an appointment or warm-transfer on this billing-only call.
   tags:
     feature: billing
     difficulty: "2"

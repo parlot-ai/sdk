@@ -26,12 +26,14 @@ from parlot.instrumentation.livekit import parlotize
 parlotize("livekit-voice")
 # ─────────────────────────────────────────────────────────────────────────
 
-import livekit.agents as agents
-from livekit.agents import AgentSession, WorkerOptions
+from livekit.agents import Agent, AgentServer, AgentSession, JobContext, cli
 from livekit.plugins import openai, silero
 
+server = AgentServer()
 
-async def entrypoint(ctx: agents.JobContext) -> None:
+
+@server.rtc_session()
+async def entrypoint(ctx: JobContext) -> None:
     await ctx.connect()
 
     session = AgentSession(
@@ -43,7 +45,7 @@ async def entrypoint(ctx: agents.JobContext) -> None:
 
     await session.start(
         room=ctx.room,
-        agent=agents.Agent(
+        agent=Agent(
             instructions="You are a helpful voice assistant.",
         ),
     )
@@ -54,4 +56,4 @@ async def entrypoint(ctx: agents.JobContext) -> None:
 
 
 if __name__ == "__main__":
-    agents.cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint))
+    cli.run_app(server)

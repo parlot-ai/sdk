@@ -1,5 +1,6 @@
-# Curated persona-LLM scenarios for the drive-thru demo agent.
-name: Parlot drive-thru — curated persona sims
+# Curated LiveKit Agent Simulation scenarios for the drive-thru demo agent.
+# Run: lk agent simulate text --scenarios sim_scenarios.yaml -y
+name: Parlot drive-thru — curated simulations
 
 scenarios:
 - label: Simple Big Mac combo order
@@ -15,6 +16,10 @@ scenarios:
     1. Order a Big Mac combo (medium, Coke).
     2. Confirm when they read the order back.
     3. Say that's all and hang up after they give the total / send you to the window.
+  agent_expectations: >
+    Takes a Big Mac combo order for medium size with a Coke, reads the order back
+    for confirmation, and completes with a total (or sends the caller to the window).
+    Does not invent menu items or add sauces the caller did not request.
   tags:
     feature: order
     difficulty: "1"
@@ -31,6 +36,11 @@ scenarios:
     1. Start with the Happy Meal.
     2. Change the order once (size or piece count) when they start confirming.
     3. Accept the final read-back and hang up.
+  agent_expectations: >
+    Accepts the Happy Meal, applies the caller's mid-order size/piece change without
+    starting over from scratch, optionally adds fries when asked, and ends with a
+    confirmed read-back the caller accepts. The final cart must reflect the changed
+    choice, not only the first request.
   tags:
     feature: modify
     difficulty: "2"
@@ -46,6 +56,10 @@ scenarios:
     1. Ask about a McFlurry.
     2. After one clarifying question from the agent, say you need to go and cancel — "actually never mind, I'll pass" — then hang up.
     Do not confirm any items onto the order.
+  agent_expectations: >
+    Answers the McFlurry question, then accepts the caller's cancel / walk-away without
+    forcing a completed order. Ending with a confirmed paid order is a fail; a polite
+    close with an empty or abandoned cart is a pass.
   tags:
     feature: abandon
     difficulty: "1"
