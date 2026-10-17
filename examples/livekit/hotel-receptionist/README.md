@@ -11,7 +11,7 @@ Recording follows Parlot **Settings → Recording** (telemetry bootstrap). Overr
 
 ## Setup
 
-Requires [uv](https://docs.astral.sh/uv/) and the [LiveKit CLI](https://docs.livekit.io/reference/developer-tools/livekit-cli/) (`lk`).
+Requires [uv](https://docs.astral.sh/uv/) and the [LiveKit CLI](https://docs.livekit.io/reference/developer-tools/livekit-cli/) (`lk`) **v2.19.0+**.
 
 ```bash
 cd examples/livekit/hotel-receptionist
@@ -49,20 +49,23 @@ lk agent console
 
 Press **Ctrl+T** to toggle Text/Audio mode, then type as the guest. Press **Q** to quit.
 
-## Persona LLM sample sessions
+## Agent Simulations
 
-A second LiveKit Inference LLM role-plays the caller from scenario instructions
-(`PERSONA` / `OPENING LINE` / `FACTS` / `DO`). Driver: [`../persona_sim/`](../persona_sim/).
-Default scenarios: [`sim_scenarios.yaml`](sim_scenarios.yaml). Full set: [`scenarios.yaml`](scenarios.yaml).
+[LiveKit Agent Simulations](https://docs.livekit.io/testing/simulations/) run an LLM-driven simulated caller against this agent on LiveKit Cloud, then judge the transcript against `agent_expectations`. Default scenarios: [`sim_scenarios.yaml`](sim_scenarios.yaml). Full set: [`scenarios.yaml`](scenarios.yaml).
+
+Authenticate the CLI once (`lk cloud auth`), then from this directory:
 
 ```bash
-uv run python ../persona_sim/run_persona_sim.py --list
-uv run python ../persona_sim/run_persona_sim.py --label "Simple room booking by phone"
-uv run python ../persona_sim/run_persona_sim.py --all --max-turns 24
-uv run python ../persona_sim/run_persona_sim.py --scenarios scenarios.yaml --tag feature=room_booking --limit 3
+lk agent simulate text --scenarios sim_scenarios.yaml -y
+# Optional: full STT-LLM-TTS pipeline + call-quality metrics (needed for useful Parlot audio)
+lk agent simulate audio --scenarios sim_scenarios.yaml -y
+# Full suite:
+lk agent simulate text --scenarios scenarios.yaml -y
 ```
 
-Each run prints `parlot_session_id=…`.
+Text mode exercises LLM, tools, and conversation logic (Parlot telemetry). Audio mode also exercises STT/TTS and is what you want when verifying session recordings in Parlot. The CLI may mint scenario `id` fields in place on first run (`-y` confirms).
+
+The curated set includes **Hostile caller demanding a free night** (`sentiment: negative`) so sample sessions exercise Parlot turn/session sentiment scoring.
 
 ## LiveKit playground / worker
 
@@ -70,14 +73,23 @@ Each run prints `parlot_session_id=…`.
 lk agent dev
 ```
 
+## Legacy: persona_sim
+
+Offline local driver ([`../persona_sim/`](../persona_sim/)) that drives `AgentSession.run()` without LiveKit Cloud. Prefer `lk agent simulate` above for Cloud sims and sample data.
+
+```bash
+uv run python ../persona_sim/run_persona_sim.py --list
+uv run python ../persona_sim/run_persona_sim.py --label "Simple room booking by phone"
+```
+
 ## Architecture
 
 ```
 agent.py             — HotelReceptionistAgent + Parlot parlotize()
-sim_adapter.py       — hooks for shared persona-sim driver
-../persona_sim/      — shared persona-LLM guest + AgentSession.run() driver
-sim_scenarios.yaml   — curated PERSONA scenarios (default)
+sim_scenarios.yaml   — curated LiveKit Agent Simulation scenarios
 scenarios.yaml       — full LiveKit simulation scenario set
+sim_adapter.py       — hooks for legacy persona-sim driver
+../persona_sim/      — legacy offline persona-LLM driver
 tools_*.py           — rooms / restaurant / services tools
 book_*.py            — AgentTask booking flows
 hotel_db.py          — HotelDB (apsw) + schema + pricing

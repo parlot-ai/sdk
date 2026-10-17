@@ -1,0 +1,66 @@
+# LiveKit Agent Simulation scenarios for the restaurant multi-agent example.
+# Run: lk agent simulate text --scenarios sim_scenarios.yaml -y
+name: Parlot restaurant-agent — curated simulations
+
+scenarios:
+- label: Book a dinner reservation
+  instructions: |
+    PERSONA: Avery Chen, polite diner booking ahead. Speaks in short turns.
+    OPENING LINE: "Hi, I'd like to make a reservation for tonight."
+    FACTS (reveal each only when asked):
+    - time: 7:30 PM
+    - name: Avery Chen
+    - phone: 415-555-0198
+    DO, IN ORDER:
+    1. Ask to book a table.
+    2. Answer time, name, and phone when asked.
+    3. Confirm the reservation when the agent reads it back.
+    4. Hang up once confirmed.
+  agent_expectations: >
+    Greeter hands off to the reservation specialist. Collects reservation time,
+    name, and phone, confirms the details with the caller, and completes the
+    booking. Must not take a takeaway order on this call.
+  tags:
+    feature: reservation
+    difficulty: "1"
+
+- label: Place a takeaway order
+  instructions: |
+    PERSONA: Riley, hungry and decisive, ordering pickup.
+    OPENING LINE: "Hey — I want to order takeaway, not a table."
+    FACTS (reveal each only when asked):
+    - order: one pizza and one coffee
+    - name: Riley Morgan
+    - phone: 628-555-0144
+    DO, IN ORDER:
+    1. Make clear you want takeaway / pickup, not a reservation.
+    2. Order pizza and coffee when asked.
+    3. Give name and phone if asked.
+    4. Confirm the order and hang up.
+  agent_expectations: >
+    Routes to the takeaway (or checkout) path rather than booking a table.
+    Captures an order that includes pizza and coffee, and confirms it with the
+    caller before ending. Booking only a reservation is a fail.
+  tags:
+    feature: takeaway
+    difficulty: "1"
+
+- label: Ask about the menu then leave
+  instructions: |
+    PERSONA: Sam, browsing only — not ready to commit.
+    OPENING LINE: "Hi, what do you have on the menu?"
+    FACTS:
+    - you only want menu info
+    - you will NOT book a table or place an order
+    DO, IN ORDER:
+    1. Ask what is on the menu / what you serve.
+    2. After hearing options, say you'll think about it and hang up.
+    Do not provide a name, phone, or payment details.
+  agent_expectations: >
+    Answers with menu items (pizza, salad, ice cream, coffee or equivalent)
+    without forcing a reservation or completed order. Ending with a confirmed
+    booking or paid checkout is a fail.
+  tags:
+    feature: menu_info
+    difficulty: "1"
+    outcome: incomplete

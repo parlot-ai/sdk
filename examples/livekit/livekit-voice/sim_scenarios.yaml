@@ -1,0 +1,33 @@
+# LiveKit Agent Simulation scenarios for the minimal voice example.
+# Run: lk agent simulate text --scenarios sim_scenarios.yaml -y
+name: Parlot livekit-voice — curated simulations
+
+scenarios:
+- label: Ask what the agent can do
+  instructions: |
+    PERSONA: Taylor, curious first-time caller, polite and brief.
+    OPENING LINE: "Hi — what can you help me with?"
+    DO, IN ORDER:
+    1. Ask what the agent can do.
+    2. Acknowledge the answer briefly ("got it, thanks").
+    3. Hang up.
+  agent_expectations: >
+    Greets the caller and explains that it is a helpful voice assistant (or similar
+    capability summary). Must respond verbally; a silent turn is a fail.
+  tags:
+    feature: greeting
+    difficulty: "1"
+
+- label: Simple factual question
+  instructions: |
+    PERSONA: Morgan, decisive, wants a short answer.
+    OPENING LINE: "Quick question — what's two plus two?"
+    DO, IN ORDER:
+    1. Ask the math question.
+    2. Confirm the answer if needed, then say thanks and hang up.
+  agent_expectations: >
+    Answers that two plus two is four (or an equivalent clear confirmation).
+    Must not refuse a simple arithmetic question or go silent.
+  tags:
+    feature: qa
+    difficulty: "1"

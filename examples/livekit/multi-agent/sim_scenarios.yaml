@@ -1,0 +1,45 @@
+# LiveKit Agent Simulation scenarios for the multi-agent storytelling example.
+# Run: lk agent simulate text --scenarios sim_scenarios.yaml -y
+name: Parlot multi-agent — curated simulations
+
+scenarios:
+- label: Share name and hometown for a story
+  instructions: |
+    PERSONA: Jordan Lee, friendly and brief. Happy to hear a short interactive story.
+    OPENING LINE: "Hi! I'd love a story."
+    FACTS (reveal each only when asked):
+    - name: Jordan Lee
+    - location: Portland, Oregon
+    DO, IN ORDER:
+    1. Greet and ask for a story if needed.
+    2. Give your name when asked.
+    3. Give your hometown / location when asked.
+    4. Engage with at least one turn of the personalized story.
+    5. When the storyteller asks if you want more, say you're good and let them wrap up.
+  agent_expectations: >
+    Intro agent collects name and location, then hands off to the story agent.
+    The story mentions or clearly uses Jordan / Portland (or equivalent personalization).
+    Ending without a handoff or without using the gathered details is a fail.
+  tags:
+    feature: handoff
+    difficulty: "1"
+
+- label: Reluctant caller eventually shares details
+  instructions: |
+    PERSONA: Casey, a bit shy; answers in short phrases and needs a second ask for location.
+    OPENING LINE: "Uh, hi."
+    FACTS (reveal each only when asked):
+    - name: Casey Nguyen (give on first clear ask)
+    - location: Austin, Texas (only after the agent asks a second time or clarifies)
+    DO, IN ORDER:
+    1. Answer the greeting briefly.
+    2. Give your name when asked.
+    3. On the first location ask, say "near Austin" vaguely; on the follow-up, say Austin, Texas.
+    4. Listen to a bit of the story, then say that's enough and let them finish.
+  agent_expectations: >
+    Persists politely until both name and a concrete location are gathered, then
+    hands off and tells a personalized story. Giving up without location, or never
+    handing off to storytelling, is a fail.
+  tags:
+    feature: intake
+    difficulty: "2"
