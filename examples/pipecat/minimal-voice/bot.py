@@ -35,14 +35,14 @@ from pipecat.transports.daily.transport import DailyParams
 from pipecat.transports.websocket.fastapi import FastAPIWebsocketParams
 from pipecat.workers.runner import WorkerRunner
 
+load_dotenv(override=True)
+
 # ── Parlot instrumentation ────────────────────────────────────────────────
-# Call before PipelineWorker. Replaces Pipecat setup_tracing() for Parlot export.
+# Call after load_dotenv so PARLOT_* are available; before PipelineWorker.
 from parlot.instrumentation.pipecat import parlotize
 
 parlotize("pipecat-minimal-voice", version="0.1.0")
 # ─────────────────────────────────────────────────────────────────────────
-
-load_dotenv(override=True)
 
 
 async def get_current_weather(params: FunctionCallParams, location: str, format: str):
