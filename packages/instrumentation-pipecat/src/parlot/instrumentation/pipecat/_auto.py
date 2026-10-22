@@ -166,7 +166,12 @@ def _build_provider(
 
 
 def _attach_processor_if_needed(provider: TracerProvider, context: ParlotContext) -> None:
+    from opentelemetry.sdk.trace import TracerProvider as SdkTracerProvider
+
     from ._processor import PipecatGenAIProcessor
+
+    if not isinstance(provider, SdkTracerProvider):
+        return
 
     try:
         active = getattr(provider, "_active_span_processor", None)

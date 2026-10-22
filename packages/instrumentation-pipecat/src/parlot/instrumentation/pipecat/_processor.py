@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Mapping
 
 from opentelemetry.sdk.trace import ReadableSpan
-from opentelemetry.trace import Span
+from opentelemetry.util.types import AttributeValue
 
 from parlot.core.attrs import (
     ATTR_GEN_AI_MODEL,
@@ -21,14 +21,20 @@ from parlot.core.context import ParlotContext
 from parlot.core.processor import ParlotBaseProcessor
 from parlot.core.session import get_active_session
 
-from ._session import close_session, emit_turn, ensure_session, lookup_session
+from ._platform_refs import stamp_pipecat_platform_refs
+from ._session import (
+    _PipecatSessionState,
+    close_session,
+    emit_turn,
+    ensure_session,
+    lookup_session,
+)
 from ._span_rename import (
     NATIVE_CONVERSATION,
     NATIVE_TURN,
     apply_pipecat_span_rename,
     remap_pipecat_span_name,
 )
-from ._platform_refs import stamp_pipecat_platform_refs
 from .attrs import (
     ATTR_PIPECAT_CONVERSATION_ID,
     ATTR_PIPECAT_METRICS_TTFB,
@@ -42,6 +48,19 @@ from .attrs import (
 logger = logging.getLogger("parlot.instrumentation.pipecat")
 
 
+def _as_float(value: AttributeValue | None) -> float | None:
+    if value is None or isinstance(value, (list, tuple)):
+        return None
+    try:
+        return float(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+
+
+def _pipecat_state(state: Any) -> _PipecatSessionState | None:
+    return state if isinstance(state, _PipecatSessionState) else None
+
+
 class PipecatGenAIProcessor(ParlotBaseProcessor):
     """Enrich and remap Pipecat OTEL spans for Parlot export."""
 
@@ -50,10 +69,11 @@ class PipecatGenAIProcessor(ParlotBaseProcessor):
         # conversation_id → (start_ns by turn_number) for duration-preserving remint
         self._turn_starts: dict[str, dict[int, int]] = {}
 
-    def on_start(self, span: Span, parent_context: Any = None) -> None:
+    def on_start(self, span, parent_context=None) -> None:  # noqa: ANN001
+        # SDK Span (not API Span) — leave untyped like LiveKit processor.
         super().on_start(span, parent_context)
-        name = span.name or ""
-        attrs = span.attributes or {}
+        name = getattr(span, "name", None) or ""
+        attrs: Mapping[str, AttributeValue] = getattr(span, "attributes", None) or {}
         if name == NATIVE_CONVERSATION:
             cid = str(
                 attrs.get(ATTR_PIPECAT_CONVERSATION_ID)
@@ -63,12 +83,13 @@ class PipecatGenAIProcessor(ParlotBaseProcessor):
             if cid:
                 ensure_session(cid)
         elif name == NATIVE_TURN:
-            cid = self._conversation_id_from_context(attrs, parent_context)
+            cid = self._conversation_id_from_context(attrs)
             turn_n = self._turn_number(attrs)
             if cid and turn_n is not None:
                 ensure_session(cid)
                 starts = self._turn_starts.setdefault(cid, {})
-                starts[turn_n] = span.start_time or 0
+                start_time = getattr(span, "start_time", None)
+                starts[turn_n] = int(start_time) if start_time else 0
 
     def on_end(self, span: ReadableSpan) -> None:
         super().on_end(span)
@@ -78,9 +99,7 @@ class PipecatGenAIProcessor(ParlotBaseProcessor):
         if name == NATIVE_CONVERSATION:
             cid = str(attrs.get(ATTR_PIPECAT_CONVERSATION_ID) or "").strip()
             if cid:
-                # Session span already minted; drop native conversation from export
-                # by renaming to a non-exportable name then clearing — ExportFilter
-                # drops unknown names. Prefer marking via empty rename.
+                # Session span already minted; drop native conversation from export.
                 span._name = "__parlot_drop_conversation__"
                 close_session(cid, reason="completed")
             return
@@ -101,32 +120,31 @@ class PipecatGenAIProcessor(ParlotBaseProcessor):
         self._map_transcript_text(span)
 
     def _conversation_id_from_context(
-        self, attrs: Any, parent_context: Any
+        self, attrs: Mapping[str, AttributeValue]
     ) -> str:
         cid = str(attrs.get(ATTR_PIPECAT_CONVERSATION_ID) or "").strip()
         if cid:
             return cid
-        state = get_active_session()
-        if state and getattr(state, "conversation_id", ""):
-            return str(state.conversation_id)
+        state = _pipecat_state(get_active_session())
+        if state and state.conversation_id:
+            return state.conversation_id
         return ""
 
     @staticmethod
-    def _turn_number(attrs: Any) -> int | None:
+    def _turn_number(attrs: Mapping[str, AttributeValue]) -> int | None:
         raw = attrs.get(ATTR_PIPECAT_TURN_NUMBER)
-        if raw is None:
+        if raw is None or isinstance(raw, (list, tuple)):
             return None
         try:
-            return int(raw)
+            return int(raw)  # type: ignore[arg-type]
         except (TypeError, ValueError):
             return None
 
     def _mint_contract_turn(self, span: ReadableSpan) -> None:
         attrs = span.attributes or {}
         cid = str(attrs.get(ATTR_PIPECAT_CONVERSATION_ID) or "").strip()
-        state = lookup_session(cid) if cid else get_active_session()
-        if state is None or not getattr(state, "conversation_id", ""):
-            # Best-effort: open session from turn attrs
+        state = lookup_session(cid) if cid else _pipecat_state(get_active_session())
+        if state is None or not state.conversation_id:
             if not cid:
                 return
             state = ensure_session(cid)
@@ -137,13 +155,7 @@ class PipecatGenAIProcessor(ParlotBaseProcessor):
             state.turn_count += 1
             turn_n = state.turn_count
         interrupted = bool(attrs.get(ATTR_PIPECAT_TURN_INTERRUPTED))
-        latency = attrs.get(ATTR_PIPECAT_TURN_USER_BOT_LATENCY)
-        e2e: float | None = None
-        if latency is not None:
-            try:
-                e2e = float(latency)
-            except (TypeError, ValueError):
-                e2e = None
+        e2e = _as_float(attrs.get(ATTR_PIPECAT_TURN_USER_BOT_LATENCY))
         start_ns = None
         starts = self._turn_starts.get(state.conversation_id) or {}
         if turn_n in starts:
@@ -160,9 +172,8 @@ class PipecatGenAIProcessor(ParlotBaseProcessor):
         )
 
     def _stamp_session_linkage(self, span: ReadableSpan) -> None:
-        state = get_active_session()
+        state = _pipecat_state(get_active_session())
         if state is None or not state.session_id:
-            # Try conversation.id on the span itself
             attrs = span.attributes or {}
             cid = str(attrs.get(ATTR_PIPECAT_CONVERSATION_ID) or "").strip()
             if cid:
@@ -172,7 +183,7 @@ class PipecatGenAIProcessor(ParlotBaseProcessor):
         self._set(span, ATTR_SESSION_ID, state.session_id)
         self._set(span, ATTR_SESSION_CONVERSATION_ID, state.conversation_id)
         turn_n = self._turn_number(span.attributes or {})
-        if turn_n is None and getattr(state, "open_turn_index", None) is not None:
+        if turn_n is None and state.open_turn_index is not None:
             turn_n = state.open_turn_index
         if turn_n is not None:
             self._set(span, ATTR_TURN_INDEX, turn_n)
@@ -180,24 +191,19 @@ class PipecatGenAIProcessor(ParlotBaseProcessor):
 
     def _map_pipecat_metrics(self, span: ReadableSpan) -> None:
         attrs = span.attributes or {}
-        ttfb = attrs.get(ATTR_PIPECAT_METRICS_TTFB)
+        ttfb = _as_float(attrs.get(ATTR_PIPECAT_METRICS_TTFB))
         if ttfb is not None and not attrs.get(ATTR_GEN_AI_TTS_TTFB_S):
-            try:
-                self._set(span, ATTR_GEN_AI_TTS_TTFB_S, float(ttfb))
-            except (TypeError, ValueError):
-                pass
-        # Pipecat sometimes uses gen_ai.usage.* already — leave alone.
-        # Ensure model attr present when provider set.
+            self._set(span, ATTR_GEN_AI_TTS_TTFB_S, ttfb)
         if not attrs.get(ATTR_GEN_AI_MODEL):
             model = attrs.get("gen_ai.request.model") or attrs.get("model")
-            if model:
+            if model is not None and not isinstance(model, (list, tuple)):
                 self._set(span, ATTR_GEN_AI_MODEL, str(model))
 
     def _map_transcript_text(self, span: ReadableSpan) -> None:
         attrs = span.attributes or {}
         name = span.name or ""
         transcript = attrs.get(ATTR_PIPECAT_TRANSCRIPT) or attrs.get(ATTR_PIPECAT_TEXT)
-        if not transcript:
+        if transcript is None or isinstance(transcript, (list, tuple)):
             return
         text = str(transcript)
         if name == "stt" or name.startswith("stt"):
