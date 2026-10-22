@@ -1,0 +1,45 @@
+# parlot-instrumentation-pipecat
+
+Parlot OpenTelemetry instrumentation for [Pipecat](https://github.com/pipecat-ai/pipecat) voice agents.
+
+Emits Parlot’s Conversation Contract (`parlot.session`, `parlot.turn`, GenAI/voice spans) so Pipecat sessions show up in the same debugger as any other supported framework.
+
+## Install
+
+```bash
+pip install parlot-instrumentation-pipecat
+# or: pip install "parlot[pipecat]"
+```
+
+## Instrument
+
+Call `parlotize()` once before building your pipeline (replaces Pipecat's `setup_tracing` for Parlot export). Enable tracing on `PipelineWorker`:
+
+```python
+from parlot.instrumentation.pipecat import parlotize
+
+parlotize("my-pipecat-agent", version="0.1.0")
+
+# ... build Pipeline ...
+
+worker = PipelineWorker(
+    pipeline,
+    params=PipelineParams(enable_metrics=True, enable_usage_metrics=True),
+    enable_tracing=True,
+    enable_turn_tracking=True,
+)
+```
+
+```bash
+export PARLOT_ENDPOINT=https://ingest.parlot.ai
+export PARLOT_API_KEY=<org-scoped-key>
+```
+
+## Example
+
+See [`examples/pipecat/minimal-voice/`](../../examples/pipecat/minimal-voice/) (adapted from Pipecat's [open-telemetry/langfuse](https://github.com/pipecat-ai/pipecat-examples/tree/main/open-telemetry/langfuse) demo).
+
+## Docs
+
+- [Pipecat guide](https://parlot.ai/docs/sdk/guides/pipecat)
+- [Concepts](https://parlot.ai/docs/sdk/get-started/concepts)

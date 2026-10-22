@@ -1,0 +1,14 @@
+[project]
+name = "parlot-pipecat-minimal-voice"
+version = "0.1.0"
+description = "Minimal Pipecat voice bot with Parlot (adapted from pipecat-examples/open-telemetry/langfuse)"
+requires-python = ">=3.11"
+dependencies = [
+    "pipecat-ai[daily,webrtc,websocket,silero,cartesia,deepgram,openai,tracing,runner]>=1.0.0",
+    "parlot-instrumentation-pipecat",
+    "python-dotenv>=1.0.0",
+]
+
+[tool.uv.sources]
+parlot-instrumentation-pipecat = { path = "../../../packages/instrumentation-pipecat", editable = true }
+parlot-core = { path = "../../../packages/core", editable = true }
