@@ -16,6 +16,7 @@ on:
           - parlot-core
           - parlot-instrumentation-livekit
           - parlot-instrumentation-langgraph
+          - parlot-instrumentation-pipecat
       repository:
         description: "Target repository"
         required: true
@@ -126,6 +127,33 @@ jobs:
           enable-cache: true
       - name: Build parlot-instrumentation-langgraph
         run: uv build --package parlot-instrumentation-langgraph --out-dir dist/
+      - name: Publish to PyPI
+        if: ${{ github.event.inputs.repository != 'testpypi' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+      - name: Publish to TestPyPI
+        if: ${{ github.event.inputs.repository == 'testpypi' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: dist/
+
+  publish-pipecat:
+    name: Publish parlot-instrumentation-pipecat
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi-pipecat
+    if: |
+      github.event_name == 'workflow_dispatch' && (github.event.inputs.package == 'all' || github.event.inputs.package == 'parlot-instrumentation-pipecat') ||
+      github.event_name == 'release' && startsWith(github.event.release.tag_name, 'instrumentation-pipecat-v')
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.1.0
+        with:
+          enable-cache: true
+      - name: Build parlot-instrumentation-pipecat
+        run: uv build --package parlot-instrumentation-pipecat --out-dir dist/
       - name: Publish to PyPI
         if: ${{ github.event.inputs.repository != 'testpypi' }}
         uses: pypa/gh-action-pypi-publish@release/v1

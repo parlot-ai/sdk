@@ -61,4 +61,4 @@ uv sync --group dev
 uv run pytest -q
 ```
 
-Use `uv run` from the repo root. Packages: `parlot` · `parlot-core` · `parlot-instrumentation-livekit` · `parlot-instrumentation-langgraph`. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Use `uv run` from the repo root. Packages: `parlot` · `parlot-core` · `parlot-instrumentation-livekit` · `parlot-instrumentation-langgraph` · `parlot-instrumentation-pipecat`. See [CONTRIBUTING.md](CONTRIBUTING.md).

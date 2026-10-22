@@ -21,6 +21,13 @@
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true
     },
+    "packages/instrumentation-pipecat": {
+      "release-type": "python",
+      "component": "instrumentation-pipecat",
+      "package-name": "parlot-instrumentation-pipecat",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true
+    },
     "packages/meta": {
       "release-type": "python",
       "component": "parlot",
