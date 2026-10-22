@@ -7,7 +7,7 @@ Adapted from Pipecat’s official [open-telemetry/langfuse](https://github.com/p
 ## Prerequisites
 
 - [uv](https://docs.astral.sh/uv/)
-- API keys: Deepgram, Cartesia, OpenAI
+- API keys: Deepgram, Google (Gemini TTS), OpenAI
 - Parlot API key (mint in **Settings → API Keys**)
 - Optional: [Daily](https://daily.co) credentials if you use the Daily transport
 
@@ -17,7 +17,7 @@ Adapted from Pipecat’s official [open-telemetry/langfuse](https://github.com/p
 cd examples/pipecat/minimal-voice
 uv sync
 cp .env.example .env
-# fill PARLOT_*, DEEPGRAM_API_KEY, CARTESIA_API_KEY, OPENAI_API_KEY
+# fill PARLOT_*, DEEPGRAM_API_KEY, GOOGLE_API_KEY, OPENAI_API_KEY
 uv run bot.py
 ```
 

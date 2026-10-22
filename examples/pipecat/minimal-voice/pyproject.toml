@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Minimal Pipecat voice bot with Parlot (adapted from pipecat-examples/open-telemetry/langfuse)"
 requires-python = ">=3.11"
 dependencies = [
-    "pipecat-ai[daily,webrtc,websocket,silero,cartesia,deepgram,openai,tracing,runner]>=1.0.0",
+    "pipecat-ai[daily,webrtc,websocket,silero,google,deepgram,openai,tracing,runner]>=1.0.0",
     "parlot-instrumentation-pipecat",
     "python-dotenv>=1.0.0",
 ]

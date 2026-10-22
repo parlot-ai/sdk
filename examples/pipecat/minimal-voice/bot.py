@@ -25,10 +25,11 @@ from pipecat.processors.aggregators.llm_response_universal import (
 )
 from pipecat.runner.types import RunnerArguments
 from pipecat.runner.utils import create_transport
-from pipecat.services.cartesia.tts import CartesiaTTSService
 from pipecat.services.deepgram.stt import DeepgramSTTService
+from pipecat.services.google.tts import GeminiTTSService
 from pipecat.services.llm_service import FunctionCallParams
 from pipecat.services.openai.llm import OpenAILLMService
+from pipecat.transcriptions.language import Language
 from pipecat.transports.base_transport import BaseTransport, TransportParams
 from pipecat.transports.daily.transport import DailyParams
 from pipecat.transports.websocket.fastapi import FastAPIWebsocketParams
@@ -75,10 +76,13 @@ async def run_bot(transport: BaseTransport):
 
     stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"))
 
-    tts = CartesiaTTSService(
-        api_key=os.getenv("CARTESIA_API_KEY"),
-        settings=CartesiaTTSService.Settings(
-            voice="71a7ad14-091c-4e8e-a314-022ece01c121",  # British Reading Lady
+    # Gemini TTS via GOOGLE_API_KEY (GenAI backend — pass api_key to opt in).
+    tts = GeminiTTSService(
+        api_key=os.getenv("GOOGLE_API_KEY"),
+        settings=GeminiTTSService.Settings(
+            model="gemini-2.5-flash-preview-tts",
+            voice="Kore",
+            language=Language.EN_US,
         ),
     )
 
