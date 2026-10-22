@@ -17,36 +17,25 @@ def install_pipeline_worker_hooks() -> None:
     if _patched:
         return
 
-    worker_cls = None
-    params_cls = None
     try:
         from pipecat.pipeline.worker import PipelineParams, PipelineWorker
-
-        worker_cls = PipelineWorker
-        params_cls = PipelineParams
     except ImportError:
-        try:
-            from pipecat.pipeline.task import PipelineParams, PipelineTask
+        logger.warning(
+            "parlot: pipecat PipelineWorker not importable; "
+            "enable_tracing=True must be set manually"
+        )
+        return
 
-            worker_cls = PipelineTask
-            params_cls = PipelineParams
-        except ImportError:
-            logger.warning(
-                "parlot: pipecat PipelineWorker not importable; "
-                "enable_tracing=True must be set manually"
-            )
-            return
-
-    original_init = worker_cls.__init__
+    original_init = PipelineWorker.__init__
     init_params = inspect.signature(original_init).parameters
     supports_turn_tracking = "enable_turn_tracking" in init_params
 
     def patched_init(self: Any, *args: Any, **kwargs: Any) -> None:
         params = kwargs.get("params")
-        if params is None and len(args) >= 2 and isinstance(args[1], params_cls):
+        if params is None and len(args) >= 2 and isinstance(args[1], PipelineParams):
             params = args[1]
         if params is None:
-            kwargs["params"] = params_cls(
+            kwargs["params"] = PipelineParams(
                 enable_metrics=True,
                 enable_usage_metrics=True,
             )
@@ -64,6 +53,6 @@ def install_pipeline_worker_hooks() -> None:
 
         original_init(self, *args, **kwargs)
 
-    worker_cls.__init__ = patched_init  # type: ignore[method-assign]
+    PipelineWorker.__init__ = patched_init  # type: ignore[method-assign]
     _patched = True
-    logger.debug("parlot: patched Pipecat %s for tracing defaults", worker_cls.__name__)
+    logger.debug("parlot: patched Pipecat PipelineWorker for tracing defaults")
