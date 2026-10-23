@@ -10,7 +10,7 @@ export function meta({}: Route.MetaArgs) {
     {
       name: 'description',
       content:
-        'Documentation for Parlot voice AI observability: SDK guides, LiveKit & LangGraph instrumentation, App user guide, and Python API reference.',
+        'Documentation for Parlot voice AI observability: SDK guides, LiveKit, Pipecat & LangGraph instrumentation, App user guide, and Python API reference.',
     },
   ];
 }
@@ -28,7 +28,7 @@ export default function Home() {
         </h1>
 
         <p className="text-lg text-fd-muted-foreground max-w-2xl mb-8 leading-relaxed">
-          Instrument LiveKit multi-agent sessions, analyze audio and turn-by-turn latency,
+          Instrument LiveKit and Pipecat voice agents, analyze audio and turn-by-turn latency,
           and configure conversation boundaries with production-grade observability.
         </p>
 
@@ -78,16 +78,18 @@ export default function Home() {
             </Link>
 
             <Link
-              to="/sdk/guides/livekit"
+              to="/sdk/guides"
               className="p-5 rounded-xl border border-fd-border bg-fd-card hover:border-fd-primary/50 transition flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center gap-2 text-fd-primary font-semibold text-sm mb-1">
                   <Layers className="w-4 h-4" /> Integrations
                 </div>
-                <h3 className="text-lg font-bold text-fd-foreground mb-1">LiveKit Voice Agents</h3>
+                <h3 className="text-lg font-bold text-fd-foreground mb-1">
+                  LiveKit, Pipecat & LangGraph
+                </h3>
                 <p className="text-sm text-fd-muted-foreground">
-                  Is Parlot a fit for your LiveKit voice agent? What you get and how instrumentation works.
+                  Framework guides for LiveKit and Pipecat voice agents, plus LangGraph workflows.
                 </p>
               </div>
             </Link>
