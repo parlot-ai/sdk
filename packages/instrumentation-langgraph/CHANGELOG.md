@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/parlot-ai/sdk/compare/instrumentation-langgraph-v0.4.1...instrumentation-langgraph-v0.4.2) (2026-10-23)
+
+
+### Bug Fixes
+
+* **langgraph:** require parlot-core with shared session helpers ([#107](https://github.com/parlot-ai/sdk/issues/107)) ([a6e07e9](https://github.com/parlot-ai/sdk/commit/a6e07e98b8dff0822b5243a8bea1022e1f1d3858))
+
 ## [0.4.1](https://github.com/parlot-ai/sdk/compare/instrumentation-langgraph-v0.4.0...instrumentation-langgraph-v0.4.1) (2026-09-29)
 
 
