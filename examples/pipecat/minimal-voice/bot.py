@@ -88,7 +88,15 @@ async def run_bot(transport: BaseTransport):
 
     llm = OpenAILLMService(
         api_key=os.getenv("OPENAI_API_KEY"),
-        model="gpt-4o-mini",
+        settings=OpenAILLMService.Settings(
+            model="gpt-4o-mini",
+            system_instruction=(
+                "You are a helpful assistant in a voice conversation. "
+                "Your responses will be spoken aloud, so avoid emojis, bullet "
+                "points, or other formatting that can't be spoken. Respond "
+                "briefly and helpfully."
+            ),
+        ),
     )
 
     @llm.event_handler("on_function_calls_started")
@@ -96,17 +104,6 @@ async def run_bot(transport: BaseTransport):
         await tts.queue_frame(TTSSpeakFrame("Let me check on that."))
 
     context = LLMContext(
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are a helpful assistant in a voice conversation. "
-                    "Your responses will be spoken aloud, so avoid emojis, bullet "
-                    "points, or other formatting that can't be spoken. Respond "
-                    "briefly and helpfully."
-                ),
-            }
-        ],
         tools=[get_current_weather],
     )
     user_aggregator, assistant_aggregator = LLMContextAggregatorPair(

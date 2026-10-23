@@ -16,6 +16,8 @@ from parlot.core.attrs import (
     ATTR_TURN_AGENT_TEXT,
     ATTR_TURN_INDEX,
     ATTR_TURN_USER_TEXT,
+    CONTRACT_SPAN_NAMES,
+    is_genai_span_name,
 )
 from parlot.core.context import ParlotContext
 from parlot.core.processor import ParlotBaseProcessor
@@ -95,6 +97,13 @@ class PipecatGenAIProcessor(ParlotBaseProcessor):
         super().on_end(span)
         name = span.name or ""
         attrs = span.attributes or {}
+
+        # Passthrough contract / GenAI spans we mint (emit_turn / ensure_session).
+        # Remap treats unknown names as drop — without this, parlot.session /
+        # parlot.turn never export. Do not early-return on bare "stt"/"tts":
+        # those are Pipecat-native names that still need linkage enrichment.
+        if name in CONTRACT_SPAN_NAMES or is_genai_span_name(name):
+            return
 
         if name == NATIVE_CONVERSATION:
             cid = str(attrs.get(ATTR_PIPECAT_CONVERSATION_ID) or "").strip()
