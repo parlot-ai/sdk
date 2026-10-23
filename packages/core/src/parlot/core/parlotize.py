@@ -19,6 +19,63 @@ from parlot.core.context import ParlotContext
 logger = logging.getLogger("parlot.core.parlotize")
 
 
+def normalize_glob_or_bool(
+    value: bool | list[str] | None,
+) -> bool | list[str] | None:
+    """Normalize a bool-or-glob-list config (``record`` / ``capture_logs``)."""
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    return value
+
+
+def log_parlotize_ready(
+    framework: str,
+    *,
+    agent_id: str,
+    endpoint: str,
+    api_key: str = "",
+    bootstrap_ok: bool | None = None,
+    log: logging.Logger | None = None,
+) -> None:
+    """Shared ready / warn log after adapter ``parlotize()`` succeeds."""
+    log = log or logger
+    auth_ok = bool(endpoint and api_key)
+    if not auth_ok or bootstrap_ok is False:
+        bootstrap_label = (
+            "failed"
+            if bootstrap_ok is False
+            else ("ok" if bootstrap_ok else "skipped")
+        )
+        # LiveKit historically used "is not ready"; Pipecat used "may not authenticate".
+        # Prefer the broader "not ready" wording when bootstrap is explicitly False.
+        if bootstrap_ok is False:
+            log.warning(
+                "parlot: %s instrumentation installed but telemetry is not ready "
+                "(agent_id=%s endpoint=%s bootstrap=%s); check PARLOT_ENDPOINT / "
+                "PARLOT_API_KEY",
+                framework,
+                agent_id,
+                endpoint or "(unset)",
+                bootstrap_label,
+            )
+        else:
+            log.warning(
+                "parlot: %s instrumentation installed but telemetry may not "
+                "authenticate (agent_id=%s endpoint=%s); check PARLOT_ENDPOINT / "
+                "PARLOT_API_KEY",
+                framework,
+                agent_id,
+                endpoint or "(unset)",
+            )
+        return
+    log.info(
+        "parlot: %s instrumentation ready (agent_id=%s endpoint=%s)",
+        framework,
+        agent_id,
+        endpoint,
+    )
+
+
 @runtime_checkable
 class ParlotizeProtocol(Protocol):
     """Common parameters every adapter ``parlotize()`` must accept.
@@ -163,12 +220,7 @@ def base_parlotize(
     resolved_api_key = resolve_api_key(api_key)
     resolved_capture_content = resolve_capture_genai_content(capture_genai_content)
 
-    if isinstance(capture_logs, list):
-        resolved_capture_logs: bool | list[str] | None = [
-            str(item).strip() for item in capture_logs if str(item).strip()
-        ]
-    else:
-        resolved_capture_logs = capture_logs
+    resolved_capture_logs = normalize_glob_or_bool(capture_logs)
 
     resolved_log_level = log_level.strip().upper() if log_level else None
 

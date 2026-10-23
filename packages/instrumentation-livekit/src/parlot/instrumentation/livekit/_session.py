@@ -14,11 +14,8 @@ from opentelemetry import trace
 from opentelemetry.context import Context
 
 from parlot.core.attrs import (
-    ATTR_AGENT_FRAMEWORK,
     ATTR_CONVERSATION_CHANNEL,
     ATTR_GEN_AI_CONVERSATION_ID,
-    ATTR_SESSION_CLOSE_ERROR,
-    ATTR_SESSION_CLOSE_REASON,
     ATTR_SESSION_CONVERSATION_ID,
     ATTR_SESSION_ID,
     ATTR_SESSION_TOTAL_CACHED_TOKENS,
@@ -27,10 +24,17 @@ from parlot.core.attrs import (
     ATTR_SESSION_TURN_COUNT,
     ATTR_SESSION_TURN_INDEX_MAX,
     SPAN_CONVERSATION_SESSION,
-    SPAN_PARLOT_SESSION_CLOSE,
 )
 from parlot.core.ids import new_session_id
 from parlot.core.metadata import stamp_session_metadata_attrs
+from parlot.core.session_lifecycle import (
+    DEFAULT_CLOSE_FLUSH_ATTEMPT_TIMEOUT_MS,
+    DEFAULT_CLOSE_FLUSH_BACKOFFS_S,
+    DEFAULT_CLOSE_FLUSH_BUDGET_S,
+    emit_parlot_session_close,
+    force_flush_tracer_provider,
+    force_flush_with_budget,
+)
 from parlot.instrumentation.livekit.attrs import (
     ATTR_LK_AGENT_NAME,
     ATTR_LK_JOB_ID,
@@ -287,33 +291,16 @@ def _end_session_span(bootstrap: _JobBootstrap, end_time: int | None = None) -> 
 
 
 # Close-path flush budget (~12s wall from AgentSession close) with short backoff.
-_CLOSE_FLUSH_BUDGET_S = 12.0
-_CLOSE_FLUSH_BACKOFFS_S = (1.0, 3.0, 6.0)
-_CLOSE_FLUSH_ATTEMPT_TIMEOUT_MS = 4_000
+# Aliases kept for tests that patch these module attributes.
+_CLOSE_FLUSH_BUDGET_S = DEFAULT_CLOSE_FLUSH_BUDGET_S
+_CLOSE_FLUSH_BACKOFFS_S = DEFAULT_CLOSE_FLUSH_BACKOFFS_S
+_CLOSE_FLUSH_ATTEMPT_TIMEOUT_MS = DEFAULT_CLOSE_FLUSH_ATTEMPT_TIMEOUT_MS
 CLOSE_ERROR_OTLP_FLUSH_INCOMPLETE = "otlp_flush_incomplete"
 
 
 def _force_flush_tracer_provider(*, timeout_millis: int) -> bool:
     """Return True when the tracer provider reports a successful flush."""
-    from opentelemetry import trace
-
-    provider = trace.get_tracer_provider()
-    if provider is None:
-        return True
-    force_flush = getattr(provider, "force_flush", None)
-    if not callable(force_flush):
-        return True
-    try:
-        result = force_flush(timeout_millis=timeout_millis)
-    except TypeError:
-        result = force_flush()
-    except Exception:
-        logger.warning("parlot: force_flush raised before session close", exc_info=True)
-        return False
-    if result is None:
-        # Some providers return None on success; treat as ok.
-        return True
-    return bool(result)
+    return force_flush_tracer_provider(timeout_millis=timeout_millis)
 
 
 def _flush_otlp_before_session_close(_bootstrap: _JobBootstrap) -> bool:
@@ -322,49 +309,13 @@ def _flush_otlp_before_session_close(_bootstrap: _JobBootstrap) -> bool:
     Returns True when flush confirmed within the close budget; False otherwise.
     Backoffs are 1s / 3s / 6s inside a ~12s wall-clock budget shared with ingest.
     """
-    started = time.monotonic()
-    attempt = 0
-    while True:
-        attempt += 1
-        remaining_s = _CLOSE_FLUSH_BUDGET_S - (time.monotonic() - started)
-        if remaining_s <= 0:
-            break
-        timeout_ms = min(
-            _CLOSE_FLUSH_ATTEMPT_TIMEOUT_MS,
-            max(1, int(remaining_s * 1000)),
-        )
-        ok = _force_flush_tracer_provider(timeout_millis=timeout_ms)
-        elapsed_ms = int((time.monotonic() - started) * 1000)
-        if ok:
-            logger.info(
-                "parlot: otlp flush before close ok attempts=%s elapsed_ms=%s",
-                attempt,
-                elapsed_ms,
-            )
-            return True
-        backoff_idx = attempt - 1
-        if backoff_idx >= len(_CLOSE_FLUSH_BACKOFFS_S):
-            break
-        backoff_s = _CLOSE_FLUSH_BACKOFFS_S[backoff_idx]
-        remaining_s = _CLOSE_FLUSH_BUDGET_S - (time.monotonic() - started)
-        if remaining_s <= 0:
-            break
-        sleep_s = min(backoff_s, remaining_s)
-        logger.warning(
-            "parlot: otlp flush before close incomplete; retrying "
-            "attempt=%s sleep_s=%.1f remaining_s=%.1f",
-            attempt,
-            sleep_s,
-            remaining_s,
-        )
-        time.sleep(sleep_s)
-    elapsed_ms = int((time.monotonic() - started) * 1000)
-    logger.warning(
-        "parlot: otlp flush before close failed attempts=%s elapsed_ms=%s",
-        attempt,
-        elapsed_ms,
+    return force_flush_with_budget(
+        budget_s=_CLOSE_FLUSH_BUDGET_S,
+        backoffs_s=_CLOSE_FLUSH_BACKOFFS_S,
+        attempt_timeout_ms=_CLOSE_FLUSH_ATTEMPT_TIMEOUT_MS,
+        flush_fn=_force_flush_tracer_provider,
+        log=logger,
     )
-    return False
 
 
 def emit_parlot_session_close_span(
@@ -379,40 +330,27 @@ def emit_parlot_session_close_span(
     if tracer is None:
         return
     state = bootstrap.state
-    attrs: dict[str, Any] = {
-        ATTR_SESSION_ID: bootstrap.session_id,
-        ATTR_SESSION_CONVERSATION_ID: state.conversation_id,
-        ATTR_GEN_AI_CONVERSATION_ID: state.conversation_id,
-        ATTR_AGENT_FRAMEWORK: "livekit",
-        ATTR_SESSION_CLOSE_REASON: close_reason,
-    }
-    if close_error:
-        attrs[ATTR_SESSION_CLOSE_ERROR] = close_error
-    session_attrs = getattr(bootstrap.session_span, "attributes", None)
-    if session_attrs is not None:
-        items = (
-            session_attrs.items()
-            if hasattr(session_attrs, "items")
-            else getattr(session_attrs, "__iter__", lambda: [])()
-        )
-        for key, value in items:
-            if not isinstance(key, str) or key in attrs:
-                continue
-            if isinstance(value, (str, bool, int, float)):
-                attrs[key] = value
     # Stale snapshot on parlot.session can under-report; state is authoritative.
-    attrs[ATTR_SESSION_TURN_COUNT] = state.turn_count
-    attrs[ATTR_SESSION_TURN_INDEX_MAX] = state.turn_count
-    attrs[ATTR_SESSION_TOTAL_INPUT_TOKENS] = state.total_input_tokens
-    attrs[ATTR_SESSION_TOTAL_OUTPUT_TOKENS] = state.total_output_tokens
-    attrs[ATTR_SESSION_TOTAL_CACHED_TOKENS] = state.total_cached_tokens
-    stamp_session_metadata_attrs(attrs, getattr(state, "custom_metadata", None))
-    span = tracer.start_span(SPAN_PARLOT_SESSION_CLOSE, attributes=attrs)
-    stamp_session_sdk_version(span, state)
-    if end_time is not None and hasattr(span, "end"):
-        span.end(end_time=end_time)
-    else:
-        span.end()
+    extra: dict[str, Any] = {
+        ATTR_SESSION_TURN_COUNT: state.turn_count,
+        ATTR_SESSION_TURN_INDEX_MAX: state.turn_count,
+        ATTR_SESSION_TOTAL_INPUT_TOKENS: state.total_input_tokens,
+        ATTR_SESSION_TOTAL_OUTPUT_TOKENS: state.total_output_tokens,
+        ATTR_SESSION_TOTAL_CACHED_TOKENS: state.total_cached_tokens,
+    }
+    stamp_session_metadata_attrs(extra, getattr(state, "custom_metadata", None))
+    emit_parlot_session_close(
+        tracer,
+        session_id=bootstrap.session_id,
+        conversation_id=state.conversation_id,
+        reason=close_reason,
+        framework="livekit",
+        close_error=close_error,
+        extra_attrs=extra,
+        copy_from_session_span=bootstrap.session_span,
+        end_time=end_time,
+        state=state,
+    )
 
 
 def _detach_otel_context(bootstrap: _JobBootstrap) -> None:

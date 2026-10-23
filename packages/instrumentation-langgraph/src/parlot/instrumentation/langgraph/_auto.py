@@ -113,19 +113,18 @@ def parlotize(
                 "No OTLP endpoint configured. Pass endpoint= or set the "
                 "PARLOT_ENDPOINT environment variable."
             )
-        tracer_provider = _build_provider(
+        from parlot.core.provider import build_filtered_tracer_provider
+
+        tracer_provider = build_filtered_tracer_provider(
             endpoint=res.endpoint,
             api_key=res.api_key,
-            service_name=service_name,
+            service_name=service_name or "langgraph-agent",
             service_version=_configured_agent_version or None,
         )
 
-    from opentelemetry import trace
+    from parlot.core.provider import try_set_global_tracer_provider
 
-    try:
-        trace.set_tracer_provider(tracer_provider)
-    except Exception:
-        logger.debug("Could not set global tracer provider", exc_info=True)
+    try_set_global_tracer_provider(tracer_provider)
 
     tracer = tracer_provider.get_tracer(
         "parlot.instrumentation.langgraph",
@@ -147,30 +146,6 @@ def parlotize(
         "parlot-instrumentation.langgraph configured (endpoint=%s)", res.endpoint
     )
     return res.context
-
-
-def _build_provider(
-    *,
-    endpoint: str,
-    api_key: str,
-    service_name: Optional[str],
-    service_version: Optional[str] = None,
-):
-    from opentelemetry.sdk.trace import TracerProvider
-    from opentelemetry.sdk.trace.export import BatchSpanProcessor
-
-    from parlot.core.export import ExportFilterSpanExporter
-    from parlot.core.provider import build_otlp_http_exporter, build_resource
-
-    resource = build_resource(
-        service_name=service_name or "langgraph-agent",
-        service_version=service_version,
-    )
-    otlp = build_otlp_http_exporter(endpoint=endpoint, api_key=api_key)
-    exporter = ExportFilterSpanExporter(otlp)
-    provider = TracerProvider(resource=resource)
-    provider.add_span_processor(BatchSpanProcessor(exporter))
-    return provider
 
 
 def close_session(thread_id: str, *, reason: str = "completed") -> None:

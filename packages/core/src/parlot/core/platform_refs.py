@@ -24,6 +24,24 @@ def platform_ref_flat_key(kind: str) -> str:
     return f"{ATTR_PLATFORM_REF_PREFIX}{kind}"
 
 
+def stamp_framework_refs(span: Any, framework: str, **kinds: str) -> None:
+    """Stamp non-empty ``platform.ref.*`` kinds for ``framework``.
+
+    Convenience wrapper over :func:`stamp_platform_refs` for adapters that
+    build refs from keyword ids (e.g. ``conversation_id=``, ``room_sid=``).
+    """
+    fw = str(framework or "").strip()
+    if not fw:
+        return
+    triples = [
+        (fw, str(kind).strip(), str(value).strip())
+        for kind, value in kinds.items()
+        if str(kind or "").strip() and str(value or "").strip()
+    ]
+    if triples:
+        stamp_platform_refs(span, triples)
+
+
 def stamp_platform_refs(
     span: Any,
     refs: list[tuple[str, str, str]],

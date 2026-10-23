@@ -111,20 +111,13 @@ def parlotize(
     _escalation_metadata_match = (
         dict(escalation_metadata_match) if escalation_metadata_match else None
     )
-    if isinstance(record, list):
-        _configured_record = [str(item).strip() for item in record if str(item).strip()]
-    else:
-        _configured_record = record
-    _configured_await_recording = bool(await_recording)
+    from parlot.core.parlotize import normalize_glob_or_bool
     from parlot.core.provider import resolve_capture_genai_content
 
+    _configured_record = normalize_glob_or_bool(record)
+    _configured_await_recording = bool(await_recording)
     _configured_capture_genai_content = resolve_capture_genai_content(capture_genai_content)
-    if isinstance(capture_logs, list):
-        _configured_capture_logs = [
-            str(item).strip() for item in capture_logs if str(item).strip()
-        ]
-    else:
-        _configured_capture_logs = capture_logs
+    _configured_capture_logs = normalize_glob_or_bool(capture_logs)
     _configured_log_level = log_level.strip().upper() if log_level else None
 
     from ._agent_version import resolve_agent_version
@@ -191,21 +184,20 @@ def parlotize(
     _install_telemetry_compare()
 
     _configured = True
+    from parlot.core.parlotize import log_parlotize_ready
+
     bootstrap_ok = res.context.runtime is not None
-    if not res.endpoint or not res.api_key or not bootstrap_ok:
-        logger.warning(
-            "parlot: livekit instrumentation installed but telemetry is not ready "
-            "(agent_id=%s endpoint=%s bootstrap=%s); check PARLOT_ENDPOINT / PARLOT_API_KEY",
-            res.agent_id,
-            res.endpoint or "(unset)",
-            "ok" if bootstrap_ok else "failed",
-        )
-    else:
-        logger.info(
-            "parlot: livekit instrumentation ready (agent_id=%s endpoint=%s)",
-            res.agent_id,
-            res.endpoint,
-        )
+    # Treat missing endpoint/key as not-ready (same as prior warning path).
+    if not res.endpoint or not res.api_key:
+        bootstrap_ok = False
+    log_parlotize_ready(
+        "livekit",
+        agent_id=res.agent_id,
+        endpoint=res.endpoint or "",
+        api_key=res.api_key or "",
+        bootstrap_ok=bootstrap_ok,
+        log=logger,
+    )
     return res.context
 
 
