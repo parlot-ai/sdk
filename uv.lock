@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.15'",
@@ -2324,7 +2324,7 @@ wheels = [
 
 [[package]]
 name = "parlot"
-version = "0.3.2"
+version = "0.3.3"
 source = { editable = "packages/meta" }
 dependencies = [
     { name = "parlot-core" },
@@ -2360,7 +2360,7 @@ provides-extras = ["livekit", "langgraph", "pipecat", "all"]
 
 [[package]]
 name = "parlot-core"
-version = "0.4.7"
+version = "0.4.8"
 source = { editable = "packages/core" }
 dependencies = [
     { name = "httpx" },
@@ -2422,7 +2422,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "parlot-instrumentation-livekit"
-version = "0.4.6"
+version = "0.4.7"
 source = { editable = "packages/instrumentation-livekit" }
 dependencies = [
     { name = "httpx" },
@@ -2454,7 +2454,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "parlot-instrumentation-pipecat"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "packages/instrumentation-pipecat" }
 dependencies = [
     { name = "httpx" },

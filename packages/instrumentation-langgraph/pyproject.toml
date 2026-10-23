@@ -24,7 +24,7 @@ classifiers = [
 ]
 keywords = ["opentelemetry", "telemetry", "ai", "agents", "observability", "langgraph", "langchain", "parlot"]
 dependencies = [
-    "parlot-core>=0.1.0",
+    "parlot-core>=0.4.8",
     "opentelemetry-api>=1.27.0",
     "opentelemetry-sdk>=1.27.0",
     "opentelemetry-exporter-otlp-proto-http>=1.27.0",
