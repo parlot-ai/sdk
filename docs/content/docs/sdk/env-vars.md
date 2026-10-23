@@ -16,7 +16,7 @@ The Parlot SDK can be configured via environment variables or explicitly through
 | ----------------- | --------- | ------- | ----------- |
 | `PARLOT_ENDPOINT` | **Yes\*** | _None_  | Base URL of the Parlot OpenTelemetry Protocol (OTLP) collector (e.g. `https://ingest.parlot.ai`). The SDK appends `/v1/traces` for spans, `/v1/metrics` for metrics (LiveKit), and `/v1/logs` for session application logs. <br/>_\*Required when `endpoint=` is omitted from `parlotize()`._ |
 | `PARLOT_API_KEY`  | **Yes\*** | _None_  | Bearer token from Parlot **Settings → API keys**. Required for authenticated ingest, Settings bootstrap, and recording grants. Without it the process can start, but telemetry will not authenticate. |
-| `PARLOT_DEBUG_LEVEL` | —      | `INFO`  | Root logging level for internal SDK loggers (`parlot.core`, `parlot.instrumentation.livekit`, `parlot.instrumentation.langgraph`). Values: `DEBUG`, `INFO`, `WARNING`, `ERROR`. |
+| `PARLOT_DEBUG_LEVEL` | —      | `INFO`  | Level for **Parlot** loggers only (`parlot.*`, including LiveKit / LangGraph / Pipecat instrumentation). Does **not** raise the process root logger — so `DEBUG` will not flood `websockets` / `aiortc`. Values: `DEBUG`, `INFO`, `WARNING`, `ERROR`. |
 
 ### Deploy convention (not an SDK env var)
 

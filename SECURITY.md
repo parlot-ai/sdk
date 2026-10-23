@@ -10,6 +10,7 @@ We release patches for security vulnerabilities on the latest minor version of e
 | `parlot-core` | :white_check_mark: |
 | `parlot-instrumentation-livekit` | :white_check_mark: |
 | `parlot-instrumentation-langgraph` | :white_check_mark: |
+| `parlot-instrumentation-pipecat` | :white_check_mark: |
 
 ## Reporting a Vulnerability
 

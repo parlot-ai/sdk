@@ -10,7 +10,7 @@ echo "Building Python API reference with pdoc..."
 mkdir -p "${OUTPUT_DIR}"
 cd "${REPO_ROOT}"
 
-uv run pdoc parlot parlot.instrumentation.livekit parlot.instrumentation.langgraph \
+uv run pdoc parlot parlot.instrumentation.livekit parlot.instrumentation.langgraph parlot.instrumentation.pipecat \
   --output-directory "${OUTPUT_DIR}" \
   --template-directory "${TEMPLATE_DIR}" \
   --favicon "/docs/img/favicon.ico" \

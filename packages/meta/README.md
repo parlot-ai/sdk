@@ -2,7 +2,7 @@
 
 Parlot shows whether production voice agents actually work — turns, handoffs, and goal completion with an evidence trail — not just that the pipeline returned 200s.
 
-Call `parlotize()` once at startup. MIT OpenTelemetry instrumentation for LiveKit Agents (and LangGraph when you already run voice).
+Call `parlotize()` once at startup. MIT OpenTelemetry instrumentation for LiveKit Agents, Pipecat, and LangGraph when you already run those stacks.
 
 **Docs:** [parlot.ai/docs](https://parlot.ai/docs) · **Product:** [parlot.ai](https://parlot.ai)
 
@@ -10,6 +10,7 @@ Call `parlotize()` once at startup. MIT OpenTelemetry instrumentation for LiveKi
 
 ```bash
 pip install "parlot[livekit]"
+# or: pip install "parlot[pipecat]"
 # or: pip install "parlot[langgraph]"
 # or: pip install "parlot[all]"
 ```
@@ -18,6 +19,7 @@ Or install an instrumentation package directly:
 
 ```bash
 pip install parlot-instrumentation-livekit
+# or: pip install parlot-instrumentation-pipecat
 # or: pip install parlot-instrumentation-langgraph
 ```
 
@@ -53,5 +55,6 @@ Mint the API key in Parlot **Settings → API Keys**.
 
 - [Quick Start](https://parlot.ai/docs/sdk/get-started/quick-start)
 - [LiveKit guide](https://parlot.ai/docs/guides/livekit)
+- [Pipecat guide](https://parlot.ai/docs/guides/pipecat)
 - [LangGraph guide](https://parlot.ai/docs/guides/langgraph)
 - [GitHub](https://github.com/parlot-ai/sdk)

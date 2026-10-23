@@ -53,9 +53,12 @@ jobs:
         run: uv run pytest -q packages/instrumentation-langgraph/tests
       - name: Pytest (livekit)
         run: uv run pytest -q packages/instrumentation-livekit/tests
+      - name: Pytest (pipecat)
+        run: uv run pytest -q packages/instrumentation-pipecat/tests
       - name: Build smoke test (all packages)
         run: |
           uv build --package parlot
           uv build --package parlot-core
           uv build --package parlot-instrumentation-livekit
           uv build --package parlot-instrumentation-langgraph
+          uv build --package parlot-instrumentation-pipecat

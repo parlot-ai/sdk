@@ -11,6 +11,7 @@ packages=(
   "meta:parlot"
   "instrumentation-livekit:parlot-instrumentation-livekit"
   "instrumentation-langgraph:parlot-instrumentation-langgraph"
+  "instrumentation-pipecat:parlot-instrumentation-pipecat"
   "core:parlot-core"
 )
 

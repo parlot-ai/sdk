@@ -48,6 +48,7 @@ Mint the API key in Parlot **Settings → API Keys**.
 - [LiveKit guide](https://parlot.ai/docs/guides/livekit)
 - Minimal example: [`examples/livekit/livekit-voice/`](examples/livekit/livekit-voice/) · more under [`examples/`](examples/)
 - Already running LangGraph / LangChain alongside voice? See [`parlot-instrumentation-langgraph`](packages/instrumentation-langgraph/README.md) or `pip install "parlot[langgraph]"`.
+- Building on Pipecat? See [`parlot-instrumentation-pipecat`](packages/instrumentation-pipecat/README.md) or `pip install "parlot[pipecat]"` · example [`examples/pipecat/minimal-voice/`](examples/pipecat/minimal-voice/).
 
 ## License
 
@@ -60,4 +61,4 @@ uv sync --group dev
 uv run pytest -q
 ```
 
-Use `uv run` from the repo root. Packages: `parlot` · `parlot-core` · `parlot-instrumentation-livekit` · `parlot-instrumentation-langgraph`. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Use `uv run` from the repo root. Packages: `parlot` · `parlot-core` · `parlot-instrumentation-livekit` · `parlot-instrumentation-langgraph` · `parlot-instrumentation-pipecat`. See [CONTRIBUTING.md](CONTRIBUTING.md).

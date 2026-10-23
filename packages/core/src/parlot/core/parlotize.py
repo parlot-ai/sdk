@@ -89,11 +89,25 @@ class BaseParlotizeResult:
 
 
 def configure_parlot_logging() -> None:
-    """Configure root logging from ``PARLOT_DEBUG_LEVEL`` when no handlers exist."""
+    """Apply ``PARLOT_DEBUG_LEVEL`` to ``parlot.*`` loggers only.
+
+    Ensures a root handler exists at INFO so messages reach stdout, without
+    flipping the process root to DEBUG (that floods ``websockets`` / ``aiortc``
+    / similar when debugging Parlot span export).
+    """
     level_name = os.getenv("PARLOT_DEBUG_LEVEL", "INFO").upper()
     level = getattr(logging, level_name, logging.INFO)
     if not logging.root.handlers:
-        logging.basicConfig(level=level)
+        logging.basicConfig(level=logging.INFO)
+    for name in (
+        "parlot",
+        "parlot.core",
+        "parlot.core.logging",
+        "parlot.instrumentation.livekit",
+        "parlot.instrumentation.langgraph",
+        "parlot.instrumentation.pipecat",
+    ):
+        logging.getLogger(name).setLevel(level)
 
 
 def base_parlotize(

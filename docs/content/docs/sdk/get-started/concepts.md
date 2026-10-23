@@ -19,6 +19,7 @@ and goal evaluations.
 | `parlot-core` | Semantic conventions (GenAI v1.41 + Conversation Contract + voice), base processor, shared provider helpers |
 | `parlot-instrumentation-livekit` | LiveKit Agents OpenTelemetry instrumentation, Room Composite recording hooks, platform refs |
 | `parlot-instrumentation-langgraph` | LangGraph / LangChain `parlotize()` via global callbacks |
+| `parlot-instrumentation-pipecat` | Pipecat voice agents — Conversation Contract via OpenTelemetry remap |
 
 Contract helpers (`record_human_rep`, `set_session_metadata`, `add_platform_ref`, …) live in
 `parlot.core`. Framework packages re-export them for convenience — prefer those re-exports in
@@ -38,7 +39,7 @@ conventions (semconv) v1.41.0. LiveKit also emits voice and handoff spans.
    answering-machine detection (`amd`)
 
 Framework guides explain how each adapter attaches to this vocabulary — see
-[LangGraph](/sdk/guides/langgraph) and [LiveKit](/sdk/guides/livekit).
+[LangGraph](/sdk/guides/langgraph), [LiveKit](/sdk/guides/livekit), and [Pipecat](/sdk/guides/pipecat).
 
 ## Session and agent identity
 
@@ -85,7 +86,7 @@ precedence: [Environment Variables](/sdk/env-vars).
 
 **GenAI** means generative AI in general—any large language model (LLM) or tool stack.
 
-This policy is shared across adapters (LiveKit, LangGraph, and future frameworks). It controls
+This policy is shared across adapters (LiveKit, LangGraph, Pipecat, and future frameworks). It controls
 whether **message bodies** and **tool request/response payloads** are attached to GenAI spans.
 
 | Mode | Behavior |

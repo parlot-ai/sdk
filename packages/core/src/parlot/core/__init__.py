@@ -26,6 +26,13 @@ from .genai_content_capture import should_capture_genai_content
 from .export import ExportFilterSpanExporter
 from .intent import derive_intent
 from .logs_capture import should_capture_logs
+from .metrics import (
+    LONG_LIVED_METRICS_EXPORT_INTERVAL_MS,
+    ParlotMetricsRecorder,
+    QuietOTLPMetricExporter,
+    UsageMetricsRecorder,
+    build_parlot_meter_provider,
+)
 from .runtime import ParlotRuntimeContext, runtime_from_bootstrap
 from .sdk_version import resolve_parlot_sdk_version, stamp_session_sdk_version
 from .session import (
@@ -49,7 +56,11 @@ __all__ = [
     "base_parlotize",
     "configure_parlot_logging",
     "ExportFilterSpanExporter",
+    "LONG_LIVED_METRICS_EXPORT_INTERVAL_MS",
     "ParlotBaseProcessor",
+    "ParlotMetricsRecorder",
+    "QuietOTLPMetricExporter",
+    "UsageMetricsRecorder",
     "assert_sync_span_processors",
     "SessionState",
     "SessionTopology",
@@ -57,6 +68,7 @@ __all__ = [
     "adopt_existing_tracer_provider",
     "build_otlp_http_exporter",
     "build_parlot_client_headers",
+    "build_parlot_meter_provider",
     "build_resource",
     "build_tracer_provider",
     "HEADER_SDK_NAME",
