@@ -1,8 +1,8 @@
 """Debug logging for span processor events.
 
-Set ``PARLOT_DEBUG_LEVEL=DEBUG`` to emit span lifecycle lines. Ensure the root
-logger is configured in your app entry point (``logging.basicConfig``) so
-messages reach stdout.
+Set ``PARLOT_DEBUG_LEVEL=DEBUG`` to emit span lifecycle lines on ``parlot.*``
+loggers (``parlotize`` configures this). Noisy third-party loggers stay at
+their defaults — do not set the process root to DEBUG for Parlot alone.
 """
 
 from __future__ import annotations

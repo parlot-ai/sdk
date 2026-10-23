@@ -106,7 +106,7 @@ def parlotize(
     except Exception:
         logger.debug("Could not set global tracer provider", exc_info=True)
 
-    from ._hooks import install_pipeline_worker_hooks
+    from ._hooks import install_pipeline_worker_hooks, install_tool_call_hooks
     from ._session import set_identity, set_tracer
 
     set_identity(_configured_agent_id, _configured_agent_version)
@@ -116,7 +116,9 @@ def parlotize(
             resolve_parlot_sdk_version() or None,
         )
     )
+    _wire_session_logs(res.context, _configured_agent_id)
     install_pipeline_worker_hooks()
+    install_tool_call_hooks()
     _neutralize_pipecat_setup_tracing()
 
     _configured = True
@@ -137,6 +139,102 @@ def parlotize(
     return res.context
 
 
+def _wire_session_logs(context: ParlotContext, agent_id: str) -> None:
+    """Bind active-session fields + forward loguru into session log capture."""
+    from ._session import any_open_session
+
+    def _session_resolver() -> dict | None:
+        # Prefer ContextVar; fall back to the process-global open session map.
+        # Pipeline worker vs uvicorn threads do not share ContextVars.
+        state = any_open_session()
+        if state is None or not getattr(state, "session_id", None):
+            return None
+        return {
+            "session_id": state.session_id,
+            "conversation_id": getattr(state, "conversation_id", "") or state.session_id,
+            "turn_index": int(getattr(state, "turn_count", 0) or 0),
+        }
+
+    context.session_logs.set_resolvers(
+        session_resolver=_session_resolver,
+        agent_id_resolver=lambda: agent_id,
+    )
+    _install_loguru_session_sink(context, agent_id)
+
+
+def _install_loguru_session_sink(context: ParlotContext, agent_id: str) -> None:
+    """Pipecat logs via loguru; bridge into Parlot session logs.
+
+    Level is DEBUG so bootstrap ``logs.min_level`` (often DEBUG) can filter —
+    Pipecat's useful pipeline lines are mostly DEBUG.
+    """
+    try:
+        from loguru import logger as loguru_logger
+    except ImportError:
+        return
+
+    import logging as stdlib_logging
+
+    from parlot.core.session_logs import SessionLogHandler
+
+    collector = context.session_logs
+    # Reuse the installed handler when present so format/flush stay consistent.
+    bridge = collector._handler or SessionLogHandler(collector)
+    if bridge.formatter is None:
+        bridge.setFormatter(stdlib_logging.Formatter("%(message)s"))
+
+    def _sink(message) -> None:  # noqa: ANN001
+        try:
+            record = message.record
+            level = str(record["level"].name)
+            # Map loguru-only levels onto stdlib.
+            levelno = getattr(stdlib_logging, level, None)
+            if not isinstance(levelno, int):
+                levelno = (
+                    stdlib_logging.DEBUG
+                    if level == "TRACE"
+                    else stdlib_logging.INFO
+                )
+            file_info = record.get("file")
+            pathname = ""
+            if file_info is not None:
+                pathname = str(getattr(file_info, "path", None) or file_info or "")
+            lr = stdlib_logging.LogRecord(
+                name=str(record.get("name") or "pipecat"),
+                level=levelno,
+                pathname=pathname,
+                lineno=int(record.get("line") or 0),
+                msg=str(record.get("message") or ""),
+                args=(),
+                exc_info=None,
+                func=str(record.get("function") or ""),
+            )
+            lr.created = float(record["time"].timestamp())
+            # LogRecord.levelname is derived from levelno; SUCCESS→Level 25 needs help.
+            if level not in (
+                "DEBUG",
+                "INFO",
+                "WARNING",
+                "ERROR",
+                "CRITICAL",
+                "WARN",
+            ):
+                lr.levelname = "INFO" if level == "SUCCESS" else level
+            collector.handle_record(bridge, lr)
+        except Exception:
+            pass
+
+    try:
+        loguru_logger.add(
+            _sink,
+            level="DEBUG",
+            format="{message}",
+            filter=lambda _r: bool(agent_id),
+        )
+    except Exception:
+        logger.debug("Could not install loguru session-log sink", exc_info=True)
+
+
 def _build_provider(
     *,
     endpoint: str,
@@ -151,7 +249,15 @@ def _build_provider(
     from parlot.core.export import ExportFilterSpanExporter
     from parlot.core.provider import build_otlp_http_exporter, build_resource
 
+    from parlot.core.metrics import ParlotMetricsRecorder
+
+    from ._metrics import (
+        build_meter_provider,
+        configure_metrics_endpoint,
+        set_metrics_recorder,
+    )
     from ._processor import PipecatGenAIProcessor
+    from .attrs import PIPECAT_FRAMEWORK
 
     resource = build_resource(
         service_name=service_name or "pipecat-agent",
@@ -162,6 +268,18 @@ def _build_provider(
     provider = TracerProvider(resource=resource)
     provider.add_span_processor(PipecatGenAIProcessor(context=context))
     provider.add_span_processor(BatchSpanProcessor(exporter))
+    try:
+        configure_metrics_endpoint(endpoint, api_key, resource)
+        meter_provider = build_meter_provider(endpoint, api_key, resource)
+        set_metrics_recorder(
+            ParlotMetricsRecorder(
+                meter_provider,
+                meter_name="parlot.instrumentation.pipecat",
+                framework=PIPECAT_FRAMEWORK,
+            )
+        )
+    except Exception:
+        logger.debug("Could not enable Pipecat usage metrics exporter", exc_info=True)
     return provider
 
 
@@ -208,6 +326,17 @@ def _neutralize_pipecat_setup_tracing() -> None:
 
     _wrapped._parlot_wrapped = True  # type: ignore[attr-defined]
     setup_mod.setup_tracing = _wrapped  # type: ignore[assignment]
+
+
+def flush_session_logs() -> None:
+    """Push any buffered session logs (call on session close)."""
+    ctx = _parlot_context
+    if ctx is None:
+        return
+    try:
+        ctx.session_logs._try_flush(force=True)
+    except Exception:
+        logger.debug("session_logs flush failed", exc_info=True)
 
 
 def close_session(conversation_id: str, *, reason: str = "completed") -> None:

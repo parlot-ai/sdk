@@ -3,9 +3,36 @@
 from __future__ import annotations
 
 import logging as stdlib_logging
+import os
 from unittest.mock import MagicMock, patch
 
 from parlot.core import logging as parlot_logging
+from parlot.core.parlotize import configure_parlot_logging
+
+
+def test_configure_parlot_logging_debug_does_not_raise_root(monkeypatch) -> None:
+    monkeypatch.setenv("PARLOT_DEBUG_LEVEL", "DEBUG")
+    # Simulate a process that already has a root handler (e.g. pipecat runner).
+    root = stdlib_logging.getLogger()
+    had_handler = bool(root.handlers)
+    if not had_handler:
+        handler = stdlib_logging.StreamHandler()
+        root.addHandler(handler)
+    try:
+        root.setLevel(stdlib_logging.INFO)
+        configure_parlot_logging()
+        assert root.level == stdlib_logging.INFO
+        assert stdlib_logging.getLogger("parlot").level == stdlib_logging.DEBUG
+        assert stdlib_logging.getLogger("parlot.instrumentation.pipecat").level == (
+            stdlib_logging.DEBUG
+        )
+        # Third-party noise stays inherit/root INFO — not forced to DEBUG.
+        assert stdlib_logging.getLogger("websockets").level == stdlib_logging.NOTSET
+        assert stdlib_logging.getLogger("aiortc").level == stdlib_logging.NOTSET
+    finally:
+        if not had_handler:
+            root.handlers.clear()
+        os.environ.pop("PARLOT_DEBUG_LEVEL", None)
 
 
 def test_is_parlot_debug_defaults_to_info():

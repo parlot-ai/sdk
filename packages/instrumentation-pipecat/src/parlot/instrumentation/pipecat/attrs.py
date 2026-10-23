@@ -13,5 +13,6 @@ ATTR_PIPECAT_TRANSCRIPT = "transcript"
 ATTR_PIPECAT_TEXT = "text"
 ATTR_PIPECAT_METRICS_TTFB = "metrics.ttfb"
 ATTR_PIPECAT_METRICS_CHAR_COUNT = "metrics.character_count"
+ATTR_PIPECAT_METRICS_AUDIO_SECONDS = "metrics.audio_seconds"
 
 PIPECAT_FRAMEWORK = "pipecat"
