@@ -29,11 +29,11 @@ dependencies = [
 
 [project.optional-dependencies]
 livekit = ["parlot-instrumentation-livekit>=0.4.0"]
-langgraph = ["parlot-instrumentation-langgraph>=0.4.0"]
+langgraph = ["parlot-instrumentation-langgraph>=0.4.2"]
 pipecat = ["parlot-instrumentation-pipecat>=0.1.0"]
 all = [
     "parlot-instrumentation-livekit>=0.4.0",
-    "parlot-instrumentation-langgraph>=0.4.0",
+    "parlot-instrumentation-langgraph>=0.4.2",
     "parlot-instrumentation-pipecat>=0.1.0",
 ]
 

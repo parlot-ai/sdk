@@ -2388,7 +2388,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "parlot-instrumentation-langgraph"
-version = "0.4.1"
+version = "0.4.2"
 source = { editable = "packages/instrumentation-langgraph" }
 dependencies = [
     { name = "httpx" },
@@ -2454,7 +2454,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "parlot-instrumentation-pipecat"
-version = "0.1.1"
+version = "0.1.2"
 source = { editable = "packages/instrumentation-pipecat" }
 dependencies = [
     { name = "httpx" },
