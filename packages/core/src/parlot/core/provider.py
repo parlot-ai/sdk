@@ -132,3 +132,79 @@ def adopt_existing_tracer_provider() -> Any | None:
     if isinstance(provider, SdkTracerProvider):
         return provider
     return None
+
+
+def try_set_global_tracer_provider(provider: Any) -> bool:
+    """Set the global tracer provider, swallowing failures (already set, etc.)."""
+    from opentelemetry import trace
+
+    try:
+        trace.set_tracer_provider(provider)
+        return True
+    except Exception:
+        logger.debug("Could not set global tracer provider", exc_info=True)
+        return False
+
+
+def attach_span_processor_if_absent(
+    provider: Any,
+    factory: Any,
+    *,
+    processor_type: type | None = None,
+) -> bool:
+    """Attach a span processor when the SDK provider does not already have one.
+
+    ``factory`` is a zero-arg callable that returns a ``SpanProcessor``.
+    ``processor_type`` defaults to the type of the first factory result check —
+    when omitted, skips the duplicate check and always adds.
+
+    Returns True when a processor was attached.
+    """
+    from opentelemetry.sdk.trace import TracerProvider as SdkTracerProvider
+
+    if not isinstance(provider, SdkTracerProvider):
+        return False
+
+    if processor_type is not None:
+        try:
+            active = getattr(provider, "_active_span_processor", None)
+            procs = getattr(active, "_span_processors", None) or getattr(
+                active, "_processors", None
+            )
+            if procs and any(isinstance(p, processor_type) for p in procs):
+                return False
+        except Exception:
+            pass
+    try:
+        provider.add_span_processor(factory())
+        return True
+    except Exception:
+        logger.debug("Could not attach span processor", exc_info=True)
+        return False
+
+
+def build_filtered_tracer_provider(
+    *,
+    endpoint: str,
+    api_key: str,
+    service_name: Optional[str] = None,
+    service_version: Optional[str] = None,
+    span_processors: Sequence[SpanProcessor] = (),
+) -> TracerProvider:
+    """Build a TracerProvider with ``ExportFilterSpanExporter`` over OTLP/HTTP.
+
+    Framework processors go in ``span_processors`` (before the batch exporter).
+    """
+    from parlot.core.export import ExportFilterSpanExporter
+
+    resource = build_resource(
+        service_name=service_name,
+        service_version=service_version,
+    )
+    otlp = build_otlp_http_exporter(endpoint=endpoint, api_key=api_key)
+    exporter = ExportFilterSpanExporter(otlp)
+    provider = TracerProvider(resource=resource)
+    for processor in span_processors:
+        provider.add_span_processor(processor)
+    provider.add_span_processor(BatchSpanProcessor(exporter))
+    return provider

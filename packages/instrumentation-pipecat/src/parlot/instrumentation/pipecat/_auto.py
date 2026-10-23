@@ -99,12 +99,10 @@ def parlotize(
         # Adopt existing provider: still attach our processor when possible.
         _attach_processor_if_needed(tracer_provider, res.context)
 
-    from opentelemetry import trace
+    from parlot.core.provider import try_set_global_tracer_provider
+    from parlot.core.parlotize import log_parlotize_ready
 
-    try:
-        trace.set_tracer_provider(tracer_provider)
-    except Exception:
-        logger.debug("Could not set global tracer provider", exc_info=True)
+    try_set_global_tracer_provider(tracer_provider)
 
     from ._hooks import install_pipeline_worker_hooks, install_tool_call_hooks
     from ._session import set_identity, set_tracer
@@ -122,20 +120,13 @@ def parlotize(
     _neutralize_pipecat_setup_tracing()
 
     _configured = True
-    if not res.endpoint or not res.api_key:
-        logger.warning(
-            "parlot: pipecat instrumentation installed but telemetry may not "
-            "authenticate (agent_id=%s endpoint=%s); check PARLOT_ENDPOINT / "
-            "PARLOT_API_KEY",
-            res.agent_id,
-            res.endpoint or "(unset)",
-        )
-    else:
-        logger.info(
-            "parlot: pipecat instrumentation ready (agent_id=%s endpoint=%s)",
-            res.agent_id,
-            res.endpoint,
-        )
+    log_parlotize_ready(
+        "pipecat",
+        agent_id=res.agent_id,
+        endpoint=res.endpoint or "",
+        api_key=res.api_key or "",
+        log=logger,
+    )
     return res.context
 
 
@@ -243,13 +234,8 @@ def _build_provider(
     service_version: Optional[str] = None,
     context: ParlotContext,
 ):
-    from opentelemetry.sdk.trace import TracerProvider
-    from opentelemetry.sdk.trace.export import BatchSpanProcessor
-
-    from parlot.core.export import ExportFilterSpanExporter
-    from parlot.core.provider import build_otlp_http_exporter, build_resource
-
     from parlot.core.metrics import ParlotMetricsRecorder
+    from parlot.core.provider import build_filtered_tracer_provider, build_resource
 
     from ._metrics import (
         build_meter_provider,
@@ -259,16 +245,18 @@ def _build_provider(
     from ._processor import PipecatGenAIProcessor
     from .attrs import PIPECAT_FRAMEWORK
 
-    resource = build_resource(
+    provider = build_filtered_tracer_provider(
+        endpoint=endpoint,
+        api_key=api_key,
         service_name=service_name or "pipecat-agent",
         service_version=service_version,
+        span_processors=(PipecatGenAIProcessor(context=context),),
     )
-    otlp = build_otlp_http_exporter(endpoint=endpoint, api_key=api_key)
-    exporter = ExportFilterSpanExporter(otlp)
-    provider = TracerProvider(resource=resource)
-    provider.add_span_processor(PipecatGenAIProcessor(context=context))
-    provider.add_span_processor(BatchSpanProcessor(exporter))
     try:
+        resource = build_resource(
+            service_name=service_name or "pipecat-agent",
+            service_version=service_version,
+        )
         configure_metrics_endpoint(endpoint, api_key, resource)
         meter_provider = build_meter_provider(endpoint, api_key, resource)
         set_metrics_recorder(
@@ -284,26 +272,15 @@ def _build_provider(
 
 
 def _attach_processor_if_needed(provider: TracerProvider, context: ParlotContext) -> None:
-    from opentelemetry.sdk.trace import TracerProvider as SdkTracerProvider
+    from parlot.core.provider import attach_span_processor_if_absent
 
     from ._processor import PipecatGenAIProcessor
 
-    if not isinstance(provider, SdkTracerProvider):
-        return
-
-    try:
-        active = getattr(provider, "_active_span_processor", None)
-        procs = getattr(active, "_span_processors", None) or getattr(
-            active, "_processors", None
-        )
-        if procs and any(isinstance(p, PipecatGenAIProcessor) for p in procs):
-            return
-    except Exception:
-        pass
-    try:
-        provider.add_span_processor(PipecatGenAIProcessor(context=context))
-    except Exception:
-        logger.debug("Could not attach PipecatGenAIProcessor", exc_info=True)
+    attach_span_processor_if_absent(
+        provider,
+        lambda: PipecatGenAIProcessor(context=context),
+        processor_type=PipecatGenAIProcessor,
+    )
 
 
 def _neutralize_pipecat_setup_tracing() -> None:

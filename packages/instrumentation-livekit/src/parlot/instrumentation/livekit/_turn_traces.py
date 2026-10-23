@@ -2,37 +2,24 @@
 
 from __future__ import annotations
 
-import random
-from typing import TYPE_CHECKING
-
-from opentelemetry import trace
-from opentelemetry.trace import NonRecordingSpan, SpanContext, TraceFlags
+from typing import TYPE_CHECKING, Any
 
 from parlot.core.attrs import (
     ATTR_PARTICIPANT_DIAR_SOURCE,
-    ATTR_SESSION_CONVERSATION_ID,
-    ATTR_SESSION_ID,
     ATTR_TURN_ACTIVE_AGENT_ID,
-    ATTR_TURN_E2E_LATENCY_S,
     ATTR_TURN_EOU_DELAY_S,
-    ATTR_TURN_INDEX,
     ATTR_TURN_INPUT_MODALITY,
-    ATTR_TURN_INTERRUPTED,
     ATTR_TURN_LANGUAGE,
     ATTR_TURN_LANGUAGE_SWITCH,
-    ATTR_TURN_LLM_TTFT_S,
-    ATTR_TURN_TTS_TTFB_S,
     ATTR_TURN_MEDIA_END_MS,
     ATTR_TURN_MEDIA_START_MS,
     ATTR_TURN_PARTICIPANT_ID,
     ATTR_TURN_PARTICIPANT_LABEL,
-    ATTR_TURN_PARTICIPANT_ROLE,
-    ATTR_TURN_PREV_TRACE_ID,
     ATTR_TURN_SPEECH_WALL_END_MS,
     ATTR_TURN_SPEECH_WALL_START_MS,
     ATTR_TURN_TRANSCRIPTION_DELAY_S,
 )
-from parlot.core.turn_emit import stamp_turn_utterance_text
+from parlot.core.turn_emit import emit_parlot_turn_root
 
 if TYPE_CHECKING:
     from opentelemetry.trace import Tracer
@@ -75,68 +62,46 @@ def emit_turn_root_span(
 
     Returns ``(trace_id, span_id)`` as 32- and 16-char hex strings.
     """
-    trace_id = random.getrandbits(128)
-    span_id = random.getrandbits(64)
-    ctx = SpanContext(
-        trace_id=trace_id,
-        span_id=span_id,
-        is_remote=False,
-        trace_flags=TraceFlags(0x01),
+    extra: dict[str, Any] = {}
+    if participant_id:
+        extra[ATTR_TURN_PARTICIPANT_ID] = participant_id
+    if participant_label:
+        extra[ATTR_TURN_PARTICIPANT_LABEL] = participant_label
+    if diarization_source:
+        extra[ATTR_PARTICIPANT_DIAR_SOURCE] = diarization_source
+    if input_modality:
+        extra[ATTR_TURN_INPUT_MODALITY] = input_modality
+    if active_agent_id:
+        extra[ATTR_TURN_ACTIVE_AGENT_ID] = active_agent_id
+    if speech_start_wall_ms is not None:
+        extra[ATTR_TURN_SPEECH_WALL_START_MS] = speech_start_wall_ms
+    if speech_end_wall_ms is not None:
+        extra[ATTR_TURN_SPEECH_WALL_END_MS] = speech_end_wall_ms
+    if media_segment_start_ms > 0 or media_segment_end_ms > 0:
+        extra[ATTR_TURN_MEDIA_START_MS] = media_segment_start_ms
+        extra[ATTR_TURN_MEDIA_END_MS] = media_segment_end_ms
+    if transcription_delay_s is not None:
+        extra[ATTR_TURN_TRANSCRIPTION_DELAY_S] = transcription_delay_s
+    if eou_delay_s is not None:
+        extra[ATTR_TURN_EOU_DELAY_S] = eou_delay_s
+    if language:
+        extra[ATTR_TURN_LANGUAGE] = language
+    if language_switch:
+        extra[ATTR_TURN_LANGUAGE_SWITCH] = language_switch
+
+    return emit_parlot_turn_root(
+        tracer,
+        session_id=session_id,
+        conversation_id=conversation_id,
+        turn_index=turn_index,
+        participant_role=participant_role,
+        utterance_text=utterance_text,
+        prev_trace_id=prev_trace_id,
+        start_time_unix_ns=start_time_unix_ns,
+        end_time_unix_ns=end_time_unix_ns,
+        interrupted=interrupted,
+        e2e_latency_s=e2e_latency_s,
+        llm_ttft_s=llm_ttft_s,
+        tts_ttfb_s=tts_ttfb_s,
+        extra_attrs=extra,
     )
-    parent = NonRecordingSpan(ctx)
-    parent_ctx = trace.set_span_in_context(parent)
-
-    start_ns = start_time_unix_ns if start_time_unix_ns is not None else None
-    end_ns = end_time_unix_ns if end_time_unix_ns is not None else None
-
-    span = tracer.start_span("parlot.turn", context=parent_ctx, start_time=start_ns)
-    try:
-        span.set_attribute(ATTR_SESSION_ID, session_id)
-        span.set_attribute(ATTR_SESSION_CONVERSATION_ID, conversation_id)
-        span.set_attribute(ATTR_TURN_INDEX, turn_index)
-        if prev_trace_id:
-            span.set_attribute(ATTR_TURN_PREV_TRACE_ID, prev_trace_id)
-        if participant_role:
-            span.set_attribute(ATTR_TURN_PARTICIPANT_ROLE, participant_role)
-        if participant_id:
-            span.set_attribute(ATTR_TURN_PARTICIPANT_ID, participant_id)
-        if participant_label:
-            span.set_attribute(ATTR_TURN_PARTICIPANT_LABEL, participant_label)
-        if diarization_source:
-            span.set_attribute(ATTR_PARTICIPANT_DIAR_SOURCE, diarization_source)
-        if input_modality:
-            span.set_attribute(ATTR_TURN_INPUT_MODALITY, input_modality)
-        if active_agent_id:
-            span.set_attribute(ATTR_TURN_ACTIVE_AGENT_ID, active_agent_id)
-        if speech_start_wall_ms is not None:
-            span.set_attribute(ATTR_TURN_SPEECH_WALL_START_MS, speech_start_wall_ms)
-        if speech_end_wall_ms is not None:
-            span.set_attribute(ATTR_TURN_SPEECH_WALL_END_MS, speech_end_wall_ms)
-        if media_segment_start_ms > 0 or media_segment_end_ms > 0:
-            span.set_attribute(ATTR_TURN_MEDIA_START_MS, media_segment_start_ms)
-            span.set_attribute(ATTR_TURN_MEDIA_END_MS, media_segment_end_ms)
-        if e2e_latency_s is not None:
-            span.set_attribute(ATTR_TURN_E2E_LATENCY_S, e2e_latency_s)
-        if llm_ttft_s is not None:
-            span.set_attribute(ATTR_TURN_LLM_TTFT_S, llm_ttft_s)
-        if tts_ttfb_s is not None:
-            span.set_attribute(ATTR_TURN_TTS_TTFB_S, tts_ttfb_s)
-        if transcription_delay_s is not None:
-            span.set_attribute(ATTR_TURN_TRANSCRIPTION_DELAY_S, transcription_delay_s)
-        if eou_delay_s is not None:
-            span.set_attribute(ATTR_TURN_EOU_DELAY_S, eou_delay_s)
-        if interrupted:
-            span.set_attribute(ATTR_TURN_INTERRUPTED, True)
-        if language:
-            span.set_attribute(ATTR_TURN_LANGUAGE, language)
-        if language_switch:
-            span.set_attribute(ATTR_TURN_LANGUAGE_SWITCH, language_switch)
-        stamp_turn_utterance_text(
-            span,
-            participant_role=participant_role,
-            utterance_text=utterance_text,
-        )
-    finally:
-        span.end(end_time=end_ns)
-
-    return format(trace_id, "032x"), format(span_id, "016x")

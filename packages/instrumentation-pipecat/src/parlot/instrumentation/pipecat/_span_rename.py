@@ -8,19 +8,13 @@ from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.util.types import AttributeValue
 
 from parlot.core.attrs import (
-    ATTR_AGENT_STAGE,
-    ATTR_GEN_AI_MODEL,
     ATTR_GEN_AI_OP_NAME,
-    ATTR_GEN_AI_TOOL_NAME,
     GEN_AI_OP_CHAT,
     GEN_AI_OP_EXECUTE_TOOL,
     GEN_AI_OP_GENERATE_CONTENT,
-    SPAN_VOICE_STT,
-    SPAN_VOICE_TTS,
-    span_name_chat,
-    span_name_execute_tool,
 )
 from parlot.core.processor import ParlotBaseProcessor
+from parlot.core.span_rename import apply_genai_span_rename, remap_native_span_name
 
 # Pipecat TurnTraceObserver / service decorator names (and prefixed variants).
 NATIVE_CONVERSATION = "conversation"
@@ -36,6 +30,9 @@ _NATIVE_STAGE: dict[str, str] = {
     "llm_tool_call": "call",
     "llm_tool_result": "result",
 }
+
+_LLM_BASES = frozenset({"llm", "llm_setup", "llm_response", "llm_request"})
+_TOOL_BASES = frozenset({"llm_tool_call", "llm_tool_result"})
 
 
 def _base_service_name(native_name: str) -> str:
@@ -85,36 +82,39 @@ def remap_pipecat_span_name(
         NATIVE_TURN,
     ):
         return None
-    if base in ("llm", "llm_setup", "llm_response", "llm_request"):
-        model = str(attrs.get(ATTR_GEN_AI_MODEL) or "").strip() or None
-        return span_name_chat(model)
-    if base in ("llm_tool_call", "llm_tool_result"):
-        tool = str(attrs.get(ATTR_GEN_AI_TOOL_NAME) or "").strip()
-        return span_name_execute_tool(tool) if tool else span_name_execute_tool("tool")
-    if base == "stt":
-        return SPAN_VOICE_STT
-    if base == "tts":
-        return SPAN_VOICE_TTS
-    # Unknown — drop so ExportFilter does not leak vendor names.
-    return None
+    return remap_native_span_name(
+        base,
+        attrs,
+        llm_names=_LLM_BASES,
+        tool_names=_TOOL_BASES,
+        tts_names=("tts",),
+        stt_names=("stt",),
+        unknown="drop",
+    )
 
 
 def apply_pipecat_span_rename(span: ReadableSpan) -> None:
     """Mutate ``span._name`` and GenAI op attrs for export."""
     native = span.name or ""
-    attrs = span.attributes or {}
-    exported = remap_pipecat_span_name(native, attrs)
-    if exported is None:
-        return
-    if exported != native:
-        span._name = exported
     base = _base_service_name(native)
-    stage = _NATIVE_STAGE.get(base)
-    if stage and not attrs.get(ATTR_AGENT_STAGE):
-        ParlotBaseProcessor._set(span, ATTR_AGENT_STAGE, stage)
-    if base in ("llm", "llm_setup", "llm_response", "llm_request"):
-        existing_op = str(attrs.get(ATTR_GEN_AI_OP_NAME) or "").strip().lower()
-        if existing_op != GEN_AI_OP_GENERATE_CONTENT:
-            ParlotBaseProcessor._set(span, ATTR_GEN_AI_OP_NAME, GEN_AI_OP_CHAT)
-    elif base in ("llm_tool_call", "llm_tool_result"):
-        ParlotBaseProcessor._set(span, ATTR_GEN_AI_OP_NAME, GEN_AI_OP_EXECUTE_TOOL)
+
+    def _after(
+        sp: object,
+        _native: str,
+        _exported: str,
+        attrs: Mapping[str, AttributeValue],
+    ) -> None:
+        if base in _LLM_BASES:
+            existing_op = str(attrs.get(ATTR_GEN_AI_OP_NAME) or "").strip().lower()
+            if existing_op != GEN_AI_OP_GENERATE_CONTENT:
+                ParlotBaseProcessor._set(sp, ATTR_GEN_AI_OP_NAME, GEN_AI_OP_CHAT)
+        elif base in _TOOL_BASES:
+            ParlotBaseProcessor._set(sp, ATTR_GEN_AI_OP_NAME, GEN_AI_OP_EXECUTE_TOOL)
+
+    apply_genai_span_rename(
+        span,
+        remap_fn=remap_pipecat_span_name,
+        stage_for_native=_NATIVE_STAGE,
+        resolve_stage_key=_base_service_name,
+        after_rename=_after,
+    )

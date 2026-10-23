@@ -2,44 +2,37 @@
 
 from __future__ import annotations
 
-import atexit
 import logging
 import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
-from opentelemetry import trace
-from opentelemetry.trace import Span, Status, StatusCode, Tracer
+from opentelemetry.trace import Span, Tracer
 
 from parlot.core.attrs import (
     ATTR_AGENT_FRAMEWORK,
     ATTR_CONVERSATION_CHANNEL,
     ATTR_GEN_AI_AGENT_ID,
     ATTR_GEN_AI_AGENT_VERSION,
-    ATTR_GEN_AI_CONVERSATION_ID,
     ATTR_SESSION_AGENT_FRAMEWORK,
     ATTR_SESSION_AGENT_FRAMEWORK_RAW_ID,
     ATTR_SESSION_AGENT_ID,
-    ATTR_SESSION_CONVERSATION_ID,
-    ATTR_SESSION_ID,
     ATTR_SESSION_MODALITY,
-    ATTR_TURN_INDEX,
     ATTR_TURN_INPUT_MODALITY,
-    ATTR_TURN_PARTICIPANT_ROLE,
-    SPAN_CONVERSATION_SESSION,
-    SPAN_PARLOT_SESSION_CLOSE,
-    SPAN_PARLOT_TURN,
 )
-from parlot.core.ids import new_session_id
 from parlot.core.sdk_version import stamp_session_sdk_version
-from parlot.core.turn_emit import stamp_turn_utterance_text
 from parlot.core.session import (
     SessionState,
-    clear_active_session,
     get_active_session,
     session_owned,
-    set_active_session,
 )
+from parlot.core.session_lifecycle import (
+    emit_parlot_session_close,
+    force_flush_tracer_provider,
+    start_parlot_session_span,
+)
+from parlot.core.session_registry import ConversationSessionRegistry
+from parlot.core.turn_emit import emit_parlot_turn_root
 from parlot.instrumentation.langgraph.attrs import ATTR_LG_THREAD_ID
 
 logger = logging.getLogger("parlot.instrumentation.langgraph")
@@ -57,13 +50,16 @@ class _LangGraphSessionState(SessionState):
     open_agent_turn_index: int | None = None
 
 
-_sessions_by_thread: dict[str, tuple[Span, _LangGraphSessionState]] = {}
+_registry: ConversationSessionRegistry[_LangGraphSessionState] = (
+    ConversationSessionRegistry()
+)
+# Backward-compat alias for tests that clear the session map directly.
+_sessions_by_thread = _registry._sessions
 _configured_agent_id: str = ""
 _configured_agent_version: str = ""
 _configured_channel: str = ""
 _configured_modality: str = ""
 _tracer: Tracer | None = None
-_atexit_registered = False
 
 
 def set_identity(agent_id: str, version: str) -> None:
@@ -104,14 +100,6 @@ def _resolved_modality() -> str:
     return ""
 
 
-def _ensure_atexit() -> None:
-    global _atexit_registered
-    if _atexit_registered:
-        return
-    atexit.register(flush_all_sessions)
-    _atexit_registered = True
-
-
 def _stamp_session_identity(span: Span, *, thread_id: str, state: Any | None = None) -> None:
     span.set_attribute(ATTR_AGENT_FRAMEWORK, LANGGRAPH_FRAMEWORK)
     span.set_attribute(ATTR_SESSION_AGENT_FRAMEWORK, LANGGRAPH_FRAMEWORK)
@@ -139,31 +127,35 @@ def ensure_session(thread_id: str) -> _LangGraphSessionState | None:
         return None
     if not thread_id:
         thread_id = f"anon-{uuid.uuid4().hex[:12]}"
-    existing = _sessions_by_thread.get(thread_id)
-    if existing is not None:
-        span, state = existing
-        set_active_session(span, state)
-        return state
-    if _tracer is None:
-        logger.debug("No tracer; skipping langgraph session bootstrap")
-        return None
 
-    session_id = new_session_id()
-    conversation_id = thread_id
-    state = _LangGraphSessionState(
-        session_id=session_id,
-        conversation_id=conversation_id,
-        thread_id=thread_id,
-        framework=LANGGRAPH_FRAMEWORK,
-    )
-    span = _tracer.start_span(SPAN_CONVERSATION_SESSION)
-    span.set_attribute(ATTR_SESSION_ID, session_id)
-    span.set_attribute(ATTR_SESSION_CONVERSATION_ID, conversation_id)
-    span.set_attribute(ATTR_GEN_AI_CONVERSATION_ID, conversation_id)
-    _stamp_session_identity(span, thread_id=thread_id, state=state)
-    _sessions_by_thread[thread_id] = (span, state)
-    set_active_session(span, state)
-    _ensure_atexit()
+    tid = thread_id
+
+    def _factory() -> tuple[Span, _LangGraphSessionState] | None:
+        if _tracer is None:
+            logger.debug("No tracer; skipping langgraph session bootstrap")
+            return None
+        conversation_id = tid
+        state = _LangGraphSessionState(
+            session_id="",
+            conversation_id=conversation_id,
+            thread_id=tid,
+            framework=LANGGRAPH_FRAMEWORK,
+        )
+
+        def _stamp(span: Span) -> None:
+            _stamp_session_identity(span, thread_id=tid, state=state)
+
+        span, session_id = start_parlot_session_span(
+            _tracer,
+            conversation_id=conversation_id,
+            stamp_fn=_stamp,
+        )
+        state.session_id = session_id
+        return span, state
+
+    state = _registry.ensure(tid, _factory)
+    if state is not None:
+        _registry.ensure_atexit(flush_all_sessions)
     return state
 
 
@@ -182,77 +174,57 @@ def emit_turn(
     else:
         state.turn_count = max(state.turn_count, turn_index)
 
-    import random
+    extra: dict[str, Any] = {
+        ATTR_AGENT_FRAMEWORK: LANGGRAPH_FRAMEWORK,
+        ATTR_LG_THREAD_ID: state.thread_id,
+    }
+    modality = _resolved_modality()
+    if modality:
+        extra[ATTR_TURN_INPUT_MODALITY] = modality
 
-    from opentelemetry.trace import NonRecordingSpan, SpanContext, TraceFlags
-
-    trace_id = random.getrandbits(128)
-    span_id = random.getrandbits(64)
-    ctx = SpanContext(
-        trace_id=trace_id,
-        span_id=span_id,
-        is_remote=False,
-        trace_flags=TraceFlags(0x01),
+    tid, _span_id = emit_parlot_turn_root(
+        _tracer,
+        session_id=state.session_id,
+        conversation_id=state.conversation_id,
+        turn_index=turn_index,
+        participant_role=role,
+        utterance_text=utterance_text,
+        stamp_genai_conversation_id=True,
+        extra_attrs=extra,
     )
-    parent_ctx = trace.set_span_in_context(NonRecordingSpan(ctx))
-    span = _tracer.start_span(SPAN_PARLOT_TURN, context=parent_ctx)
-    try:
-        span.set_attribute(ATTR_SESSION_ID, state.session_id)
-        span.set_attribute(ATTR_SESSION_CONVERSATION_ID, state.conversation_id)
-        span.set_attribute(ATTR_GEN_AI_CONVERSATION_ID, state.conversation_id)
-        span.set_attribute(ATTR_TURN_INDEX, turn_index)
-        span.set_attribute(ATTR_TURN_PARTICIPANT_ROLE, role)
-        modality = _resolved_modality()
-        if modality:
-            span.set_attribute(ATTR_TURN_INPUT_MODALITY, modality)
-        span.set_attribute(ATTR_AGENT_FRAMEWORK, LANGGRAPH_FRAMEWORK)
-        span.set_attribute(ATTR_LG_THREAD_ID, state.thread_id)
-        stamp_turn_utterance_text(
-            span,
-            participant_role=role,
-            utterance_text=utterance_text,
-        )
-    finally:
-        span.end()
-    state.last_turn_trace_id = format(trace_id, "032x")
+    state.last_turn_trace_id = tid
     return turn_index
 
 
 def close_session(thread_id: str, *, reason: str = "completed") -> None:
     """End the session for ``thread_id`` and emit ``parlot.session.close``."""
-    pair = _sessions_by_thread.pop(thread_id, None)
-    if pair is None or _tracer is None:
+    if _tracer is None:
+        _registry.pop(thread_id)
         return
-    session_span, state = pair
-    close = _tracer.start_span(SPAN_PARLOT_SESSION_CLOSE)
-    try:
-        close.set_attribute(ATTR_SESSION_ID, state.session_id)
-        close.set_attribute(ATTR_SESSION_CONVERSATION_ID, state.conversation_id)
-        close.set_attribute("session.close_reason", reason)
-        _stamp_session_identity(close, thread_id=thread_id, state=state)
-    finally:
-        close.end()
-    try:
-        session_span.set_status(Status(StatusCode.OK))
-    except Exception:
-        pass
-    session_span.end()
-    active = get_active_session()
-    if active is state:
-        clear_active_session()
-    # BatchSpanProcessor otherwise may exit before GenAI/contract spans export.
-    try:
-        provider = trace.get_tracer_provider()
-        force_flush = getattr(provider, "force_flush", None)
-        if callable(force_flush):
-            force_flush(timeout_millis=10_000)
-    except Exception:
-        logger.debug("force_flush after close_session failed", exc_info=True)
+
+    def _closer(session_span: Span, state: _LangGraphSessionState) -> None:
+        emit_parlot_session_close(
+            _tracer,
+            session_id=state.session_id,
+            conversation_id=state.conversation_id,
+            reason=reason,
+            framework=LANGGRAPH_FRAMEWORK,
+            stamp_fn=lambda span: _stamp_session_identity(
+                span, thread_id=thread_id, state=state
+            ),
+            state=state,
+        )
+        _registry.end_and_clear(session_span, state)
+        if not force_flush_tracer_provider(timeout_millis=10_000):
+            logger.debug("force_flush after close_session failed")
+
+    _registry.close(thread_id, closer=_closer, clear_active=False)
 
 
 def flush_all_sessions() -> None:
-    for thread_id in list(_sessions_by_thread):
-        close_session(thread_id, reason="process_exit")
+    _registry.flush_all(
+        lambda thread_id: close_session(thread_id, reason="process_exit")
+    )
 
 
 def thread_id_from_metadata(metadata: dict[str, Any] | None, tags: list[str] | None = None) -> str:
