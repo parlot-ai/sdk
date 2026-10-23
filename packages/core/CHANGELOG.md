@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.8](https://github.com/parlot-ai/sdk/compare/core-v0.4.7...core-v0.4.8) (2026-10-23)
+
+
+### Features
+
+* **pipecat:** add Conversation Contract instrumentation adapter ([#102](https://github.com/parlot-ai/sdk/issues/102)) ([807ceb5](https://github.com/parlot-ai/sdk/commit/807ceb5f0a0b8057bb4705e4d5db4f1fa72eb286))
+
 ## [0.4.7](https://github.com/parlot-ai/sdk/compare/core-v0.4.6...core-v0.4.7) (2026-10-17)
 
 
