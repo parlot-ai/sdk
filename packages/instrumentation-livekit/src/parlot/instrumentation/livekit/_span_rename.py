@@ -102,7 +102,7 @@ def apply_livekit_span_rename(span: ReadableSpan) -> None:
     """Mutate ``span._name`` and GenAI op attrs for export."""
 
     def _after(
-        sp: object,
+        sp: ReadableSpan,
         native: str,
         _exported: str,
         attrs: Mapping[str, AttributeValue],

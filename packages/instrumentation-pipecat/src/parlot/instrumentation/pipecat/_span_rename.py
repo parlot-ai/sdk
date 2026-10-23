@@ -99,7 +99,7 @@ def apply_pipecat_span_rename(span: ReadableSpan) -> None:
     base = _base_service_name(native)
 
     def _after(
-        sp: object,
+        sp: ReadableSpan,
         _native: str,
         _exported: str,
         attrs: Mapping[str, AttributeValue],

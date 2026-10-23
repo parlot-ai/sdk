@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Callable, Literal, Mapping, Sequence
+from collections.abc import Collection
+from typing import Callable, Literal, Mapping
 
+from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.util.types import AttributeValue
 
 from parlot.core.attrs import (
@@ -28,12 +30,12 @@ def remap_native_span_name(
     native: str,
     attrs: Mapping[str, AttributeValue] | None = None,
     *,
-    llm_names: Sequence[str] = (),
-    tool_names: Sequence[str] = (),
-    tts_names: Sequence[str] = (),
-    stt_names: Sequence[str] = (),
-    drop_names: Sequence[str] = (),
-    tool_name_attrs: Sequence[str] = (ATTR_GEN_AI_TOOL_NAME,),
+    llm_names: Collection[str] = (),
+    tool_names: Collection[str] = (),
+    tts_names: Collection[str] = (),
+    stt_names: Collection[str] = (),
+    drop_names: Collection[str] = (),
+    tool_name_attrs: Collection[str] = (ATTR_GEN_AI_TOOL_NAME,),
     unknown: UnknownPolicy = "drop",
     custom: Callable[
         [str, Mapping[str, AttributeValue]], str | None | object
@@ -77,17 +79,19 @@ def remap_native_span_name(
 
 
 def apply_genai_span_rename(
-    span: object,
+    span: ReadableSpan,
     *,
     remap_fn: Callable[[str, Mapping[str, AttributeValue] | None], str | None],
     stage_for_native: Mapping[str, str] | None = None,
-    llm_names: Sequence[str] = (),
-    tool_names: Sequence[str] = (),
+    llm_names: Collection[str] = (),
+    tool_names: Collection[str] = (),
     set_chat_op: bool = True,
     set_tool_op: bool = True,
     preserve_ops: frozenset[str] | None = None,
     resolve_stage_key: Callable[[str], str] | None = None,
-    after_rename: Callable[[object, str, str, Mapping[str, AttributeValue]], None]
+    after_rename: Callable[
+        [ReadableSpan, str, str, Mapping[str, AttributeValue]], None
+    ]
     | None = None,
 ) -> None:
     """Mutate ``span._name`` and GenAI op / stage attrs for export.
@@ -96,8 +100,8 @@ def apply_genai_span_rename(
     extra logic (e.g. LiveKit evaluation op preservation, tool name sync).
     When provided, it replaces the default chat/tool op stamping.
     """
-    native = getattr(span, "name", None) or ""
-    attrs = getattr(span, "attributes", None) or {}
+    native = span.name or ""
+    attrs = span.attributes or {}
     exported = remap_fn(native, attrs)
     if exported is None:
         return
