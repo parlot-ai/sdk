@@ -37,7 +37,7 @@ export PARLOT_API_KEY=<org-scoped-key>
 
 ## Example
 
-See [`examples/pipecat/minimal-voice/`](../../examples/pipecat/minimal-voice/) (adapted from Pipecat's [open-telemetry/langfuse](https://github.com/pipecat-ai/pipecat-examples/tree/main/open-telemetry/langfuse) demo).
+See [`examples/pipecat/minimal-voice/`](https://github.com/parlot-ai/sdk/tree/main/examples/pipecat/minimal-voice) (adapted from Pipecat's [open-telemetry/langfuse](https://github.com/pipecat-ai/pipecat-examples/tree/main/open-telemetry/langfuse) demo).
 
 ## Docs
 
