@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3](https://github.com/parlot-ai/sdk/compare/parlot-v0.3.2...parlot-v0.3.3) (2026-10-23)
+
+
+### Features
+
+* **pipecat:** add Conversation Contract instrumentation adapter ([#102](https://github.com/parlot-ai/sdk/issues/102)) ([807ceb5](https://github.com/parlot-ai/sdk/commit/807ceb5f0a0b8057bb4705e4d5db4f1fa72eb286))
+
 ## [0.3.2](https://github.com/parlot-ai/sdk/compare/parlot-v0.3.1...parlot-v0.3.2) (2026-09-29)
 
 
