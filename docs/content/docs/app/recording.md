@@ -19,7 +19,7 @@ playback and redaction pipeline.
 | **BYO link-only** | External URI stamped for UI; rejected when tenant PII redaction is on |
 
 Playback always uses a **signed URL for the session’s current playable asset** (redacted when
-policy requires). Raw segment URIs are not the playable contract.
+policy requires).
 
 ## Why enable recording
 
