@@ -56,7 +56,9 @@ async def complete_recording(
     *,
     session_id: str,
     format: str,
+    conversation_id: Optional[str] = None,
     segment_count: Optional[int] = None,
+    segments: Optional[list[Mapping[str, int]]] = None,
     sample_rate: Optional[int] = None,
     channel_map: Optional[str] = None,
     anchor_wall_ms: Optional[int] = None,
@@ -72,8 +74,18 @@ async def complete_recording(
         "session_id": session_id,
         "format": format,
     }
+    if conversation_id:
+        payload["conversation_id"] = conversation_id
     if segment_count is not None:
         payload["segment_count"] = int(segment_count)
+    if segments:
+        payload["segments"] = [
+            {
+                "segment_index": int(s["segment_index"]),
+                "sample_offset": int(s["sample_offset"]),
+            }
+            for s in segments
+        ]
     if sample_rate is not None:
         payload["sample_rate"] = int(sample_rate)
     if channel_map:

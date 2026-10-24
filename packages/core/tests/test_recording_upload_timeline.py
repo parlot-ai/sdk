@@ -131,7 +131,12 @@ async def test_complete_recording_posts_body() -> None:
             _runtime(),
             session_id="s1",
             format="pcm_wav",
+            conversation_id="conv-1",
             segment_count=2,
+            segments=[
+                {"segment_index": 0, "sample_offset": 0},
+                {"segment_index": 1, "sample_offset": 16000},
+            ],
             sample_rate=16000,
             channel_map="user,agent",
             anchor_wall_ms=1,
@@ -139,6 +144,12 @@ async def test_complete_recording_posts_body() -> None:
             wall_end_ms=2000,
         )
     assert out == {"ok": True, "partial": False}
+    body = client.post.await_args.kwargs["json"]
+    assert body["conversation_id"] == "conv-1"
+    assert body["segments"] == [
+        {"segment_index": 0, "sample_offset": 0},
+        {"segment_index": 1, "sample_offset": 16000},
+    ]
 
 
 @pytest.mark.asyncio

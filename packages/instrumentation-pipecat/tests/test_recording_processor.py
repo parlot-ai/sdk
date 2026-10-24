@@ -81,6 +81,10 @@ async def test_finish_uses_cached_session_after_clear() -> None:
     proc._cached_session_id = "s" * 32
     proc._cached_runtime = MagicMock(endpoint="http://localhost:8788", api_key="k")
     proc._segment_index = 2
+    proc._uploaded_segments = [
+        {"segment_index": 0, "sample_offset": 0},
+        {"segment_index": 1, "sample_offset": 500},
+    ]
     proc._sample_count = 1000
     proc._had_non_silent = True
     proc._received_audio = True
@@ -111,3 +115,7 @@ async def test_finish_uses_cached_session_after_clear() -> None:
     complete.assert_awaited_once()
     assert complete.await_args.kwargs["session_id"] == "s" * 32
     assert complete.await_args.kwargs["segment_count"] == 2
+    assert complete.await_args.kwargs["segments"] == [
+        {"segment_index": 0, "sample_offset": 0},
+        {"segment_index": 1, "sample_offset": 500},
+    ]

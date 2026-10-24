@@ -123,6 +123,7 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
         self._format = "opus_ogg" if format == "opus_ogg" else "pcm_wav"
         self._context = context
         self._segment_index = 0
+        self._uploaded_segments: list[dict[str, int]] = []
         self._sample_offset = 0
         self._sample_count = 0
         self._anchor_wall_ms: int | None = None
@@ -133,6 +134,7 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
         self._received_audio = False
         # Cached so /complete still works after CancelFrame tears down the session.
         self._cached_session_id: str = ""
+        self._cached_conversation_id: str = ""
         self._cached_runtime: Any = None
         self._cached_session_span: Any = None
 
@@ -211,6 +213,10 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
         sid = self._session_id()
         if sid:
             self._cached_session_id = sid
+        state = self._session_state()
+        cid = str(getattr(state, "conversation_id", "") or "") if state else ""
+        if cid:
+            self._cached_conversation_id = cid
         span = get_active_session_span()
         if span is not None:
             self._cached_session_span = span
@@ -298,6 +304,12 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
         uri = grant_audio_uri(grant)
         if uri:
             self._audio_uri = uri
+        self._uploaded_segments.append(
+            {
+                "segment_index": self._segment_index,
+                "sample_offset": self._sample_offset,
+            }
+        )
         frames = len(audio) // (2 * max(1, num_channels))
         self._sample_offset += frames
         self._sample_count += frames
@@ -370,11 +382,19 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
             self._segment_index,
             self._sample_count,
         )
+        conversation_id = self._cached_conversation_id
+        if not conversation_id:
+            state = self._session_state()
+            conversation_id = (
+                str(getattr(state, "conversation_id", "") or "") if state else ""
+            )
         result = await complete_recording(
             runtime,
             session_id=session_id,
             format=self._format,
+            conversation_id=conversation_id or None,
             segment_count=self._segment_index,
+            segments=list(self._uploaded_segments),
             sample_rate=self.sample_rate or 16_000,
             channel_map=CHANNEL_MAP,
             anchor_wall_ms=self._anchor_wall_ms,
