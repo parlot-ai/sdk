@@ -131,6 +131,10 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
         self._upload_lock = asyncio.Lock()
         self._had_non_silent = False
         self._received_audio = False
+        # Cached so /complete still works after CancelFrame tears down the session.
+        self._cached_session_id: str = ""
+        self._cached_runtime: Any = None
+        self._cached_session_span: Any = None
 
         try:
             from ._auto import register_recording_processor
@@ -155,15 +159,21 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
                 logger.debug("parlot: recording started stamp failed", exc_info=True)
 
     async def process_frame(self, frame, direction: FrameDirection):  # type: ignore[override]
-        await super().process_frame(frame, direction)
-        # Parent already flushed the last buffer on End/Cancel; complete upload.
+        # Complete *before* End/Cancel propagate: pushing CancelFrame ends the
+        # Pipecat conversation span, which calls close_session and clears the
+        # active session — finish() would then skip /complete (no session id).
         if isinstance(frame, (EndFrame, CancelFrame)):
             try:
                 await self.finish()
             except Exception:
                 logger.warning("parlot: recording finish on end failed", exc_info=True)
+            await super().process_frame(frame, direction)
+            return
+        await super().process_frame(frame, direction)
 
     def _runtime(self):
+        if self._cached_runtime is not None:
+            return self._cached_runtime
         ctx = self._context
         if ctx is None:
             from ._auto import configured_context
@@ -174,7 +184,11 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
         return getattr(ctx, "runtime", None)
 
     def _session_span(self):
-        return get_active_session_span()
+        span = get_active_session_span()
+        if span is not None:
+            self._cached_session_span = span
+            return span
+        return self._cached_session_span
 
     def _session_state(self):
         state = get_active_session()
@@ -184,12 +198,28 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
 
     def _session_id(self) -> str:
         state = self._session_state()
-        return str(getattr(state, "session_id", "") or "") if state else ""
+        sid = str(getattr(state, "session_id", "") or "") if state else ""
+        if sid:
+            self._cached_session_id = sid
+            return sid
+        return self._cached_session_id
+
+    def _cache_binding(self) -> None:
+        runtime = self._runtime()
+        if runtime is not None:
+            self._cached_runtime = runtime
+        sid = self._session_id()
+        if sid:
+            self._cached_session_id = sid
+        span = get_active_session_span()
+        if span is not None:
+            self._cached_session_span = span
 
     def _maybe_stamp_started(self) -> None:
         if self._anchor_wall_ms is not None:
             return
         self._anchor_wall_ms = int(time.time() * 1000)
+        self._cache_binding()
         state = self._session_state()
         if state is not None:
             set_recording_anchor_wall_ms(state, self._anchor_wall_ms)
@@ -214,11 +244,12 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
     ) -> None:
         self._received_audio = True
         self._maybe_stamp_started()
+        self._cache_binding()
         if not _pcm_is_silent(audio):
             self._had_non_silent = True
 
-        runtime = self._runtime()
-        session_id = self._session_id()
+        runtime = self._cached_runtime or self._runtime()
+        session_id = self._cached_session_id or self._session_id()
         if runtime is None or not session_id:
             logger.warning(
                 "parlot: recording segment skipped — no runtime/session yet"
@@ -284,9 +315,20 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
         except Exception:
             pass
         try:
-            await asyncio.wait_for(self._finish_inner(), timeout=CLOSE_TIMEOUT_S)
+            await asyncio.shield(
+                asyncio.wait_for(self._finish_inner(), timeout=CLOSE_TIMEOUT_S)
+            )
         except asyncio.TimeoutError:
             stamp_recording_error(self._session_span(), "complete_timeout")
+        except asyncio.CancelledError:
+            # Pipeline cancel can interrupt us; still try to complete once.
+            try:
+                await self._finish_inner()
+            except Exception as exc:
+                stamp_recording_error(
+                    self._session_span(), f"complete_failed:{type(exc).__name__}"
+                )
+            raise
         except Exception as exc:
             stamp_recording_error(
                 self._session_span(), f"complete_failed:{type(exc).__name__}"
@@ -310,13 +352,24 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
             stamp_recording_error(self._session_span(), "silent")
             return
 
-        runtime = self._runtime()
-        session_id = self._session_id()
+        runtime = self._cached_runtime or self._runtime()
+        session_id = self._cached_session_id or self._session_id()
         if runtime is None or not session_id:
             stamp_recording_error(self._session_span(), "complete_no_session")
+            logger.warning(
+                "parlot: recording complete skipped — no session "
+                "(cached_id=%r)",
+                self._cached_session_id,
+            )
             return
 
         wall_end_ms = int(time.time() * 1000)
+        logger.info(
+            "parlot: recording complete session_id=%s segments=%s samples=%s",
+            session_id,
+            self._segment_index,
+            self._sample_count,
+        )
         result = await complete_recording(
             runtime,
             session_id=session_id,

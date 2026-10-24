@@ -70,3 +70,44 @@ async def test_finish_no_audio_stamps_failed() -> None:
             await proc.finish()
             err.assert_called()
             assert err.call_args.args[1] == "no_audio"
+
+
+@pytest.mark.asyncio
+async def test_finish_uses_cached_session_after_clear() -> None:
+    """CancelFrame clears the active session before a late finish; cache must win."""
+    from parlot.instrumentation.pipecat._recording import ParlotRecordingProcessor
+
+    proc = ParlotRecordingProcessor(segment_seconds=1)
+    proc._cached_session_id = "s" * 32
+    proc._cached_runtime = MagicMock(endpoint="http://localhost:8788", api_key="k")
+    proc._segment_index = 2
+    proc._sample_count = 1000
+    proc._had_non_silent = True
+    proc._received_audio = True
+    proc._anchor_wall_ms = 1
+    with (
+        patch.object(proc, "stop_recording", new_callable=AsyncMock),
+        patch(
+            "parlot.instrumentation.pipecat._recording.complete_recording",
+            new_callable=AsyncMock,
+            return_value={
+                "audio_recording_uri": "r2://b/audio.ogg",
+                "partial": False,
+            },
+        ) as complete,
+        patch(
+            "parlot.instrumentation.pipecat._recording.get_active_session",
+            return_value=None,
+        ),
+        patch(
+            "parlot.instrumentation.pipecat._recording.any_open_session",
+            return_value=None,
+        ),
+        patch(
+            "parlot.instrumentation.pipecat._recording.stamp_recording_uploaded"
+        ),
+    ):
+        await proc.finish()
+    complete.assert_awaited_once()
+    assert complete.await_args.kwargs["session_id"] == "s" * 32
+    assert complete.await_args.kwargs["segment_count"] == 2
