@@ -20,6 +20,7 @@ Install and env setup: [Quick Start](/sdk/get-started/quick-start). Shared produ
 - **Session + transcript** — turns, close reason, `framework=pipecat`
 - **Pipeline waterfall** — STT / LLM / TTS timing from Pipecat’s OpenTelemetry spans
 - **Usage** — tokens and character counts when `enable_metrics` / `enable_usage_metrics` are on
+- **Session audio** — optional stereo capture via `ParlotRecordingProcessor` (WAV segments by default)
 - **Search by conversation id** — Pipecat `conversation_id` → `platform.ref.conversation_id`
 
 ## How instrumentation works
@@ -45,11 +46,17 @@ renamed to the shared GenAI / voice vocabulary (`chat {model}`, `stt`, `tts`, �
 ## Add it to an existing bot
 
 ```python
-from parlot.instrumentation.pipecat import parlotize
+from parlot.instrumentation.pipecat import ParlotRecordingProcessor, parlotize
 
-parlotize("my-pipecat-agent", version="0.1.0")
+parlotize("my-pipecat-agent", version="0.1.0", record=True)
 
-# ... Pipeline ...
+pipeline = Pipeline([
+    transport.input(),
+    # ... stt / llm / tts ...
+    transport.output(),
+    ParlotRecordingProcessor(),  # after output — user L / bot R stereo WAV segments
+    context_aggregator.assistant(),
+])
 
 worker = PipelineWorker(
     pipeline,
@@ -67,6 +74,20 @@ export PARLOT_API_KEY=<org-scoped-key>
 
 Call `parlotize` once from `parlot.instrumentation.pipecat` for the process that owns the
 pipeline. Do not mix in another framework’s `parlotize` in the same agent process.
+
+### Recording
+
+With `record=True` (or Settings → Recording allowlists) and `ParlotRecordingProcessor` in the
+pipeline, the agent uploads ~30s stereo WAV segments via a presigned PUT, then
+`POST /v1/recordings/complete`. Parlot stitches gaps as silence, normalizes for playback, and
+applies close-gated PII beeps when redaction is on.
+
+- Default deps stay thin (`wave` + `httpx`). Optional `parlot[recording-opus]` / package extra
+  `recording-opus` encodes Opus/OGG segments when upstream bandwidth matters (~0.5 Mbps/call).
+- Place the processor **after** `transport.output()` so both directions are buffered.
+- Fail-open: upload/complete errors stamp `session.recording.status=failed` and never break the call.
+- Playback is always the session’s current signed URL (redacted when policy requires) — not the
+  raw segment URI.
 
 ## Example
 

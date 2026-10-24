@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
     from opentelemetry.trace import TracerProvider
@@ -15,7 +16,9 @@ logger = logging.getLogger("parlot.instrumentation.pipecat")
 _configured = False
 _configured_agent_id: str | None = None
 _configured_agent_version: str = ""
+_configured_record: bool | list[str] | None = None
 _parlot_context: ParlotContext | None = None
+_active_recorders: list[Any] = []
 
 
 def parlotize(
@@ -29,6 +32,7 @@ def parlotize(
     version: Optional[str] = None,
     capture_logs: bool | list[str] | None = None,
     log_level: Optional[str] = None,
+    record: bool | list[str] | None = None,
 ) -> ParlotContext:
     """Parlotize Pipecat instrumentation and OTLP export.
 
@@ -53,20 +57,26 @@ def parlotize(
         version: Shared — ``gen_ai.agent.version``.
         capture_logs: Shared — session log capture.
         log_level: Shared — minimum level for session log capture.
+        record: Audio recording policy. Boolean or agent-id glob patterns.
+            When enabled, place ``ParlotRecordingProcessor`` after
+            ``transport.output()`` (WAV segments by default).
 
     Returns:
         The ``ParlotContext`` for this process.
     """
-    global _configured, _configured_agent_id, _configured_agent_version, _parlot_context
+    global _configured, _configured_agent_id, _configured_agent_version
+    global _configured_record, _parlot_context
     if _configured:
         logger.debug("parlot-instrumentation.pipecat already configured — skipping")
         assert _parlot_context is not None
         return _parlot_context
 
     from parlot.core import base_parlotize
+    from parlot.core.parlotize import normalize_glob_or_bool
     from parlot.core.sdk_version import resolve_parlot_sdk_version
 
     _configured_agent_version = (version or "").strip() or "unknown"
+    _configured_record = normalize_glob_or_bool(record)
 
     res = base_parlotize(
         agent_id,
@@ -316,8 +326,53 @@ def flush_session_logs() -> None:
         logger.debug("session_logs flush failed", exc_info=True)
 
 
+def configured_context() -> ParlotContext | None:
+    return _parlot_context
+
+
+def configured_record() -> bool | list[str] | None:
+    return _configured_record
+
+
+def register_recording_processor(processor: Any) -> None:
+    """Track an active ``ParlotRecordingProcessor`` for close-time flush."""
+    if processor is not None and processor not in _active_recorders:
+        _active_recorders.append(processor)
+
+
+def unregister_recording_processor(processor: Any) -> None:
+    try:
+        _active_recorders.remove(processor)
+    except ValueError:
+        pass
+
+
+async def finish_active_recordings() -> None:
+    """Fail-open flush of every registered recording processor."""
+    recorders = list(_active_recorders)
+    _active_recorders.clear()
+    for proc in recorders:
+        finish = getattr(proc, "finish", None)
+        if finish is None:
+            continue
+        try:
+            await finish()
+        except Exception:
+            logger.warning("parlot: recording finish failed", exc_info=True)
+
+
 def close_session(conversation_id: str, *, reason: str = "completed") -> None:
     """Public helper to close a Pipecat-owned session by conversation_id."""
     from ._session import close_session as _close
+
+    # Best-effort sync bridge: schedule finish if a loop is running.
+    try:
+        loop = asyncio.get_running_loop()
+        loop.create_task(finish_active_recordings())
+    except RuntimeError:
+        try:
+            asyncio.run(finish_active_recordings())
+        except Exception:
+            logger.debug("parlot: sync recording finish skipped", exc_info=True)
 
     _close(conversation_id, reason=reason)

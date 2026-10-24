@@ -4,19 +4,16 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Optional
+from typing import Any
 
-import httpx
-
-from parlot.core.attrs import (
-    ATTR_SESSION_RECORDING_ANCHOR_WALL_MS,
-    ATTR_SESSION_RECORDING_AUDIO_URI,
-    ATTR_SESSION_RECORDING_DISABLED_REASON,
-    ATTR_SESSION_RECORDING_EGRESS_ID,
-    ATTR_SESSION_RECORDING_WEBHOOK_ERROR,
-)
 from parlot.core.context import ParlotContext
-from parlot.core.runtime import ParlotRuntimeContext
+from parlot.core.recording_stamp import (
+    stamp_recording_disabled,
+    stamp_recording_error,
+    stamp_recording_started,
+    stamp_recording_uploaded,
+)
+from parlot.core.recording_upload import fetch_upload_grant
 
 from ._recording_guard import recording_disabled_reason, should_record
 
@@ -35,51 +32,16 @@ def _format_egress_error(exc: BaseException) -> str:
 
 
 def _stamp_recording_webhook_error(bootstrap: Any, error: str) -> None:
-    """Surface recording failure on parlot.session (copied to parlot.session.close)."""
-    session_span = bootstrap.session_span
-    if session_span is not None and hasattr(session_span, "is_recording"):
-        if session_span.is_recording():
-            session_span.set_attribute(ATTR_SESSION_RECORDING_WEBHOOK_ERROR, error)
-    logger.warning("parlot: recording failed — %s", error)
+    stamp_recording_error(bootstrap.session_span, error)
 
 
 def _stamp_recording_disabled(bootstrap: Any, reason: str) -> None:
-    """Record why egress was not started (Settings / parlotize / job metadata)."""
-    session_span = bootstrap.session_span
-    if session_span is not None and hasattr(session_span, "is_recording"):
-        if session_span.is_recording():
-            session_span.set_attribute(ATTR_SESSION_RECORDING_DISABLED_REASON, reason)
-    logger.debug("parlot: recording disabled — %s", reason)
+    stamp_recording_disabled(bootstrap.session_span, reason)
 
 
 def _context_from_bootstrap(bootstrap: Any) -> ParlotContext | None:
     processor = getattr(bootstrap, "processor", None)
     return getattr(processor, "_context", None) if processor is not None else None
-
-
-async def _fetch_upload_grant(
-    session_id: str,
-    room_name: str,
-    runtime: ParlotRuntimeContext,
-) -> Optional[dict]:
-    url = f"{runtime.endpoint}/v1/recordings/upload-grant"
-    headers = {"Authorization": f"Bearer {runtime.api_key}"}
-    payload = {"session_id": session_id, "room_name": room_name}
-    try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.post(url, json=payload, headers=headers)
-        if resp.status_code >= 400:
-            logger.error(
-                "parlot: upload grant failed status=%s body=%s",
-                resp.status_code,
-                resp.text[:500],
-            )
-            return None
-        return resp.json()
-    except Exception as exc:
-        logger.error("parlot: upload grant request failed — %s", exc)
-        logger.debug("parlot: upload grant request failed", exc_info=True)
-        return None
 
 
 async def maybe_start_room_composite_egress(ctx: Any) -> None:
@@ -113,7 +75,9 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
         return
 
     session_id = bootstrap.session_id
-    grant = await _fetch_upload_grant(session_id, str(room_name), runtime)
+    grant = await fetch_upload_grant(
+        runtime, session_id=session_id, room_name=str(room_name)
+    )
     if grant is None:
         _stamp_recording_webhook_error(bootstrap, "upload_grant_failed")
         return
@@ -177,13 +141,20 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
     anchor_ms = int(time.time() * 1000)
 
     session_span = bootstrap.session_span
-    if session_span is not None and hasattr(session_span, "is_recording"):
-        if session_span.is_recording():
-            if audio_uri:
-                session_span.set_attribute(ATTR_SESSION_RECORDING_AUDIO_URI, audio_uri)
-            session_span.set_attribute(ATTR_SESSION_RECORDING_ANCHOR_WALL_MS, anchor_ms)
-            if egress_id:
-                session_span.set_attribute(ATTR_SESSION_RECORDING_EGRESS_ID, str(egress_id))
+    stamp_recording_started(
+        session_span,
+        anchor_wall_ms=anchor_ms,
+        source="livekit_egress",
+        channel_map="mixed",
+        format="opus_ogg",
+    )
+    if audio_uri:
+        stamp_recording_uploaded(
+            session_span,
+            audio_uri=audio_uri,
+            format="opus_ogg",
+            egress_id=str(egress_id) if egress_id else None,
+        )
 
     bootstrap.processor.set_recording_anchor_wall_ms(bootstrap.state, anchor_ms)
     logger.info(

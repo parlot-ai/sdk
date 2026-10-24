@@ -36,6 +36,24 @@ from .genai_content_capture import should_capture_genai_content
 from .export import ExportFilterSpanExporter
 from .intent import derive_intent
 from .logs_capture import should_capture_logs
+from .recording import should_record
+from .recording_source import RecordingSource, stamp_external_recording
+from .recording_stamp import (
+    stamp_recording_disabled,
+    stamp_recording_error,
+    stamp_recording_started,
+    stamp_recording_uploaded,
+)
+from .recording_timeline import (
+    media_segments_from_speech,
+    set_recording_anchor_wall_ms,
+    speech_wall_ms_from_span,
+)
+from .recording_upload import (
+    complete_recording,
+    fetch_upload_grant,
+    put_bytes_to_presigned_url,
+)
 from .metrics import (
     LONG_LIVED_METRICS_EXPORT_INTERVAL_MS,
     ParlotMetricsRecorder,
@@ -129,6 +147,19 @@ __all__ = [
     "set_session_attribute",
     "set_session_metadata",
     "should_capture_genai_content",
+    "should_record",
+    "RecordingSource",
+    "stamp_external_recording",
+    "stamp_recording_disabled",
+    "stamp_recording_error",
+    "stamp_recording_started",
+    "stamp_recording_uploaded",
+    "set_recording_anchor_wall_ms",
+    "media_segments_from_speech",
+    "speech_wall_ms_from_span",
+    "fetch_upload_grant",
+    "complete_recording",
+    "put_bytes_to_presigned_url",
     "should_capture_logs",
     "stamp_framework_refs",
     "stamp_platform_refs",

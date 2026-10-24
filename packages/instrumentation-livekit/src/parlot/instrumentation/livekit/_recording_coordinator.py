@@ -35,21 +35,16 @@ class RecordingCoordinator:
         """Recording timeline t=0 (``audio_recording_started_at``) for media_segment_*."""
         if anchor_wall_ms <= 0:
             return
-        # Freeze after first set — mid-session egress must not reset media t=0.
-        if state.recording_anchor_wall_ms is not None:
-            return
-        state.recording_anchor_wall_ms = anchor_wall_ms
+        from parlot.core.recording_timeline import set_recording_anchor_wall_ms
+
+        set_recording_anchor_wall_ms(state, anchor_wall_ms)
 
     @staticmethod
     def speech_wall_ms_from_span(span: ReadableSpan) -> tuple[int, int] | None:
         """Wall-clock epoch ms from OTLP span bounds (LiveKit user_turn / agent_turn)."""
-        start_ns = span.start_time
-        end_ns = span.end_time
-        if start_ns is None or end_ns is None:
-            return None
-        if end_ns <= start_ns:
-            return None
-        return start_ns // 1_000_000, end_ns // 1_000_000
+        from parlot.core.recording_timeline import speech_wall_ms_from_span
+
+        return speech_wall_ms_from_span(span)
 
     @staticmethod
     def media_segments_from_speech(
@@ -57,12 +52,12 @@ class RecordingCoordinator:
         speech_start_wall_ms: int,
         speech_end_wall_ms: int,
     ) -> tuple[int, int]:
-        anchor = state.recording_anchor_wall_ms
-        if anchor is None:
+        from parlot.core.recording_timeline import media_segments_from_speech
+
+        if getattr(state, "recording_anchor_wall_ms", None) is None:
             return 0, 0
-        return (
-            max(0, speech_start_wall_ms - anchor),
-            max(0, speech_end_wall_ms - anchor),
+        return media_segments_from_speech(
+            state, speech_start_wall_ms, speech_end_wall_ms
         )
 
     def genai_content_enabled(
