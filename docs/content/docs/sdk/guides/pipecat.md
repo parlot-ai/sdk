@@ -54,7 +54,7 @@ pipeline = Pipeline([
     transport.input(),
     # ... stt / llm / tts ...
     transport.output(),
-    ParlotRecordingProcessor(),  # after output — user L / bot R stereo WAV segments
+    ParlotRecordingProcessor(),  # after output — stereo WAV segments
     context_aggregator.assistant(),
 ])
 

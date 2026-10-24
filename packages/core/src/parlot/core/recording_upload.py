@@ -60,7 +60,6 @@ async def complete_recording(
     segment_count: Optional[int] = None,
     segments: Optional[list[Mapping[str, int]]] = None,
     sample_rate: Optional[int] = None,
-    channel_map: Optional[str] = None,
     anchor_wall_ms: Optional[int] = None,
     sample_count: Optional[int] = None,
     wall_end_ms: Optional[int] = None,
@@ -88,8 +87,6 @@ async def complete_recording(
         ]
     if sample_rate is not None:
         payload["sample_rate"] = int(sample_rate)
-    if channel_map:
-        payload["channel_map"] = channel_map
     if anchor_wall_ms is not None:
         payload["anchor_wall_ms"] = int(anchor_wall_ms)
     if sample_count is not None:

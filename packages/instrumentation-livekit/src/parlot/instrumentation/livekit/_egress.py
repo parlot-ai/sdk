@@ -145,7 +145,6 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
         session_span,
         anchor_wall_ms=anchor_ms,
         source="livekit_egress",
-        channel_map="mixed",
         format="opus_ogg",
     )
     if audio_uri:

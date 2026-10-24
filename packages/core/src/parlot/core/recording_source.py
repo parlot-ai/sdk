@@ -31,7 +31,6 @@ def stamp_external_recording(
     audio_uri: str,
     anchor_wall_ms: int,
     mode: str = "link",
-    channel_map: str = "user,agent",
     format: str = "opus_ogg",
     sample_count: Optional[int] = None,
     wall_end_ms: Optional[int] = None,
@@ -62,7 +61,6 @@ def stamp_external_recording(
         target,
         anchor_wall_ms=anchor_wall_ms,
         source=source,
-        channel_map=channel_map,
         format=format,
     )
     stamp_recording_uploaded(

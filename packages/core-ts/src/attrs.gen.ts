@@ -121,7 +121,6 @@ export const ATTR_SESSION_RECORDING_WEBHOOK_ERROR = "session.recording.webhook_e
 export const ATTR_SESSION_RECORDING_DISABLED_REASON = "session.recording.disabled_reason" as const;
 export const ATTR_SESSION_RECORDING_STATUS = "session.recording.status" as const;
 export const ATTR_SESSION_RECORDING_FORMAT = "session.recording.format" as const;
-export const ATTR_SESSION_RECORDING_CHANNEL_MAP = "session.recording.channel_map" as const;
 export const ATTR_SESSION_RECORDING_SAMPLE_COUNT = "session.recording.sample_count" as const;
 export const ATTR_SESSION_RECORDING_WALL_END_MS = "session.recording.wall_end_ms" as const;
 export const ATTR_SESSION_RECORDING_PARTIAL = "session.recording.partial" as const;

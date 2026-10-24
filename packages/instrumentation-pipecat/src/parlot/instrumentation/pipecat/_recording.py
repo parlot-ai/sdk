@@ -35,7 +35,6 @@ from ._session import any_open_session
 
 logger = logging.getLogger("parlot.instrumentation.pipecat.recording")
 
-CHANNEL_MAP = "user,agent"
 DEFAULT_SEGMENT_SECONDS = 30
 # Mono PCM16 bytes per second at 16 kHz (AudioBufferProcessor compares per-track).
 _DEFAULT_MONO_BYTES_PER_SEC = 16_000 * 2
@@ -233,7 +232,6 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
             self._session_span(),
             anchor_wall_ms=self._anchor_wall_ms,
             source="pipecat_buffer",
-            channel_map=CHANNEL_MAP,
             format=self._format,
         )
 
@@ -396,7 +394,6 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
             segment_count=self._segment_index,
             segments=list(self._uploaded_segments),
             sample_rate=self.sample_rate or 16_000,
-            channel_map=CHANNEL_MAP,
             anchor_wall_ms=self._anchor_wall_ms,
             sample_count=self._sample_count,
             wall_end_ms=wall_end_ms,

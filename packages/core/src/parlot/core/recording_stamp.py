@@ -8,7 +8,6 @@ from typing import Any, Optional
 from parlot.core.attrs import (
     ATTR_SESSION_RECORDING_ANCHOR_WALL_MS,
     ATTR_SESSION_RECORDING_AUDIO_URI,
-    ATTR_SESSION_RECORDING_CHANNEL_MAP,
     ATTR_SESSION_RECORDING_DISABLED_REASON,
     ATTR_SESSION_RECORDING_EGRESS_ID,
     ATTR_SESSION_RECORDING_FORMAT,
@@ -57,13 +56,11 @@ def stamp_recording_started(
     *,
     anchor_wall_ms: int,
     source: str,
-    channel_map: str = "user,agent",
     format: str = "pcm_wav",
 ) -> None:
     stamp_recording_attr(span, ATTR_SESSION_RECORDING_ANCHOR_WALL_MS, int(anchor_wall_ms))
     stamp_recording_attr(span, ATTR_SESSION_RECORDING_STATUS, "recording")
     stamp_recording_attr(span, ATTR_SESSION_RECORDING_SOURCE, source)
-    stamp_recording_attr(span, ATTR_SESSION_RECORDING_CHANNEL_MAP, channel_map)
     stamp_recording_attr(span, ATTR_SESSION_RECORDING_FORMAT, format)
 
 

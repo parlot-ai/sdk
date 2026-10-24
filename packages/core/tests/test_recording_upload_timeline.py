@@ -138,7 +138,6 @@ async def test_complete_recording_posts_body() -> None:
                 {"segment_index": 1, "sample_offset": 16000},
             ],
             sample_rate=16000,
-            channel_map="user,agent",
             anchor_wall_ms=1,
             sample_count=32000,
             wall_end_ms=2000,
