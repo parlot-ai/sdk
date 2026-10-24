@@ -250,7 +250,10 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
             sample_offset=self._sample_offset,
             content_type=content_type,
         )
-        put_url = grant_put_url(grant) if grant else None
+        if grant is None:
+            stamp_recording_error(self._session_span(), "upload_grant_failed")
+            return
+        put_url = grant_put_url(grant)
         if not put_url:
             stamp_recording_error(self._session_span(), "upload_grant_failed")
             return

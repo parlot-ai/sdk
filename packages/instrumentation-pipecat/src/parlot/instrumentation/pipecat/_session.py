@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 from opentelemetry.trace import Span, Tracer
 
@@ -207,7 +208,7 @@ def emit_turn(
     state.turn_count = max(state.turn_count, turn_index)
     state.open_turn_index = turn_index
 
-    extra = {
+    extra: dict[str, Any] = {
         ATTR_TURN_PARTICIPANT_ID: role,
         ATTR_TURN_INPUT_MODALITY: "voice",
         ATTR_AGENT_FRAMEWORK: PIPECAT_FRAMEWORK,
