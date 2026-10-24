@@ -123,7 +123,7 @@ async def run_bot(transport: BaseTransport):
             llm,
             tts,
             transport.output(),
-            ParlotRecordingProcessor(),  # stereo WAV segments → Parlot
+            ParlotRecordingProcessor(),  # mixed dual-mono stereo → Parlot
             assistant_aggregator,
         ]
     )

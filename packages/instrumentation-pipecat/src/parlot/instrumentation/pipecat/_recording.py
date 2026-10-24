@@ -1,7 +1,8 @@
-"""Pipecat session recording: stereo AudioBufferProcessor → WAV segments → /complete."""
+"""Pipecat session recording: mixed dual-mono stereo → WAV segments → /complete."""
 
 from __future__ import annotations
 
+import array
 import asyncio
 import io
 import logging
@@ -49,6 +50,17 @@ def _pcm_is_silent(pcm: bytes) -> bool:
     return all(b == 0 for b in pcm)
 
 
+def _mono_pcm_to_dual_stereo(pcm: bytes) -> bytes:
+    """Duplicate mono s16le onto L and R (LiveKit-style mixed stereo, not L/R split)."""
+    mono = array.array("h")
+    mono.frombytes(pcm)
+    stereo = array.array("h")
+    for sample in mono:
+        stereo.append(sample)
+        stereo.append(sample)
+    return stereo.tobytes()
+
+
 def _wav_bytes(pcm: bytes, *, sample_rate: int, num_channels: int) -> bytes:
     buf = io.BytesIO()
     with wave.open(buf, "wb") as wf:
@@ -93,9 +105,11 @@ def _encode_opus_ogg(pcm: bytes, *, sample_rate: int, num_channels: int) -> byte
 
 
 class ParlotRecordingProcessor(AudioBufferProcessor):
-    """Stereo buffer → ~30s WAV (or Opus) segments → presigned PUT → ``/complete``.
+    """Mixed dual-mono stereo → ~30s WAV (or Opus) segments → presigned PUT → ``/complete``.
 
-    Place after ``transport.output()`` so both user (L) and bot (R) audio are captured.
+    Place after ``transport.output()`` so user and bot are buffered. Pipecat mixes
+    both tracks (``num_channels=1``); we expand to stereo with the same mix on L and R
+    so playback matches LiveKit Room Composite rather than hard-panned L/R.
 
     Fail-open: never raises into the call path; stamps ``session.recording.status=failed``
     with a reason when capture/upload cannot complete.
@@ -113,9 +127,10 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
         mono_bytes = int(max(1.0, segment_seconds) * _DEFAULT_MONO_BYTES_PER_SEC)
         if sample_rate and sample_rate != 16_000:
             mono_bytes = int(max(1.0, segment_seconds) * sample_rate * 2)
+        # Mono merge in Pipecat (not user-L / bot-R); we dual-mono to stereo on upload.
         super().__init__(
             sample_rate=sample_rate,
-            num_channels=2,
+            num_channels=1,
             buffer_size=mono_bytes,
             auto_start_recording=True,
             **kwargs,
@@ -262,22 +277,31 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
             )
             return
 
+        # Timeline frames from the buffer (mono mix); encode as dual-mono stereo.
+        frames = len(audio) // (2 * max(1, num_channels))
+        pcm = (
+            _mono_pcm_to_dual_stereo(audio)
+            if num_channels == 1
+            else audio
+        )
+        out_channels = 2 if num_channels == 1 else num_channels
+
         content_type = "audio/ogg" if self._format == "opus_ogg" else "audio/wav"
         if self._format == "opus_ogg":
             encoded = _encode_opus_ogg(
-                audio, sample_rate=sample_rate, num_channels=num_channels
+                pcm, sample_rate=sample_rate, num_channels=out_channels
             )
             if encoded is None:
                 self._format = "pcm_wav"
                 content_type = "audio/wav"
                 body = _wav_bytes(
-                    audio, sample_rate=sample_rate, num_channels=num_channels
+                    pcm, sample_rate=sample_rate, num_channels=out_channels
                 )
             else:
                 body = encoded
         else:
             body = _wav_bytes(
-                audio, sample_rate=sample_rate, num_channels=num_channels
+                pcm, sample_rate=sample_rate, num_channels=out_channels
             )
 
         grant = await fetch_upload_grant(
@@ -310,7 +334,6 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
                 "sample_offset": self._sample_offset,
             }
         )
-        frames = len(audio) // (2 * max(1, num_channels))
         self._sample_offset += frames
         self._sample_count += frames
         self._segment_index += 1

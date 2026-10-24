@@ -10,6 +10,7 @@ import pytest
 
 from parlot.core.recording_source import stamp_external_recording
 from parlot.instrumentation.pipecat._recording import (
+    _mono_pcm_to_dual_stereo,
     _pcm_is_silent,
     _wav_bytes,
     recording_enabled_for_agent,
@@ -23,6 +24,13 @@ def test_wav_bytes_roundtrip() -> None:
         assert wf.getnchannels() == 2
         assert wf.getframerate() == 16000
         assert wf.readframes(wf.getnframes()) == pcm
+
+
+def test_mono_to_dual_stereo_duplicates_channels() -> None:
+    # Three mono s16 samples → interleaved L=R
+    mono = b"\x01\x00\x02\x00\x03\x00"
+    stereo = _mono_pcm_to_dual_stereo(mono)
+    assert stereo == b"\x01\x00\x01\x00\x02\x00\x02\x00\x03\x00\x03\x00"
 
 
 def test_pcm_silence_detection() -> None:

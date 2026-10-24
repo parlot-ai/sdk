@@ -33,7 +33,7 @@ Search by the conversation UUID stamped as `platform.ref.conversation_id` (also 
 In `bot.py`:
 
 1. `parlotize("pipecat-minimal-voice", record=True)` before the pipeline — configures OTLP export to Parlot (do **not** also call Pipecat `setup_tracing()`).
-2. `ParlotRecordingProcessor()` after `transport.output()` — stereo session audio.
+2. `ParlotRecordingProcessor()` after `transport.output()` — mixed dual-mono stereo session audio.
 3. `PipelineWorker(..., enable_tracing=True, enable_turn_tracking=True)` with metrics on.
 
 Remove those and the bot still works — just without Parlot telemetry / recording.
