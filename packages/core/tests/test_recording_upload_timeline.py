@@ -7,10 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from parlot.core.attrs import (
-    ATTR_SESSION_RECORDING_STATUS,
-    ATTR_SESSION_RECORDING_WEBHOOK_ERROR,
-)
+from parlot.core.attrs import ATTR_SESSION_RECORDING_STATUS
 from parlot.core.recording_source import stamp_external_recording
 from parlot.core.recording_stamp import stamp_recording_started, stamp_recording_uploaded
 from parlot.core.recording_timeline import (
