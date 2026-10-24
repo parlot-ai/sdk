@@ -38,7 +38,9 @@ logger = logging.getLogger("parlot.instrumentation.pipecat.recording")
 DEFAULT_SEGMENT_SECONDS = 30
 # Mono PCM16 bytes per second at 16 kHz (AudioBufferProcessor compares per-track).
 _DEFAULT_MONO_BYTES_PER_SEC = 16_000 * 2
-CLOSE_TIMEOUT_S = 25.0
+# Must cover stop_recording flush + POST /complete (httpx timeout 120s). Local
+# stitch of multi‑MB WAV segments often exceeds 25s and used to abort mid-complete.
+CLOSE_TIMEOUT_S = 120.0
 
 
 def _pcm_is_silent(pcm: bytes) -> bool:
