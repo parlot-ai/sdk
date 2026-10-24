@@ -21,6 +21,9 @@ cp .env.example .env
 uv run bot.py
 ```
 
+`uv sync` installs Parlot from this repo’s `packages/` (editable). After a PyPI release that
+includes recording, you can drop `[tool.uv.sources]` and pin `parlot[pipecat]>=…` instead.
+
 The Pipecat runner opens a local client (WebRTC by default). Talk to the bot; the session appears in Parlot with `framework=pipecat`.
 
 Search by the conversation UUID stamped as `platform.ref.conversation_id` (also passed as `PipelineWorker(conversation_id=…)`).
@@ -29,10 +32,11 @@ Search by the conversation UUID stamped as `platform.ref.conversation_id` (also 
 
 In `bot.py`:
 
-1. `parlotize("pipecat-minimal-voice")` before the pipeline — configures OTLP export to Parlot (do **not** also call Pipecat `setup_tracing()`).
-2. `PipelineWorker(..., enable_tracing=True, enable_turn_tracking=True)` with metrics on.
+1. `parlotize("pipecat-minimal-voice", record=True)` before the pipeline — configures OTLP export to Parlot (do **not** also call Pipecat `setup_tracing()`).
+2. `ParlotRecordingProcessor()` after `transport.output()` — stereo session audio.
+3. `PipelineWorker(..., enable_tracing=True, enable_turn_tracking=True)` with metrics on.
 
-Remove those and the bot still works — just without Parlot telemetry.
+Remove those and the bot still works — just without Parlot telemetry / recording.
 
 ## Transports
 
