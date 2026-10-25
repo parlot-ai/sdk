@@ -79,11 +79,12 @@ pipeline. Do not mix in another framework’s `parlotize` in the same agent proc
 
 With `record=True` (or Settings → Recording allowlists) and `ParlotRecordingProcessor` in the
 pipeline, the agent uploads ~30s stereo WAV segments via a presigned PUT, then
-`POST /v1/recordings/complete`. Parlot stitches gaps as silence, normalizes for playback, and
+stitches them together. Parlot stitches gaps as silence, normalizes for playback, and
 applies close-gated PII beeps when redaction is on.
 
-- Default deps stay thin (`wave` + `httpx`). Optional `parlot[recording-opus]` / package extra
-  `recording-opus` encodes Opus/OGG segments when upstream bandwidth matters (~0.5 Mbps/call).
+- Default deps stay thin (`wave` + `httpx`); stereo PCM WAV at 16 kHz is ~0.5 Mbps/call upstream.
+  Optional `parlot[recording-opus]` / package extra `recording-opus` encodes Opus/OGG segments
+  instead when you need a smaller upload bitrate.
 - Place the processor **after** `transport.output()` so both directions are buffered.
 - Fail-open: upload/complete errors stamp `session.recording.status=failed` and never break the call.
 - Playback is always the session’s current signed URL (redacted when policy requires) — not the
