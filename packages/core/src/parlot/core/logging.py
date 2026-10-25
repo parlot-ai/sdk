@@ -9,13 +9,9 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 from typing import Any
 
 logger = logging.getLogger(__name__)
-
-_level = os.getenv("PARLOT_DEBUG_LEVEL", "INFO").upper()
-logger.setLevel(getattr(logging, _level, logging.INFO))
 
 # Max characters per attribute value in debug logs (full values still export).
 _LOG_VALUE_MAX_LEN = 32

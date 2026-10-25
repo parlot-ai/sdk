@@ -17,7 +17,6 @@ from .logging import log_span_event
 from .session import SessionState
 
 logger = logging.getLogger("parlot.processor")
-logger.setLevel(logging.DEBUG)
 
 
 class ParlotBaseProcessor(SpanProcessor):
