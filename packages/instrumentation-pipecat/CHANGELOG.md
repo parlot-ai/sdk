@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5](https://github.com/parlot-ai/sdk/compare/instrumentation-pipecat-v0.1.4...instrumentation-pipecat-v0.1.5) (2026-10-25)
+
+
+### Bug Fixes
+
+* **pipecat:** await final segment upload before recording complete ([#120](https://github.com/parlot-ai/sdk/issues/120)) ([38dba4d](https://github.com/parlot-ai/sdk/commit/38dba4d0d5dde413b5fd100ab7375d662494c33e))
+
 ## [0.1.4](https://github.com/parlot-ai/sdk/compare/instrumentation-pipecat-v0.1.3...instrumentation-pipecat-v0.1.4) (2026-10-25)
 
 
