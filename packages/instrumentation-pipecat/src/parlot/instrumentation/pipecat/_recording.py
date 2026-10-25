@@ -42,6 +42,8 @@ _DEFAULT_MONO_BYTES_PER_SEC = 16_000 * 2
 # Must cover stop_recording flush + POST /complete (httpx timeout 120s). Local
 # stitch of multi‑MB WAV segments often exceeds 25s and used to abort mid-complete.
 CLOSE_TIMEOUT_S = 120.0
+# Bound how long finish waits for in-flight segment PUTs so /complete still has budget.
+UPLOAD_DRAIN_TIMEOUT_S = 15.0
 
 
 def _pcm_is_silent(pcm: bytes) -> bool:
@@ -145,15 +147,14 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
         self._anchor_wall_ms: int | None = None
         self._audio_uri: str | None = None
         self._finished = False
-        # Re-entry guard for finish(); keep False until drain so stop_recording
-        # flush can still upload (see _await_uploads_idle).
+        # Re-entry guard for finish(); uploads stay allowed until drain closes the gate.
         self._finishing = False
         self._upload_lock = asyncio.Lock()
-        self._uploads_in_flight = 0
-        self._uploads_idle = asyncio.Event()
-        self._uploads_idle.set()
+        self._upload_tasks: set[asyncio.Task[None]] = set()
         self._had_non_silent = False
         self._received_audio = False
+        # Last specific upload failure (grant/put); avoid overwriting with a generic stamp.
+        self._last_upload_error: str | None = None
         # Cached so /complete still works after CancelFrame tears down the session.
         self._cached_session_id: str = ""
         self._cached_conversation_id: str = ""
@@ -169,11 +170,22 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
 
         @self.event_handler("on_audio_data")
         async def _on_audio(processor, audio, sample_rate, num_channels):
+            # Child task so finish() can gather uploads even if this handler is
+            # concurrent with CancelFrame; still await so Pipecat cleanup waits.
+            task = asyncio.create_task(
+                self._upload_segment(audio, sample_rate, num_channels),
+                name="parlot-recording-upload",
+            )
+            self._upload_tasks.add(task)
+            task.add_done_callback(self._upload_tasks.discard)
             try:
-                await self._upload_segment(audio, sample_rate, num_channels)
+                await task
             except Exception:
                 logger.warning("parlot: segment upload failed", exc_info=True)
-                stamp_recording_error(self._session_span(), "segment_upload_error")
+                if not self._last_upload_error:
+                    stamp_recording_error(
+                        self._session_span(), "segment_upload_error"
+                    )
 
         @self.event_handler("on_recording_started")
         async def _on_started(processor):
@@ -258,50 +270,44 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
             format=self._format,
         )
 
-    def _begin_upload(self) -> None:
-        self._uploads_in_flight += 1
-        self._uploads_idle.clear()
-
-    def _end_upload(self) -> None:
-        self._uploads_in_flight = max(0, self._uploads_in_flight - 1)
-        if self._uploads_in_flight == 0:
-            self._uploads_idle.set()
-
     async def _await_uploads_idle(self) -> None:
-        """Wait for in-flight / just-scheduled segment uploads after stop_recording.
+        """Gather in-flight segment upload tasks after stop_recording.
 
         Cancel/End can race a buffer flush: finish must not treat
         ``received_audio && segment_index==0`` as silent while PUT is still running.
         """
-        # Yield so stop_recording's on_audio_data can start and bump in-flight.
-        for _ in range(5):
-            await asyncio.sleep(0)
-            if self._uploads_in_flight > 0:
-                break
-        # Drain; extra yields catch handlers that start after a brief idle.
-        for _ in range(10):
-            if self._uploads_in_flight > 0:
-                await self._uploads_idle.wait()
-            await asyncio.sleep(0)
-            if self._uploads_in_flight == 0:
-                async with self._upload_lock:
-                    if self._uploads_in_flight == 0:
-                        return
+        # One yield so stop_recording's on_audio_data can create_task + register.
+        await asyncio.sleep(0)
+        pending = [t for t in self._upload_tasks if not t.done()]
+        if not pending:
+            return
+        try:
+            await asyncio.wait_for(
+                asyncio.gather(*pending, return_exceptions=True),
+                timeout=UPLOAD_DRAIN_TIMEOUT_S,
+            )
+        except asyncio.TimeoutError:
+            still = sum(1 for t in pending if not t.done())
+            logger.warning(
+                "parlot: recording upload drain timed out "
+                "(pending=%s); proceeding with committed segments",
+                still,
+            )
 
     async def _upload_segment(
         self, audio: bytes, sample_rate: int, num_channels: int
     ) -> None:
-        # Allow uploads during finish() until drained; block only when fully done.
+        # Allow uploads during finish() until the post-drain gate closes.
         if self._finished or not audio:
             return
-        self._begin_upload()
-        try:
-            async with self._upload_lock:
-                if self._finished:
-                    return
-                await self._upload_segment_locked(audio, sample_rate, num_channels)
-        finally:
-            self._end_upload()
+        async with self._upload_lock:
+            if self._finished:
+                return
+            await self._upload_segment_locked(audio, sample_rate, num_channels)
+
+    def _stamp_upload_error(self, reason: str) -> None:
+        self._last_upload_error = reason
+        stamp_recording_error(self._session_span(), reason)
 
     async def _upload_segment_locked(
         self, audio: bytes, sample_rate: int, num_channels: int
@@ -355,17 +361,17 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
             content_type=content_type,
         )
         if grant is None:
-            stamp_recording_error(self._session_span(), "upload_grant_failed")
+            self._stamp_upload_error("upload_grant_failed")
             return
         put_url = grant_put_url(grant)
         if not put_url:
-            stamp_recording_error(self._session_span(), "upload_grant_failed")
+            self._stamp_upload_error("upload_grant_failed")
             return
         ok = await put_bytes_to_presigned_url(
             put_url, body, content_type=content_type
         )
         if not ok:
-            stamp_recording_error(self._session_span(), "segment_put_failed")
+            self._stamp_upload_error("segment_put_failed")
             return
 
         uri = grant_audio_uri(grant)
@@ -392,16 +398,24 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
             unregister_recording_processor(self)
         except Exception:
             pass
+
+        # Single task so CancelledError waits for the same work (no double /complete).
+        task = asyncio.create_task(
+            self._finish_inner(), name="parlot-recording-finish"
+        )
         try:
-            await asyncio.shield(
-                asyncio.wait_for(self._finish_inner(), timeout=CLOSE_TIMEOUT_S)
-            )
+            await asyncio.wait_for(asyncio.shield(task), timeout=CLOSE_TIMEOUT_S)
         except asyncio.TimeoutError:
             stamp_recording_error(self._session_span(), "complete_timeout")
-        except asyncio.CancelledError:
-            # Pipeline cancel can interrupt us; still try to complete once.
+            task.cancel()
             try:
-                await self._finish_inner()
+                await task
+            except (asyncio.CancelledError, Exception):
+                pass
+        except asyncio.CancelledError:
+            # Outer cancel: wait for the shielded task; do not start a second finish.
+            try:
+                await asyncio.shield(task)
             except Exception as exc:
                 stamp_recording_error(
                     self._session_span(), f"complete_failed:{type(exc).__name__}"
@@ -413,7 +427,7 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
             )
             logger.warning("parlot: recording finish failed — %s", exc, exc_info=True)
         finally:
-            # Block further segment uploads only after flush + /complete attempt.
+            # Safety net if drain path never set the gate.
             self._finished = True
 
     async def _finish_inner(self) -> None:
@@ -425,17 +439,33 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
         # stop_recording may still be uploading the final buffer segment.
         await self._await_uploads_idle()
 
-        if self._segment_index == 0 and self._sample_count == 0:
-            if not self._received_audio:
+        # Close the upload window before /complete so late flushes cannot orphan raw/.
+        # Set the gate before snapshotting; do not hold _upload_lock across this so a
+        # hung PUT (drain timed out) cannot deadlock finish.
+        self._finished = True
+        segment_count = self._segment_index
+        segments = list(self._uploaded_segments)
+        sample_count = self._sample_count
+        received_audio = self._received_audio
+        had_non_silent = self._had_non_silent
+        last_upload_error = self._last_upload_error
+        audio_uri_hint = self._audio_uri
+        fmt = self._format
+        anchor = self._anchor_wall_ms
+
+        if segment_count == 0 and sample_count == 0:
+            if not received_audio:
                 stamp_recording_error(self._session_span(), "no_audio")
-            elif not self._had_non_silent:
+            elif not had_non_silent:
                 stamp_recording_error(self._session_span(), "silent")
+            elif last_upload_error:
+                # Specific grant/put failure already stamped; keep it.
+                pass
             else:
-                # Saw non-silent PCM but no segment was committed (grant/PUT failed).
                 stamp_recording_error(self._session_span(), "segment_upload_error")
             return
 
-        if not self._had_non_silent:
+        if not had_non_silent:
             stamp_recording_error(self._session_span(), "silent")
             return
 
@@ -454,8 +484,8 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
         logger.info(
             "parlot: recording complete session_id=%s segments=%s samples=%s",
             session_id,
-            self._segment_index,
-            self._sample_count,
+            segment_count,
+            sample_count,
         )
         conversation_id = self._cached_conversation_id
         if not conversation_id:
@@ -463,14 +493,6 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
             conversation_id = (
                 str(getattr(state, "conversation_id", "") or "") if state else ""
             )
-        # Snapshot under lock so counters/segments stay consistent with drain.
-        async with self._upload_lock:
-            segment_count = self._segment_index
-            segments = list(self._uploaded_segments)
-            sample_count = self._sample_count
-            audio_uri_hint = self._audio_uri
-            fmt = self._format
-            anchor = self._anchor_wall_ms
         result = await complete_recording(
             runtime,
             session_id=session_id,
