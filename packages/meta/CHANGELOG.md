@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.5](https://github.com/parlot-ai/sdk/compare/parlot-v0.3.4...parlot-v0.3.5) (2026-10-25)
+
+
+### Features
+
+* frame packages and docs around voice AI agents on LiveKit, Pipecat, and LangGraph ([#115](https://github.com/parlot-ai/sdk/issues/115)) ([7f6366b](https://github.com/parlot-ai/sdk/commit/7f6366bea87361bbfb8ec4df4371adecf89f6c42))
+
 ## [0.3.4](https://github.com/parlot-ai/sdk/compare/parlot-v0.3.3...parlot-v0.3.4) (2026-10-25)
 
 

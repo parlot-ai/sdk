@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.9](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.8...instrumentation-livekit-v0.4.9) (2026-10-25)
+
+
+### Features
+
+* frame packages and docs around voice AI agents on LiveKit, Pipecat, and LangGraph ([#115](https://github.com/parlot-ai/sdk/issues/115)) ([7f6366b](https://github.com/parlot-ai/sdk/commit/7f6366bea87361bbfb8ec4df4371adecf89f6c42))
+
 ## [0.4.8](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.7...instrumentation-livekit-v0.4.8) (2026-10-25)
 
 
