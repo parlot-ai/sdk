@@ -5,15 +5,9 @@ description = "Minimal Pipecat voice bot with Parlot (adapted from pipecat-examp
 requires-python = ">=3.11"
 dependencies = [
     "pipecat-ai[daily,webrtc,websocket,silero,google,deepgram,openai,tracing,runner]>=1.0.0",
-    "parlot[pipecat]",
+    "parlot[pipecat]>=0.3.3",
     "python-dotenv>=1.0.0",
 ]
 
 [tool.uv]
 package = false
-
-# Local checkout — recording lands with this branch; switch to PyPI floors after release.
-[tool.uv.sources]
-parlot = { path = "../../../packages/meta", editable = true }
-parlot-core = { path = "../../../packages/core", editable = true }
-parlot-instrumentation-pipecat = { path = "../../../packages/instrumentation-pipecat", editable = true }

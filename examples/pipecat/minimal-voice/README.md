@@ -21,9 +21,6 @@ cp .env.example .env
 uv run bot.py
 ```
 
-`uv sync` installs Parlot from this repo’s `packages/` (editable). After a PyPI release that
-includes recording, you can drop `[tool.uv.sources]` and pin `parlot[pipecat]>=…` instead.
-
 The Pipecat runner opens a local client (WebRTC by default). Talk to the bot; the session appears in Parlot with `framework=pipecat`.
 
 Search by the conversation UUID stamped as `platform.ref.conversation_id` (also passed as `PipelineWorker(conversation_id=…)`).
