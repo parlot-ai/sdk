@@ -1,6 +1,6 @@
 ---
 title: LiveKit
-description: Is Parlot a fit for your LiveKit Agents? What you get, how instrumentation works, and how to add it.
+description: Is Parlot a fit for your LiveKit voice AI agents? What you get, how instrumentation works, and how to add it.
 sidebar_position: 1
 sidebar_custom_props:
   eyebrow: LiveKit
@@ -8,9 +8,9 @@ sidebar_custom_props:
 
 # LiveKit
 
-You already ship [LiveKit Agents](https://docs.livekit.io/agents/). Parlot’s MIT `parlotize()`
-adds session debugging beside your agent: turns, handoffs, latency, and audio evidence for each
-call.
+You already ship voice AI agents on [LiveKit Agents](https://docs.livekit.io/agents/). Parlot’s
+MIT `parlotize()` adds session debugging beside your agent: turns, handoffs, latency, and audio
+evidence for each call.
 
 Install and env setup: [Quick Start](/sdk/get-started/quick-start). Shared product model:
 [Concepts](/sdk/get-started/concepts).

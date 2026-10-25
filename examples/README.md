@@ -1,6 +1,7 @@
 # Parlot SDK Examples
 
-This directory contains reference implementations of AI agents instrumented with Parlot OpenTelemetry observability.
+This directory contains reference implementations of production voice AI agents (and LangGraph)
+instrumented with Parlot OpenTelemetry observability.
 
 ## Examples Overview
 
@@ -12,11 +13,13 @@ This directory contains reference implementations of AI agents instrumented with
 | `livekit/drive-thru` | LiveKit Agents | Fast-food ordering agent |
 | `livekit/restaurant-agent` | LiveKit Agents | Restaurant booking and multi-agent routing |
 | `livekit/multi-agent` | LiveKit Agents | Multi-agent handoff orchestration |
+| `pipecat/minimal-voice` | Pipecat | Minimal voice bot with STT → LLM → TTS |
 | `langgraph/minimal-agent` | LangGraph | Graph-based conversational agent with callback telemetry |
 
 ## Running examples in this repo
 
-Each example depends on published Parlot packages from PyPI (`parlot[livekit]` or `parlot[langgraph]`).
+Each example depends on published Parlot packages from PyPI (`parlot[livekit]`,
+`parlot[pipecat]`, or `parlot[langgraph]`).
 
 Requires [uv](https://docs.astral.sh/uv/) and the [LiveKit CLI](https://docs.livekit.io/reference/developer-tools/livekit-cli/) (`lk`) for local agent dev/console.
 

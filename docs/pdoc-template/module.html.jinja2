@@ -14,6 +14,7 @@
         <ul>
             <li><a href="parlot/core.html">parlot.core</a></li>
             <li><a href="parlot/instrumentation/livekit.html">parlot.instrumentation.livekit</a></li>
+            <li><a href="parlot/instrumentation/pipecat.html">parlot.instrumentation.pipecat</a></li>
             <li><a href="parlot/instrumentation/langgraph.html">parlot.instrumentation.langgraph</a></li>
         </ul>
     {% else %}
@@ -26,7 +27,7 @@
     {% if module.modulename == "parlot" %}
         <div class="pdoc-landing">
             <p class="pdoc-lead">
-                Production voice AI observability — MIT OpenTelemetry instrumentation for LiveKit Agents and LangGraph.
+                Production voice AI observability — MIT OpenTelemetry instrumentation for LiveKit Agents, Pipecat, and LangGraph.
             </p>
             <p>
                 The Parlot Python SDK provides automated turn detection, audio metrics, and session contract tracking.
@@ -53,10 +54,21 @@
                         <h3><a href="parlot/instrumentation/livekit.html">parlot.instrumentation.livekit</a></h3>
                     </div>
                     <p>
-                        Voice agent telemetry for LiveKit Agents: turn tracking, audio latency metrics, participant spans,
+                        Voice AI agent telemetry for LiveKit Agents: turn tracking, audio latency metrics, participant spans,
                         SIP caller metadata, and audio stream egress.
                     </p>
                     <a class="pdoc-card-link" href="parlot/instrumentation/livekit.html">View LiveKit Reference &rarr;</a>
+                </div>
+
+                <div class="pdoc-card">
+                    <div class="pdoc-card-header">
+                        <span class="pdoc-badge">Pipecat</span>
+                        <h3><a href="parlot/instrumentation/pipecat.html">parlot.instrumentation.pipecat</a></h3>
+                    </div>
+                    <p>
+                        Voice AI agent telemetry for Pipecat: Conversation Contract turns and STT/LLM/TTS waterfall via OpenTelemetry remap.
+                    </p>
+                    <a class="pdoc-card-link" href="parlot/instrumentation/pipecat.html">View Pipecat Reference &rarr;</a>
                 </div>
 
                 <div class="pdoc-card">
@@ -65,7 +77,8 @@
                         <h3><a href="parlot/instrumentation/langgraph.html">parlot.instrumentation.langgraph</a></h3>
                     </div>
                     <p>
-                        OpenTelemetry callback handler and automatic configuration for LangGraph and LangChain agent workflows.
+                        OpenTelemetry callback handler and automatic configuration for LangGraph and LangChain agent workflows —
+                        same turn model as voice AI agents.
                     </p>
                     <a class="pdoc-card-link" href="parlot/instrumentation/langgraph.html">View LangGraph Reference &rarr;</a>
                 </div>

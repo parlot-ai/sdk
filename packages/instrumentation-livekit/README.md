@@ -1,8 +1,8 @@
 # parlot-instrumentation-livekit
 
-Parlot shows whether production voice agents actually work — turns, handoffs, and goal completion with an evidence trail — not just that the pipeline returned 200s.
+Parlot shows whether production voice AI agents actually work — turns, handoffs, and goal completion with an evidence trail — not just that the pipeline returned 200s.
 
-MIT OpenTelemetry instrumentation for [LiveKit Agents](https://docs.livekit.io/agents/) (Cloud, self-hosted, or [LiveKit on Telnyx](https://telnyx.com/products/livekit-on-telnyx)).
+MIT OpenTelemetry instrumentation for [LiveKit Agents](https://docs.livekit.io/agents/) (Cloud, self-hosted, or [LiveKit on Telnyx](https://telnyx.com/products/livekit-on-telnyx)). Also see Pipecat and LangGraph packages when you run those stacks.
 
 **Docs:** [LiveKit guide](https://parlot.ai/docs/guides/livekit) · [Quick Start](https://parlot.ai/docs/sdk/get-started/quick-start) · [parlot.ai](https://parlot.ai)
 

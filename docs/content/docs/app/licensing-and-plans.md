@@ -9,8 +9,8 @@ This page summarizes what Free includes, and what Parlot Cloud plans unlock in t
 
 ## SDK instrumentation
 
-The open-source SDKs that instrument LiveKit Agents and LangGraph are licensed under the **MIT**
-license. See the [SDK documentation](/sdk).
+The open-source SDKs that instrument voice AI agents on LiveKit Agents, Pipecat, and LangGraph are
+licensed under the **MIT** license. See the [SDK documentation](/sdk).
 
 ## Platform core (Business Source License 1.1)
 

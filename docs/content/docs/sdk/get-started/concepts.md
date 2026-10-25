@@ -8,9 +8,9 @@ sidebar_position: 2
 
 ## Why Parlot
 
-Parlot models each production voice agent call as sessions and turns, then stores the underlying
-OpenTelemetry spans as the lasting record. The platform turns those spans into interaction graphs
-and goal evaluations.
+Parlot models each production voice AI agent call as sessions and turns, then stores the
+underlying OpenTelemetry spans as the lasting record. The platform turns those spans into
+interaction graphs and goal evaluations across LiveKit, Pipecat, and LangGraph.
 
 ## Packages
 

@@ -1,6 +1,6 @@
 ---
 title: LangGraph instrumentation
-description: parlotize() for LangGraph / LangChain agents.
+description: Same debugger as voice AI agents — parlotize() for LangGraph / LangChain.
 sidebar_position: 3
 sidebar_custom_props:
   eyebrow: LangGraph
@@ -8,9 +8,11 @@ sidebar_custom_props:
 
 # LangGraph instrumentation
 
-`parlot-instrumentation-langgraph` registers a global LangChain callback handler via
-LangChain’s `register_configure_hook` so every `invoke` / `ainvoke` / `astream` emits
-Parlot Conversation Contract spans plus OpenTelemetry generative AI (GenAI) operational spans.
+Use LangGraph when you run text or hybrid agents alongside production voice AI (LiveKit or
+Pipecat) and want one debugger. `parlot-instrumentation-langgraph` registers a global LangChain
+callback handler via LangChain’s `register_configure_hook` so every `invoke` / `ainvoke` /
+`astream` emits Parlot Conversation Contract spans plus OpenTelemetry generative AI (GenAI)
+operational spans.
 
 ## Quick start
 
