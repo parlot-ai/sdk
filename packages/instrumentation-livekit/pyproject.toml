@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "parlot-instrumentation-livekit"
 version = "0.4.8"
-description = "Parlot instrumentation for LiveKit Agents — turns, handoffs, and goal completion"
+description = "Parlot instrumentation for LiveKit voice AI agents — turns, handoffs, and goal completion"
 readme = "README.md"
 license = "MIT"
 authors = [

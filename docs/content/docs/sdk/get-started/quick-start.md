@@ -1,16 +1,20 @@
 ---
 title: Quick Start
-description: Production voice AI observability — instrument a LiveKit agent in minutes.
+description: Production voice AI observability — instrument LiveKit, Pipecat, or LangGraph agents in minutes.
 sidebar_position: 1
 ---
 
 # Quick Start
 
-**Know if your voice agent is actually working.** Parlot’s MIT `parlotize()` instruments
-[LiveKit Agents](https://docs.livekit.io/agents/) — Cloud, self-hosted, or
-[LiveKit on Telnyx](https://telnyx.com/products/livekit-on-telnyx) — and models each call as
-turns: timeline, multi-agent graph, and goal completion with an evidence trail to the proving
-turns and audio.
+**Know if your voice AI agent is actually working.** Parlot’s MIT `parlotize()` instruments
+production voice AI agents on [LiveKit Agents](https://docs.livekit.io/agents/),
+[Pipecat](https://docs.pipecat.ai/), and [LangGraph](https://langchain-ai.github.io/langgraph/)
+/ LangChain — and models each call as turns: timeline, multi-agent graph, and goal completion
+with an evidence trail to the proving turns and audio.
+
+This walkthrough uses LiveKit (Cloud, self-hosted, or
+[LiveKit on Telnyx](https://telnyx.com/products/livekit-on-telnyx)). For Pipecat or LangGraph,
+jump to the framework guides under [Next](#next).
 
 ## Install
 
@@ -23,6 +27,7 @@ uv add parlot-instrumentation-livekit
 
 # Or via the parlot meta-package
 pip install "parlot[livekit]"
+# also: "parlot[pipecat]" · "parlot[langgraph]" · "parlot[all]"
 ```
 
 ## Instrument
@@ -60,9 +65,10 @@ when you open the session in Parlot.
 
 - [Core concepts](/sdk/get-started/concepts)
 - [LiveKit guide](/sdk/guides/livekit)
+- [Pipecat guide](/sdk/guides/pipecat)
+- [LangGraph guide](/sdk/guides/langgraph)
 - [Python API Reference](/sdk/python)
 - [TypeScript Reference](/sdk/typescript)
-- Already running LangGraph / LangChain alongside voice? See the [LangGraph guide](/sdk/guides/langgraph).
 
 ## License
 

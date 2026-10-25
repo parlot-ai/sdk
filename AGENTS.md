@@ -11,7 +11,8 @@ Public open-source SDK. Stay inside this repository.
 
 User-facing docs live under [`docs/content/docs/`](docs/content/docs/) (App Guide + SDK docs).
 
-**Audience:** developers who already build agents on LiveKit, LangGraph, or similar frameworks.
+**Audience:** developers who already build voice AI agents on LiveKit, Pipecat, LangGraph, or
+similar frameworks.
 Keep framework and OpenTelemetry terms (`AgentSession`, Room Composite egress, OTel/OTLP, GenAI
 semconv, SIP, `parlotize()` kwargs). Skip pedantic expansions of API/UI for this audience.
 

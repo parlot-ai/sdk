@@ -1,6 +1,6 @@
 ---
 title: Pipecat
-description: Instrument Pipecat voice agents with Parlot — turns, waterfall, and usage over OpenTelemetry.
+description: Instrument Pipecat voice AI agents with Parlot — turns, waterfall, and usage over OpenTelemetry.
 sidebar_position: 3
 sidebar_custom_props:
   eyebrow: Pipecat
@@ -8,7 +8,7 @@ sidebar_custom_props:
 
 # Pipecat
 
-You already ship [Pipecat](https://docs.pipecat.ai/) voice agents. Parlot’s MIT `parlotize()`
+You already ship [Pipecat](https://docs.pipecat.ai/) voice AI agents. Parlot’s MIT `parlotize()`
 adds a production session debugger: turns, STT/LLM/TTS waterfall, and usage — on the shared
 Conversation Contract every Parlot adapter emits.
 

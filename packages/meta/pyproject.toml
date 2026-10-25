@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "parlot"
 version = "0.3.4"
-description = "Know if production voice agents work — MIT OpenTelemetry instrumentation for LiveKit Agents"
+description = "Know if production voice AI agents work — MIT OpenTelemetry instrumentation for LiveKit, Pipecat, and LangGraph"
 readme = "README.md"
 license = "MIT"
 authors = [
@@ -22,7 +22,18 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: System :: Monitoring",
 ]
-keywords = ["opentelemetry", "telemetry", "ai", "agents", "observability", "parlot"]
+keywords = [
+    "opentelemetry",
+    "telemetry",
+    "ai",
+    "agents",
+    "voice",
+    "observability",
+    "parlot",
+    "livekit",
+    "pipecat",
+    "langgraph",
+]
 dependencies = [
     "parlot-core>=0.4.9",
 ]

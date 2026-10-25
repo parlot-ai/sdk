@@ -1,8 +1,12 @@
 # parlot-instrumentation-langgraph
 
-Parlot’s lead product is production voice observability on LiveKit. Use this package when you already run voice and want the **same debugger** for LangGraph / LangChain — same turn model, not a separate product.
+Parlot’s lead product is observability for production voice AI agents (LiveKit Agents, Pipecat).
+Use this package when you already run voice and want the **same debugger** for LangGraph /
+LangChain — same turn model, not a separate product.
 
-Prefer [`parlot-instrumentation-livekit`](https://pypi.org/project/parlot-instrumentation-livekit/) for voice agents.
+Prefer [`parlot-instrumentation-livekit`](https://pypi.org/project/parlot-instrumentation-livekit/)
+or [`parlot-instrumentation-pipecat`](https://pypi.org/project/parlot-instrumentation-pipecat/) for
+voice agents.
 
 **Docs:** [LangGraph guide](https://parlot.ai/docs/guides/langgraph) · [Quick Start](https://parlot.ai/docs/sdk/get-started/quick-start) · [parlot.ai](https://parlot.ai)
 

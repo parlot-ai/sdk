@@ -1,20 +1,29 @@
 # Parlot SDK
 
-Parlot shows whether production voice agents actually work — turns, handoffs, and goal completion with an evidence trail — not just that the pipeline returned 200s.
+Parlot shows whether production voice AI agents actually work — turns, handoffs, and goal completion with an evidence trail — not just that the pipeline returned 200s.
 
-Call `parlotize()` once at startup. MIT OpenTelemetry instrumentation for LiveKit Agents (Cloud, self-hosted, or [LiveKit on Telnyx](https://telnyx.com/products/livekit-on-telnyx)).
+Call `parlotize()` once at startup. MIT OpenTelemetry instrumentation for LiveKit Agents (Cloud, self-hosted, or [LiveKit on Telnyx](https://telnyx.com/products/livekit-on-telnyx)), Pipecat, and LangGraph.
 
 **Docs:** [parlot.ai/docs](https://parlot.ai/docs) · **Product:** [parlot.ai](https://parlot.ai)
 
 ## Install
 
 ```bash
-pip install parlot-instrumentation-livekit
-# or: uv add parlot-instrumentation-livekit
-# or: pip install "parlot[livekit]"
+pip install "parlot[livekit]"
+# or: pip install "parlot[pipecat]"
+# or: pip install "parlot[langgraph]"
+# or: pip install "parlot[all]"
 ```
 
-## Instrument
+Or install an instrumentation package directly:
+
+```bash
+pip install parlot-instrumentation-livekit
+# or: pip install parlot-instrumentation-pipecat
+# or: pip install parlot-instrumentation-langgraph
+```
+
+## Instrument (LiveKit)
 
 Call `parlotize("…")` before constructing `AgentSession`, then `await ctx.connect()` before `session.start()`:
 
@@ -45,10 +54,10 @@ Mint the API key in Parlot **Settings → API Keys**.
 ## Next
 
 - [Quick Start](https://parlot.ai/docs/sdk/get-started/quick-start)
-- [LiveKit guide](https://parlot.ai/docs/guides/livekit)
-- Minimal example: [`examples/livekit/livekit-voice/`](examples/livekit/livekit-voice/) · more under [`examples/`](examples/)
-- Already running LangGraph / LangChain alongside voice? See [`parlot-instrumentation-langgraph`](packages/instrumentation-langgraph/README.md) or `pip install "parlot[langgraph]"`.
-- Building on Pipecat? See [`parlot-instrumentation-pipecat`](packages/instrumentation-pipecat/README.md) or `pip install "parlot[pipecat]"` · example [`examples/pipecat/minimal-voice/`](examples/pipecat/minimal-voice/).
+- [LiveKit guide](https://parlot.ai/docs/guides/livekit) · example [`examples/livekit/livekit-voice/`](examples/livekit/livekit-voice/)
+- [Pipecat guide](https://parlot.ai/docs/guides/pipecat) · example [`examples/pipecat/minimal-voice/`](examples/pipecat/minimal-voice/)
+- [LangGraph guide](https://parlot.ai/docs/guides/langgraph) · [`parlot-instrumentation-langgraph`](packages/instrumentation-langgraph/README.md)
+- More under [`examples/`](examples/)
 
 ## License
 

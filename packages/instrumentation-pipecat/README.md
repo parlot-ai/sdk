@@ -1,8 +1,10 @@
 # parlot-instrumentation-pipecat
 
-Parlot OpenTelemetry instrumentation for [Pipecat](https://github.com/pipecat-ai/pipecat) voice agents.
+Parlot OpenTelemetry instrumentation for [Pipecat](https://github.com/pipecat-ai/pipecat)
+production voice AI agents.
 
-Emits Parlot’s Conversation Contract (`parlot.session`, `parlot.turn`, GenAI/voice spans) so Pipecat sessions show up in the same debugger as any other supported framework.
+Emits Parlot’s Conversation Contract (`parlot.session`, `parlot.turn`, GenAI/voice spans) so
+Pipecat sessions show up in the same debugger as LiveKit and LangGraph.
 
 ## Install
 
