@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.10](https://github.com/parlot-ai/sdk/compare/core-v0.4.9...core-v0.4.10) (2026-10-25)
+
+
+### Bug Fixes
+
+* **core:** accept Sequence for complete_recording segments ([#122](https://github.com/parlot-ai/sdk/issues/122)) ([ebeecd4](https://github.com/parlot-ai/sdk/commit/ebeecd4d04b45d925d70e212f5fd3fdf0277fa85))
+
 ## [0.4.9](https://github.com/parlot-ai/sdk/compare/core-v0.4.8...core-v0.4.9) (2026-10-25)
 
 
