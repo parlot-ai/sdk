@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/parlot-ai/sdk/compare/instrumentation-pipecat-v0.1.2...instrumentation-pipecat-v0.1.3) (2026-10-25)
+
+
+### Features
+
+* **pipecat:** add framework-agnostic session recording ([#111](https://github.com/parlot-ai/sdk/issues/111)) ([1e5c036](https://github.com/parlot-ai/sdk/commit/1e5c036a161d4d1f51cf4d9a406db926970b4575))
+
 ## [0.1.2](https://github.com/parlot-ai/sdk/compare/instrumentation-pipecat-v0.1.1...instrumentation-pipecat-v0.1.2) (2026-10-23)
 
 

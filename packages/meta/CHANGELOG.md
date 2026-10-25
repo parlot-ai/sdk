@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.4](https://github.com/parlot-ai/sdk/compare/parlot-v0.3.3...parlot-v0.3.4) (2026-10-25)
+
+
+### Features
+
+* **pipecat:** add framework-agnostic session recording ([#111](https://github.com/parlot-ai/sdk/issues/111)) ([1e5c036](https://github.com/parlot-ai/sdk/commit/1e5c036a161d4d1f51cf4d9a406db926970b4575))
+
+
+### Bug Fixes
+
+* **parlot:** raise langgraph install floor to 0.4.2 ([#109](https://github.com/parlot-ai/sdk/issues/109)) ([086a313](https://github.com/parlot-ai/sdk/commit/086a313f094a57a6e173e96aad880b4d50e8aa75))
+
 ## [0.3.3](https://github.com/parlot-ai/sdk/compare/parlot-v0.3.2...parlot-v0.3.3) (2026-10-23)
 
 

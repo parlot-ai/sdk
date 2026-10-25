@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.9](https://github.com/parlot-ai/sdk/compare/core-v0.4.8...core-v0.4.9) (2026-10-25)
+
+
+### Features
+
+* **pipecat:** add framework-agnostic session recording ([#111](https://github.com/parlot-ai/sdk/issues/111)) ([1e5c036](https://github.com/parlot-ai/sdk/commit/1e5c036a161d4d1f51cf4d9a406db926970b4575))
+
+
+### Bug Fixes
+
+* **core:** apply PARLOT_DEBUG_LEVEL via loggerDict walk ([#114](https://github.com/parlot-ai/sdk/issues/114)) ([f1c61ac](https://github.com/parlot-ai/sdk/commit/f1c61ac139aa67be0030b7fc95af7ed622dd242b))
+
 ## [0.4.8](https://github.com/parlot-ai/sdk/compare/core-v0.4.7...core-v0.4.8) (2026-10-23)
 
 
