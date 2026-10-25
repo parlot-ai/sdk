@@ -111,7 +111,7 @@ async def test_finish_waits_for_in_flight_upload_before_silent_check() -> None:
     async def slow_locked(audio: bytes, sample_rate: int, num_channels: int) -> None:
         # Real _upload_segment acquires the lock + checks _finished before this.
         proc._received_audio = True
-        proc._had_non_silent = True
+        proc._all_silent = False
         started.set()
         await release.wait()
         proc._uploaded_segments.append({"segment_index": 0, "sample_offset": 0})
@@ -171,7 +171,7 @@ async def test_finish_rejects_upload_after_drain_before_complete() -> None:
     proc._segment_index = 1
     proc._uploaded_segments = [{"segment_index": 0, "sample_offset": 0}]
     proc._sample_count = 1600
-    proc._had_non_silent = True
+    proc._all_silent = False
     proc._received_audio = True
 
     gate_closed = asyncio.Event()
@@ -226,7 +226,7 @@ async def test_finish_cancel_awaits_same_task_once() -> None:
     proc._segment_index = 1
     proc._uploaded_segments = [{"segment_index": 0, "sample_offset": 0}]
     proc._sample_count = 1600
-    proc._had_non_silent = True
+    proc._all_silent = False
     proc._received_audio = True
 
     entered = asyncio.Event()
@@ -278,7 +278,7 @@ async def test_finish_upload_drain_timeout_proceeds() -> None:
 
     async def hung_locked(audio: bytes, sample_rate: int, num_channels: int) -> None:
         proc._received_audio = True
-        proc._had_non_silent = True
+        proc._all_silent = False
         started.set()
         await asyncio.Event().wait()  # never completes
 
@@ -317,7 +317,7 @@ async def test_finish_uses_cached_session_after_clear() -> None:
         {"segment_index": 1, "sample_offset": 500},
     ]
     proc._sample_count = 1000
-    proc._had_non_silent = True
+    proc._all_silent = False
     proc._received_audio = True
     proc._anchor_wall_ms = 1
     with (

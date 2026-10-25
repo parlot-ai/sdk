@@ -151,7 +151,7 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
         self._finishing = False
         self._upload_lock = asyncio.Lock()
         self._upload_tasks: set[asyncio.Task[None]] = set()
-        self._had_non_silent = False
+        self._all_silent = True
         self._received_audio = False
         # Last specific upload failure (grant/put); avoid overwriting with a generic stamp.
         self._last_upload_error: str | None = None
@@ -316,7 +316,7 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
         self._maybe_stamp_started()
         self._cache_binding()
         if not _pcm_is_silent(audio):
-            self._had_non_silent = True
+            self._all_silent = False
 
         runtime = self._cached_runtime or self._runtime()
         session_id = self._cached_session_id or self._session_id()
@@ -447,7 +447,7 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
         segments = list(self._uploaded_segments)
         sample_count = self._sample_count
         received_audio = self._received_audio
-        had_non_silent = self._had_non_silent
+        all_silent = self._all_silent
         last_upload_error = self._last_upload_error
         audio_uri_hint = self._audio_uri
         fmt = self._format
@@ -456,7 +456,7 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
         if segment_count == 0 and sample_count == 0:
             if not received_audio:
                 stamp_recording_error(self._session_span(), "no_audio")
-            elif not had_non_silent:
+            elif all_silent:
                 stamp_recording_error(self._session_span(), "silent")
             elif last_upload_error:
                 # Specific grant/put failure already stamped; keep it.
@@ -465,7 +465,7 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
                 stamp_recording_error(self._session_span(), "segment_upload_error")
             return
 
-        if not had_non_silent:
+        if all_silent:
             stamp_recording_error(self._session_span(), "silent")
             return
 
