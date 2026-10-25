@@ -65,6 +65,16 @@ lk agent simulate text --scenarios scenarios.yaml -y
 
 Text mode exercises LLM, tools, and conversation logic (Parlot telemetry). Audio mode also exercises STT/TTS and is what you want when verifying session recordings in Parlot. The CLI may mint scenario `id` fields in place on first run (`-y` confirms).
 
+If simulate fails with `timed out … waiting for the agent to register`, start the worker yourself, then point the sim at the named agent ([LiveKit: run against a live agent](https://docs.livekit.io/testing/simulations/#run-against-a-live-agent)). Use `lk agent start` (not `dev`) so the worker is on the production deployment that `--agent-name` dispatches to:
+
+```bash
+# Terminal 1 — leave running
+lk agent start
+
+# Terminal 2
+lk agent simulate text --scenarios sim_scenarios.yaml -y --agent-name hotel-receptionist
+```
+
 The curated set includes **Hostile caller demanding a free night** (`sentiment: negative`) so sample sessions exercise Parlot turn/session sentiment scoring.
 
 ## LiveKit playground / worker

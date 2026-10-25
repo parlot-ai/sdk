@@ -1,7 +1,8 @@
 # Legacy: offline persona-LLM session driver
 
 Prefer [LiveKit Agent Simulations](https://docs.livekit.io/testing/simulations/) via
-`lk agent simulate` in each example directory. This driver remains for **offline**
+`lk agent simulate` in each example directory (if registration times out, start the agent
+with `lk agent start` and pass `--agent-name` — see that example’s README). This driver remains for **offline**
 local runs that do not use LiveKit Cloud (no Room Composite recording).
 
 Each example that still supports this path provides:

@@ -42,6 +42,16 @@ lk agent simulate audio --scenarios sim_scenarios.yaml -y
 
 Text mode is enough for Parlot turn/tool telemetry. Use audio mode when you need a real session recording.
 
+If simulate fails with `timed out … waiting for the agent to register`, start the worker yourself, then point the sim at it ([LiveKit: run against a live agent](https://docs.livekit.io/testing/simulations/#run-against-a-live-agent)). Use `lk agent start` (not `dev`) so the worker is on the production deployment that `--agent-name` dispatches to. This example has no `agent_name`, so pass an empty string for the project default agent:
+
+```bash
+# Terminal 1 — leave running
+lk agent start
+
+# Terminal 2
+lk agent simulate text --scenarios sim_scenarios.yaml -y --agent-name ""
+```
+
 ## Legacy: persona_sim
 
 Offline local driver ([`../persona_sim/`](../persona_sim/)). Prefer `lk agent simulate` above.
