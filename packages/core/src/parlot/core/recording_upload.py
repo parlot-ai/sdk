@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping, Optional, Sequence
 
 import httpx
 
@@ -58,7 +58,7 @@ async def complete_recording(
     format: str,
     conversation_id: Optional[str] = None,
     segment_count: Optional[int] = None,
-    segments: Optional[list[Mapping[str, int]]] = None,
+    segments: Optional[Sequence[Mapping[str, int]]] = None,
     sample_rate: Optional[int] = None,
     anchor_wall_ms: Optional[int] = None,
     sample_count: Optional[int] = None,
