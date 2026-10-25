@@ -32,6 +32,8 @@ cp .env.example .env
 lk agent dev
 ```
 
+LiveKit examples also support [Agent Simulations](https://docs.livekit.io/testing/simulations/) (`lk agent simulate …` in each example README). If the CLI times out waiting for the agent to register, start the worker in another terminal with `lk agent start`, then re-run simulate with `--agent-name` (the `@server.rtc_session(agent_name=…)` value, or `""` for an unnamed default agent). Details and per-example names are in each example’s README and the [LiveKit guide](https://parlot.ai/docs/guides/livekit#agent-simulations).
+
 ## Copying an example into your own project
 
 Examples already install Parlot from PyPI. To add the same dependency in your own project:

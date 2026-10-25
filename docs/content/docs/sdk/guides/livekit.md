@@ -142,6 +142,39 @@ Session Initiation Protocol (SIP) dispatch rules, and `lk dispatch` aligned with
 See the [healthcare example](https://github.com/parlot-ai/sdk/blob/main/examples/livekit/healthcare/README.md)
 for a full WarmTransferTask setup.
 
+## Agent Simulations
+
+Parlot LiveKit examples ship `sim_scenarios.yaml` files for
+[LiveKit Agent Simulations](https://docs.livekit.io/testing/simulations/). From an example
+directory (after `lk cloud auth`):
+
+```bash
+lk agent simulate text --scenarios sim_scenarios.yaml -y
+```
+
+By default the CLI starts your agent as a local worker, waits for it to register, then
+dispatches simulated rooms. Slow cold starts can fail with
+`timed out … waiting for the agent to register`.
+
+**Workaround:** run the agent yourself, then point the sim at the already-registered
+worker ([run against a live agent](https://docs.livekit.io/testing/simulations/#run-against-a-live-agent)):
+
+```bash
+# Terminal 1 — leave running (use start, not dev: --agent-name dispatches to production)
+lk agent start
+
+# Terminal 2 — named agents (match @server.rtc_session(agent_name=…))
+lk agent simulate text --scenarios sim_scenarios.yaml -y --agent-name hotel-receptionist
+# healthcare example: --agent-name healthcare
+
+# Unnamed / default agents (no agent_name on rtc_session):
+lk agent simulate text --scenarios sim_scenarios.yaml -y --agent-name ""
+```
+
+Use `lk agent start` rather than `lk agent dev`. Dev registers under a random `dev-`
+deployment; simulate’s `--agent-name` targets the production deployment by default.
+Requires a `--scenarios` file when using `--agent-name`.
+
 ## Human escalation
 
 Semantics and role vocabulary live in
