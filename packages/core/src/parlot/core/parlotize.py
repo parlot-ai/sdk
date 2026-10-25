@@ -151,25 +151,21 @@ def configure_parlot_logging() -> None:
     Ensures a root handler exists at INFO so messages reach stdout, without
     flipping the process root to DEBUG (that floods ``websockets`` / ``aiortc``
     / similar when debugging Parlot span export).
+
+    Sets the ``parlot`` parent so future ``parlot.*`` children with ``NOTSET``
+    inherit, and walks already-created ``parlot.*`` loggers so a prior
+    ``setLevel`` cannot stick — no hardcoded name list to maintain.
     """
     level_name = os.getenv("PARLOT_DEBUG_LEVEL", "INFO").upper()
     level = getattr(logging, level_name, logging.INFO)
     if not logging.root.handlers:
         logging.basicConfig(level=logging.INFO)
-    for name in (
-        "parlot",
-        "parlot.core",
-        "parlot.core.logging",
-        # Recording helpers — set explicitly so a prior setLevel cannot stick.
-        "parlot.core.recording_upload",
-        "parlot.core.recording_stamp",
-        "parlot.core.recording_source",
-        "parlot.instrumentation.livekit",
-        "parlot.instrumentation.langgraph",
-        "parlot.instrumentation.pipecat",
-        "parlot.instrumentation.pipecat.recording",
-    ):
-        logging.getLogger(name).setLevel(level)
+    logging.getLogger("parlot").setLevel(level)
+    for name, obj in list(logging.Logger.manager.loggerDict.items()):
+        if name != "parlot" and not name.startswith("parlot."):
+            continue
+        if isinstance(obj, logging.Logger):
+            obj.setLevel(level)
 
 
 def base_parlotize(

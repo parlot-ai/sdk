@@ -18,20 +18,15 @@ def test_configure_parlot_logging_debug_does_not_raise_root(monkeypatch) -> None
     if not had_handler:
         handler = stdlib_logging.StreamHandler()
         root.addHandler(handler)
+    sticky = stdlib_logging.getLogger("parlot.core.some_new_helper")
+    sticky.setLevel(stdlib_logging.WARNING)
     try:
         root.setLevel(stdlib_logging.INFO)
         configure_parlot_logging()
         assert root.level == stdlib_logging.INFO
         assert stdlib_logging.getLogger("parlot").level == stdlib_logging.DEBUG
-        assert stdlib_logging.getLogger("parlot.instrumentation.pipecat").level == (
-            stdlib_logging.DEBUG
-        )
-        assert stdlib_logging.getLogger("parlot.core.recording_upload").level == (
-            stdlib_logging.DEBUG
-        )
-        assert stdlib_logging.getLogger(
-            "parlot.instrumentation.pipecat.recording"
-        ).level == stdlib_logging.DEBUG
+        # Walk clears sticky prior setLevel without a hardcoded name list.
+        assert sticky.level == stdlib_logging.DEBUG
         # Third-party noise stays inherit/root INFO — not forced to DEBUG.
         assert stdlib_logging.getLogger("websockets").level == stdlib_logging.NOTSET
         assert stdlib_logging.getLogger("aiortc").level == stdlib_logging.NOTSET
