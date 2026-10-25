@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.8](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.7...instrumentation-livekit-v0.4.8) (2026-10-25)
+
+
+### Features
+
+* **pipecat:** add framework-agnostic session recording ([#111](https://github.com/parlot-ai/sdk/issues/111)) ([1e5c036](https://github.com/parlot-ai/sdk/commit/1e5c036a161d4d1f51cf4d9a406db926970b4575))
+
 ## [0.4.7](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.6...instrumentation-livekit-v0.4.7) (2026-10-23)
 
 
