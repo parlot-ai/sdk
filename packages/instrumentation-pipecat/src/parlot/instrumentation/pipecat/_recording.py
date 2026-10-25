@@ -145,7 +145,13 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
         self._anchor_wall_ms: int | None = None
         self._audio_uri: str | None = None
         self._finished = False
+        # Re-entry guard for finish(); keep False until drain so stop_recording
+        # flush can still upload (see _await_uploads_idle).
+        self._finishing = False
         self._upload_lock = asyncio.Lock()
+        self._uploads_in_flight = 0
+        self._uploads_idle = asyncio.Event()
+        self._uploads_idle.set()
         self._had_non_silent = False
         self._received_audio = False
         # Cached so /complete still works after CancelFrame tears down the session.
@@ -252,13 +258,50 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
             format=self._format,
         )
 
+    def _begin_upload(self) -> None:
+        self._uploads_in_flight += 1
+        self._uploads_idle.clear()
+
+    def _end_upload(self) -> None:
+        self._uploads_in_flight = max(0, self._uploads_in_flight - 1)
+        if self._uploads_in_flight == 0:
+            self._uploads_idle.set()
+
+    async def _await_uploads_idle(self) -> None:
+        """Wait for in-flight / just-scheduled segment uploads after stop_recording.
+
+        Cancel/End can race a buffer flush: finish must not treat
+        ``received_audio && segment_index==0`` as silent while PUT is still running.
+        """
+        # Yield so stop_recording's on_audio_data can start and bump in-flight.
+        for _ in range(5):
+            await asyncio.sleep(0)
+            if self._uploads_in_flight > 0:
+                break
+        # Drain; extra yields catch handlers that start after a brief idle.
+        for _ in range(10):
+            if self._uploads_in_flight > 0:
+                await self._uploads_idle.wait()
+            await asyncio.sleep(0)
+            if self._uploads_in_flight == 0:
+                async with self._upload_lock:
+                    if self._uploads_in_flight == 0:
+                        return
+
     async def _upload_segment(
         self, audio: bytes, sample_rate: int, num_channels: int
     ) -> None:
+        # Allow uploads during finish() until drained; block only when fully done.
         if self._finished or not audio:
             return
-        async with self._upload_lock:
-            await self._upload_segment_locked(audio, sample_rate, num_channels)
+        self._begin_upload()
+        try:
+            async with self._upload_lock:
+                if self._finished:
+                    return
+                await self._upload_segment_locked(audio, sample_rate, num_channels)
+        finally:
+            self._end_upload()
 
     async def _upload_segment_locked(
         self, audio: bytes, sample_rate: int, num_channels: int
@@ -340,9 +383,9 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
 
     async def finish(self) -> None:
         """Flush last partial segment and POST ``/complete``. Fail-open."""
-        if self._finished:
+        if self._finishing or self._finished:
             return
-        self._finished = True
+        self._finishing = True
         try:
             from ._auto import unregister_recording_processor
 
@@ -369,6 +412,9 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
                 self._session_span(), f"complete_failed:{type(exc).__name__}"
             )
             logger.warning("parlot: recording finish failed — %s", exc, exc_info=True)
+        finally:
+            # Block further segment uploads only after flush + /complete attempt.
+            self._finished = True
 
     async def _finish_inner(self) -> None:
         try:
@@ -376,11 +422,17 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
         except Exception:
             logger.debug("parlot: stop_recording during finish failed", exc_info=True)
 
+        # stop_recording may still be uploading the final buffer segment.
+        await self._await_uploads_idle()
+
         if self._segment_index == 0 and self._sample_count == 0:
             if not self._received_audio:
                 stamp_recording_error(self._session_span(), "no_audio")
-            else:
+            elif not self._had_non_silent:
                 stamp_recording_error(self._session_span(), "silent")
+            else:
+                # Saw non-silent PCM but no segment was committed (grant/PUT failed).
+                stamp_recording_error(self._session_span(), "segment_upload_error")
             return
 
         if not self._had_non_silent:
@@ -411,36 +463,45 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
             conversation_id = (
                 str(getattr(state, "conversation_id", "") or "") if state else ""
             )
+        # Snapshot under lock so counters/segments stay consistent with drain.
+        async with self._upload_lock:
+            segment_count = self._segment_index
+            segments = list(self._uploaded_segments)
+            sample_count = self._sample_count
+            audio_uri_hint = self._audio_uri
+            fmt = self._format
+            anchor = self._anchor_wall_ms
         result = await complete_recording(
             runtime,
             session_id=session_id,
-            format=self._format,
+            format=fmt,
             conversation_id=conversation_id or None,
-            segment_count=self._segment_index,
-            segments=list(self._uploaded_segments),
+            segment_count=segment_count,
+            segments=segments,
             sample_rate=self.sample_rate or 16_000,
-            anchor_wall_ms=self._anchor_wall_ms,
-            sample_count=self._sample_count,
+            anchor_wall_ms=anchor,
+            sample_count=sample_count,
             wall_end_ms=wall_end_ms,
         )
         if result is None:
             stamp_recording_error(self._session_span(), "complete_failed")
             return
 
-        audio_uri = str(result.get("audio_recording_uri") or self._audio_uri or "")
+        audio_uri = str(result.get("audio_recording_uri") or audio_uri_hint or "")
         partial = bool(result.get("partial"))
         if audio_uri:
             stamp_recording_uploaded(
                 self._session_span(),
                 audio_uri=audio_uri,
                 partial=partial,
-                sample_count=self._sample_count,
+                sample_count=sample_count,
                 wall_end_ms=wall_end_ms,
-                format=self._format,
+                format=fmt,
             )
 
     async def fail(self, reason: str) -> None:
         stamp_recording_error(self._session_span(), reason)
+        self._finishing = True
         self._finished = True
 
 
