@@ -88,7 +88,7 @@ applies close-gated PII beeps when redaction is on.
 - Place the processor **after** `transport.output()` so both directions are buffered.
 - Fail-open: upload/complete errors stamp `session.recording.status=failed` and never break the call.
 - Playback is always the session’s current signed URL (redacted when policy requires) — not the
-  raw segment URI.
+  raw audio URI.
 
 ## Example
 
