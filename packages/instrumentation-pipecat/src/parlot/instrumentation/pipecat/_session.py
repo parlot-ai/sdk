@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 from opentelemetry.trace import Span, Tracer
 
@@ -17,8 +18,13 @@ from parlot.core.attrs import (
     ATTR_SESSION_AGENT_ID,
     ATTR_SESSION_MODALITY,
     ATTR_TURN_INPUT_MODALITY,
+    ATTR_TURN_MEDIA_END_MS,
+    ATTR_TURN_MEDIA_START_MS,
     ATTR_TURN_PARTICIPANT_ID,
+    ATTR_TURN_SPEECH_WALL_END_MS,
+    ATTR_TURN_SPEECH_WALL_START_MS,
 )
+from parlot.core.recording_timeline import media_segments_from_speech
 from parlot.core.sdk_version import stamp_session_sdk_version
 from parlot.core.session import (
     SessionState,
@@ -202,11 +208,23 @@ def emit_turn(
     state.turn_count = max(state.turn_count, turn_index)
     state.open_turn_index = turn_index
 
-    extra = {
+    extra: dict[str, Any] = {
         ATTR_TURN_PARTICIPANT_ID: role,
         ATTR_TURN_INPUT_MODALITY: "voice",
         ATTR_AGENT_FRAMEWORK: PIPECAT_FRAMEWORK,
     }
+    if start_time_ns is not None and end_time_ns is not None:
+        speech_start = int(start_time_ns) // 1_000_000
+        speech_end = int(end_time_ns) // 1_000_000
+        if speech_end >= speech_start:
+            extra[ATTR_TURN_SPEECH_WALL_START_MS] = speech_start
+            extra[ATTR_TURN_SPEECH_WALL_END_MS] = speech_end
+            if getattr(state, "recording_anchor_wall_ms", None) is not None:
+                media_start, media_end = media_segments_from_speech(
+                    state, speech_start, speech_end
+                )
+                extra[ATTR_TURN_MEDIA_START_MS] = media_start
+                extra[ATTR_TURN_MEDIA_END_MS] = media_end
     tid, _span_id = emit_parlot_turn_root(
         _tracer,
         session_id=state.session_id,

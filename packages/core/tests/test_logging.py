@@ -26,6 +26,12 @@ def test_configure_parlot_logging_debug_does_not_raise_root(monkeypatch) -> None
         assert stdlib_logging.getLogger("parlot.instrumentation.pipecat").level == (
             stdlib_logging.DEBUG
         )
+        assert stdlib_logging.getLogger("parlot.core.recording_upload").level == (
+            stdlib_logging.DEBUG
+        )
+        assert stdlib_logging.getLogger(
+            "parlot.instrumentation.pipecat.recording"
+        ).level == stdlib_logging.DEBUG
         # Third-party noise stays inherit/root INFO — not forced to DEBUG.
         assert stdlib_logging.getLogger("websockets").level == stdlib_logging.NOTSET
         assert stdlib_logging.getLogger("aiortc").level == stdlib_logging.NOTSET

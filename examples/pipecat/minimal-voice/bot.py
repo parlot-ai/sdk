@@ -39,9 +39,9 @@ load_dotenv(override=True)
 
 # ── Parlot instrumentation ────────────────────────────────────────────────
 # Call after load_dotenv so PARLOT_* are available; before PipelineWorker.
-from parlot.instrumentation.pipecat import parlotize
+from parlot.instrumentation.pipecat import ParlotRecordingProcessor, parlotize
 
-parlotize("pipecat-minimal-voice", version="0.1.0")
+parlotize("pipecat-minimal-voice", version="0.1.0", record=True)
 # ─────────────────────────────────────────────────────────────────────────
 
 
@@ -123,6 +123,7 @@ async def run_bot(transport: BaseTransport):
             llm,
             tts,
             transport.output(),
+            ParlotRecordingProcessor(),  # mixed dual-mono stereo → Parlot
             assistant_aggregator,
         ]
     )

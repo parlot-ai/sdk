@@ -160,9 +160,14 @@ def configure_parlot_logging() -> None:
         "parlot",
         "parlot.core",
         "parlot.core.logging",
+        # Recording helpers — set explicitly so a prior setLevel cannot stick.
+        "parlot.core.recording_upload",
+        "parlot.core.recording_stamp",
+        "parlot.core.recording_source",
         "parlot.instrumentation.livekit",
         "parlot.instrumentation.langgraph",
         "parlot.instrumentation.pipecat",
+        "parlot.instrumentation.pipecat.recording",
     ):
         logging.getLogger(name).setLevel(level)
 

@@ -44,6 +44,8 @@ class SessionState:
     custom_metadata: dict[str, str] = field(default_factory=dict)
     # Owning instrumentation package, e.g. "livekit" | "langgraph"
     framework: str = ""
+    # Sample-0 wall ms for media_segment_* (first write wins via set_recording_anchor_wall_ms).
+    recording_anchor_wall_ms: int | None = None
 
 
 def get_active_session() -> SessionState | None:

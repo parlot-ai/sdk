@@ -89,7 +89,7 @@ async def test_egress_starts_without_webhooks(monkeypatch) -> None:
             return_value=bootstrap,
         ),
         patch(
-            "parlot.instrumentation.livekit._egress._fetch_upload_grant",
+            "parlot.instrumentation.livekit._egress.fetch_upload_grant",
             new_callable=AsyncMock,
             return_value=grant,
         ),
@@ -166,7 +166,7 @@ async def test_egress_failure_logs_descriptively_without_traceback(
             return_value=bootstrap,
         ),
         patch(
-            "parlot.instrumentation.livekit._egress._fetch_upload_grant",
+            "parlot.instrumentation.livekit._egress.fetch_upload_grant",
             new_callable=AsyncMock,
             return_value=grant,
         ),

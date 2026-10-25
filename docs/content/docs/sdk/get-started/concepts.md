@@ -66,10 +66,11 @@ Each framework guide notes how the adapter stamps deployment identity on the liv
 
 - **Telemetry** (turns, handoffs, close, usage) goes over OpenTelemetry Protocol (OTLP) to
   `PARLOT_ENDPOINT` (`/v1/traces`, and `/v1/metrics` where the adapter exports metrics).
-- **Audio recording** is framework-specific and **on by default** for new tenants
-  (Settings → Recording allowlist `*`). On LiveKit it uses Room Composite egress; opening the
-  session in Parlot confirms the audio file is present. Session turns and spans still appear
-  while audio confirmation is pending. Turn recording off with an empty allowlist or
+- **Audio recording** is **on by default** for new tenants (Settings → Recording allowlist `*`).
+  Capture is adapter-specific (LiveKit Room Composite egress; Pipecat stereo buffer → WAV
+  segments → server stitch/normalize); shared policy and playback apply to every source.
+  Opening the session in Parlot confirms the playable file. Session turns and spans still
+  appear while audio confirmation is pending. Turn recording off with an empty allowlist or
   `parlotize(record=False)`.
 - **Application logs** capture Python’s `logging` module during an active session (skip
   `print()`) and show on the session **Logs** tab. They export as OTLP logs (`POST /v1/logs`,
@@ -79,8 +80,8 @@ Each framework guide notes how the adapter stamps deployment identity on the liv
 - **Generative AI content** (LLM/tool bodies) is a separate policy — see
   [Generative AI content capture](#generative-ai-content-capture).
 
-See the [LiveKit guide](/sdk/guides/livekit) for how recording attaches on the agent. Policy and
-precedence: [Environment Variables](/sdk/env-vars).
+See the [LiveKit](/sdk/guides/livekit) and [Pipecat](/sdk/guides/pipecat) guides for how each
+adapter attaches capture. Policy and precedence: [Environment Variables](/sdk/env-vars).
 
 ## Generative AI content capture
 

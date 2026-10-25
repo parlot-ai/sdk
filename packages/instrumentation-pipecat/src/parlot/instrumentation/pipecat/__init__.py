@@ -11,11 +11,15 @@ from parlot.core import (
 
 from ._auto import close_session, parlotize
 from ._processor import PipecatGenAIProcessor
+from ._recording import ParlotRecordingProcessor
+from parlot.core import stamp_external_recording
 
 __all__ = [
     "parlotize",
     "close_session",
     "PipecatGenAIProcessor",
+    "ParlotRecordingProcessor",
+    "stamp_external_recording",
     "add_platform_ref",
     "human_escalation",
     "record_human_rep",
