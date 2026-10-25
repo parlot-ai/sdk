@@ -5,7 +5,7 @@ description = "Minimal Pipecat voice bot with Parlot (adapted from pipecat-examp
 requires-python = ">=3.11"
 dependencies = [
     "pipecat-ai[daily,webrtc,websocket,silero,google,deepgram,openai,tracing,runner]>=1.0.0",
-    "parlot[pipecat]>=0.3.3",
+    "parlot[pipecat]>=0.3.4",
     "python-dotenv>=1.0.0",
 ]
 
