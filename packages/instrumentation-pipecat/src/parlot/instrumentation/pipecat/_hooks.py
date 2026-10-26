@@ -209,6 +209,70 @@ def install_tool_call_hooks() -> None:
     logger.debug("parlot: patched LLMService._run_function_call for tool spans")
 
 
+def bind_user_aggregator(user_aggregator: Any) -> bool:
+    """Attach Parlot turn handlers to an ``LLMUserAggregator`` (idempotent).
+
+    Returns True if handlers were newly bound.
+    """
+    if user_aggregator is None:
+        return False
+    if getattr(user_aggregator, "_parlot_turn_handlers", False):
+        return False
+    from ._turn_events import (
+        handle_user_turn_message_added,
+        handle_user_turn_started,
+        handle_user_turn_stopped,
+    )
+
+    user_aggregator.add_event_handler("on_user_turn_started", handle_user_turn_started)
+    user_aggregator.add_event_handler("on_user_turn_stopped", handle_user_turn_stopped)
+    user_aggregator.add_event_handler(
+        "on_user_turn_message_added", handle_user_turn_message_added
+    )
+    user_aggregator._parlot_turn_handlers = True
+    return True
+
+
+def bind_assistant_aggregator(assistant_aggregator: Any) -> bool:
+    """Attach Parlot turn handlers to an ``LLMAssistantAggregator`` (idempotent).
+
+    Returns True if handlers were newly bound.
+    """
+    if assistant_aggregator is None:
+        return False
+    if getattr(assistant_aggregator, "_parlot_turn_handlers", False):
+        return False
+    from ._turn_events import (
+        handle_assistant_turn_started,
+        handle_assistant_turn_stopped,
+    )
+
+    assistant_aggregator.add_event_handler(
+        "on_assistant_turn_started", handle_assistant_turn_started
+    )
+    assistant_aggregator.add_event_handler(
+        "on_assistant_turn_stopped", handle_assistant_turn_stopped
+    )
+    assistant_aggregator._parlot_turn_handlers = True
+    return True
+
+
+def attach_aggregators(
+    user_aggregator: Any = None,
+    assistant_aggregator: Any = None,
+) -> None:
+    """Bind Parlot turn handlers onto existing context aggregators.
+
+    Prefer calling ``parlotize()`` before constructing aggregators so the
+    ``__init__`` patch auto-wires them. Use this when aggregators already
+    exist (built before ``parlotize``, or handed in by a framework).
+
+    Idempotent — safe to call more than once on the same instances.
+    """
+    bind_user_aggregator(user_aggregator)
+    bind_assistant_aggregator(assistant_aggregator)
+
+
 def install_aggregator_turn_hooks() -> None:
     """Wire Parlot turn minting onto LLM context aggregators.
 
@@ -234,27 +298,12 @@ def install_aggregator_turn_hooks() -> None:
         )
         return
 
-    from ._turn_events import (
-        handle_assistant_turn_started,
-        handle_assistant_turn_stopped,
-        handle_user_turn_message_added,
-        handle_user_turn_started,
-        handle_user_turn_stopped,
-    )
-
     if not getattr(LLMUserAggregator.__init__, "_parlot_turn_wrapped", False):
         original_user_init = LLMUserAggregator.__init__
 
         def patched_user_init(self: Any, *args: Any, **kwargs: Any) -> None:
             original_user_init(self, *args, **kwargs)
-            if getattr(self, "_parlot_turn_handlers", False):
-                return
-            self.add_event_handler("on_user_turn_started", handle_user_turn_started)
-            self.add_event_handler("on_user_turn_stopped", handle_user_turn_stopped)
-            self.add_event_handler(
-                "on_user_turn_message_added", handle_user_turn_message_added
-            )
-            self._parlot_turn_handlers = True
+            bind_user_aggregator(self)
 
         patched_user_init._parlot_turn_wrapped = True  # type: ignore[attr-defined]
         LLMUserAggregator.__init__ = patched_user_init  # type: ignore[method-assign]
@@ -264,15 +313,7 @@ def install_aggregator_turn_hooks() -> None:
 
         def patched_asst_init(self: Any, *args: Any, **kwargs: Any) -> None:
             original_asst_init(self, *args, **kwargs)
-            if getattr(self, "_parlot_turn_handlers", False):
-                return
-            self.add_event_handler(
-                "on_assistant_turn_started", handle_assistant_turn_started
-            )
-            self.add_event_handler(
-                "on_assistant_turn_stopped", handle_assistant_turn_stopped
-            )
-            self._parlot_turn_handlers = True
+            bind_assistant_aggregator(self)
 
         patched_asst_init._parlot_turn_wrapped = True  # type: ignore[attr-defined]
         LLMAssistantAggregator.__init__ = patched_asst_init  # type: ignore[method-assign]

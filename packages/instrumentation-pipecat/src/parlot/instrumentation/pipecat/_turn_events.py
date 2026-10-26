@@ -15,7 +15,8 @@ from __future__ import annotations
 import logging
 import time
 from datetime import datetime
-from typing import Any
+from functools import wraps
+from typing import Any, Callable, TypeVar
 
 from ._session import (
     allocate_agent_turn_index,
@@ -28,6 +29,21 @@ from ._session import (
 )
 
 logger = logging.getLogger("parlot.instrumentation.pipecat")
+
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def _fail_soft(fn: F) -> F:
+    """Never let Parlot turn handlers break user handlers or the pipeline."""
+
+    @wraps(fn)
+    def wrapper(*args: Any, **kwargs: Any) -> None:
+        try:
+            fn(*args, **kwargs)
+        except Exception:
+            logger.debug("parlot: turn event handler failed", exc_info=True)
+
+    return wrapper  # type: ignore[return-value]
 
 
 def _iso_to_unix_ns(ts: str | None) -> int | None:
@@ -51,6 +67,7 @@ def _prefer_start_ns(recorded: int | None, timestamp: str | None) -> int | None:
     return _iso_to_unix_ns(timestamp)
 
 
+@_fail_soft
 def handle_latency_measured(_observer: Any, latency_seconds: float) -> None:
     """``UserBotLatencyObserver.on_latency_measured`` — buffer for next agent turn."""
     try:
@@ -63,6 +80,7 @@ def handle_latency_measured(_observer: Any, latency_seconds: float) -> None:
     buffer_e2e_latency(state, latency)
 
 
+@_fail_soft
 def handle_user_turn_started(_aggregator: Any, _strategy: Any = None) -> None:
     """``on_user_turn_started`` — reserve indices + speech start for nesting."""
     state = _resolve_state()
@@ -74,6 +92,7 @@ def handle_user_turn_started(_aggregator: Any, _strategy: Any = None) -> None:
         state.user_turn_start_ns = time.time_ns()
 
 
+@_fail_soft
 def handle_assistant_turn_started(_aggregator: Any) -> None:
     """``on_assistant_turn_started`` — reserve agent index + speech start."""
     state = _resolve_state()
@@ -84,6 +103,7 @@ def handle_assistant_turn_started(_aggregator: Any) -> None:
         state.agent_turn_start_ns = time.time_ns()
 
 
+@_fail_soft
 def handle_user_turn_stopped(_aggregator: Any, _strategy: Any, message: Any) -> None:
     """``on_user_turn_stopped`` — cascade mode has content; realtime is ``None``."""
     content = getattr(message, "content", None)
@@ -100,6 +120,7 @@ def handle_user_turn_stopped(_aggregator: Any, _strategy: Any, message: Any) -> 
     _mint_user_turn(text, timestamp=getattr(message, "timestamp", None))
 
 
+@_fail_soft
 def handle_user_turn_message_added(_aggregator: Any, message: Any) -> None:
     """``on_user_turn_message_added`` — always has content (realtime user text)."""
     content = getattr(message, "content", None)
@@ -111,6 +132,7 @@ def handle_user_turn_message_added(_aggregator: Any, message: Any) -> None:
     _mint_user_turn(text, timestamp=getattr(message, "timestamp", None))
 
 
+@_fail_soft
 def handle_assistant_turn_stopped(_aggregator: Any, message: Any) -> None:
     """``on_assistant_turn_stopped`` — spoken (or interrupted) assistant text."""
     content = getattr(message, "content", None)
