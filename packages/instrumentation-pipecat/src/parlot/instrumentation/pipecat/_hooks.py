@@ -12,6 +12,7 @@ logger = logging.getLogger("parlot.instrumentation.pipecat")
 _patched = False
 _tool_patched = False
 _aggregator_patched = False
+_latency_patched = False
 
 
 def install_pipeline_worker_hooks() -> None:
@@ -55,10 +56,54 @@ def install_pipeline_worker_hooks() -> None:
             kwargs.setdefault("enable_turn_tracking", True)
 
         original_init(self, *args, **kwargs)
+        _bind_latency_observer(self)
 
     PipelineWorker.__init__ = patched_init  # type: ignore[method-assign]
     _patched = True
     logger.debug("parlot: patched Pipecat PipelineWorker for tracing defaults")
+
+
+def _bind_latency_observer(worker: Any) -> None:
+    """Attach Parlot handler to PipelineWorker's UserBotLatencyObserver."""
+    observer = getattr(worker, "_user_bot_latency_observer", None)
+    if observer is None or getattr(observer, "_parlot_latency_bound", False):
+        return
+    from ._turn_events import handle_latency_measured
+
+    observer.add_event_handler("on_latency_measured", handle_latency_measured)
+    observer._parlot_latency_bound = True
+
+
+def install_latency_observer_hooks() -> None:
+    """Also patch ``UserBotLatencyObserver.__init__`` for manually added observers."""
+    global _latency_patched
+    if _latency_patched:
+        return
+
+    try:
+        from pipecat.observers.user_bot_latency_observer import UserBotLatencyObserver
+    except ImportError:
+        return
+
+    if getattr(UserBotLatencyObserver.__init__, "_parlot_latency_wrapped", False):
+        _latency_patched = True
+        return
+
+    from ._turn_events import handle_latency_measured
+
+    original_init = UserBotLatencyObserver.__init__
+
+    def patched_init(self: Any, *args: Any, **kwargs: Any) -> None:
+        original_init(self, *args, **kwargs)
+        if getattr(self, "_parlot_latency_bound", False):
+            return
+        self.add_event_handler("on_latency_measured", handle_latency_measured)
+        self._parlot_latency_bound = True
+
+    patched_init._parlot_latency_wrapped = True  # type: ignore[attr-defined]
+    UserBotLatencyObserver.__init__ = patched_init  # type: ignore[method-assign]
+    _latency_patched = True
+    logger.debug("parlot: patched UserBotLatencyObserver for e2e latency")
 
 
 def install_tool_call_hooks() -> None:
@@ -190,8 +235,10 @@ def install_aggregator_turn_hooks() -> None:
         return
 
     from ._turn_events import (
+        handle_assistant_turn_started,
         handle_assistant_turn_stopped,
         handle_user_turn_message_added,
+        handle_user_turn_started,
         handle_user_turn_stopped,
     )
 
@@ -202,6 +249,7 @@ def install_aggregator_turn_hooks() -> None:
             original_user_init(self, *args, **kwargs)
             if getattr(self, "_parlot_turn_handlers", False):
                 return
+            self.add_event_handler("on_user_turn_started", handle_user_turn_started)
             self.add_event_handler("on_user_turn_stopped", handle_user_turn_stopped)
             self.add_event_handler(
                 "on_user_turn_message_added", handle_user_turn_message_added
@@ -218,6 +266,9 @@ def install_aggregator_turn_hooks() -> None:
             original_asst_init(self, *args, **kwargs)
             if getattr(self, "_parlot_turn_handlers", False):
                 return
+            self.add_event_handler(
+                "on_assistant_turn_started", handle_assistant_turn_started
+            )
             self.add_event_handler(
                 "on_assistant_turn_stopped", handle_assistant_turn_stopped
             )

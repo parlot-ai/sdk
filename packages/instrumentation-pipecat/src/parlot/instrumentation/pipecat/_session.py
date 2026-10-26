@@ -58,6 +58,11 @@ class _PipecatSessionState(SessionState):
     # True once the open user/agent slot was minted from aggregator events.
     user_turn_emitted: bool = False
     agent_turn_emitted: bool = False
+    # Wall-clock starts from on_*_turn_started (prefer over ISO message.timestamp).
+    user_turn_start_ns: int | None = None
+    agent_turn_start_ns: int | None = None
+    # Latest UserBotLatencyObserver measurement; consumed on next agent emit_turn.
+    pending_e2e_latency_s: float | None = None
     transport: str = ""
     close_emitted: bool = False
 
@@ -92,6 +97,22 @@ def clear_open_turn_indices(state: _PipecatSessionState) -> None:
     state.open_turn_index = None
     state.user_turn_emitted = False
     state.agent_turn_emitted = False
+    state.user_turn_start_ns = None
+    state.agent_turn_start_ns = None
+
+
+def buffer_e2e_latency(state: _PipecatSessionState, latency_s: float) -> None:
+    """Store user→bot latency until the next agent ``parlot.turn`` mint."""
+    if latency_s < 0:
+        return
+    state.pending_e2e_latency_s = float(latency_s)
+
+
+def take_pending_e2e_latency(state: _PipecatSessionState) -> float | None:
+    """Pop buffered e2e latency for the agent turn about to be minted."""
+    value = state.pending_e2e_latency_s
+    state.pending_e2e_latency_s = None
+    return value
 
 
 _registry: ConversationSessionRegistry[_PipecatSessionState] = (
