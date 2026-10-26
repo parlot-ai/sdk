@@ -1,4 +1,4 @@
-"""Patch Pipecat PipelineWorker so tracing/metrics stay on after parlotize()."""
+"""Patch Pipecat PipelineWorker / aggregators so tracing + turns stay on after parlotize()."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ logger = logging.getLogger("parlot.instrumentation.pipecat")
 
 _patched = False
 _tool_patched = False
+_aggregator_patched = False
 
 
 def install_pipeline_worker_hooks() -> None:
@@ -161,3 +162,69 @@ def install_tool_call_hooks() -> None:
     LLMService._run_function_call = _patched  # type: ignore[method-assign]
     _tool_patched = True
     logger.debug("parlot: patched LLMService._run_function_call for tool spans")
+
+
+def install_aggregator_turn_hooks() -> None:
+    """Wire Parlot turn minting onto LLM context aggregators.
+
+    ``parlot.turn`` is minted from committed aggregator transcripts
+    (``on_user_turn_stopped`` / ``on_assistant_turn_stopped`` /
+    ``on_user_turn_message_added``), not from OTEL STT/native-turn spans.
+    Bots must use ``LLMContextAggregatorPair`` with the assistant aggregator
+    after ``transport.output()``.
+    """
+    global _aggregator_patched
+    if _aggregator_patched:
+        return
+
+    try:
+        from pipecat.processors.aggregators.llm_response_universal import (
+            LLMAssistantAggregator,
+            LLMUserAggregator,
+        )
+    except ImportError:
+        logger.warning(
+            "parlot: Pipecat LLMContextAggregator classes not importable; "
+            "parlot.turn will not be minted from aggregator events"
+        )
+        return
+
+    from ._turn_events import (
+        handle_assistant_turn_stopped,
+        handle_user_turn_message_added,
+        handle_user_turn_stopped,
+    )
+
+    if not getattr(LLMUserAggregator.__init__, "_parlot_turn_wrapped", False):
+        original_user_init = LLMUserAggregator.__init__
+
+        def patched_user_init(self: Any, *args: Any, **kwargs: Any) -> None:
+            original_user_init(self, *args, **kwargs)
+            if getattr(self, "_parlot_turn_handlers", False):
+                return
+            self.add_event_handler("on_user_turn_stopped", handle_user_turn_stopped)
+            self.add_event_handler(
+                "on_user_turn_message_added", handle_user_turn_message_added
+            )
+            self._parlot_turn_handlers = True
+
+        patched_user_init._parlot_turn_wrapped = True  # type: ignore[attr-defined]
+        LLMUserAggregator.__init__ = patched_user_init  # type: ignore[method-assign]
+
+    if not getattr(LLMAssistantAggregator.__init__, "_parlot_turn_wrapped", False):
+        original_asst_init = LLMAssistantAggregator.__init__
+
+        def patched_asst_init(self: Any, *args: Any, **kwargs: Any) -> None:
+            original_asst_init(self, *args, **kwargs)
+            if getattr(self, "_parlot_turn_handlers", False):
+                return
+            self.add_event_handler(
+                "on_assistant_turn_stopped", handle_assistant_turn_stopped
+            )
+            self._parlot_turn_handlers = True
+
+        patched_asst_init._parlot_turn_wrapped = True  # type: ignore[attr-defined]
+        LLMAssistantAggregator.__init__ = patched_asst_init  # type: ignore[method-assign]
+
+    _aggregator_patched = True
+    logger.debug("parlot: patched LLM context aggregators for turn events")

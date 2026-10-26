@@ -27,35 +27,53 @@ Install and env setup: [Quick Start](/sdk/get-started/quick-start). Shared produ
 
 ```mermaid
 flowchart LR
-  PipecatOTEL["Pipecat conversation / turn / stt / llm / tts spans"] --> Remap["Parlot remap"]
-  Remap --> Contract["parlot.session / parlot.turn / GenAI / voice"]
+  Agg["LLMContextAggregatorPair turn events"] --> Turns["parlot.turn"]
+  PipecatOTEL["Pipecat stt / llm / tts spans"] --> Remap["Parlot remap + turn.index"]
+  Turns --> Contract["parlot.session / GenAI / voice"]
+  Remap --> Contract
   Contract --> OTLP["OTLP to Parlot"]
 ```
 
 1. Call `parlotize("…")` once at process start. This installs a TracerProvider that exports to
-   Parlot and patches `PipelineWorker` so tracing + metrics default on.
-2. Build your pipeline as usual. Pass `enable_tracing=True` and
-   `enable_turn_tracking=True` on `PipelineWorker` (or rely on the patch).
-3. Do **not** call Pipecat’s `setup_tracing()` afterward — it would replace the global
+   Parlot, patches `PipelineWorker` so tracing + metrics default on, and auto-wires turn
+   handlers onto `LLMUserAggregator` / `LLMAssistantAggregator`.
+2. Build your pipeline with **`LLMContextAggregatorPair`**. Place the **user** aggregator
+   early (after STT / before the LLM) and the **assistant** aggregator **after**
+   `transport.output()` so committed transcripts include what was spoken.
+3. Pass `enable_tracing=True` and `enable_turn_tracking=True` on `PipelineWorker`
+   (or rely on the patch).
+4. Do **not** call Pipecat’s `setup_tracing()` afterward — it would replace the global
    TracerProvider and drop Parlot processors. `parlotize` is the Parlot equivalent.
 
-Pipecat’s nested conversation→turn tree is remapped onto the Conversation Contract: one
-`parlot.session` per conversation, a new OTel trace per `parlot.turn`, and service spans
-renamed to the shared GenAI / voice vocabulary (`chat {model}`, `stt`, `tts`, …).
+Committed user/assistant transcripts from aggregator events
+(`on_user_turn_stopped` / `on_assistant_turn_stopped`, plus realtime
+`on_user_turn_message_added`) mint `parlot.turn`. Pipecat’s nested conversation→turn OTEL
+tree is still used for session open/close and STT/LLM/TTS waterfall nesting under
+`turn.index` — those spans do not mint contract turns.
 
 ## Add it to an existing bot
 
 ```python
+from pipecat.processors.aggregators.llm_context import LLMContext
+from pipecat.processors.aggregators.llm_response_universal import (
+    LLMContextAggregatorPair,
+)
 from parlot.instrumentation.pipecat import ParlotRecordingProcessor, parlotize
 
 parlotize("my-pipecat-agent", version="0.1.0", record=True)
 
+context = LLMContext(messages)
+context_aggregator = LLMContextAggregatorPair(context)
+
 pipeline = Pipeline([
     transport.input(),
-    # ... stt / llm / tts ...
+    stt,
+    context_aggregator.user(),
+    llm,
+    tts,
     transport.output(),
     ParlotRecordingProcessor(),  # after output — mixed dual-mono stereo WAV segments
-    context_aggregator.assistant(),
+    context_aggregator.assistant(),  # after output — required for agent parlot.turn
 ])
 
 worker = PipelineWorker(

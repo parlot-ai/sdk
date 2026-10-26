@@ -114,7 +114,11 @@ def parlotize(
 
     try_set_global_tracer_provider(tracer_provider)
 
-    from ._hooks import install_pipeline_worker_hooks, install_tool_call_hooks
+    from ._hooks import (
+        install_aggregator_turn_hooks,
+        install_pipeline_worker_hooks,
+        install_tool_call_hooks,
+    )
     from ._session import set_identity, set_tracer
 
     set_identity(_configured_agent_id, _configured_agent_version)
@@ -127,6 +131,7 @@ def parlotize(
     _wire_session_logs(res.context, _configured_agent_id)
     install_pipeline_worker_hooks()
     install_tool_call_hooks()
+    install_aggregator_turn_hooks()
     _neutralize_pipecat_setup_tracing()
 
     _configured = True
