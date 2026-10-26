@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from types import SimpleNamespace
 
 import pytest
@@ -13,6 +14,7 @@ from opentelemetry.trace import set_span_in_context
 from parlot.core.attrs import (
     ATTR_SESSION_ID,
     ATTR_TURN_AGENT_TEXT,
+    ATTR_TURN_E2E_LATENCY_S,
     ATTR_TURN_INDEX,
     ATTR_TURN_INTERRUPTED,
     ATTR_TURN_PARTICIPANT_ROLE,
@@ -27,12 +29,16 @@ from parlot.instrumentation.pipecat._session import (
     _sessions_by_conversation,
     close_session,
     ensure_session,
+    lookup_session,
     set_identity,
     set_tracer,
 )
 from parlot.instrumentation.pipecat._turn_events import (
+    handle_assistant_turn_started,
     handle_assistant_turn_stopped,
+    handle_latency_measured,
     handle_user_turn_message_added,
+    handle_user_turn_started,
     handle_user_turn_stopped,
 )
 from parlot.instrumentation.pipecat.attrs import (
@@ -229,4 +235,115 @@ def test_empty_assistant_content_skipped() -> None:
     ensure_session("conv-empty")
 
     handle_assistant_turn_stopped(None, _asst_msg(content="   "))
+    assert [s for s in exporter.get_finished_spans() if s.name == SPAN_PARLOT_TURN] == []
+
+
+def test_latency_measured_stamps_e2e_on_next_agent_turn() -> None:
+    exporter, provider = _provider()
+    tracer = provider.get_tracer("test")
+    set_tracer(tracer)
+    set_identity("pipecat-test", "0.1.0")
+    ensure_session("conv-e2e")
+
+    handle_user_turn_stopped(None, None, _user_msg(content="hello"))
+    # Bot starts speaking → latency observer fires before assistant_turn_stopped.
+    handle_latency_measured(None, 0.85)
+    handle_assistant_turn_stopped(None, _asst_msg(content="hi there"))
+
+    turns = [s for s in exporter.get_finished_spans() if s.name == SPAN_PARLOT_TURN]
+    by_role = {s.attributes[ATTR_TURN_PARTICIPANT_ROLE]: s for s in turns}
+    assert ATTR_TURN_E2E_LATENCY_S not in (by_role["user"].attributes or {})
+    assert by_role["agent"].attributes[ATTR_TURN_E2E_LATENCY_S] == pytest.approx(0.85)
+
+    state = lookup_session("conv-e2e")
+    assert state is not None
+    assert state.pending_e2e_latency_s is None
+
+
+def test_latency_consumed_once_not_on_following_turn() -> None:
+    exporter, provider = _provider()
+    tracer = provider.get_tracer("test")
+    set_tracer(tracer)
+    set_identity("pipecat-test", "0.1.0")
+    ensure_session("conv-e2e-once")
+
+    handle_latency_measured(None, 1.2)
+    handle_assistant_turn_stopped(None, _asst_msg(content="first"))
+    handle_assistant_turn_stopped(None, _asst_msg(content="second"))
+
+    agents = [
+        s
+        for s in exporter.get_finished_spans()
+        if s.name == SPAN_PARLOT_TURN
+        and s.attributes[ATTR_TURN_PARTICIPANT_ROLE] == "agent"
+    ]
+    assert agents[0].attributes[ATTR_TURN_E2E_LATENCY_S] == pytest.approx(1.2)
+    assert ATTR_TURN_E2E_LATENCY_S not in (agents[1].attributes or {})
+
+
+def test_turn_started_reserves_indices_and_start_ns() -> None:
+    exporter, provider = _provider()
+    tracer = provider.get_tracer("test")
+    set_tracer(tracer)
+    set_identity("pipecat-test", "0.1.0")
+    state = ensure_session("conv-started")
+    assert state is not None
+
+    t0 = time.time_ns()
+    handle_user_turn_started(None, None)
+    assert state.open_user_turn_index == 1
+    assert state.open_agent_turn_index == 2
+    assert state.user_turn_start_ns is not None
+    assert state.user_turn_start_ns >= t0
+
+    # Nested STT before stopped can use reserved agent index.
+    conv = tracer.start_span("conversation")
+    conv.set_attribute(ATTR_PIPECAT_CONVERSATION_ID, "conv-started")
+    turn = tracer.start_span("turn", context=set_span_in_context(conv))
+    turn.set_attribute(ATTR_PIPECAT_CONVERSATION_ID, "conv-started")
+    stt = tracer.start_span("stt", context=set_span_in_context(turn))
+    stt.set_attribute(ATTR_PIPECAT_TRANSCRIPT, "early")
+    stt.end()
+
+    handle_user_turn_stopped(None, None, _user_msg(content="early"))
+    handle_assistant_turn_started(None)
+    assert state.agent_turn_start_ns is not None
+    recorded_agent_start = state.agent_turn_start_ns
+    handle_assistant_turn_stopped(
+        None,
+        _asst_msg(
+            content="reply",
+            # ISO far in the past — started ns must win.
+            timestamp="2020-01-01T00:00:00.000+00:00",
+        ),
+    )
+
+    finished = list(exporter.get_finished_spans())
+    stt_span = next(s for s in finished if s.name == SPAN_VOICE_STT)
+    assert stt_span.attributes[ATTR_TURN_INDEX] == 2
+
+    agent = next(
+        s
+        for s in finished
+        if s.name == SPAN_PARLOT_TURN
+        and s.attributes[ATTR_TURN_PARTICIPANT_ROLE] == "agent"
+    )
+    assert agent.start_time == recorded_agent_start
+    turn.end()
+    conv.end()
+
+
+def test_empty_user_after_started_clears_reservation() -> None:
+    exporter, provider = _provider()
+    tracer = provider.get_tracer("test")
+    set_tracer(tracer)
+    set_identity("pipecat-test", "0.1.0")
+    state = ensure_session("conv-empty-user")
+    assert state is not None
+
+    handle_user_turn_started(None, None)
+    assert state.open_user_turn_index == 1
+    handle_user_turn_stopped(None, None, _user_msg(content="  "))
+    assert state.open_user_turn_index is None
+    assert state.open_agent_turn_index is None
     assert [s for s in exporter.get_finished_spans() if s.name == SPAN_PARLOT_TURN] == []

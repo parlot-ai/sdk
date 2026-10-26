@@ -116,6 +116,7 @@ def parlotize(
 
     from ._hooks import (
         install_aggregator_turn_hooks,
+        install_latency_observer_hooks,
         install_pipeline_worker_hooks,
         install_tool_call_hooks,
     )
@@ -132,6 +133,7 @@ def parlotize(
     install_pipeline_worker_hooks()
     install_tool_call_hooks()
     install_aggregator_turn_hooks()
+    install_latency_observer_hooks()
     _neutralize_pipecat_setup_tracing()
 
     _configured = True
