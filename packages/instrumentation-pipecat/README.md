@@ -15,14 +15,24 @@ pip install parlot-instrumentation-pipecat
 
 ## Instrument
 
-Call `parlotize()` once before building your pipeline (replaces Pipecat's `setup_tracing` for Parlot export). Enable tracing on `PipelineWorker`:
+Call `parlotize()` once before building your pipeline (replaces Pipecat's `setup_tracing` for Parlot export). Use `LLMContextAggregatorPair` with the assistant aggregator **after** `transport.output()` — `parlotize` auto-wires those aggregators so committed turn events mint `parlot.turn`.
 
 ```python
+from pipecat.processors.aggregators.llm_response_universal import LLMContextAggregatorPair
 from parlot.instrumentation.pipecat import parlotize
 
 parlotize("my-pipecat-agent", version="0.1.0")
 
-# ... build Pipeline ...
+context_aggregator = LLMContextAggregatorPair(context)
+pipeline = Pipeline([
+    transport.input(),
+    stt,
+    context_aggregator.user(),
+    llm,
+    tts,
+    transport.output(),
+    context_aggregator.assistant(),
+])
 
 worker = PipelineWorker(
     pipeline,

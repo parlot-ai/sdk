@@ -17,6 +17,8 @@ from parlot.core.attrs import (
     ATTR_SESSION_AGENT_FRAMEWORK_RAW_ID,
     ATTR_SESSION_AGENT_ID,
     ATTR_SESSION_MODALITY,
+    ATTR_SESSION_TURN_COUNT,
+    ATTR_SESSION_TURN_INDEX_MAX,
     ATTR_TURN_INPUT_MODALITY,
     ATTR_TURN_MEDIA_END_MS,
     ATTR_TURN_MEDIA_START_MS,
@@ -53,14 +55,15 @@ class _PipecatSessionState(SessionState):
     # Pipecat's native turn.number is one exchange; we allocate separate indices.
     open_user_turn_index: int | None = None
     open_agent_turn_index: int | None = None
-    # True once the open user index has been reminted (STT-final path).
+    # True once the open user/agent slot was minted from aggregator events.
     user_turn_emitted: bool = False
+    agent_turn_emitted: bool = False
     transport: str = ""
     close_emitted: bool = False
 
 
 def allocate_user_turn_index(state: _PipecatSessionState) -> int:
-    """Next Parlot turn index for user/STT (stable for the open Pipecat exchange)."""
+    """Next Parlot turn index for a user utterance (aggregator events)."""
     if state.open_user_turn_index is not None:
         return state.open_user_turn_index
     state.turn_count += 1
@@ -70,7 +73,7 @@ def allocate_user_turn_index(state: _PipecatSessionState) -> int:
 
 
 def allocate_agent_turn_index(state: _PipecatSessionState) -> int:
-    """Next Parlot turn index for agent/LLM/TTS (after any open user turn)."""
+    """Next Parlot turn index for agent speech / nesting (after any open user)."""
     if state.open_agent_turn_index is not None:
         return state.open_agent_turn_index
     if state.open_user_turn_index is not None:
@@ -88,6 +91,7 @@ def clear_open_turn_indices(state: _PipecatSessionState) -> None:
     state.open_agent_turn_index = None
     state.open_turn_index = None
     state.user_turn_emitted = False
+    state.agent_turn_emitted = False
 
 
 _registry: ConversationSessionRegistry[_PipecatSessionState] = (
@@ -283,6 +287,10 @@ def close_session(conversation_id: str, *, reason: str = "completed") -> None:
             conversation_id=state.conversation_id,
             reason=reason,
             framework=PIPECAT_FRAMEWORK,
+            extra_attrs={
+                ATTR_SESSION_TURN_COUNT: state.turn_count,
+                ATTR_SESSION_TURN_INDEX_MAX: state.turn_count,
+            },
             stamp_fn=lambda span: _stamp_session_identity(
                 span, conversation_id=conversation_id, state=state
             ),
