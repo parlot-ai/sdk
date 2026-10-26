@@ -10,6 +10,8 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanE
 from parlot.core.attrs import (
     ATTR_SESSION_AGENT_FRAMEWORK,
     ATTR_SESSION_ID,
+    ATTR_SESSION_TURN_COUNT,
+    ATTR_SESSION_TURN_INDEX_MAX,
     ATTR_TURN_INDEX,
     SPAN_CONVERSATION_SESSION,
     SPAN_PARLOT_SESSION_CLOSE,
@@ -66,3 +68,36 @@ def test_ensure_session_and_turn_emit_contract_spans() -> None:
 
     turn_spans = [s for s in exporter.get_finished_spans() if s.name == SPAN_PARLOT_TURN]
     assert turn_spans[0].attributes[ATTR_TURN_INDEX] == 1
+
+    close_spans = [
+        s for s in exporter.get_finished_spans() if s.name == SPAN_PARLOT_SESSION_CLOSE
+    ]
+    assert close_spans[0].attributes[ATTR_SESSION_TURN_COUNT] == 1
+    assert close_spans[0].attributes[ATTR_SESSION_TURN_INDEX_MAX] == 1
+
+
+def test_release_agent_turn_reservation_rolls_back_turn_count() -> None:
+    from parlot.instrumentation.pipecat._session import (
+        allocate_agent_turn_index,
+        allocate_user_turn_index,
+        release_agent_turn_reservation,
+    )
+
+    exporter = InMemorySpanExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    tracer = provider.get_tracer("test")
+    set_tracer(tracer)
+
+    state = ensure_session("conv-release")
+    assert state is not None
+    allocate_user_turn_index(state)
+    allocate_agent_turn_index(state)
+    assert state.turn_count == 2
+    assert state.open_user_turn_index == 1
+    assert state.open_agent_turn_index == 2
+
+    release_agent_turn_reservation(state)
+    assert state.open_agent_turn_index is None
+    assert state.open_user_turn_index == 1
+    assert state.turn_count == 1

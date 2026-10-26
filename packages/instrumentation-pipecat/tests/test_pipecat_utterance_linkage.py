@@ -292,3 +292,148 @@ def test_turn_bounds_follow_stt_and_llm_tts_windows() -> None:
     # Reminted windows must stay far shorter than the 10s native turn.
     assert (user.end_time - user.start_time) < 1_000_000_000
     assert (agent.end_time - agent.start_time) < 2_000_000_000
+
+
+def test_premature_native_turn_still_mints_agent_after_stt_user() -> None:
+    """Native turn ends before STT/TTS; reserved agent must still emit on TTS.
+
+    Reproduces staging gap: Pipecat Turn N closes in ~80ms, user STT mints and
+    reserves agent N+1, reply TTS lands with no open native turn — previously
+    orphan/flush bailed on open_user_turn_index and the utterance was lost.
+    """
+    exporter, provider = _provider()
+    tracer = provider.get_tracer("test")
+    set_tracer(tracer)
+    set_identity("pipecat-test", "0.1.0")
+
+    t0 = time.time_ns()
+    conv = tracer.start_span("conversation", start_time=t0)
+    conv.set_attribute(ATTR_PIPECAT_CONVERSATION_ID, "conv-premature")
+
+    # Spurious short native turn (ends before speech finishes).
+    turn = tracer.start_span(
+        "turn", context=set_span_in_context(conv), start_time=t0
+    )
+    turn.set_attribute(ATTR_PIPECAT_CONVERSATION_ID, "conv-premature")
+    turn.set_attribute(ATTR_PIPECAT_TURN_NUMBER, 3)
+    turn.end(end_time=t0 + 80_000_000)
+
+    # STT final + agent reply run with no open native turn.
+    stt = tracer.start_span("stt", start_time=t0 + 200_000_000)
+    stt.set_attribute(ATTR_PIPECAT_CONVERSATION_ID, "conv-premature")
+    stt.set_attribute(ATTR_PIPECAT_TURN_NUMBER, 3)
+    stt.set_attribute(ATTR_PIPECAT_TRANSCRIPT, "Sounds perfect.")
+    stt.set_attribute("is_final", True)
+    stt.end(end_time=t0 + 400_000_000)
+
+    llm = tracer.start_span("llm", start_time=t0 + 450_000_000)
+    llm.set_attribute(ATTR_PIPECAT_CONVERSATION_ID, "conv-premature")
+    llm.set_attribute(ATTR_PIPECAT_TURN_NUMBER, 3)
+    llm.set_attribute(
+        "output", "It really does! Would you like to know anything else?"
+    )
+    llm.end(end_time=t0 + 800_000_000)
+
+    tts = tracer.start_span("tts", start_time=t0 + 850_000_000)
+    tts.set_attribute(ATTR_PIPECAT_CONVERSATION_ID, "conv-premature")
+    tts.set_attribute(ATTR_PIPECAT_TURN_NUMBER, 3)
+    tts.set_attribute(
+        ATTR_PIPECAT_TEXT, "It really does! Would you like to know anything else?"
+    )
+    tts.end(end_time=t0 + 2_000_000_000)
+
+    # Next exchange must not steal the prior agent slot.
+    turn4 = tracer.start_span(
+        "turn", context=set_span_in_context(conv), start_time=t0 + 2_100_000_000
+    )
+    turn4.set_attribute(ATTR_PIPECAT_CONVERSATION_ID, "conv-premature")
+    turn4.set_attribute(ATTR_PIPECAT_TURN_NUMBER, 4)
+    stt2 = tracer.start_span(
+        "stt", context=set_span_in_context(turn4), start_time=t0 + 2_200_000_000
+    )
+    stt2.set_attribute(ATTR_PIPECAT_TRANSCRIPT, "All. Thank you.")
+    stt2.set_attribute("is_final", True)
+    stt2.end(end_time=t0 + 2_500_000_000)
+    tts2 = tracer.start_span(
+        "tts", context=set_span_in_context(turn4), start_time=t0 + 2_600_000_000
+    )
+    tts2.set_attribute(ATTR_PIPECAT_TEXT, "You're welcome! Have a great day!")
+    tts2.end(end_time=t0 + 3_200_000_000)
+    turn4.end(end_time=t0 + 3_300_000_000)
+    conv.end(end_time=t0 + 3_400_000_000)
+
+    turns = [s for s in exporter.get_finished_spans() if s.name == SPAN_PARLOT_TURN]
+    ordered = sorted(turns, key=lambda s: int(s.attributes[ATTR_TURN_INDEX]))
+    by_text = {
+        (
+            s.attributes.get(ATTR_TURN_USER_TEXT)
+            or s.attributes.get(ATTR_TURN_AGENT_TEXT)
+            or ""
+        ): int(s.attributes[ATTR_TURN_INDEX])
+        for s in ordered
+    }
+    assert "Sounds perfect." in by_text
+    assert "It really does! Would you like to know anything else?" in by_text
+    assert "All. Thank you." in by_text
+    assert "You're welcome! Have a great day!" in by_text
+    assert (
+        by_text["It really does! Would you like to know anything else?"]
+        == by_text["Sounds perfect."] + 1
+    )
+    assert by_text["All. Thank you."] > by_text[
+        "It really does! Would you like to know anything else?"
+    ]
+
+
+def test_empty_late_tts_does_not_burn_agent_index() -> None:
+    """TTS with no text after a closed turn must not permanently burn an index."""
+    exporter, provider = _provider()
+    tracer = provider.get_tracer("test")
+    set_tracer(tracer)
+    set_identity("pipecat-test", "0.1.0")
+
+    t0 = time.time_ns()
+    conv = tracer.start_span("conversation", start_time=t0)
+    conv.set_attribute(ATTR_PIPECAT_CONVERSATION_ID, "conv-empty-tts")
+
+    turn1 = tracer.start_span(
+        "turn", context=set_span_in_context(conv), start_time=t0
+    )
+    turn1.set_attribute(ATTR_PIPECAT_CONVERSATION_ID, "conv-empty-tts")
+    turn1.set_attribute(ATTR_PIPECAT_TURN_NUMBER, 1)
+    tts1 = tracer.start_span(
+        "tts", context=set_span_in_context(turn1), start_time=t0 + 100_000_000
+    )
+    tts1.set_attribute(ATTR_PIPECAT_TEXT, "Hello.")
+    tts1.end(end_time=t0 + 500_000_000)
+    turn1.end(end_time=t0 + 600_000_000)
+
+    # Late empty TTS (no transcript attr) after native turn closed.
+    empty = tracer.start_span("tts", start_time=t0 + 700_000_000)
+    empty.set_attribute(ATTR_PIPECAT_CONVERSATION_ID, "conv-empty-tts")
+    empty.set_attribute(ATTR_PIPECAT_TURN_NUMBER, 1)
+    empty.end(end_time=t0 + 800_000_000)
+
+    turn2 = tracer.start_span(
+        "turn", context=set_span_in_context(conv), start_time=t0 + 900_000_000
+    )
+    turn2.set_attribute(ATTR_PIPECAT_CONVERSATION_ID, "conv-empty-tts")
+    turn2.set_attribute(ATTR_PIPECAT_TURN_NUMBER, 2)
+    stt = tracer.start_span(
+        "stt", context=set_span_in_context(turn2), start_time=t0 + 1_000_000_000
+    )
+    stt.set_attribute(ATTR_PIPECAT_TRANSCRIPT, "Hi")
+    stt.set_attribute("is_final", True)
+    stt.end(end_time=t0 + 1_200_000_000)
+    tts2 = tracer.start_span(
+        "tts", context=set_span_in_context(turn2), start_time=t0 + 1_300_000_000
+    )
+    tts2.set_attribute(ATTR_PIPECAT_TEXT, "Hey there.")
+    tts2.end(end_time=t0 + 1_800_000_000)
+    turn2.end(end_time=t0 + 1_900_000_000)
+    conv.end(end_time=t0 + 2_000_000_000)
+
+    turns = [s for s in exporter.get_finished_spans() if s.name == SPAN_PARLOT_TURN]
+    indexes = sorted(int(s.attributes[ATTR_TURN_INDEX]) for s in turns)
+    # Greeting agent=1, user=2, agent=3 — no gap from the empty late TTS.
+    assert indexes == [1, 2, 3]

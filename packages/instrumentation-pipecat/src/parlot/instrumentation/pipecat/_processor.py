@@ -38,6 +38,7 @@ from ._session import (
     emit_turn,
     ensure_session,
     lookup_session,
+    release_agent_turn_reservation,
 )
 from ._span_rename import (
     NATIVE_CONVERSATION,
@@ -295,22 +296,32 @@ class PipecatGenAIProcessor(ParlotBaseProcessor):
         interrupted: bool = False,
         e2e: float | None = None,
     ) -> bool:
-        """Emit a reserved agent-only turn (tool continuation) before a new user.
+        """Emit a reserved agent turn (tool continuation or post-STT reply).
 
         Without this, STT allocates ``user = open_agent + 1`` while keeping the
         old agent index — timeline then sorts user (earlier STT) before agent
         (later LLM) despite a lower agent turn index.
+
+        After STT mints the user turn, ``open_user_turn_index`` stays set with
+        ``user_turn_emitted=True`` until the agent reply lands. Allow flush in
+        that state so late TTS (native turn already closed) still mints the
+        reserved agent index instead of burning it.
         """
         if state.open_agent_turn_index is None:
             return False
-        if state.open_user_turn_index is not None:
+        # Still waiting for a paired native-turn mint of the user utterance.
+        if state.open_user_turn_index is not None and not state.user_turn_emitted:
             return False
         agent_idx = state.open_agent_turn_index
         _key, buffered = self._find_agent_bucket(cid, prefer_turn)
         agent_text = str(buffered.get("agent") or "").strip()
         if not agent_text:
-            # Indices reserved by LLM/TTS with no text yet — drop reservation.
-            clear_open_turn_indices(state)
+            # Indices reserved by LLM/TTS with no text yet — drop reservation
+            # without burning turn_count (empty TTS / no-audio retry).
+            release_agent_turn_reservation(state)
+            if state.open_user_turn_index is None:
+                state.open_turn_index = None
+                state.user_turn_emitted = False
             return False
         agent_start = buffered.get("agent_start_ns")
         agent_end = buffered.get("agent_end_ns")
@@ -384,22 +395,36 @@ class PipecatGenAIProcessor(ParlotBaseProcessor):
 
         Late tool-follow-up TTS otherwise buffers onto the *next* turn and gets
         paired with the next user STT (inverted indices / timeline order).
+
+        Also covers the premature-native-turn case: STT already minted the user
+        turn (``user_turn_emitted``) and reserved the agent index, then TTS
+        arrives with no open native turn — emit the reserved agent slot now.
         """
         cid, turn_n = self._resolve_conversation_and_turn(span)
         state = lookup_session(cid) if cid else _pipecat_state(get_active_session())
         if state is None or not cid:
             return
-        if state.open_user_turn_index is not None:
+        # User slot open but not yet reminted — leave for native-turn mint.
+        if state.open_user_turn_index is not None and not state.user_turn_emitted:
             return
         if self._native_turn_open(cid):
             return
-        bucket = self._bucket(cid, turn_n) if turn_n is not None else {}
+        _key, bucket = self._find_agent_bucket(cid, turn_n)
         agent_text = str(bucket.get("agent") or "").strip()
         if not agent_text or bucket.get("agent_emitted"):
+            # Late empty TTS (e.g. no-audio retry) may have allocated an
+            # agent-only index — roll it back instead of burning the slot.
+            if (
+                state.open_agent_turn_index is not None
+                and state.open_user_turn_index is None
+            ):
+                release_agent_turn_reservation(state)
             return
         if state.open_agent_turn_index is None:
             allocate_agent_turn_index(state)
-        self._flush_pending_agent_only(state, cid=cid, prefer_turn=turn_n)
+        self._flush_pending_agent_only(
+            state, cid=cid, prefer_turn=turn_n if turn_n is not None else _key
+        )
 
     def _mint_contract_turn(self, span: ReadableSpan) -> None:
         attrs = span.attributes or {}
@@ -475,6 +500,7 @@ class PipecatGenAIProcessor(ParlotBaseProcessor):
                 end_time_ns=user_end,
             )
             state.user_turn_emitted = True
+        emitted_agent_here = False
         if agent_text and not agent_already and agent_idx is not None:
             emit_turn(
                 state,
@@ -488,6 +514,21 @@ class PipecatGenAIProcessor(ParlotBaseProcessor):
                 start_time_ns=agent_start_ns,
                 end_time_ns=agent_end_ns,
             )
+            emitted_agent_here = True
+
+        # When this native turn had no agent text, mint any reserved agent text
+        # sitting in *other* Pipecat-turn buckets (premature native turn closed
+        # before TTS; the next native turn must not wipe that reservation).
+        if not emitted_agent_here and state.open_agent_turn_index is not None:
+            flushed = self._flush_pending_agent_only(
+                state,
+                cid=state.conversation_id,
+                prefer_turn=None,
+                interrupted=interrupted,
+                e2e=e2e,
+            )
+            if not flushed and state.open_agent_turn_index is not None:
+                release_agent_turn_reservation(state)
         clear_open_turn_indices(state)
 
     @staticmethod

@@ -17,6 +17,8 @@ from parlot.core.attrs import (
     ATTR_SESSION_AGENT_FRAMEWORK_RAW_ID,
     ATTR_SESSION_AGENT_ID,
     ATTR_SESSION_MODALITY,
+    ATTR_SESSION_TURN_COUNT,
+    ATTR_SESSION_TURN_INDEX_MAX,
     ATTR_TURN_INPUT_MODALITY,
     ATTR_TURN_MEDIA_END_MS,
     ATTR_TURN_MEDIA_START_MS,
@@ -88,6 +90,24 @@ def clear_open_turn_indices(state: _PipecatSessionState) -> None:
     state.open_agent_turn_index = None
     state.open_turn_index = None
     state.user_turn_emitted = False
+
+
+def release_agent_turn_reservation(state: _PipecatSessionState) -> None:
+    """Drop an open agent index without emitting; roll back ``turn_count`` when safe.
+
+    Pipeline spans allocate agent indices before text is known. Empty TTS/LLM
+    (or a cleared reservation with no buffered text) must not permanently burn
+    the index — otherwise the next user jumps ahead and timeline gaps appear.
+    """
+    agent_idx = state.open_agent_turn_index
+    if agent_idx is None:
+        return
+    user_idx = state.open_user_turn_index
+    state.open_agent_turn_index = None
+    if state.open_turn_index == agent_idx:
+        state.open_turn_index = user_idx
+    if state.turn_count == agent_idx:
+        state.turn_count = user_idx if user_idx is not None else max(0, agent_idx - 1)
 
 
 _registry: ConversationSessionRegistry[_PipecatSessionState] = (
@@ -277,12 +297,18 @@ def close_session(conversation_id: str, *, reason: str = "completed") -> None:
         if state.close_emitted:
             return
         state.close_emitted = True
+        # Match LiveKit: collector merge uses these as the close turn hint.
+        extra = {
+            ATTR_SESSION_TURN_COUNT: state.turn_count,
+            ATTR_SESSION_TURN_INDEX_MAX: state.turn_count,
+        }
         emit_parlot_session_close(
             _tracer,
             session_id=state.session_id,
             conversation_id=state.conversation_id,
             reason=reason,
             framework=PIPECAT_FRAMEWORK,
+            extra_attrs=extra,
             stamp_fn=lambda span: _stamp_session_identity(
                 span, conversation_id=conversation_id, state=state
             ),
