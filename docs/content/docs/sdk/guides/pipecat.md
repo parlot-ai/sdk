@@ -53,6 +53,24 @@ turn indices early for waterfall nesting. PipelineWorker’s
 Pipecat’s nested conversation→turn OTEL tree is still used for session open/close
 and STT/LLM/TTS nesting under `turn.index` — those spans do not mint contract turns.
 
+## Requirements
+
+For user/agent turns and transcript on the Parlot timeline, the pipeline **must**
+include `LLMUserAggregator` and `LLMAssistantAggregator` (typically via
+`LLMContextAggregatorPair`). Parlot does **not** instantiate them for you.
+
+- Place the **user** aggregator early (after STT / before the LLM).
+- Place the **assistant** aggregator **after** `transport.output()` so committed
+  text matches what was spoken.
+- Call `parlotize()` **before** constructing those aggregators so handlers
+  auto-wire. If they already exist, call `attach_aggregators(user, assistant)`.
+- Without aggregators: session + STT/LLM/TTS spans may still export;
+  **`parlot.turn` will not**.
+
+Your own event handlers and `PipelineWorker(observers=[...])` keep working —
+Parlot **appends** handlers and observers alongside yours; it does not replace
+them.
+
 ## Add it to an existing bot
 
 ```python
@@ -60,12 +78,18 @@ from pipecat.processors.aggregators.llm_context import LLMContext
 from pipecat.processors.aggregators.llm_response_universal import (
     LLMContextAggregatorPair,
 )
-from parlot.instrumentation.pipecat import ParlotRecordingProcessor, parlotize
+from parlot.instrumentation.pipecat import (
+    ParlotRecordingProcessor,
+    attach_aggregators,
+    parlotize,
+)
 
 parlotize("my-pipecat-agent", version="0.1.0", record=True)
 
 context = LLMContext(messages)
 context_aggregator = LLMContextAggregatorPair(context)
+# Only needed if aggregators were built before parlotize():
+# attach_aggregators(context_aggregator.user(), context_aggregator.assistant())
 
 pipeline = Pipeline([
     transport.input(),
@@ -84,6 +108,8 @@ worker = PipelineWorker(
     enable_tracing=True,
     enable_turn_tracking=True,
     conversation_id="optional-stable-id",
+    # Your observers stay; Parlot does not replace this list.
+    # observers=[MyCustomObserver()],
 )
 ```
 

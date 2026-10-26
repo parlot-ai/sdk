@@ -13,17 +13,30 @@ pip install parlot-instrumentation-pipecat
 # or: pip install "parlot[pipecat]"
 ```
 
-## Instrument
+## Requirements
 
-Call `parlotize()` once before building your pipeline (replaces Pipecat's `setup_tracing` for Parlot export). Use `LLMContextAggregatorPair` with the assistant aggregator **after** `transport.output()` — `parlotize` auto-wires those aggregators so committed turn events mint `parlot.turn`.
+For `parlot.turn` (user/agent transcript on the timeline), the pipeline **must** include
+`LLMUserAggregator` and `LLMAssistantAggregator` — typically via `LLMContextAggregatorPair`.
+Parlot does not create them. Put the assistant aggregator **after** `transport.output()`.
+
+Call `parlotize()` **before** building aggregators so handlers auto-wire. If they already
+exist, call `attach_aggregators(user, assistant)`. Without aggregators you may still get
+session + STT/LLM/TTS spans, but not contract turns.
+
+Your own aggregator event handlers and `observers=[...]` keep working — Parlot appends
+alongside them.
+
+## Instrument
 
 ```python
 from pipecat.processors.aggregators.llm_response_universal import LLMContextAggregatorPair
-from parlot.instrumentation.pipecat import parlotize
+from parlot.instrumentation.pipecat import attach_aggregators, parlotize
 
 parlotize("my-pipecat-agent", version="0.1.0")
 
 context_aggregator = LLMContextAggregatorPair(context)
+# attach_aggregators(...) only if the pair was built before parlotize()
+
 pipeline = Pipeline([
     transport.input(),
     stt,
