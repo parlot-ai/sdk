@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.6](https://github.com/parlot-ai/sdk/compare/instrumentation-pipecat-v0.1.5...instrumentation-pipecat-v0.1.6) (2026-10-26)
+
+
+### Features
+
+* **pipecat:** attach_aggregators and document aggregator requirement ([#128](https://github.com/parlot-ai/sdk/issues/128)) ([3e2e628](https://github.com/parlot-ai/sdk/commit/3e2e628c712969063d835c8725871809cd386af5))
+
+
+### Bug Fixes
+
+* **pipecat:** mint parlot.turn from context-aggregator events ([#125](https://github.com/parlot-ai/sdk/issues/125)) ([cfe1b8c](https://github.com/parlot-ai/sdk/commit/cfe1b8cea03b2009e35b8dbd140e54ef4869ec5e))
+* **pipecat:** restore e2e latency and reserve turns on started events ([#127](https://github.com/parlot-ai/sdk/issues/127)) ([95d3ffb](https://github.com/parlot-ai/sdk/commit/95d3ffbb8511d43d7d5126d95ab827f72881e71c))
+
 ## [0.1.5](https://github.com/parlot-ai/sdk/compare/instrumentation-pipecat-v0.1.4...instrumentation-pipecat-v0.1.5) (2026-10-25)
 
 
