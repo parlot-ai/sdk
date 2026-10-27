@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.6](https://github.com/parlot-ai/sdk/compare/parlot-v0.3.5...parlot-v0.3.6) (2026-10-27)
+
+
+### Bug Fixes
+
+* **parlot:** raise pipecat install floor to 0.1.6 ([#129](https://github.com/parlot-ai/sdk/issues/129)) ([be25d20](https://github.com/parlot-ai/sdk/commit/be25d2028d7a141d052fc00b91539d5954b165c3))
+* **parlot:** raise pipecat install floor to 0.1.7 ([#132](https://github.com/parlot-ai/sdk/issues/132)) ([082aa6c](https://github.com/parlot-ai/sdk/commit/082aa6cf23ce386d7913eee881e06fca31ed8879))
+
 ## [0.3.5](https://github.com/parlot-ai/sdk/compare/parlot-v0.3.4...parlot-v0.3.5) (2026-10-25)
 
 
