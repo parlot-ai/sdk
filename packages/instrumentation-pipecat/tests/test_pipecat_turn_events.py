@@ -13,12 +13,15 @@ from opentelemetry.trace import set_span_in_context
 
 from parlot.core.attrs import (
     ATTR_SESSION_ID,
+    ATTR_SESSION_TURN_COUNT,
+    ATTR_SESSION_TURN_INDEX_MAX,
     ATTR_TURN_AGENT_TEXT,
     ATTR_TURN_E2E_LATENCY_S,
     ATTR_TURN_INDEX,
     ATTR_TURN_INTERRUPTED,
     ATTR_TURN_PARTICIPANT_ROLE,
     ATTR_TURN_USER_TEXT,
+    SPAN_PARLOT_SESSION_CLOSE,
     SPAN_PARLOT_TURN,
     SPAN_VOICE_STT,
     SPAN_VOICE_TTS,
@@ -343,7 +346,103 @@ def test_empty_user_after_started_clears_reservation() -> None:
 
     handle_user_turn_started(None, None)
     assert state.open_user_turn_index == 1
+    assert state.open_agent_turn_index == 2
+    assert state.turn_count == 2
     handle_user_turn_stopped(None, None, _user_msg(content="  "))
     assert state.open_user_turn_index is None
     assert state.open_agent_turn_index is None
+    assert state.turn_count == 0
+    assert state.last_minted_turn_index == 0
     assert [s for s in exporter.get_finished_spans() if s.name == SPAN_PARLOT_TURN] == []
+
+    # Next real user mint reuses index 1 (no ghost hole from the cleared reserve).
+    handle_user_turn_stopped(None, None, _user_msg(content="hello"))
+    turns = [s for s in exporter.get_finished_spans() if s.name == SPAN_PARLOT_TURN]
+    assert len(turns) == 1
+    assert turns[0].attributes[ATTR_TURN_INDEX] == 1
+    assert state.turn_count == 2  # user 1 + reserved agent 2
+    assert state.last_minted_turn_index == 1
+
+
+def test_empty_assistant_after_user_does_not_skip_agent_index() -> None:
+    """User mint reserves agent N+1; empty assistant clear must rewind so reply is N+1."""
+    exporter, provider = _provider()
+    tracer = provider.get_tracer("test")
+    set_tracer(tracer)
+    set_identity("pipecat-test", "0.1.0")
+    state = ensure_session("conv-empty-asst")
+    assert state is not None
+
+    handle_user_turn_stopped(None, None, _user_msg(content="weather?"))
+    assert state.open_user_turn_index == 1
+    assert state.open_agent_turn_index == 2
+    assert state.last_minted_turn_index == 1
+
+    handle_assistant_turn_started(None)
+    handle_assistant_turn_stopped(None, _asst_msg(content="   "))
+    assert state.open_agent_turn_index is None
+    assert state.turn_count == 1
+    assert state.last_minted_turn_index == 1
+
+    handle_assistant_turn_started(None)
+    handle_assistant_turn_stopped(None, _asst_msg(content="Let me check."))
+    turns = [s for s in exporter.get_finished_spans() if s.name == SPAN_PARLOT_TURN]
+    by_role = {s.attributes[ATTR_TURN_PARTICIPANT_ROLE]: s for s in turns}
+    assert by_role["user"].attributes[ATTR_TURN_INDEX] == 1
+    assert by_role["agent"].attributes[ATTR_TURN_INDEX] == 2
+    assert state.last_minted_turn_index == 2
+    assert state.turn_count == 2
+
+
+def test_consecutive_users_after_empty_assistant_are_contiguous() -> None:
+    """Staging ghost pattern: user 8 → empty agent → user 10; must stay contiguous."""
+    exporter, provider = _provider()
+    tracer = provider.get_tracer("test")
+    set_tracer(tracer)
+    set_identity("pipecat-test", "0.1.0")
+    state = ensure_session("conv-consec-user")
+    assert state is not None
+
+    handle_user_turn_stopped(None, None, _user_msg(content="No."))
+    assert state.last_minted_turn_index == 1
+    assert state.open_agent_turn_index == 2
+
+    handle_assistant_turn_stopped(None, _asst_msg(content=""))
+    assert state.turn_count == 1
+    assert state.open_agent_turn_index is None
+
+    handle_user_turn_stopped(None, None, _user_msg(content="No. Nothing."))
+    turns = [
+        s
+        for s in exporter.get_finished_spans()
+        if s.name == SPAN_PARLOT_TURN
+        and s.attributes[ATTR_TURN_PARTICIPANT_ROLE] == "user"
+    ]
+    assert [s.attributes[ATTR_TURN_INDEX] for s in turns] == [1, 2]
+    assert state.last_minted_turn_index == 2
+    # Agent slot reserved for nesting after second user mint.
+    assert state.turn_count == 3
+    assert state.open_agent_turn_index == 3
+
+
+def test_close_attrs_use_minted_max_after_cleared_reservation() -> None:
+    exporter, provider = _provider()
+    tracer = provider.get_tracer("test")
+    set_tracer(tracer)
+    set_identity("pipecat-test", "0.1.0")
+    state = ensure_session("conv-close-max")
+    assert state is not None
+
+    handle_user_turn_stopped(None, None, _user_msg(content="hi"))
+    handle_assistant_turn_stopped(None, _asst_msg(content=""))
+    assert state.last_minted_turn_index == 1
+    # Reservation cleared; open agent slot would have been 2.
+    assert state.turn_count == 1
+
+    close_session("conv-close-max", reason="completed")
+    close_spans = [
+        s for s in exporter.get_finished_spans() if s.name == SPAN_PARLOT_SESSION_CLOSE
+    ]
+    assert len(close_spans) == 1
+    assert close_spans[0].attributes[ATTR_SESSION_TURN_COUNT] == 1
+    assert close_spans[0].attributes[ATTR_SESSION_TURN_INDEX_MAX] == 1

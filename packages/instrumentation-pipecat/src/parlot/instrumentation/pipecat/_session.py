@@ -58,6 +58,8 @@ class _PipecatSessionState(SessionState):
     # True once the open user/agent slot was minted from aggregator events.
     user_turn_emitted: bool = False
     agent_turn_emitted: bool = False
+    # Highest index that actually emitted ``parlot.turn`` (close max / rewind).
+    last_minted_turn_index: int = 0
     # Wall-clock starts from on_*_turn_started (prefer over ISO message.timestamp).
     user_turn_start_ns: int | None = None
     agent_turn_start_ns: int | None = None
@@ -91,6 +93,22 @@ def allocate_agent_turn_index(state: _PipecatSessionState) -> int:
     return state.open_agent_turn_index
 
 
+def nesting_turn_index(state: _PipecatSessionState) -> int | None:
+    """Turn index for pipeline/tool nesting without allocating a new slot.
+
+    Prefers open aggregator reservations; otherwise last minted / turn_count.
+    """
+    if state.open_agent_turn_index is not None:
+        return state.open_agent_turn_index
+    if state.open_user_turn_index is not None:
+        return state.open_user_turn_index
+    if state.last_minted_turn_index > 0:
+        return state.last_minted_turn_index
+    if state.turn_count > 0:
+        return state.turn_count
+    return None
+
+
 def clear_open_turn_indices(state: _PipecatSessionState) -> None:
     state.open_user_turn_index = None
     state.open_agent_turn_index = None
@@ -99,6 +117,9 @@ def clear_open_turn_indices(state: _PipecatSessionState) -> None:
     state.agent_turn_emitted = False
     state.user_turn_start_ns = None
     state.agent_turn_start_ns = None
+    # Drop reserved-but-unminted agent/user slots so close max and the next
+    # allocate_* reuse contiguous indices (no ghost turn holes).
+    state.turn_count = state.last_minted_turn_index
 
 
 def buffer_e2e_latency(state: _PipecatSessionState, latency_s: float) -> None:
@@ -231,6 +252,7 @@ def emit_turn(
     if _tracer is None:
         return ""
     state.turn_count = max(state.turn_count, turn_index)
+    state.last_minted_turn_index = max(state.last_minted_turn_index, turn_index)
     state.open_turn_index = turn_index
 
     extra: dict[str, Any] = {
@@ -309,8 +331,10 @@ def close_session(conversation_id: str, *, reason: str = "completed") -> None:
             reason=reason,
             framework=PIPECAT_FRAMEWORK,
             extra_attrs={
-                ATTR_SESSION_TURN_COUNT: state.turn_count,
-                ATTR_SESSION_TURN_INDEX_MAX: state.turn_count,
+                # Minted max only — reserved-but-cleared slots must not inflate
+                # close hints (platform merge expects contiguous 1..hint).
+                ATTR_SESSION_TURN_COUNT: state.last_minted_turn_index,
+                ATTR_SESSION_TURN_INDEX_MAX: state.last_minted_turn_index,
             },
             stamp_fn=lambda span: _stamp_session_identity(
                 span, conversation_id=conversation_id, state=state
@@ -325,7 +349,7 @@ def close_session(conversation_id: str, *, reason: str = "completed") -> None:
             if recorder is not None and state.session_id:
                 recorder.record_session_close(
                     session_id=state.session_id,
-                    turn_count=state.turn_count,
+                    turn_count=state.last_minted_turn_index,
                     total_input_tokens=state.total_input_tokens,
                     total_output_tokens=state.total_output_tokens,
                 )

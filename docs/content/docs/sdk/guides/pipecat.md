@@ -48,10 +48,13 @@ flowchart LR
 Committed user/assistant transcripts from aggregator events
 (`on_user_turn_stopped` / `on_assistant_turn_stopped`, plus realtime
 `on_user_turn_message_added`) mint `parlot.turn`. `on_*_turn_started` reserves
-turn indices early for waterfall nesting. PipelineWorker’s
-`UserBotLatencyObserver` feeds `turn.e2e_latency_s` on the next agent turn.
-Pipecat’s nested conversation→turn OTEL tree is still used for session open/close
-and STT/LLM/TTS nesting under `turn.index` — those spans do not mint contract turns.
+turn indices early for waterfall nesting. Empty / aborted stop events release
+those reservations and **do not** permanently consume turn numbers — session
+`turn_count` / `turn_index_max` at close reflect minted contract turns only.
+PipelineWorker’s `UserBotLatencyObserver` feeds `turn.e2e_latency_s` on the next
+agent turn. Pipecat’s nested conversation→turn OTEL tree is still used for
+session open/close and STT/LLM/TTS nesting under `turn.index` — those spans do
+not mint contract turns.
 
 ## Requirements
 

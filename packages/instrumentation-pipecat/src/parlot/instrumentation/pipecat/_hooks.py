@@ -148,10 +148,10 @@ def install_tool_call_hooks() -> None:
 
         from ._platform_refs import stamp_pipecat_platform_refs
         from ._session import (
-            allocate_agent_turn_index,
             any_open_session,
             configured_agent_id,
             get_tracer,
+            nesting_turn_index,
         )
 
         tool_name = str(getattr(runner_item, "function_name", None) or "tool")
@@ -188,8 +188,11 @@ def install_tool_call_hooks() -> None:
                 span.set_attribute(
                     ATTR_SESSION_CONVERSATION_ID, state.conversation_id
                 )
-                turn_idx = allocate_agent_turn_index(state)
-                span.set_attribute(ATTR_TURN_INDEX, turn_idx)
+                # Nest under open / last-minted index — never burn a fresh
+                # turn number when no aggregator reservation is open.
+                turn_idx = nesting_turn_index(state)
+                if turn_idx is not None:
+                    span.set_attribute(ATTR_TURN_INDEX, turn_idx)
                 stamp_pipecat_platform_refs(
                     span, conversation_id=state.conversation_id
                 )
