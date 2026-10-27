@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7](https://github.com/parlot-ai/sdk/compare/instrumentation-pipecat-v0.1.6...instrumentation-pipecat-v0.1.7) (2026-10-27)
+
+
+### Bug Fixes
+
+* **pipecat:** rewind turn_count when clearing unused reservations ([#131](https://github.com/parlot-ai/sdk/issues/131)) ([e50c7cf](https://github.com/parlot-ai/sdk/commit/e50c7cf510ef71787ec96ff64b7c6f64397013a4))
+
 ## [0.1.6](https://github.com/parlot-ai/sdk/compare/instrumentation-pipecat-v0.1.5...instrumentation-pipecat-v0.1.6) (2026-10-26)
 
 
