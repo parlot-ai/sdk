@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.8](https://github.com/parlot-ai/sdk/compare/instrumentation-pipecat-v0.1.7...instrumentation-pipecat-v0.1.8) (2026-10-28)
+
+
+### Bug Fixes
+
+* **core:** default OTel service.name to agent_id ([#133](https://github.com/parlot-ai/sdk/issues/133)) ([95cbaec](https://github.com/parlot-ai/sdk/commit/95cbaec52eba066a71876978d5d29edf13c156e7))
+
 ## [0.1.7](https://github.com/parlot-ai/sdk/compare/instrumentation-pipecat-v0.1.6...instrumentation-pipecat-v0.1.7) (2026-10-27)
 
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.4](https://github.com/parlot-ai/sdk/compare/instrumentation-langgraph-v0.4.3...instrumentation-langgraph-v0.4.4) (2026-10-28)
+
+
+### Bug Fixes
+
+* **core:** default OTel service.name to agent_id ([#133](https://github.com/parlot-ai/sdk/issues/133)) ([95cbaec](https://github.com/parlot-ai/sdk/commit/95cbaec52eba066a71876978d5d29edf13c156e7))
+
 ## [0.4.3](https://github.com/parlot-ai/sdk/compare/instrumentation-langgraph-v0.4.2...instrumentation-langgraph-v0.4.3) (2026-10-25)
 
 
