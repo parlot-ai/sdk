@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.10](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.9...instrumentation-livekit-v0.4.10) (2026-10-28)
+
+
+### Bug Fixes
+
+* **core:** default OTel service.name to agent_id ([#133](https://github.com/parlot-ai/sdk/issues/133)) ([95cbaec](https://github.com/parlot-ai/sdk/commit/95cbaec52eba066a71876978d5d29edf13c156e7))
+
 ## [0.4.9](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.8...instrumentation-livekit-v0.4.9) (2026-10-25)
 
 
