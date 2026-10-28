@@ -33,9 +33,13 @@ Before starting any new implementation work, create a fresh branch from up-to-da
 
 ## Meta package dependency floors
 
-When a breaking (or otherwise install-contract) change lands in `parlot-core` or an instrumentation adapter, bump the matching lower bounds in [`packages/meta/pyproject.toml`](packages/meta/pyproject.toml) (`parlot-core`, `livekit` / `langgraph` / `pipecat` / `all` extras) so `"parlot[…]"` cannot resolve to pre-API wheels. Release Please will not do this automatically.
+**Manual — Release Please does not do this.** Whenever you change code under `packages/core` or `packages/instrumentation-*` that will ship a new package version (`feat` / `fix` / `perf` PR titles), plan a follow-up that raises the matching lower bounds in [`packages/meta/pyproject.toml`](packages/meta/pyproject.toml) so `"parlot[…]"` cannot resolve to pre-change wheels:
 
-After any livekit- or pipecat-changing code that ships a new `parlot-instrumentation-livekit` / `parlot-instrumentation-pipecat` version, open a follow-up PR that raises the matching `livekit` / `pipecat` and `all` floors (and the related example pins / locks) to that version once the wheel is on PyPI. Do not leave the meta floor one release behind.
+- `dependencies`: `parlot-core>=…`
+- extras: `livekit` / `langgraph` / `pipecat` / `all` → matching `parlot-instrumentation-*>=…`
+- related example pins / lockfiles when they pin those packages
+
+Bump floors only after the new wheel is on PyPI (version from the Release Please release). Do not leave the meta floor one release behind.
 
 ## Local collector (optional)
 
