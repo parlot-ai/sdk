@@ -114,7 +114,7 @@ class ParlotizeProtocol(Protocol):
                 preserving span durations, tokens, and turn text. Precedence: job
                 metadata → this kwarg → Settings → Generative AI (default: on).
             service_name: OpenTelemetry resource ``service.name``. Defaults to
-                ``agent_id`` or a framework-specific fallback.
+                ``agent_id`` when omitted or blank.
             tracer_provider: Existing OpenTelemetry ``TracerProvider`` to adopt. If
                 omitted, adapters build one with Parlot's OTLP exporter (or adopt an
                 already-registered provider when another adapter configured first).
@@ -143,6 +143,8 @@ class BaseParlotizeResult:
     capture_genai_content: Optional[bool]
     capture_logs: bool | list[str] | None
     log_level: Optional[str]
+    # OTel service.name: service_name kwarg or agent_id.
+    service_name: str = ""
 
 
 def configure_parlot_logging() -> None:
@@ -174,6 +176,7 @@ def base_parlotize(
     endpoint: Optional[str] = None,
     api_key: Optional[str] = None,
     capture_genai_content: Optional[bool] = None,
+    service_name: Optional[str] = None,
     tracer_provider: TracerProvider | None = None,
     version: Optional[str] = None,
     capture_logs: bool | list[str] | None = None,
@@ -192,6 +195,8 @@ def base_parlotize(
             ``PARLOT_ENDPOINT``.
         api_key: Org-scoped API key. If omitted, reads ``PARLOT_API_KEY``.
         capture_genai_content: Process-wide GenAI content capture override.
+        service_name: OTel ``service.name``. Defaults to ``agent_id`` when
+            omitted or blank.
         tracer_provider: Existing ``TracerProvider`` to adopt, if any.
         version: Deployment version for ``gen_ai.agent.version``. Defaults to
             ``\"unknown\"`` when omitted or blank.
@@ -199,8 +204,8 @@ def base_parlotize(
         log_level: Minimum level for session log capture.
 
     Returns:
-        Resolved endpoint, credentials, provider, and capture settings for the
-        calling adapter.
+        Resolved endpoint, credentials, provider, ``service_name``, and capture
+        settings for the calling adapter.
     """
     from parlot.core.bootstrap import fetch_telemetry_bootstrap
     from parlot.core.context import ParlotContext
@@ -209,6 +214,7 @@ def base_parlotize(
         resolve_api_key,
         resolve_capture_genai_content,
         resolve_endpoint,
+        resolve_service_name,
     )
 
     configure_parlot_logging()
@@ -220,6 +226,10 @@ def base_parlotize(
     resolved_endpoint = resolve_endpoint(endpoint)
     resolved_api_key = resolve_api_key(api_key)
     resolved_capture_content = resolve_capture_genai_content(capture_genai_content)
+    resolved_service_name = resolve_service_name(
+        service_name,
+        agent_id=resolved_agent_id,
+    )
 
     resolved_capture_logs = normalize_glob_or_bool(capture_logs)
 
@@ -254,4 +264,5 @@ def base_parlotize(
         capture_genai_content=resolved_capture_content,
         capture_logs=resolved_capture_logs,
         log_level=resolved_log_level,
+        service_name=resolved_service_name,
     )
