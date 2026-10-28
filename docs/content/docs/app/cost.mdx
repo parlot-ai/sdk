@@ -32,7 +32,7 @@ Open **Observe → Cost & margin**.
 
 | Tab | Use it to |
 |-----|-----------|
-| **Margin & cost** | Set what you charge clients per minute, then compare revenue to estimated provider cost by agent or client for the selected date range (defaults to the past 30 days). Also shows **cost per completed topic** when goals are instrumented. |
+| **Margin & cost** | Set a **bill rate ($/min)**, then compare revenue to estimated provider cost by agent or client for the selected date range (defaults to the past 30 days). Also shows **cost per completed topic** when goals are instrumented. |
 | **Rate card** | See which models appear in usage, what rate applies, and fix unpriced rows. |
 
 The Cost & margin nav item can show a badge with how many models still need a rate. Cost views
@@ -91,8 +91,9 @@ it as pass-through visibility for planning.
 
 On the **Margin & cost** tab:
 
-1. Set **You charge per minute** (organization-wide, or override per agent under agent settings).
-2. Parlot multiplies that price by session minutes to estimate revenue.
+1. Set a **bill rate ($/min)** (organization-wide under Settings → General, or override per agent
+   under agent settings).
+2. Parlot multiplies that rate by session minutes to estimate revenue.
 3. Margin compares that revenue to estimated provider cost for the selected date range (defaults
    to the past 30 days), grouped by agent or client.
 4. **Cost per completed topic** attributes session cost once per topic (first goal on that topic)
@@ -102,8 +103,8 @@ When rates are missing, margin is labeled **Partial** — unpriced models make c
 
 ### Agencies: one workspace or agent per client
 
-For different sell rates by client, prefer **one Parlot workspace per client**, or **one agent per
-client** with that agent’s sell $/min. Metadata tags (below) are for rollups inside a shared
+For different bill rates by client, prefer **one Parlot workspace per client**, or **one agent per
+client** with that agent’s bill rate ($/min). Metadata tags (below) are for rollups inside a shared
 workspace, not a full client contract object.
 
 ### Tag sessions with a client
@@ -122,7 +123,7 @@ personally identifiable information (PII) in metadata. See
 [Custom metadata](/sdk/get-started/concepts#custom-metadata-and-external-references) in the SDK
 Concepts guide.
 
-If sell price is empty, revenue and margin stay blank. If models are unpriced, cost can be
+If bill rate is empty, revenue and margin stay blank. If models are unpriced, cost can be
 understated—watch for warnings and incomplete-cost icons on rows that show near-zero cost despite
 real traffic.
 
@@ -138,7 +139,7 @@ Each row includes:
 - Line item: category (LLM / STT / TTS / telephony), provider, model, unit (for example million
   input tokens vs million output tokens: `input_mtok` / `output_mtok`), quantity, frozen
   `unit_rate_usd`, `cost_usd`, and rate source
-- Session total cost, plus revenue and margin % when you have set a per-minute sell price
+- Session total cost, plus revenue and margin % when you have set a bill rate ($/min)
 
 Unit rates are frozen at **session close** from the same catalog/override resolution that priced
 the session—so LLM input and output appear as separate lines with their own rates. Older sessions
@@ -146,7 +147,7 @@ closed before this existed may show aggregate stage rows with blank rates
 (`source=legacy_aggregate`).
 
 Filenames look like `YYYYMMDD-session-cost-{range}-{hex}.csv` (for example
-`20261005-session-cost-30d-a3f1.csv`). Exports may warn when sell price is missing or models are
+`20261005-session-cost-30d-a3f1.csv`). Exports may warn when bill rate is missing or models are
 still unpriced—revenue/margin can be blank and costs understated until rates are complete.
 
 ## Session Cost tab
