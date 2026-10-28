@@ -101,15 +101,29 @@ On the **Margin & cost** tab:
 
 When rates are missing, margin is labeled **Partial** — unpriced models make cost look too low.
 
-### Agencies: one workspace or agent per client
+### Agencies: one agent per client (default)
 
-For different bill rates by client, prefer **one Parlot workspace per client**, or **one agent per
-client** with that agent’s bill rate ($/min). Metadata tags (below) are for rollups inside a shared
-workspace, not a full client contract object.
+**Default:** put each client on its **own agent** and set that agent’s **bill rate ($/min)**. Keep
+everyone in one workspace so users, rate card, and cross-client margin rollups stay in one place.
+
+Why this is usually better than a workspace per client:
+
+- One set of members and settings instead of multiplying them by client count
+- Cost & margin can roll up across clients (by agent, or by client tag below)
+- Rate changes are one edit on one agent; a second agent covers a second use case or rate for the
+  same client later
+
+**Use a separate workspace per client** when you need hard isolation—compliance or contractual
+boundaries, client staff with their own logins, separate invoicing/API keys, or a white-label
+feel. That overhead is rarely worth it for more than a handful of clients unless those apply.
+
+Keep contract terms, retainers, and dates in your billing sheet or system. Parlot’s bill rate is
+the $/min used for margin, not a full client contract object.
 
 ### Tag sessions with a client
 
-To group margin **by client** inside one workspace, stamp `client` on the session from your agent:
+Use tags to **slice reports**, not as the source of truth for pricing. Stamp `client` on the
+session so Cost & margin can group **by client** inside one workspace:
 
 ```python
 from parlot.core import set_session_metadata
@@ -122,6 +136,9 @@ client rollup. Call this after the session has started. Prefer short identifiers
 personally identifiable information (PII) in metadata. See
 [Custom metadata](/sdk/get-started/concepts#custom-metadata-and-external-references) in the SDK
 Concepts guide.
+
+Different bill rates still belong on **agents** (or separate workspaces). The `client` tag does
+not set a rate.
 
 If bill rate is empty, revenue and margin stay blank. If models are unpriced, cost can be
 understated—watch for warnings and incomplete-cost icons on rows that show near-zero cost despite
