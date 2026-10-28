@@ -83,6 +83,7 @@ def parlotize(
         endpoint=endpoint,
         api_key=api_key,
         capture_genai_content=capture_genai_content,
+        service_name=service_name,
         tracer_provider=tracer_provider,
         version=_configured_agent_version,
         capture_logs=capture_logs,
@@ -101,7 +102,7 @@ def parlotize(
         tracer_provider = _build_provider(
             endpoint=res.endpoint,
             api_key=res.api_key,
-            service_name=service_name or res.agent_id,
+            service_name=res.service_name,
             service_version=_configured_agent_version or None,
             context=res.context,
         )
@@ -265,13 +266,13 @@ def _build_provider(
     provider = build_filtered_tracer_provider(
         endpoint=endpoint,
         api_key=api_key,
-        service_name=service_name or "pipecat-agent",
+        service_name=service_name,
         service_version=service_version,
         span_processors=(PipecatGenAIProcessor(context=context),),
     )
     try:
         resource = build_resource(
-            service_name=service_name or "pipecat-agent",
+            service_name=service_name,
             service_version=service_version,
         )
         configure_metrics_endpoint(endpoint, api_key, resource)

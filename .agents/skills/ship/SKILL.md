@@ -39,3 +39,4 @@ Source of truth for the prefix table and release flow: [CONTRIBUTING.md](../../.
 - Do not commit secrets or `.env` files with credentials.
 - Wait for an explicit commit / push / open-PR ask; do not ship unprompted.
 - Prefer the goal and these constraints over a fixed sequence of git commands — inspect status, diff, and log, then act.
+- If the PR changes `packages/core` or `packages/instrumentation-*`, call out in the PR body that a **follow-up meta floor bump** in `packages/meta/pyproject.toml` is required after the Release Please wheel hits PyPI (see `AGENTS.md`). Do not bump floors to unpublished versions in the feature PR.

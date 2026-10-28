@@ -54,3 +54,27 @@ def test_base_parlotize_fetches_bootstrap_when_configured(caplog, monkeypatch):
     assert mock_fetch.call_args.args[1] == "key-123"
     assert result.endpoint == "http://localhost:8788"
     assert result.api_key == "key-123"
+    assert result.service_name == "test-agent"
+
+
+def test_base_parlotize_service_name_defaults_to_agent_id(monkeypatch):
+    monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:8788")
+    monkeypatch.setenv("PARLOT_API_KEY", "key-123")
+
+    with patch("parlot.core.bootstrap.fetch_telemetry_bootstrap"):
+        result = base_parlotize("hotel-receptionist")
+
+    assert result.service_name == "hotel-receptionist"
+
+
+def test_base_parlotize_explicit_service_name(monkeypatch):
+    monkeypatch.setenv("PARLOT_ENDPOINT", "http://localhost:8788")
+    monkeypatch.setenv("PARLOT_API_KEY", "key-123")
+
+    with patch("parlot.core.bootstrap.fetch_telemetry_bootstrap"):
+        result = base_parlotize(
+            "hotel-receptionist",
+            service_name="front-desk",
+        )
+
+    assert result.service_name == "front-desk"

@@ -54,8 +54,7 @@ def parlotize(
         api_key: Shared — org API key (or ``PARLOT_API_KEY``).
         capture_genai_content: Shared — GenAI payload capture override.
             Precedence: this kwarg → Settings → Generative AI → on.
-        service_name: Shared — OTel ``service.name`` (defaults to ``agent_id``
-            or ``"langgraph-agent"``).
+        service_name: Shared — OTel ``service.name`` (defaults to ``agent_id``).
         tracer_provider: Shared — existing ``TracerProvider``. If LiveKit
             already initialized one in-process, this call adopts it.
         version: Shared — ``gen_ai.agent.version``. Pass ``version=`` to set it;
@@ -89,6 +88,7 @@ def parlotize(
         endpoint=endpoint,
         api_key=api_key,
         capture_genai_content=capture_genai_content,
+        service_name=service_name,
         tracer_provider=tracer_provider,
         version=_configured_agent_version,
         capture_logs=capture_logs,
@@ -118,7 +118,7 @@ def parlotize(
         tracer_provider = build_filtered_tracer_provider(
             endpoint=res.endpoint,
             api_key=res.api_key,
-            service_name=service_name or "langgraph-agent",
+            service_name=res.service_name,
             service_version=_configured_agent_version or None,
         )
 

@@ -35,12 +35,32 @@ def resolve_capture_genai_content(capture_genai_content: Optional[bool] = None) 
     return None
 
 
+def resolve_service_name(
+    service_name: Optional[str] = None,
+    *,
+    agent_id: str = "",
+) -> str:
+    """Resolve OTel ``service.name``: explicit kwarg, else ``agent_id``, else ``unknown``.
+
+    Matches ``ParlotizeProtocol`` / adapter docs so every instrumentation uses the
+    same default without repeating framework fallbacks.
+    """
+    name = (service_name or "").strip() or (agent_id or "").strip()
+    return name or "unknown"
+
+
 def build_resource(
     *,
     service_name: Optional[str] = None,
     service_version: Optional[str] = None,
+    agent_id: str = "",
 ) -> Resource:
-    attrs = {service_attributes.SERVICE_NAME: service_name or "unknown"}
+    attrs = {
+        service_attributes.SERVICE_NAME: resolve_service_name(
+            service_name,
+            agent_id=agent_id,
+        ),
+    }
     if service_version:
         attrs[service_attributes.SERVICE_VERSION] = service_version
     return Resource.create(attrs)
