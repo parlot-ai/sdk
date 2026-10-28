@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.7](https://github.com/parlot-ai/sdk/compare/parlot-v0.3.6...parlot-v0.3.7) (2026-10-28)
+
+
+### Bug Fixes
+
+* **parlot:** raise install floors after service.name release ([#135](https://github.com/parlot-ai/sdk/issues/135)) ([b2755a3](https://github.com/parlot-ai/sdk/commit/b2755a38fe120d6debc6e697a5c5d0f8b9a369b1))
+
 ## [0.3.6](https://github.com/parlot-ai/sdk/compare/parlot-v0.3.5...parlot-v0.3.6) (2026-10-27)
 
 
