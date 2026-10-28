@@ -24,7 +24,7 @@ from parlot.instrumentation.livekit import parlotize
 
 __version__ = "0.1.0"
 
-parlotize("hotel-receptionist", version=__version__)
+parlotize("hotel-receptionist", version=__version__, service_name="hotel-receptionist")
 
 from benchmark import build_expected, diff_databases
 from common import Userdata
