@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling >= 1.26"]
 build-backend = "hatchling.build"
 
 [project]
@@ -8,6 +8,7 @@ version = "0.4.4"
 description = "Parlot instrumentation for LangGraph / LangChain — same turn model as voice AI agents"
 readme = "README.md"
 license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "Parlot AI", email = "hi@parlot.ai" },
 ]
@@ -16,6 +17,7 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -37,6 +39,8 @@ dependencies = [
 Homepage = "https://parlot.ai"
 Documentation = "https://parlot.ai/docs"
 Repository = "https://github.com/parlot-ai/sdk"
+Issues = "https://github.com/parlot-ai/sdk/issues"
+Changelog = "https://github.com/parlot-ai/sdk/blob/main/packages/instrumentation-langgraph/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
@@ -51,6 +55,7 @@ packages = ["src/parlot"]
 include = [
     "src/parlot",
     "README.md",
+    "LICENSE",
 ]
 
 [tool.pytest.ini_options]

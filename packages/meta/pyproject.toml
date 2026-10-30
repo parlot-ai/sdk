@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling >= 1.26"]
 build-backend = "hatchling.build"
 
 [project]
@@ -8,6 +8,7 @@ version = "0.3.7"
 description = "Know if production voice AI agents work — MIT OpenTelemetry instrumentation for LiveKit, Pipecat, and LangGraph"
 readme = "README.md"
 license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "Parlot AI", email = "hi@parlot.ai" },
 ]
@@ -16,6 +17,7 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -43,16 +45,14 @@ livekit = ["parlot-instrumentation-livekit>=0.4.10"]
 langgraph = ["parlot-instrumentation-langgraph>=0.4.4"]
 pipecat = ["parlot-instrumentation-pipecat>=0.1.8"]
 recording-opus = ["av>=14,<17"]
-all = [
-    "parlot-instrumentation-livekit>=0.4.10",
-    "parlot-instrumentation-langgraph>=0.4.4",
-    "parlot-instrumentation-pipecat>=0.1.8",
-]
+all = ["parlot[livekit,langgraph,pipecat]"]
 
 [project.urls]
 Homepage = "https://parlot.ai"
 Documentation = "https://parlot.ai/docs"
 Repository = "https://github.com/parlot-ai/sdk"
+Issues = "https://github.com/parlot-ai/sdk/issues"
+Changelog = "https://github.com/parlot-ai/sdk/blob/main/packages/meta/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/parlot"]
