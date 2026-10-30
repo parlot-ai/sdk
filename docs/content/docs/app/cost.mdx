@@ -32,7 +32,7 @@ Open **Observe → Cost & margin**.
 
 | Tab | Use it to |
 |-----|-----------|
-| **Margin & cost** | Set what you charge clients per minute, then compare revenue to estimated provider cost by agent or client for the selected date range (defaults to the past 30 days). |
+| **Margin & cost** | Set a **bill rate ($/min)**, then compare revenue to estimated provider cost by agent or client for the selected date range (defaults to the past 30 days). Also shows **cost per completed topic** when goals are instrumented. |
 | **Rate card** | See which models appear in usage, what rate applies, and fix unpriced rows. |
 
 The Cost & margin nav item can show a badge with how many models still need a rate. Cost views
@@ -91,14 +91,39 @@ it as pass-through visibility for planning.
 
 On the **Margin & cost** tab:
 
-1. Set **You charge per minute** (one organization-wide sell price).
-2. Parlot multiplies that price by session minutes to estimate revenue.
+1. Set a **bill rate ($/min)** (organization-wide under Settings → General, or override per agent
+   under agent settings).
+2. Parlot multiplies that rate by session minutes to estimate revenue.
 3. Margin compares that revenue to estimated provider cost for the selected date range (defaults
    to the past 30 days), grouped by agent or client.
+4. **Cost per completed topic** rolls up across agents and versions: session cost once per topic
+   (first goal on that topic), divided by completed goals.
+
+When rates are missing, margin is labeled **Partial** — unpriced models make cost look too low.
+
+### Agencies: one agent per client (default)
+
+**Default:** put each client on its **own agent** and set that agent’s **bill rate ($/min)**. Keep
+everyone in one workspace so users, rate card, and cross-client margin rollups stay in one place.
+
+Why this is usually better than a workspace per client:
+
+- One set of members and settings instead of multiplying them by client count
+- Cost & margin can roll up across clients (by agent, or by client tag below)
+- Rate changes are one edit on one agent; a second agent covers a second use case or rate for the
+  same client later
+
+**Use a separate workspace per client** when you need hard isolation—compliance or contractual
+boundaries, client staff with their own logins, separate invoicing/API keys, or a white-label
+feel. That overhead is rarely worth it for more than a handful of clients unless those apply.
+
+Keep contract terms, retainers, and dates in your billing sheet or system. Parlot’s bill rate is
+the $/min used for margin, not a full client contract object.
 
 ### Tag sessions with a client
 
-To group margin **by client**, stamp `client` on the session from your agent:
+Use tags to **slice reports**, not as the source of truth for pricing. Stamp `client` on the
+session so Cost & margin can group **by client** inside one workspace:
 
 ```python
 from parlot.core import set_session_metadata
@@ -112,7 +137,10 @@ personally identifiable information (PII) in metadata. See
 [Custom metadata](/sdk/get-started/concepts#custom-metadata-and-external-references) in the SDK
 Concepts guide.
 
-If sell price is empty, revenue and margin stay blank. If models are unpriced, cost can be
+Different bill rates still belong on **agents** (or separate workspaces). The `client` tag does
+not set a rate.
+
+If bill rate is empty, revenue and margin stay blank. If models are unpriced, cost can be
 understated—watch for warnings and incomplete-cost icons on rows that show near-zero cost despite
 real traffic.
 
@@ -128,7 +156,7 @@ Each row includes:
 - Line item: category (LLM / STT / TTS / telephony), provider, model, unit (for example million
   input tokens vs million output tokens: `input_mtok` / `output_mtok`), quantity, frozen
   `unit_rate_usd`, `cost_usd`, and rate source
-- Session total cost, plus revenue and margin % when you have set a per-minute sell price
+- Session total cost, plus revenue and margin % when you have set a bill rate ($/min)
 
 Unit rates are frozen at **session close** from the same catalog/override resolution that priced
 the session—so LLM input and output appear as separate lines with their own rates. Older sessions
@@ -136,7 +164,7 @@ closed before this existed may show aggregate stage rows with blank rates
 (`source=legacy_aggregate`).
 
 Filenames look like `YYYYMMDD-session-cost-{range}-{hex}.csv` (for example
-`20261005-session-cost-30d-a3f1.csv`). Exports may warn when sell price is missing or models are
+`20261005-session-cost-30d-a3f1.csv`). Exports may warn when bill rate is missing or models are
 still unpriced—revenue/margin can be blank and costs understated until rates are complete.
 
 ## Session Cost tab
