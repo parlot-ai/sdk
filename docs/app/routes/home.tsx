@@ -2,17 +2,15 @@ import type { Route } from './+types/home';
 import { HomeLayout } from 'fumadocs-ui/layouts/home';
 import { Link } from 'react-router';
 import { baseOptions } from '@/lib/layout.shared';
+import { PRODUCT_DEFINITION, seoMeta } from '@/lib/seo';
 import { BookOpen, Code2, Terminal, Layers, ArrowRight } from 'lucide-react';
 
 export function meta({}: Route.MetaArgs) {
-  return [
-    { title: 'Parlot Documentation — Observability for Voice AI' },
-    {
-      name: 'description',
-      content:
-        'Documentation for Parlot voice AI observability: SDK guides, LiveKit, Pipecat & LangGraph instrumentation, App user guide, and Python API reference.',
-    },
-  ];
+  return seoMeta({
+    title: 'Parlot Documentation — Voice AI Observability for LiveKit & Pipecat',
+    description: `${PRODUCT_DEFINITION} SDK guides, LiveKit, Pipecat & LangGraph instrumentation, App user guide, and Python API reference.`,
+    path: '/docs',
+  });
 }
 
 export default function Home() {
@@ -28,8 +26,9 @@ export default function Home() {
         </h1>
 
         <p className="text-lg text-fd-muted-foreground max-w-2xl mb-8 leading-relaxed">
-          Instrument LiveKit and Pipecat voice agents, analyze audio and turn-by-turn latency,
-          and configure conversation boundaries with production-grade observability.
+          {PRODUCT_DEFINITION} Instrument LiveKit and Pipecat voice agents, analyze
+          audio and turn-by-turn latency, and configure conversation boundaries with
+          production-grade observability.
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-4 mb-14">

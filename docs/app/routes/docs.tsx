@@ -6,9 +6,16 @@ import {
   DocsPage,
   DocsTitle,
 } from 'fumadocs-ui/layouts/notebook/page';
+import { JsonLd } from '@/components/json-ld';
 import { LLMCopyButton } from '@/components/llm-copy-button';
 import { docs, getPageMarkdownUrl, source } from '@/lib/source';
 import { baseOptions } from '@/lib/layout.shared';
+import {
+  breadcrumbJsonLd,
+  docsCanonicalPath,
+  seoMeta,
+  techArticleJsonLd,
+} from '@/lib/seo';
 import { gitConfig } from '@/lib/shared';
 import { useFumadocsLoader } from 'fumadocs-core/source/client';
 import { useMDXComponents } from '@/components/mdx';
@@ -25,12 +32,43 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   return {
     path: page.path,
+    title: page.title,
+    description: page.description ?? '',
+    pageUrl: page.url,
     markdownUrl: getPageMarkdownUrl(page).url,
     pageTree: await source.serializePageTree(source.getPageTree()),
   };
 }
 
-function Content({ path, markdownUrl }: { path: string; markdownUrl: string }) {
+export function meta({ data }: Route.MetaArgs) {
+  if (!data) {
+    return [{ title: 'Not found — Parlot Docs' }];
+  }
+  const canonical = docsCanonicalPath(data.pageUrl);
+  const description =
+    data.description ||
+    `${data.title} — Parlot documentation for voice AI observability.`;
+  return seoMeta({
+    title: `${data.title} — Parlot Docs`,
+    description,
+    path: canonical,
+    type: 'article',
+  });
+}
+
+function Content({
+  path,
+  markdownUrl,
+  pageUrl,
+  title,
+  description,
+}: {
+  path: string;
+  markdownUrl: string;
+  pageUrl: string;
+  title: string;
+  description: string;
+}) {
   const page = docs.getPage(path);
   if (!page) throw new Error(`unknown page: ${path}`);
 
@@ -38,11 +76,23 @@ function Content({ path, markdownUrl }: { path: string; markdownUrl: string }) {
   const Mdx = page.body;
   const filteredToc = toc.filter((item) => item.depth > 1);
   const pageId = path.split('/').pop()?.replace(/\.(mdx|md)$/, '');
+  const canonical = docsCanonicalPath(pageUrl);
 
   return (
     <DocsPage toc={filteredToc}>
-      <title>{page.title}</title>
-      <meta name="description" content={page.description} />
+      <JsonLd
+        data={[
+          techArticleJsonLd({
+            title,
+            description: description || title,
+            path: canonical,
+          }),
+          breadcrumbJsonLd([
+            { name: 'Docs', path: '/docs' },
+            { name: title, path: canonical },
+          ]),
+        ]}
+      />
       <DocsTitle id={pageId}>{page.title}</DocsTitle>
       {page.description && <DocsDescription>{page.description}</DocsDescription>}
       <div className="flex flex-row gap-2 items-center border-b border-fd-border -mt-4 pb-6 mb-6">
@@ -85,7 +135,13 @@ export default function Page({ loaderData }: Route.ComponentProps) {
         },
       ]}
     >
-      <Content path={path} markdownUrl={markdownUrl} />
+      <Content
+        path={path}
+        markdownUrl={markdownUrl}
+        pageUrl={loaderData.pageUrl}
+        title={loaderData.title}
+        description={loaderData.description}
+      />
     </DocsLayout>
   );
 }
