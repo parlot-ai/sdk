@@ -8,7 +8,7 @@ Prefer [`parlot-instrumentation-livekit`](https://pypi.org/project/parlot-instru
 or [`parlot-instrumentation-pipecat`](https://pypi.org/project/parlot-instrumentation-pipecat/) for
 voice agents.
 
-**Docs:** [LangGraph guide](https://parlot.ai/docs/guides/langgraph) · [Quick Start](https://parlot.ai/docs/sdk/get-started/quick-start) · [parlot.ai](https://parlot.ai)
+**Docs:** [LangGraph guide](https://parlot.ai/docs/sdk/guides/langgraph) · [Quick Start](https://parlot.ai/docs/sdk/get-started/quick-start) · [parlot.ai](https://parlot.ai)
 
 ## Install
 
@@ -32,7 +32,7 @@ graph.invoke(
 )
 ```
 
-Pass `channel` (e.g. `webchat`, `sms`) when LangGraph owns the session. If `thread_id` is omitted, Parlot mints one automatically. When used inside a LiveKit agent that already called LiveKit `parlotize()`, this nests GenAI spans under that session — see the [LangGraph guide](https://parlot.ai/docs/guides/langgraph).
+Pass `channel` (e.g. `webchat`, `sms`) when LangGraph owns the session. If `thread_id` is omitted, Parlot mints one automatically. When used inside a LiveKit agent that already called LiveKit `parlotize()`, this nests GenAI spans under that session — see the [LangGraph guide](https://parlot.ai/docs/sdk/guides/langgraph).
 
 ## Configure
 
@@ -41,10 +41,10 @@ export PARLOT_ENDPOINT=https://ingest.parlot.ai
 export PARLOT_API_KEY=<org-scoped-key>
 ```
 
-Mint the API key in Parlot **Settings → API Keys**. Session logs and generative AI content capture are configured in Settings or via `parlotize(...)` kwargs — see the [LangGraph guide](https://parlot.ai/docs/guides/langgraph).
+Mint the API key in Parlot **Settings → API Keys**. Session logs and generative AI content capture are configured in Settings or via `parlotize(...)` kwargs — see the [LangGraph guide](https://parlot.ai/docs/sdk/guides/langgraph).
 
 ## Next
 
-- [LangGraph guide](https://parlot.ai/docs/guides/langgraph)
+- [LangGraph guide](https://parlot.ai/docs/sdk/guides/langgraph)
 - [Concepts](https://parlot.ai/docs/concepts)
 - Example: [`examples/langgraph/minimal-agent/`](../../examples/langgraph/minimal-agent/)

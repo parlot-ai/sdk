@@ -8,9 +8,10 @@ sidebar_position: 2
 
 ## Why Parlot
 
-Parlot models each production voice AI agent call as sessions and turns, then stores the
-underlying OpenTelemetry spans as the lasting record. The platform turns those spans into
-interaction graphs and goal evaluations across LiveKit, Pipecat, and LangGraph.
+In the dashboard you see each production call as a **session** of **turns**: timeline, cost by
+speech-to-text / language model / text-to-speech, goals, and multi-agent handoffs. The
+underlying OpenTelemetry spans are the lasting record. The same model covers LiveKit, Pipecat,
+and LangGraph.
 
 ## Packages
 
@@ -21,25 +22,13 @@ interaction graphs and goal evaluations across LiveKit, Pipecat, and LangGraph.
 | `parlot-instrumentation-langgraph` | LangGraph / LangChain `parlotize()` via global callbacks |
 | `parlot-instrumentation-pipecat` | Pipecat voice agents — Conversation Contract via OpenTelemetry remap |
 
+The **Conversation Contract** is Parlot’s shared session/turn span model (`parlot.session`,
+`parlot.turn`, close, and related attributes) so every framework exports the same episode shape.
+
 Contract helpers (`record_human_rep`, `set_session_metadata`, `add_platform_ref`, …) live in
 `parlot.core`. Framework packages re-export them for convenience — prefer those re-exports in
 agent code. See the [Python API Reference](/sdk/python) and
 [Interactive API Docs](/docs/ref/python/).
-
-## Shared span vocabulary
-
-Adapters share a Conversation Contract and OpenTelemetry generative AI (GenAI) semantic
-conventions (semconv) v1.41.0. LiveKit also emits voice and handoff spans.
-
-1. **Conversation Contract** — `parlot.session`, `parlot.turn`, `parlot.session.close`
-   (LiveKit also emits `parlot.agent.handoff`)
-2. **OpenTelemetry GenAI** (semconv v1.41.0) — `invoke_agent`, `chat`, `execute_tool {name}`,
-   `invoke_workflow`
-3. **Voice** (LiveKit) — `tts`, `stt`, end-of-utterance detection (`eou_detection`),
-   answering-machine detection (`amd`)
-
-Framework guides explain how each adapter attaches to this vocabulary — see
-[LangGraph](/sdk/guides/langgraph), [LiveKit](/sdk/guides/livekit), and [Pipecat](/sdk/guides/pipecat).
 
 ## Session and agent identity
 
@@ -72,9 +61,9 @@ Each framework guide notes how the adapter stamps deployment identity on the liv
   Opening the session in Parlot confirms the playable file. Session turns and spans still
   appear while audio confirmation is pending. Turn recording off with an empty allowlist or
   `parlotize(record=False)`.
-- **Application logs** capture Python’s `logging` module during an active session (skip
-  `print()`) and show on the session **Logs** tab. They export as OTLP logs (`POST /v1/logs`,
-  Protocol Buffers) with `session.id` on each record. Policy mirrors recording
+- **Application logs** capture Python’s `logging` module during an active session (prefer
+  `logging` over `print()`) and show on the session **Logs** tab. They export as OTLP logs
+  (`POST /v1/logs`, Protocol Buffers) with `session.id` on each record. Policy mirrors recording
   (Settings → Logs + `parlotize(capture_logs=…)`; fallback on). Treat log text as sensitive—it
   may include personally identifiable information (PII).
 - **Generative AI content** (LLM/tool bodies) is a separate policy — see
@@ -112,6 +101,21 @@ Settings → Gen AI content capture → on
 
 Resolved from Settings when each span is sent, so new jobs pick up per-agent toggles.
 Already-running processes keep the policy they loaded until you restart them.
+
+## Span names reference
+
+Adapters share a Conversation Contract and OpenTelemetry generative AI (GenAI) semantic
+conventions (semconv) v1.41.0. LiveKit also emits voice and handoff spans.
+
+1. **Conversation Contract** — `parlot.session`, `parlot.turn`, `parlot.session.close`
+   (LiveKit also emits `parlot.agent.handoff`)
+2. **OpenTelemetry GenAI** (semconv v1.41.0) — `invoke_agent`, `chat`, `execute_tool {name}`,
+   `invoke_workflow`
+3. **Voice** (LiveKit) — `tts`, `stt`, end-of-utterance detection (`eou_detection`),
+   answering-machine detection (`amd`)
+
+Framework guides explain how each adapter attaches to this vocabulary — see
+[LangGraph](/sdk/guides/langgraph), [LiveKit](/sdk/guides/livekit), and [Pipecat](/sdk/guides/pipecat).
 
 ## Human escalation
 

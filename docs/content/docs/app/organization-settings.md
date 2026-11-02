@@ -34,7 +34,7 @@ conversational turn usage, and billing managed through Stripe.
 On self-hosted or non-Cloud deployments, contact [parlot.ai](https://parlot.ai) for commercial
 options.
 
-Rate card and model pricing live under [Cost & margin](/app/cost), not under Settings.
+Rate card and model pricing live under [Cost & margin](/app/cost).
 
 ## Agents (policy settings)
 

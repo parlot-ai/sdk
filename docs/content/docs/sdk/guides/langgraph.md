@@ -16,18 +16,22 @@ operational spans.
 
 ## Quick start
 
-```python
-from parlot.instrumentation.langgraph import parlotize, close_session
+Highlighted lines are what you add:
 
-parlotize("support-bot", version="0.1.0")
+```python
+from parlot.instrumentation.langgraph import close_session, parlotize  # [!code ++]
+
+parlotize("support-bot", version="0.1.0")  # [!code ++]
 
 graph.invoke(
     {"messages": [("user", "Hello")]},
     config={"configurable": {"thread_id": "demo-1"}},
 )
 
-close_session("demo-1")  # optional; also flushed on process exit
+close_session("demo-1")  # [!code ++]
 ```
+
+`close_session` is optional; sessions also flush on process exit.
 
 Environment: `PARLOT_ENDPOINT`, `PARLOT_API_KEY` — see [Environment Variables](/sdk/env-vars).
 `parlotize()` options: [Interactive API Reference](/docs/ref/python/parlot/instrumentation/langgraph.html)

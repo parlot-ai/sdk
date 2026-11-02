@@ -1,6 +1,7 @@
 # Parlot SDK
 
-Parlot shows whether production voice AI agents actually work — turns, handoffs, and goal completion with an evidence trail — not just that the pipeline returned 200s.
+Parlot shows whether production voice AI agents actually work — turns, handoffs, goal completion,
+and an evidence trail to the proving audio.
 
 Call `parlotize()` once at startup. MIT OpenTelemetry instrumentation for LiveKit Agents (Cloud, self-hosted, or [LiveKit on Telnyx](https://telnyx.com/products/livekit-on-telnyx)), Pipecat, and LangGraph.
 
@@ -28,11 +29,10 @@ pip install parlot-instrumentation-livekit
 Call `parlotize("…")` before constructing `AgentSession`, then `await ctx.connect()` before `session.start()`:
 
 ```python
+from livekit.agents import AgentSession, JobContext
 from parlot.instrumentation.livekit import parlotize
 
 parlotize("my-agent")
-
-from livekit.agents import AgentSession, JobContext, WorkerOptions, cli
 
 
 async def entrypoint(ctx: JobContext):
@@ -54,9 +54,9 @@ Mint the API key in Parlot **Settings → API Keys**.
 ## Next
 
 - [Quick Start](https://parlot.ai/docs/sdk/get-started/quick-start)
-- [LiveKit guide](https://parlot.ai/docs/guides/livekit) · example [`examples/livekit/livekit-voice/`](examples/livekit/livekit-voice/)
-- [Pipecat guide](https://parlot.ai/docs/guides/pipecat) · example [`examples/pipecat/minimal-voice/`](examples/pipecat/minimal-voice/)
-- [LangGraph guide](https://parlot.ai/docs/guides/langgraph) · [`parlot-instrumentation-langgraph`](packages/instrumentation-langgraph/README.md)
+- [LiveKit guide](https://parlot.ai/docs/sdk/guides/livekit) · example [`examples/livekit/livekit-voice/`](examples/livekit/livekit-voice/)
+- [Pipecat guide](https://parlot.ai/docs/sdk/guides/pipecat) · example [`examples/pipecat/minimal-voice/`](examples/pipecat/minimal-voice/)
+- [LangGraph guide](https://parlot.ai/docs/sdk/guides/langgraph) · [`parlot-instrumentation-langgraph`](packages/instrumentation-langgraph/README.md)
 - More under [`examples/`](examples/)
 
 ## License

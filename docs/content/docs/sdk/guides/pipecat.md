@@ -42,52 +42,49 @@ flowchart LR
    `transport.output()` so committed transcripts include what was spoken.
 3. Pass `enable_tracing=True` and `enable_turn_tracking=True` on `PipelineWorker`
    (or rely on the patch).
-4. Do **not** call Pipecat’s `setup_tracing()` afterward — it would replace the global
-   TracerProvider and drop Parlot processors. `parlotize` is the Parlot equivalent.
+4. `parlotize()` installs the tracer provider, so skip Pipecat’s `setup_tracing()` afterward —
+   a second setup would replace the global TracerProvider and drop Parlot processors.
 
 Committed user/assistant transcripts from aggregator events
 (`on_user_turn_stopped` / `on_assistant_turn_stopped`, plus realtime
-`on_user_turn_message_added`) mint `parlot.turn`. `on_*_turn_started` reserves
-turn indices early for waterfall nesting. Empty / aborted stop events release
-those reservations and **do not** permanently consume turn numbers — session
-`turn_count` / `turn_index_max` at close reflect minted contract turns only.
-PipelineWorker’s `UserBotLatencyObserver` feeds `turn.e2e_latency_s` on the next
-agent turn. Pipecat’s nested conversation→turn OTEL tree is still used for
-session open/close and STT/LLM/TTS nesting under `turn.index` — those spans do
-not mint contract turns.
+`on_user_turn_message_added`) mint `parlot.turn`. Early `on_*_turn_started` events reserve
+turn indices for waterfall nesting; empty or aborted stops release those reservations so
+session `turn_count` / `turn_index_max` at close match minted contract turns only.
+PipelineWorker’s `UserBotLatencyObserver` feeds `turn.e2e_latency_s` on the next agent turn.
+Pipecat’s nested conversation→turn OTEL tree still drives session open/close and
+STT/LLM/TTS nesting under `turn.index`.
 
 ## Requirements
 
-For user/agent turns and transcript on the Parlot timeline, the pipeline **must**
-include `LLMUserAggregator` and `LLMAssistantAggregator` (typically via
-`LLMContextAggregatorPair`). Parlot does **not** instantiate them for you.
+Create `LLMUserAggregator` and `LLMAssistantAggregator` in your pipeline (typically via
+`LLMContextAggregatorPair`) so the Parlot timeline shows user/agent turns and transcript.
 
 - Place the **user** aggregator early (after STT / before the LLM).
 - Place the **assistant** aggregator **after** `transport.output()` so committed
   text matches what was spoken.
 - Call `parlotize()` **before** constructing those aggregators so handlers
   auto-wire. If they already exist, call `attach_aggregators(user, assistant)`.
-- Without aggregators: session + STT/LLM/TTS spans may still export;
-  **`parlot.turn` will not**.
+- Add both aggregators to get `parlot.turn`; session and STT/LLM/TTS spans export either way.
 
 Your own event handlers and `PipelineWorker(observers=[...])` keep working —
-Parlot **appends** handlers and observers alongside yours; it does not replace
-them.
+Parlot **appends** handlers and observers alongside yours.
 
 ## Add it to an existing bot
+
+Highlighted lines are what you add:
 
 ```python
 from pipecat.processors.aggregators.llm_context import LLMContext
 from pipecat.processors.aggregators.llm_response_universal import (
     LLMContextAggregatorPair,
 )
-from parlot.instrumentation.pipecat import (
-    ParlotRecordingProcessor,
+from parlot.instrumentation.pipecat import (  # [!code ++]
+    ParlotRecordingProcessor,  # [!code ++]
     attach_aggregators,
-    parlotize,
-)
+    parlotize,  # [!code ++]
+)  # [!code ++]
 
-parlotize("my-pipecat-agent", version="0.1.0", record=True)
+parlotize("my-pipecat-agent", version="0.1.0", record=True)  # [!code ++]
 
 context = LLMContext(messages)
 context_aggregator = LLMContextAggregatorPair(context)
@@ -101,17 +98,17 @@ pipeline = Pipeline([
     llm,
     tts,
     transport.output(),
-    ParlotRecordingProcessor(),  # after output — mixed dual-mono stereo WAV segments
-    context_aggregator.assistant(),  # after output — required for agent parlot.turn
+    ParlotRecordingProcessor(),  # [!code ++]
+    context_aggregator.assistant(),
 ])
 
 worker = PipelineWorker(
     pipeline,
     params=PipelineParams(enable_metrics=True, enable_usage_metrics=True),
-    enable_tracing=True,
-    enable_turn_tracking=True,
+    enable_tracing=True,  # [!code ++]
+    enable_turn_tracking=True,  # [!code ++]
     conversation_id="optional-stable-id",
-    # Your observers stay; Parlot does not replace this list.
+    # Your observers stay; Parlot appends alongside this list.
     # observers=[MyCustomObserver()],
 )
 ```
@@ -136,8 +133,7 @@ applies close-gated PII beeps when redaction is on.
   instead when you need a smaller upload bitrate.
 - Place the processor **after** `transport.output()` so both directions are buffered.
 - Fail-open: upload/complete errors stamp `session.recording.status=failed` and never break the call.
-- Playback is always the session’s current signed URL (redacted when policy requires) — not the
-  raw audio URI.
+- Playback always uses the session’s current signed URL (redacted when policy requires).
 
 ## Example
 

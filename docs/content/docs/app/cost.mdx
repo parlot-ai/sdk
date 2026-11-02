@@ -10,10 +10,13 @@ import { Callout } from 'fumadocs-ui/components/callout';
 Parlot estimates what **providers charge you** to run voice and language models: large language
 models (LLMs), text-to-speech (TTS), speech-to-text (STT), and related usage.
 
+**Example:** a five-minute call with your rates applied might show $0.42 of provider spend. At a
+$0.80/min bill rate, that call is about $4.00 of revenue and roughly 90% margin before fixed fees.
+
 You will see cost in two places:
 
 - **Session Cost** (`/sessions/:sessionId/cost`) — spend for one conversation
-- **Cost & margin** (`/cost`) under Observe — your workspace rate card and recent margin
+- **Cost & margin** (`/cost`) under Observe — your workspace rates and recent margin
 
 ## What goes into cost
 
@@ -76,10 +79,10 @@ In short:
 Rows appear automatically from recent session usage. If Parlot finds no catalog match and no
 contract rate, the row is **Unpriced**.
 
-Unpriced usage is excluded from cost, so margin can look better than it really is. Use **Price
-now** (or open the Rate card tab) to set a rate. Multi-unit models (for example TTS characters and
-audio duration) can show more than one billable unit—price the invoice unit you use; other units
-can stay unpriced and are counted once.
+Add a rate for every model so margin reflects full cost. Use **Price now** (or open the Rate card
+tab) to set a rate. Multi-unit models (for example TTS characters and audio duration) can show
+more than one billable unit—price the invoice unit you use; other units can stay unpriced and are
+counted once.
 
 ## Telephony estimates
 
@@ -108,7 +111,7 @@ everyone in one workspace so users, rate card, and cross-client margin rollups s
 
 Why this is usually better than a workspace per client:
 
-- One set of members and settings instead of multiplying them by client count
+- One set of members and settings for every client
 - Cost & margin can roll up across clients (by agent, or by client tag below)
 - Rate changes are one edit on one agent; a second agent covers a second use case or rate for the
   same client later
@@ -118,12 +121,12 @@ boundaries, client staff with their own logins, separate invoicing/API keys, or 
 feel. That overhead is rarely worth it for more than a handful of clients unless those apply.
 
 Keep contract terms, retainers, and dates in your billing sheet or system. Parlot’s bill rate is
-the $/min used for margin, not a full client contract object.
+the $/min used for margin; store full contract terms in your billing system.
 
 ### Tag sessions with a client
 
-Use tags to **slice reports**, not as the source of truth for pricing. Stamp `client` on the
-session so Cost & margin can group **by client** inside one workspace:
+Use tags to **slice reports**, and set prices on agents (or separate workspaces). Stamp `client`
+on the session so Cost & margin can group **by client** inside one workspace:
 
 ```python
 from parlot.core import set_session_metadata

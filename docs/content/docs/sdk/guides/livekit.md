@@ -27,6 +27,52 @@ Install and env setup: [Quick Start](/sdk/get-started/quick-start). Shared produ
   metadata) from the session UI for compliance, reviews, or offline analysis
 - **Same debugger if you nest LangGraph** — see the [LangGraph guide](/sdk/guides/langgraph)
 
+## Add it to an existing agent
+
+Two required steps for full behavior:
+
+1. Call `parlotize("…")` **before** constructing `AgentSession`.
+2. Call `await ctx.connect()` **before** `session.start()`.
+
+Highlighted lines are what you add:
+
+```python
+from livekit.agents import AgentSession, JobContext
+from parlot.instrumentation.livekit import parlotize  # [!code ++]
+
+parlotize("my-agent", version="0.1.0")  # [!code ++]
+
+
+async def entrypoint(ctx: JobContext):
+    await ctx.connect()  # [!code ++]
+
+    session = AgentSession(...)
+    await session.start(agent=..., room=ctx.room)
+```
+
+`parlotize()` registers an OTLP `TracerProvider` with `livekit.agents.telemetry`, installs
+AgentSession event hooks, and (when recording is enabled) starts Room Composite recording after
+the session starts. Pass a stable deployment id; use `version=` for a real deployment label
+(otherwise Parlot stamps `"unknown"`).
+
+If you need the first agent greeting on the session recording, pass **`await_recording=True`**
+(with `await ctx.connect()` before `session.start()`). That waits for recording to start before
+connect returns and may add a little latency; leave it off for the lowest time-to-first-speech.
+
+```python
+parlotize("my-agent", version="0.1.0", await_recording=True)
+```
+
+Environment: `PARLOT_ENDPOINT`, `PARLOT_API_KEY` — see [Environment Variables](/sdk/env-vars).
+Recording, session logs, and generative AI content capture are on by default for new tenants;
+configure in Settings or via `parlotize(...)` kwargs — see
+[Concepts → Recording vs telemetry](/sdk/get-started/concepts#recording-vs-telemetry). LiveKit
+recording also needs agent `LIVEKIT_*` credentials with **`roomRecord`**.
+
+`parlotize()` options: [Interactive API Reference](/docs/ref/python/parlot/instrumentation/livekit.html)
+(LiveKit-only kwargs include `record`, `await_recording`, `auto_escalate_sip`, …). Package
+overview: [Python SDK Reference](/sdk/python).
+
 ## How instrumentation works
 
 ```mermaid
@@ -60,8 +106,8 @@ those attributes when present, maps utterance text onto the conversation contrac
 (`turn.user_text` / `turn.agent_text`), and keeps Agents 1.7 `lk.pii.*` (and legacy `lk.*`)
 readers as a fallback. Cached prompt tokens use `gen_ai.usage.cache_read.input_tokens` (or
 `gen_ai.usage.input_cached_tokens`); that count is a subset of `gen_ai.usage.input_tokens` —
-do not add the two. Realtime model turns export as `chat {model}` with
-`gen_ai.operation.name=generate_content`.
+treat them as nested, and avoid summing the two. Realtime model turns export as `chat {model}`
+with `gen_ai.operation.name=generate_content`.
 
 **Recording** is a separate path: after the session starts, the agent requests an upload grant
 and starts Room Composite egress (audio-only Ogg Vorbis). Session telemetry is sent on its own;
@@ -70,51 +116,6 @@ opening the session in Parlot confirms the audio object and sets `audio_availabl
 Shared span layers, identity, errors, and capture policies: [Concepts](/sdk/get-started/concepts).
 Examples under `examples/livekit/` target `livekit-agents>=1.8`; the instrumentation package
 requires `livekit-agents>=1.7`.
-
-## Add it to an existing agent
-
-Two required steps for full behavior:
-
-1. Call `parlotize("…")` **before** constructing `AgentSession`.
-2. Call `await ctx.connect()` **before** `session.start()`.
-
-```python
-from parlot.instrumentation.livekit import parlotize
-
-parlotize("my-agent", version="0.1.0")
-
-from livekit.agents import AgentSession, JobContext
-
-
-async def entrypoint(ctx: JobContext):
-    await ctx.connect()
-
-    session = AgentSession(...)
-    await session.start(agent=..., room=ctx.room)
-```
-
-`parlotize()` registers an OTLP `TracerProvider` with `livekit.agents.telemetry`, installs
-AgentSession event hooks, and (when recording is enabled) starts Room Composite recording after
-the session starts. Pass a stable deployment id; use `version=` for a real deployment label
-(otherwise Parlot stamps `"unknown"`).
-
-If you need the first agent greeting on the session recording, pass **`await_recording=True`**
-(with `await ctx.connect()` before `session.start()`). That waits for recording to start before
-connect returns and may add a little latency; leave it off for the lowest time-to-first-speech.
-
-```python
-parlotize("my-agent", version="0.1.0", await_recording=True)
-```
-
-Environment: `PARLOT_ENDPOINT`, `PARLOT_API_KEY` — see [Environment Variables](/sdk/env-vars).
-Recording, session logs, and generative AI content capture are on by default for new tenants;
-configure in Settings or via `parlotize(...)` kwargs — see
-[Concepts → Recording vs telemetry](/sdk/get-started/concepts#recording-vs-telemetry). LiveKit
-recording also needs agent `LIVEKIT_*` credentials with **`roomRecord`**.
-
-`parlotize()` options: [Interactive API Reference](/docs/ref/python/parlot/instrumentation/livekit.html)
-(LiveKit-only kwargs include `record`, `await_recording`, `auto_escalate_sip`, …). Package
-overview: [Python SDK Reference](/sdk/python).
 
 ## Named worker dispatch (`agent_name`)
 
