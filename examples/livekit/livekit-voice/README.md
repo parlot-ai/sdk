@@ -54,5 +54,5 @@ Remove those and the agent still works — just without telemetry.
 
 ## Next
 
-- [LiveKit guide](https://parlot.ai/docs/guides/livekit) — recording, identity, and more options
+- [LiveKit guide](https://parlot.ai/docs/sdk/guides/livekit) — recording, identity, and more options
 - More examples under [`examples/livekit/`](../)

@@ -1,0 +1,151 @@
+---
+title: Quick Start
+description: Production voice AI observability — instrument LiveKit, Pipecat, or LangGraph agents in minutes.
+sidebar_position: 1
+---
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+# Quick Start
+
+See what every call costs and whether it worked. Parlot’s MIT `parlotize()` instruments
+production voice AI agents on [LiveKit Agents](https://docs.livekit.io/agents/),
+[Pipecat](https://docs.pipecat.ai/), and [LangGraph](https://langchain-ai.github.io/langgraph/)
+/ LangChain — and models each call as turns: timeline, multi-agent graph, and goal completion
+with an evidence trail to the proving turns and audio.
+
+This walkthrough uses LiveKit (Cloud, self-hosted, or
+[LiveKit on Telnyx](https://telnyx.com/products/livekit-on-telnyx)). For Pipecat or LangGraph,
+use the matching tab below, then the framework guides under [Next](#next).
+
+## Install
+
+```bash
+# Using pip
+pip install parlot-instrumentation-livekit
+
+# Or using uv
+uv add parlot-instrumentation-livekit
+
+# Or via the parlot meta-package
+pip install "parlot[livekit]"
+# also: "parlot[pipecat]" · "parlot[langgraph]" · "parlot[all]"
+```
+
+## Instrument
+
+Highlighted lines are what you add. Call `parlotize("…")` before constructing the session,
+then follow the framework’s connect / start order.
+
+<Tabs items={['LiveKit', 'Pipecat', 'LangGraph']}>
+  <Tab value="LiveKit">
+
+Call `parlotize("…")` before constructing `AgentSession`, then `await ctx.connect()` before
+`session.start()`:
+
+```python
+from livekit.agents import AgentSession, JobContext
+from parlot.instrumentation.livekit import parlotize  # [!code ++]
+
+parlotize("my-agent")  # [!code ++]
+
+
+async def entrypoint(ctx: JobContext):
+    await ctx.connect()  # [!code ++]
+
+    session = AgentSession(...)
+    await session.start(agent=..., room=ctx.room)
+```
+
+  </Tab>
+  <Tab value="Pipecat">
+
+Call `parlotize("…")` once at process start, then build the pipeline with aggregators and
+optional recording:
+
+```python
+from pipecat.processors.aggregators.llm_context import LLMContext
+from pipecat.processors.aggregators.llm_response_universal import (
+    LLMContextAggregatorPair,
+)
+from pipecat.pipeline.pipeline import Pipeline
+from pipecat.pipeline.runner import PipelineRunner as PipelineWorker
+from pipecat.pipeline.task import PipelineParams
+from parlot.instrumentation.pipecat import (  # [!code ++]
+    ParlotRecordingProcessor,  # [!code ++]
+    parlotize,  # [!code ++]
+)  # [!code ++]
+
+parlotize("my-pipecat-agent", version="0.1.0")  # [!code ++]
+
+context = LLMContext(messages)
+context_aggregator = LLMContextAggregatorPair(context)
+
+pipeline = Pipeline([
+    transport.input(),
+    stt,
+    context_aggregator.user(),
+    llm,
+    tts,
+    transport.output(),
+    ParlotRecordingProcessor(),  # [!code ++]
+    context_aggregator.assistant(),
+])
+
+worker = PipelineWorker(
+    pipeline,
+    params=PipelineParams(enable_metrics=True, enable_usage_metrics=True),
+    enable_tracing=True,  # [!code ++]
+    enable_turn_tracking=True,  # [!code ++]
+)
+```
+
+  </Tab>
+  <Tab value="LangGraph">
+
+Call `parlotize("…")` once, then run the graph as usual:
+
+```python
+from parlot.instrumentation.langgraph import close_session, parlotize  # [!code ++]
+
+parlotize("support-bot", version="0.1.0")  # [!code ++]
+
+graph.invoke(
+    {"messages": [("user", "Hello")]},
+    config={"configurable": {"thread_id": "demo-1"}},
+)
+
+close_session("demo-1")  # [!code ++]
+```
+
+  </Tab>
+</Tabs>
+
+## Environment
+
+```bash
+export PARLOT_ENDPOINT=https://ingest.parlot.ai
+export PARLOT_API_KEY=<org-scoped-key>
+```
+
+Create the API key in Parlot **Settings → API keys**. New tenants record session audio by
+default (Settings → Recording allowlist `*`). Turn recording off with an empty allowlist or
+`parlotize(record=False)`. On LiveKit, recording uses Room Composite egress; audio is available
+when you open the session in Parlot.
+
+## Next
+
+- [Core concepts](/sdk/get-started/concepts)
+- [LiveKit guide](/sdk/guides/livekit)
+- [Pipecat guide](/sdk/guides/pipecat)
+- [LangGraph guide](/sdk/guides/langgraph)
+- [Python API Reference](/sdk/python)
+- [TypeScript Reference](/sdk/typescript)
+
+## License
+
+Instrumentation is **MIT**. The companion analysis platform is **Business Source License 1.1
+(BSL 1.1)**: free production use up to 4,000 turns/month for your own agents and agents you
+operate for clients; above that, or to offer Parlot as a hosted service, requires a commercial
+license. Each version converts to Apache 2.0 four years after its first public release.
+Enterprise governance features require an Enterprise Edition (EE) license key.

@@ -1,6 +1,7 @@
 # Parlot
 
-Parlot shows whether production voice AI agents actually work — turns, handoffs, and goal completion with an evidence trail — not just that the pipeline returned 200s.
+Parlot shows whether production voice AI agents actually work — turns, handoffs, goal completion,
+and an evidence trail to the proving audio.
 
 Call `parlotize()` once at startup. MIT OpenTelemetry instrumentation for LiveKit Agents, Pipecat, and LangGraph when you already run those stacks.
 
@@ -54,7 +55,7 @@ Mint the API key in Parlot **Settings → API Keys**.
 ## Next
 
 - [Quick Start](https://parlot.ai/docs/sdk/get-started/quick-start)
-- [LiveKit guide](https://parlot.ai/docs/guides/livekit)
-- [Pipecat guide](https://parlot.ai/docs/guides/pipecat)
-- [LangGraph guide](https://parlot.ai/docs/guides/langgraph)
+- [LiveKit guide](https://parlot.ai/docs/sdk/guides/livekit)
+- [Pipecat guide](https://parlot.ai/docs/sdk/guides/pipecat)
+- [LangGraph guide](https://parlot.ai/docs/sdk/guides/langgraph)
 - [GitHub](https://github.com/parlot-ai/sdk)

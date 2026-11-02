@@ -4,7 +4,7 @@ Parlot shows whether production voice AI agents actually work — turns, handoff
 
 MIT OpenTelemetry instrumentation for [LiveKit Agents](https://docs.livekit.io/agents/) (Cloud, self-hosted, or [LiveKit on Telnyx](https://telnyx.com/products/livekit-on-telnyx)). Also see Pipecat and LangGraph packages when you run those stacks.
 
-**Docs:** [LiveKit guide](https://parlot.ai/docs/guides/livekit) · [Quick Start](https://parlot.ai/docs/sdk/get-started/quick-start) · [parlot.ai](https://parlot.ai)
+**Docs:** [LiveKit guide](https://parlot.ai/docs/sdk/guides/livekit) · [Quick Start](https://parlot.ai/docs/sdk/get-started/quick-start) · [parlot.ai](https://parlot.ai)
 
 ## Install
 
@@ -45,10 +45,10 @@ export PARLOT_ENDPOINT=https://ingest.parlot.ai
 export PARLOT_API_KEY=<org-scoped-key>
 ```
 
-Mint the API key in Parlot **Settings → API Keys**. Recording, session logs, and generative AI content capture are configured in Settings or via `parlotize(...)` kwargs — see the [LiveKit guide](https://parlot.ai/docs/guides/livekit).
+Mint the API key in Parlot **Settings → API Keys**. Recording, session logs, and generative AI content capture are configured in Settings or via `parlotize(...)` kwargs — see the [LiveKit guide](https://parlot.ai/docs/sdk/guides/livekit).
 
 ## Next
 
 - [Quick Start](https://parlot.ai/docs/sdk/get-started/quick-start)
-- [LiveKit guide](https://parlot.ai/docs/guides/livekit)
+- [LiveKit guide](https://parlot.ai/docs/sdk/guides/livekit)
 - Examples: [`examples/livekit/`](../../examples/livekit/)
