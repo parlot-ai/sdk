@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.11](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.10...instrumentation-livekit-v0.4.11) (2026-11-02)
+
+
+### Documentation
+
+* plain-language copy and diff-style getting started snippets ([#140](https://github.com/parlot-ai/sdk/issues/140)) ([909bb73](https://github.com/parlot-ai/sdk/commit/909bb730488c74fe45b0f11aaaab712302eba558))
+
 ## [0.4.10](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.9...instrumentation-livekit-v0.4.10) (2026-10-28)
 
 
