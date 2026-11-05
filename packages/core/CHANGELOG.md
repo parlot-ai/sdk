@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.12](https://github.com/parlot-ai/sdk/compare/core-v0.4.11...core-v0.4.12) (2026-11-05)
+
+
+### Features
+
+* **core:** add session cost driver attribute constants ([#144](https://github.com/parlot-ai/sdk/issues/144)) ([820f829](https://github.com/parlot-ai/sdk/commit/820f8296df436e7ea6231c3bb728f22b9436cbd0))
+
 ## [0.4.11](https://github.com/parlot-ai/sdk/compare/core-v0.4.10...core-v0.4.11) (2026-10-28)
 
 
