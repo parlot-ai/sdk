@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.8](https://github.com/parlot-ai/sdk/compare/parlot-v0.3.7...parlot-v0.3.8) (2026-11-02)
+
+
+### Documentation
+
+* plain-language copy and diff-style getting started snippets ([#140](https://github.com/parlot-ai/sdk/issues/140)) ([909bb73](https://github.com/parlot-ai/sdk/commit/909bb730488c74fe45b0f11aaaab712302eba558))
+
 ## [0.3.7](https://github.com/parlot-ai/sdk/compare/parlot-v0.3.6...parlot-v0.3.7) (2026-10-28)
 
 
