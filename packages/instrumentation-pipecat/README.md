@@ -29,22 +29,40 @@ alongside them.
 ## Instrument
 
 ```python
-from pipecat.processors.aggregators.llm_response_universal import LLMContextAggregatorPair
-from parlot.instrumentation.pipecat import attach_aggregators, parlotize
+from pipecat.audio.vad.silero import SileroVADAnalyzer
+from pipecat.pipeline.pipeline import Pipeline
+from pipecat.pipeline.worker import PipelineParams, PipelineWorker
+from pipecat.processors.aggregators.llm_context import LLMContext
+from pipecat.processors.aggregators.llm_response_universal import (
+    LLMContextAggregatorPair,
+    LLMUserAggregatorParams,
+)
+from parlot.instrumentation.pipecat import (
+    ParlotRecordingProcessor,
+    attach_aggregators,
+    parlotize,
+)
 
-parlotize("my-pipecat-agent", version="0.1.0")
+parlotize("my-pipecat-agent", version="0.1.0", record=True)
 
-context_aggregator = LLMContextAggregatorPair(context)
-# attach_aggregators(...) only if the pair was built before parlotize()
+context = LLMContext(messages)
+user_aggregator, assistant_aggregator = LLMContextAggregatorPair(
+    context,
+    user_params=LLMUserAggregatorParams(
+        vad_analyzer=SileroVADAnalyzer(),
+    ),
+)
+# attach_aggregators(user_aggregator, assistant_aggregator) only if built before parlotize()
 
 pipeline = Pipeline([
     transport.input(),
     stt,
-    context_aggregator.user(),
+    user_aggregator,
     llm,
     tts,
     transport.output(),
-    context_aggregator.assistant(),
+    ParlotRecordingProcessor(),
+    assistant_aggregator,
 ])
 
 worker = PipelineWorker(
@@ -52,6 +70,7 @@ worker = PipelineWorker(
     params=PipelineParams(enable_metrics=True, enable_usage_metrics=True),
     enable_tracing=True,
     enable_turn_tracking=True,
+    conversation_id="optional-stable-id",
 )
 ```
 
