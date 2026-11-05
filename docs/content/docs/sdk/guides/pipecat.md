@@ -74,9 +74,13 @@ Parlot **appends** handlers and observers alongside yours.
 Highlighted lines are what you add:
 
 ```python
+from pipecat.audio.vad.silero import SileroVADAnalyzer
+from pipecat.pipeline.pipeline import Pipeline
+from pipecat.pipeline.worker import PipelineParams, PipelineWorker
 from pipecat.processors.aggregators.llm_context import LLMContext
 from pipecat.processors.aggregators.llm_response_universal import (
     LLMContextAggregatorPair,
+    LLMUserAggregatorParams,
 )
 from parlot.instrumentation.pipecat import (  # [!code ++]
     ParlotRecordingProcessor,  # [!code ++]
@@ -87,19 +91,24 @@ from parlot.instrumentation.pipecat import (  # [!code ++]
 parlotize("my-pipecat-agent", version="0.1.0", record=True)  # [!code ++]
 
 context = LLMContext(messages)
-context_aggregator = LLMContextAggregatorPair(context)
+user_aggregator, assistant_aggregator = LLMContextAggregatorPair(
+    context,
+    user_params=LLMUserAggregatorParams(
+        vad_analyzer=SileroVADAnalyzer(),
+    ),
+)
 # Only needed if aggregators were built before parlotize():
-# attach_aggregators(context_aggregator.user(), context_aggregator.assistant())
+# attach_aggregators(user_aggregator, assistant_aggregator)
 
 pipeline = Pipeline([
     transport.input(),
     stt,
-    context_aggregator.user(),
+    user_aggregator,
     llm,
     tts,
     transport.output(),
     ParlotRecordingProcessor(),  # [!code ++]
-    context_aggregator.assistant(),
+    assistant_aggregator,
 ])
 
 worker = PipelineWorker(

@@ -64,13 +64,14 @@ Call `parlotize("…")` once at process start, then build the pipeline with aggr
 optional recording:
 
 ```python
+from pipecat.audio.vad.silero import SileroVADAnalyzer
+from pipecat.pipeline.pipeline import Pipeline
+from pipecat.pipeline.worker import PipelineParams, PipelineWorker
 from pipecat.processors.aggregators.llm_context import LLMContext
 from pipecat.processors.aggregators.llm_response_universal import (
     LLMContextAggregatorPair,
+    LLMUserAggregatorParams,
 )
-from pipecat.pipeline.pipeline import Pipeline
-from pipecat.pipeline.runner import PipelineRunner as PipelineWorker
-from pipecat.pipeline.task import PipelineParams
 from parlot.instrumentation.pipecat import (  # [!code ++]
     ParlotRecordingProcessor,  # [!code ++]
     parlotize,  # [!code ++]
@@ -79,17 +80,22 @@ from parlot.instrumentation.pipecat import (  # [!code ++]
 parlotize("my-pipecat-agent", version="0.1.0")  # [!code ++]
 
 context = LLMContext(messages)
-context_aggregator = LLMContextAggregatorPair(context)
+user_aggregator, assistant_aggregator = LLMContextAggregatorPair(
+    context,
+    user_params=LLMUserAggregatorParams(
+        vad_analyzer=SileroVADAnalyzer(),
+    ),
+)
 
 pipeline = Pipeline([
     transport.input(),
     stt,
-    context_aggregator.user(),
+    user_aggregator,
     llm,
     tts,
     transport.output(),
     ParlotRecordingProcessor(),  # [!code ++]
-    context_aggregator.assistant(),
+    assistant_aggregator,
 ])
 
 worker = PipelineWorker(
