@@ -1,5 +1,5 @@
 {
-  "packages/core": "0.4.11",
+  "packages/core": "0.4.12",
   "packages/instrumentation-livekit": "0.4.11",
   "packages/instrumentation-langgraph": "0.4.5",
   "packages/instrumentation-pipecat": "0.1.9",
