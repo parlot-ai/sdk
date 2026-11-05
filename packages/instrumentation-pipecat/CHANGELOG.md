@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.9](https://github.com/parlot-ai/sdk/compare/instrumentation-pipecat-v0.1.8...instrumentation-pipecat-v0.1.9) (2026-11-05)
+
+
+### Documentation
+
+* **pipecat:** align examples with minimal-voice bot implementation ([#142](https://github.com/parlot-ai/sdk/issues/142)) ([69904fc](https://github.com/parlot-ai/sdk/commit/69904fc552238f889437df0a6b40511abea7ce11))
+
 ## [0.1.8](https://github.com/parlot-ai/sdk/compare/instrumentation-pipecat-v0.1.7...instrumentation-pipecat-v0.1.8) (2026-10-28)
 
 
