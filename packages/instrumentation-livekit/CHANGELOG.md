@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.13](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.12...instrumentation-livekit-v0.4.13) (2026-11-09)
+
+
+### Bug Fixes
+
+* **livekit:** map realtime_model_metrics to usage.llm_* ([#151](https://github.com/parlot-ai/sdk/issues/151)) ([05bc49c](https://github.com/parlot-ai/sdk/commit/05bc49ca11f6d2759642b3c80353a7c8958ff0a6))
+* **livekit:** synthesize realtime user speech windows without regressing STT ([#149](https://github.com/parlot-ai/sdk/issues/149)) ([6f8c34d](https://github.com/parlot-ai/sdk/commit/6f8c34d2e66c099d8dd50166327b45ea9c167741))
+* rename recording_webhook_error to recording_error ([#152](https://github.com/parlot-ai/sdk/issues/152)) ([8efcf12](https://github.com/parlot-ai/sdk/commit/8efcf1258f4a995a4281bfc1afc218cced674c38))
+
 ## [0.4.12](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.11...instrumentation-livekit-v0.4.12) (2026-11-09)
 
 

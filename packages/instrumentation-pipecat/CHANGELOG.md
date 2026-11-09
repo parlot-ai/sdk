@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.11](https://github.com/parlot-ai/sdk/compare/instrumentation-pipecat-v0.1.10...instrumentation-pipecat-v0.1.11) (2026-11-09)
+
+
+### Bug Fixes
+
+* rename recording_webhook_error to recording_error ([#152](https://github.com/parlot-ai/sdk/issues/152)) ([8efcf12](https://github.com/parlot-ai/sdk/commit/8efcf1258f4a995a4281bfc1afc218cced674c38))
+
 ## [0.1.10](https://github.com/parlot-ai/sdk/compare/instrumentation-pipecat-v0.1.9...instrumentation-pipecat-v0.1.10) (2026-11-09)
 
 
