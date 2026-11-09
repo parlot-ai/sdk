@@ -684,6 +684,74 @@ class TestEventBridgeTurns:
             user_turns[0].attributes[ATTR_TURN_MEDIA_START_MS]
         )
 
+    def test_realtime_user_missing_stopped_uses_agent_end_to_started(self) -> None:
+        """Gemini Live: user metrics lack stopped; started≈EOU → not a 1ms blip."""
+        proc, exporter = _proc_with_exporter()
+        _bootstrap(proc)
+        proc.set_turn_source("events")
+        from parlot.instrumentation.livekit._session import get_job_bootstrap
+
+        bootstrap = get_job_bootstrap()
+        anchor_wall_ms = 1_794_259_502_334
+        proc.set_recording_anchor_wall_ms(bootstrap.state, anchor_wall_ms)
+
+        # Pattern from session 01a1c233: agent has both timestamps; user only started
+        # near the next agent / emit time.
+        agent_started = 1_794_259_503.395
+        agent_stopped = 1_794_259_506.628
+        user_started = 1_794_259_510.646  # ~EOU, not true VAD start
+        emit_now = user_started + 0.009  # classic synth would be ~9ms
+
+        bridge = _event_bridge(proc)
+        bridge._on_conversation_item_added(
+            SimpleNamespace(
+                item=SimpleNamespace(
+                    id="msg-a",
+                    type="message",
+                    role="assistant",
+                    text_content="Welcome to The LiveKit Hotel",
+                    interrupted=False,
+                    metrics={
+                        "started_speaking_at": agent_started,
+                        "stopped_speaking_at": agent_stopped,
+                    },
+                )
+            )
+        )
+        with patch(
+            "parlot.instrumentation.livekit._turn_enricher.time.time",
+            return_value=emit_now,
+        ):
+            bridge._on_conversation_item_added(
+                SimpleNamespace(
+                    item=SimpleNamespace(
+                        id="msg-u",
+                        type="message",
+                        role="user",
+                        text_content="I want to make a reservation.",
+                        interrupted=False,
+                        metrics={"started_speaking_at": user_started},
+                    )
+                )
+            )
+
+        user_turns = [
+            t
+            for t in _parlot_turns(exporter)
+            if t.attributes.get(ATTR_TURN_PARTICIPANT_ROLE) == "user"
+        ]
+        assert len(user_turns) == 1
+        attrs = user_turns[0].attributes
+        agent_end_ms = int(agent_stopped * 1000)
+        user_end_ms = int(user_started * 1000)
+        assert attrs[ATTR_TURN_SPEECH_WALL_START_MS] == agent_end_ms
+        assert attrs[ATTR_TURN_SPEECH_WALL_END_MS] == user_end_ms
+        media_dur = (
+            attrs[ATTR_TURN_MEDIA_END_MS] - attrs[ATTR_TURN_MEDIA_START_MS]
+        )
+        assert media_dur >= 1_000
+        assert attrs[ATTR_TURN_MEDIA_START_MS] == agent_end_ms - anchor_wall_ms
+
 
 class TestNormalizeCloseReason:
     def test_enum_like_reason_string(self) -> None:
