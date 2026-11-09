@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.10](https://github.com/parlot-ai/sdk/compare/parlot-v0.3.9...parlot-v0.3.10) (2026-11-09)
+
+
+### Bug Fixes
+
+* rename recording_webhook_error to recording_error ([#152](https://github.com/parlot-ai/sdk/issues/152)) ([8efcf12](https://github.com/parlot-ai/sdk/commit/8efcf1258f4a995a4281bfc1afc218cced674c38))
+
 ## [0.3.9](https://github.com/parlot-ai/sdk/compare/parlot-v0.3.8...parlot-v0.3.9) (2026-11-09)
 
 

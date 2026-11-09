@@ -1,7 +1,7 @@
 {
-  "packages/core": "0.4.13",
-  "packages/instrumentation-livekit": "0.4.12",
+  "packages/core": "0.4.14",
+  "packages/instrumentation-livekit": "0.4.13",
   "packages/instrumentation-langgraph": "0.4.5",
-  "packages/instrumentation-pipecat": "0.1.10",
-  "packages/meta": "0.3.9"
+  "packages/instrumentation-pipecat": "0.1.11",
+  "packages/meta": "0.3.10"
 }
