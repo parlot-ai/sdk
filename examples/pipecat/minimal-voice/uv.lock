@@ -2527,14 +2527,14 @@ wheels = [
 
 [[package]]
 name = "parlot"
-version = "0.3.5"
+version = "0.3.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "parlot-core" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5b/48/bc79def618e48012d68f0887d68a438689769bac7f30ad0ac669ab0c0f5c/parlot-0.3.5.tar.gz", hash = "sha256:ddf759ab62f3c216f6c7d2b0596d32c3674d1037fc0f739688eae11a607c46c1", size = 2960, upload-time = "2026-10-25T17:02:29.383Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/37/f5/7a230756c0298448fb96a76a5b020cee0328c4dfdcb14e82e738d3b2e9d3/parlot-0.3.8.tar.gz", hash = "sha256:04f970342fada3178d18cea2667019480ace3bbed821cedb4667f26316155b23", size = 3038, upload-time = "2026-11-05T14:00:46.45Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1c/9a/71ca1e8338ff970f0929f272bb5b9e5d2975de3c8dd2aa71afc26cd50754/parlot-0.3.5-py3-none-any.whl", hash = "sha256:e910eb18734d521524ba0e9605dcce536f6cb686bfc4cc0744db54bb8694733a", size = 2900, upload-time = "2026-10-25T17:02:28.308Z" },
+    { url = "https://files.pythonhosted.org/packages/d9/6b/a5b9b29dc401fd151c1ee574ed296ceb5c3447423c615cdee722bb4d728b/parlot-0.3.8-py3-none-any.whl", hash = "sha256:f66791baaacd420e7469e591c688050d7d7490fe67cdb3f5aaa57308913171a9", size = 2945, upload-time = "2026-11-05T14:00:44.928Z" },
 ]
 
 [package.optional-dependencies]
@@ -2544,7 +2544,7 @@ pipecat = [
 
 [[package]]
 name = "parlot-core"
-version = "0.4.9"
+version = "0.4.12"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
@@ -2553,14 +2553,14 @@ dependencies = [
     { name = "opentelemetry-sdk" },
     { name = "opentelemetry-semantic-conventions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/bc/e1/c82630b2ed901943df130decc2e9fa7888f34cdce7abf27fb90892e624a5/parlot_core-0.4.9.tar.gz", hash = "sha256:e9696dab1405e5e2dd6b4940251742b26f3c76d06576772acd97ed0822255eb0", size = 42825, upload-time = "2026-10-25T13:19:34.857Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/74/9a/b1d5e2c5441ec67b158171c543a2a956c991664f054b97224348f5541491/parlot_core-0.4.12.tar.gz", hash = "sha256:8bd730905878931e646e407a04e41932fe51bbe7efa2ec874227f87e29770e21", size = 43201, upload-time = "2026-11-05T22:59:10.927Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4a/3d/ee0cadcbbb3dd59b3f20752f37b637b029c294d6c39c5a1801ccbe377bbb/parlot_core-0.4.9-py3-none-any.whl", hash = "sha256:baf0afbaddfd720952e809dce041d487a80d1138507f859dce7859f8631b8ded", size = 56865, upload-time = "2026-10-25T13:19:33.367Z" },
+    { url = "https://files.pythonhosted.org/packages/b2/5f/ba1bf94d96c58b775beea7594d57cd76a0ac63f971ef94d7b70f3ff11f34/parlot_core-0.4.12-py3-none-any.whl", hash = "sha256:fd5fe50dcdbf383cbc6e83e3f638329a7c6bdce54bf2b885550a88cca9604ab2", size = 57255, upload-time = "2026-11-05T22:59:09.304Z" },
 ]
 
 [[package]]
 name = "parlot-instrumentation-pipecat"
-version = "0.1.6"
+version = "0.1.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
@@ -2570,9 +2570,9 @@ dependencies = [
     { name = "parlot-core" },
     { name = "pipecat-ai", extra = ["tracing"] },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/26/0f/f0c77a548c69c632054e12f64c8382c2440ca171b9bed6e65bb3d0de1c47/parlot_instrumentation_pipecat-0.1.6.tar.gz", hash = "sha256:94ee34a547ebd424d6c2090b268cf200c2b53947bae25f255bb28953dd057402", size = 24249, upload-time = "2026-10-26T19:50:35.039Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/da/d7/60c5e11caa22527229437605a5cbf4f752ae3c9a15be76c31a07daabf0f2/parlot_instrumentation_pipecat-0.1.9.tar.gz", hash = "sha256:48f784e710691b55bdf8b9943a98f63434837b753d12d410663ebabb812b47b9", size = 24808, upload-time = "2026-11-05T18:28:21.836Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/16/e8/b918836df0e6735fb7a995ef79fd11653aae0be6b96da1ceea79d64ed34e/parlot_instrumentation_pipecat-0.1.6-py3-none-any.whl", hash = "sha256:ef6564780800cc508f252d30a0fbcee31b9f1bf4057f2632e410c51e1dfc8873", size = 29880, upload-time = "2026-10-26T19:50:33.653Z" },
+    { url = "https://files.pythonhosted.org/packages/98/39/eb7638fdad6f085166762443e48f9def7391399ede6cf1a01913c2cef381/parlot_instrumentation_pipecat-0.1.9-py3-none-any.whl", hash = "sha256:2a53bb20fbc813659f069f79013e1799805ed9a9a7d93aab76f795294bca5c3f", size = 30466, upload-time = "2026-11-05T18:28:20.06Z" },
 ]
 
 [[package]]
@@ -2588,8 +2588,8 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "parlot", extras = ["pipecat"], specifier = ">=0.3.5" },
-    { name = "parlot-instrumentation-pipecat", specifier = ">=0.1.6" },
+    { name = "parlot", extras = ["pipecat"], specifier = ">=0.3.8" },
+    { name = "parlot-instrumentation-pipecat", specifier = ">=0.1.8" },
     { name = "pipecat-ai", extras = ["daily", "webrtc", "websocket", "silero", "google", "deepgram", "openai", "tracing", "runner"], specifier = ">=1.0.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
 ]
