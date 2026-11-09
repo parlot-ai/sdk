@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.12](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.11...instrumentation-livekit-v0.4.12) (2026-11-09)
+
+
+### Bug Fixes
+
+* **recording:** stamp concrete upload-grant denials and improve anchors ([#148](https://github.com/parlot-ai/sdk/issues/148)) ([b00a62b](https://github.com/parlot-ai/sdk/commit/b00a62bf5a4aaf3be400705e30658d0f55d90997))
+
 ## [0.4.11](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.10...instrumentation-livekit-v0.4.11) (2026-11-02)
 
 

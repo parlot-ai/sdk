@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.9](https://github.com/parlot-ai/sdk/compare/parlot-v0.3.8...parlot-v0.3.9) (2026-11-09)
+
+
+### Bug Fixes
+
+* **parlot:** raise livekit install floor and refresh example locks ([#146](https://github.com/parlot-ai/sdk/issues/146)) ([d8c5c9c](https://github.com/parlot-ai/sdk/commit/d8c5c9ca711e34a96f0d44491816cc368fa582d5))
+
 ## [0.3.8](https://github.com/parlot-ai/sdk/compare/parlot-v0.3.7...parlot-v0.3.8) (2026-11-02)
 
 

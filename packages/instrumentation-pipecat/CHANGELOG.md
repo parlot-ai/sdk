@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.10](https://github.com/parlot-ai/sdk/compare/instrumentation-pipecat-v0.1.9...instrumentation-pipecat-v0.1.10) (2026-11-09)
+
+
+### Bug Fixes
+
+* **recording:** stamp concrete upload-grant denials and improve anchors ([#148](https://github.com/parlot-ai/sdk/issues/148)) ([b00a62b](https://github.com/parlot-ai/sdk/commit/b00a62bf5a4aaf3be400705e30658d0f55d90997))
+
 ## [0.1.9](https://github.com/parlot-ai/sdk/compare/instrumentation-pipecat-v0.1.8...instrumentation-pipecat-v0.1.9) (2026-11-05)
 
 
