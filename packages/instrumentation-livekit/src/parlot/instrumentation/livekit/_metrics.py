@@ -87,6 +87,21 @@ class ParlotMetricsRecorder(CoreParlotMetricsRecorder):
             )
             return
 
+        if metric_type == "realtime_model_metrics":
+            # Gemini Live / OpenAI Realtime emit RealtimeModelMetrics instead of
+            # LLMMetrics — map tokens into the same usage.llm_* counters so the
+            # rate card and overview usage pipes see the model.
+            input_tokens = int(getattr(metrics_obj, "input_tokens", 0) or 0)
+            output_tokens = int(getattr(metrics_obj, "output_tokens", 0) or 0)
+            self.record_llm_tokens(
+                session_id=sid,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                model=model_name,
+                provider=model_provider,
+            )
+            return
+
         if metric_type == "stt_metrics":
             audio_duration = float(getattr(metrics_obj, "audio_duration", 0) or 0)
             self.record_stt_audio(
