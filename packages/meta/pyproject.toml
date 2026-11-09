@@ -41,7 +41,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-livekit = ["parlot-instrumentation-livekit>=0.4.10"]
+livekit = ["parlot-instrumentation-livekit>=0.4.11"]
 langgraph = ["parlot-instrumentation-langgraph>=0.4.4"]
 pipecat = ["parlot-instrumentation-pipecat>=0.1.8"]
 recording-opus = ["av>=14,<17"]
