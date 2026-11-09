@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "parlot"
-version = "0.3.8"
+version = "0.3.9"
 description = "Know if production voice AI agents work — MIT OpenTelemetry instrumentation for LiveKit, Pipecat, and LangGraph"
 readme = "README.md"
 license = "MIT"
