@@ -55,7 +55,7 @@ from .recording_upload import (
     complete_recording,
     fetch_upload_grant,
     put_bytes_to_presigned_url,
-    recording_grant_webhook_error,
+    recording_grant_error,
 )
 from .metrics import (
     LONG_LIVED_METRICS_EXPORT_INTERVAL_MS,
@@ -163,7 +163,7 @@ __all__ = [
     "speech_wall_ms_from_span",
     "UploadGrantOutcome",
     "fetch_upload_grant",
-    "recording_grant_webhook_error",
+    "recording_grant_error",
     "complete_recording",
     "put_bytes_to_presigned_url",
     "should_capture_logs",

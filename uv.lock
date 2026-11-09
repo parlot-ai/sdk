@@ -2348,7 +2348,7 @@ wheels = [
 
 [[package]]
 name = "parlot"
-version = "0.3.8"
+version = "0.3.9"
 source = { editable = "packages/meta" }
 dependencies = [
     { name = "parlot-core" },
@@ -2386,7 +2386,7 @@ provides-extras = ["livekit", "langgraph", "pipecat", "recording-opus", "all"]
 
 [[package]]
 name = "parlot-core"
-version = "0.4.12"
+version = "0.4.13"
 source = { editable = "packages/core" }
 dependencies = [
     { name = "httpx" },
@@ -2448,7 +2448,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "parlot-instrumentation-livekit"
-version = "0.4.11"
+version = "0.4.12"
 source = { editable = "packages/instrumentation-livekit" }
 dependencies = [
     { name = "httpx" },
@@ -2480,7 +2480,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "parlot-instrumentation-pipecat"
-version = "0.1.9"
+version = "0.1.10"
 source = { editable = "packages/instrumentation-pipecat" }
 dependencies = [
     { name = "httpx" },

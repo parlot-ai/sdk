@@ -22,7 +22,7 @@ class UploadGrantOutcome:
     """Result of ``/v1/recordings/upload-grant``.
 
     On success ``grant`` is the JSON body. On failure ``error`` is a durable
-    ``recording_webhook_error`` string (e.g. ``quota_exceeded:session_recordings``).
+    ``recording_error`` string (e.g. ``quota_exceeded:session_recordings``).
     """
 
     grant: dict[str, Any] | None = None
@@ -33,15 +33,15 @@ class UploadGrantOutcome:
         return self.grant is not None
 
 
-def recording_grant_webhook_error(
+def recording_grant_error(
     code: str, *, grant_type: str = _SESSION_RECORDINGS_GRANT
 ) -> str:
-    """Canonical webhook_error for session_recordings grant denials."""
+    """Canonical recording_error for session_recordings grant denials."""
     return f"{code}:{grant_type}"
 
 
 def _parse_upload_grant_error(status_code: int, body_text: str) -> str:
-    """Map HTTP error body to a durable webhook_error code."""
+    """Map HTTP error body to a durable recording_error code."""
     code = ""
     grant_type = _SESSION_RECORDINGS_GRANT
     try:
@@ -56,10 +56,10 @@ def _parse_upload_grant_error(status_code: int, body_text: str) -> str:
         if isinstance(gt, str) and gt.strip():
             grant_type = gt.strip()
     if code in _GRANT_DENIAL_CODES:
-        return recording_grant_webhook_error(code, grant_type=grant_type)
+        return recording_grant_error(code, grant_type=grant_type)
     if status_code in (403, 429) and not code:
         guessed = "quota_exceeded" if status_code == 429 else "feature_not_granted"
-        return recording_grant_webhook_error(guessed, grant_type=grant_type)
+        return recording_grant_error(guessed, grant_type=grant_type)
     return "upload_grant_failed"
 
 

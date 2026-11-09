@@ -37,13 +37,13 @@ keywords = [
     "langgraph",
 ]
 dependencies = [
-    "parlot-core>=0.4.11",
+    "parlot-core>=0.4.14",
 ]
 
 [project.optional-dependencies]
-livekit = ["parlot-instrumentation-livekit>=0.4.11"]
+livekit = ["parlot-instrumentation-livekit>=0.4.13"]
 langgraph = ["parlot-instrumentation-langgraph>=0.4.4"]
-pipecat = ["parlot-instrumentation-pipecat>=0.1.8"]
+pipecat = ["parlot-instrumentation-pipecat>=0.1.11"]
 recording-opus = ["av>=14,<17"]
 all = ["parlot[livekit,langgraph,pipecat]"]
 

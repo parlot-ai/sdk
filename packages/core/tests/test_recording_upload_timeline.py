@@ -20,7 +20,7 @@ from parlot.core.recording_upload import (
     fetch_upload_grant,
     grant_put_url,
     put_bytes_to_presigned_url,
-    recording_grant_webhook_error,
+    recording_grant_error,
 )
 from parlot.core.runtime import ParlotRuntimeContext
 
@@ -134,7 +134,7 @@ async def test_fetch_upload_grant_quota_exceeded() -> None:
     with patch("parlot.core.recording_upload.httpx.AsyncClient", return_value=client):
         outcome = await fetch_upload_grant(_runtime(), session_id="s1")
     assert not outcome.ok
-    assert outcome.error == recording_grant_webhook_error("quota_exceeded")
+    assert outcome.error == recording_grant_error("quota_exceeded")
 
 
 @pytest.mark.asyncio
@@ -148,7 +148,7 @@ async def test_fetch_upload_grant_feature_not_granted() -> None:
     with patch("parlot.core.recording_upload.httpx.AsyncClient", return_value=client):
         outcome = await fetch_upload_grant(_runtime(), session_id="s1")
     assert not outcome.ok
-    assert outcome.error == recording_grant_webhook_error("feature_not_granted")
+    assert outcome.error == recording_grant_error("feature_not_granted")
 
 
 @pytest.mark.asyncio
