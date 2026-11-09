@@ -9,7 +9,7 @@ dependencies = [
     "pyyaml>=6.0",
     "apsw>=3.46",
     "tzdata>=2024.1",
-    "parlot[livekit]>=0.3.2",
+    "parlot[livekit]>=0.3.8",
 ]
 
 [tool.uv]
