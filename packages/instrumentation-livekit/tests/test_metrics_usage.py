@@ -74,6 +74,27 @@ def test_record_usage_collected_llm() -> None:
     assert totals[METRIC_USAGE_LLM_OUTPUT_TOKENS] == 50
 
 
+def test_record_usage_collected_realtime_model() -> None:
+    reader = InMemoryMetricReader()
+    recorder = ParlotMetricsRecorder(MeterProvider(metric_readers=[reader]))
+    state = _usage_state("sess-usage-realtime")
+    realtime = SimpleNamespace(
+        type="realtime_model_metrics",
+        input_tokens=220,
+        output_tokens=80,
+        metadata=SimpleNamespace(
+            model_name="google/gemini-3.8-live",
+            model_provider="google",
+        ),
+    )
+
+    recorder.record_usage_collected(state, realtime)
+    totals = _metric_sums(reader)
+
+    assert totals[METRIC_USAGE_LLM_INPUT_TOKENS] == 220
+    assert totals[METRIC_USAGE_LLM_OUTPUT_TOKENS] == 80
+
+
 def test_record_usage_collected_stt_tts() -> None:
     reader = InMemoryMetricReader()
     recorder = ParlotMetricsRecorder(MeterProvider(metric_readers=[reader]))
