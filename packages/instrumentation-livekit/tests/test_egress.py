@@ -157,10 +157,10 @@ async def test_egress_upload_grant_quota_stamps_concrete_error(
     ):
         await maybe_start_room_composite_egress(ctx)
 
-    from parlot.core.attrs import ATTR_SESSION_RECORDING_WEBHOOK_ERROR
+    from parlot.core.attrs import ATTR_SESSION_RECORDING_ERROR
 
     bootstrap.session_span.set_attribute.assert_any_call(
-        ATTR_SESSION_RECORDING_WEBHOOK_ERROR,
+        ATTR_SESSION_RECORDING_ERROR,
         "quota_exceeded:session_recordings",
     )
     assert any(

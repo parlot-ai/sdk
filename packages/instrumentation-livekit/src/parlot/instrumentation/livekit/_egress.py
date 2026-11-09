@@ -21,7 +21,7 @@ logger = logging.getLogger("parlot.instrumentation.livekit")
 
 
 def _format_egress_error(exc: BaseException) -> str:
-    """Normalize LiveKit Twirp/API errors for session.recording.webhook_error."""
+    """Normalize LiveKit Twirp/API errors for session.recording.error."""
     code = getattr(exc, "code", None)
     message = getattr(exc, "message", None) or str(exc)
     if code and message:
@@ -52,7 +52,7 @@ def _egress_anchor_wall_ms(info: Any) -> int:
     return int(time.time() * 1000)
 
 
-def _stamp_recording_webhook_error(bootstrap: Any, error: str) -> None:
+def _stamp_recording_error(bootstrap: Any, error: str) -> None:
     stamp_recording_error(bootstrap.session_span, error)
 
 
@@ -84,14 +84,14 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
 
     runtime = context.runtime if context is not None else None
     if runtime is None:
-        _stamp_recording_webhook_error(bootstrap, "egress_config_missing: bootstrap")
+        _stamp_recording_error(bootstrap, "egress_config_missing: bootstrap")
         logger.error("parlot: egress skipped — bootstrap not loaded")
         return
 
     room = getattr(ctx, "room", None)
     room_name = getattr(room, "name", None) or getattr(ctx, "room_name", None)
     if not room_name:
-        _stamp_recording_webhook_error(bootstrap, "egress_no_room_name")
+        _stamp_recording_error(bootstrap, "egress_no_room_name")
         logger.warning("parlot: egress skipped — room name unavailable")
         return
 
@@ -101,7 +101,7 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
     )
     if not outcome.ok or outcome.grant is None:
         error = outcome.error or "upload_grant_failed"
-        _stamp_recording_webhook_error(bootstrap, error)
+        _stamp_recording_error(bootstrap, error)
         logger.error("parlot: egress skipped — upload grant denied error=%s", error)
         return
 
@@ -124,7 +124,7 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
     try:
         from livekit import api
     except ImportError:
-        _stamp_recording_webhook_error(bootstrap, "livekit_api_unavailable")
+        _stamp_recording_error(bootstrap, "livekit_api_unavailable")
         logger.error("parlot: livekit-api not available for egress")
         return
 
@@ -132,7 +132,7 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
     lk_key = __import__("os").environ.get("LIVEKIT_API_KEY", "")
     lk_secret = __import__("os").environ.get("LIVEKIT_API_SECRET", "")
     if not (lk_url and lk_key and lk_secret):
-        _stamp_recording_webhook_error(bootstrap, "livekit_credentials_missing")
+        _stamp_recording_error(bootstrap, "livekit_credentials_missing")
         logger.error("parlot: LIVEKIT_* env required to start egress")
         return
 
@@ -154,7 +154,7 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
         info = await lkapi.egress.start_room_composite_egress(req)
     except Exception as exc:
         err = _format_egress_error(exc)
-        _stamp_recording_webhook_error(bootstrap, err)
+        _stamp_recording_error(bootstrap, err)
         logger.error("parlot: StartRoomCompositeEgress failed — %s", err)
         logger.debug("parlot: StartRoomCompositeEgress failed", exc_info=True)
         return

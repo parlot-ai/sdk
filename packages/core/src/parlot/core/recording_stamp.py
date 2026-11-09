@@ -16,7 +16,7 @@ from parlot.core.attrs import (
     ATTR_SESSION_RECORDING_SOURCE,
     ATTR_SESSION_RECORDING_STATUS,
     ATTR_SESSION_RECORDING_WALL_END_MS,
-    ATTR_SESSION_RECORDING_WEBHOOK_ERROR,
+    ATTR_SESSION_RECORDING_ERROR,
 )
 
 logger = logging.getLogger("parlot.core.recording_stamp")
@@ -47,7 +47,7 @@ def stamp_recording_disabled(span: Any, reason: str) -> None:
 
 def stamp_recording_error(span: Any, error: str) -> None:
     msg = error[:500]
-    stamp_recording_attr(span, ATTR_SESSION_RECORDING_WEBHOOK_ERROR, msg)
+    stamp_recording_attr(span, ATTR_SESSION_RECORDING_ERROR, msg)
     stamp_recording_attr(span, ATTR_SESSION_RECORDING_STATUS, "failed")
     if _span_recording(span):
         try:
