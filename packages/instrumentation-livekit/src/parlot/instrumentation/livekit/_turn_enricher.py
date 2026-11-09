@@ -1091,11 +1091,16 @@ class TurnEnricher:
         state.pending_interrupt_media_end_ms = media_end_ms
         state.pending_interrupt_speech_end_wall_ms = speech_end_wall_ms
 
+    # Below this, a synthesized user window is treated as realtime-degenerate
+    # (Gemini Live often stamps started_speaking_at near EOU with no stopped).
+    _MIN_SYNTHESIZED_SPEECH_MS = 200
+
     @staticmethod
     def _speech_wall_ms_from_metrics(
         metrics: Mapping[str, float] | None,
         *,
         synthesize_missing_end: bool = False,
+        last_agent_speech_end_wall_ms: int = 0,
     ) -> tuple[int, int] | None:
         if not metrics:
             return None
@@ -1103,22 +1108,42 @@ class TurnEnricher:
         if started is None:
             return None
         stopped = metrics.get("stopped_speaking_at")
-        if stopped is None:
-            if not synthesize_missing_end:
-                return None
-            # ChatMessage.metrics often omits stopped_speaking_at on user turns;
-            # synthesize end at observation time so media_segment_* can still stamp.
-            stopped = time.time()
         try:
             speech_start_wall_ms = int(float(started) * 1000)
-            speech_end_wall_ms = int(float(stopped) * 1000)
         except (TypeError, ValueError):
             return None
-        if speech_end_wall_ms <= speech_start_wall_ms:
-            if synthesize_missing_end:
-                speech_end_wall_ms = speech_start_wall_ms + 1
-            else:
+
+        if stopped is not None:
+            # Both timestamps present (typical STT→LLM→TTS / agent turns).
+            try:
+                speech_end_wall_ms = int(float(stopped) * 1000)
+            except (TypeError, ValueError):
                 return None
+            if speech_end_wall_ms <= speech_start_wall_ms:
+                return None
+            return speech_start_wall_ms, speech_end_wall_ms
+
+        if not synthesize_missing_end:
+            return None
+
+        # Missing stopped: classic STT often still has a true early VAD start, so
+        # end=now yields a multi-second window. Gemini Live often stamps started
+        # near EOU/commit (~now), collapsing to ~1–9ms — then reinterpret.
+        now_ms = int(time.time() * 1000)
+        classic_end_ms = now_ms
+        if classic_end_ms - speech_start_wall_ms >= TurnEnricher._MIN_SYNTHESIZED_SPEECH_MS:
+            return speech_start_wall_ms, classic_end_ms
+
+        # Realtime-degenerate: treat started as end; start at prior agent end.
+        speech_end_wall_ms = speech_start_wall_ms
+        agent_end = int(last_agent_speech_end_wall_ms or 0)
+        if agent_end > 0 and agent_end < speech_end_wall_ms:
+            speech_start_wall_ms = agent_end
+        if (
+            speech_end_wall_ms - speech_start_wall_ms
+            < TurnEnricher._MIN_SYNTHESIZED_SPEECH_MS
+        ):
+            return None
         return speech_start_wall_ms, speech_end_wall_ms
 
     @staticmethod
@@ -1649,6 +1674,9 @@ class TurnEnricher:
             wall_from_metrics = self._speech_wall_ms_from_metrics(
                 metrics,
                 synthesize_missing_end=(role == "user"),
+                last_agent_speech_end_wall_ms=(
+                    state.last_agent_speech_end_wall_ms if role == "user" else 0
+                ),
             )
             if wall_from_metrics is not None:
                 speech_start_wall_ms, speech_end_wall_ms = wall_from_metrics

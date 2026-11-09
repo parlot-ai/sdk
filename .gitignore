@@ -49,7 +49,7 @@ htmlcov/
 # Logs
 *.log
 logs/
-examples/**/compare/**
+examples/**/parlot-telemetry-compare/**
 
 # Node
 node_modules/

@@ -22,7 +22,7 @@ load_dotenv()
 
 from parlot.instrumentation.livekit import parlotize
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 parlotize("hotel-receptionist", version=__version__)
 
@@ -230,14 +230,13 @@ async def hotel_receptionist_agent(ctx: JobContext) -> None:
     userdata = Userdata(db=db)
     session = AgentSession[Userdata](
         userdata=userdata,
-        # An explicit VAD is required (not the bundled default): without it the
-        # speaking anchor falls back to the STT stream clock, which drifts into the
-        # future across a long call / nested-task switch and makes the turn-commit
-        # logic sleep for that offset (~the elapsed call time) before replying.
+        # Gemini Live has built-in turn detection; keep session Silero VAD so
+        # Parlot still gets end-of-speech anchors for speech_wall / media_segment.
         vad=inference.VAD(model="silero"),
-        stt=inference.STT("deepgram/nova-3"),
-        llm=inference.LLM("google/gemma-4-31b-it"),
-        tts=inference.TTS("inworld/inworld-tts-2"),
+        llm=inference.RealtimeModel(
+            model="google/gemini-3.8-live",
+            voice="Puck",
+        ),
         max_tool_steps=5,
     )
 

@@ -1541,14 +1541,14 @@ wheels = [
 
 [[package]]
 name = "parlot"
-version = "0.3.8"
+version = "0.3.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "parlot-core" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/37/f5/7a230756c0298448fb96a76a5b020cee0328c4dfdcb14e82e738d3b2e9d3/parlot-0.3.8.tar.gz", hash = "sha256:04f970342fada3178d18cea2667019480ace3bbed821cedb4667f26316155b23", size = 3038, upload-time = "2026-11-05T14:00:46.45Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fc/d8/82d7f9a5153e3636f4276b1d85b0d6d5a561a6df1d1310e095e397fd9aba/parlot-0.3.9.tar.gz", hash = "sha256:6596c30c2bc47d051c35a6bbb3ebb52ccef5efe781e5a9fcb1809e41c059f53b", size = 3037, upload-time = "2026-11-09T20:56:28.578Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d9/6b/a5b9b29dc401fd151c1ee574ed296ceb5c3447423c615cdee722bb4d728b/parlot-0.3.8-py3-none-any.whl", hash = "sha256:f66791baaacd420e7469e591c688050d7d7490fe67cdb3f5aaa57308913171a9", size = 2945, upload-time = "2026-11-05T14:00:44.928Z" },
+    { url = "https://files.pythonhosted.org/packages/54/9d/54f1100f8c09b98e244849fc7472c9e13791f9726ee9f564c3bcec95012f/parlot-0.3.9-py3-none-any.whl", hash = "sha256:63ffb2e4f532ebd5a12101185f56889c1de6064853505adf305e9ebcff6a344e", size = 2945, upload-time = "2026-11-09T20:56:27.173Z" },
 ]
 
 [package.optional-dependencies]
@@ -1558,7 +1558,7 @@ livekit = [
 
 [[package]]
 name = "parlot-core"
-version = "0.4.12"
+version = "0.4.13"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
@@ -1567,9 +1567,9 @@ dependencies = [
     { name = "opentelemetry-sdk" },
     { name = "opentelemetry-semantic-conventions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/74/9a/b1d5e2c5441ec67b158171c543a2a956c991664f054b97224348f5541491/parlot_core-0.4.12.tar.gz", hash = "sha256:8bd730905878931e646e407a04e41932fe51bbe7efa2ec874227f87e29770e21", size = 43201, upload-time = "2026-11-05T22:59:10.927Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a9/4e/0128ff676083405b381942eb216c3ed4a5f67707a55cf9b0eb487c0939cc/parlot_core-0.4.13.tar.gz", hash = "sha256:5920a1b3a02a9fd72117229a52ec45fbf380060c500aa8aa2bd40d162ff6e02d", size = 43977, upload-time = "2026-11-09T20:56:23.641Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b2/5f/ba1bf94d96c58b775beea7594d57cd76a0ac63f971ef94d7b70f3ff11f34/parlot_core-0.4.12-py3-none-any.whl", hash = "sha256:fd5fe50dcdbf383cbc6e83e3f638329a7c6bdce54bf2b885550a88cca9604ab2", size = 57255, upload-time = "2026-11-05T22:59:09.304Z" },
+    { url = "https://files.pythonhosted.org/packages/cf/b5/0d5863d24a2b2d6f2fbc5ec85095dda1ea7bb96f8541ee600c9cd3237d44/parlot_core-0.4.13-py3-none-any.whl", hash = "sha256:833a1dc70434a2d034321b02d21773c5f8e1b3d79652dbd00b96574bad142977", size = 58126, upload-time = "2026-11-09T20:56:22.431Z" },
 ]
 
 [[package]]
@@ -1597,7 +1597,7 @@ requires-dist = [
 
 [[package]]
 name = "parlot-instrumentation-livekit"
-version = "0.4.11"
+version = "0.4.12"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
@@ -1607,9 +1607,9 @@ dependencies = [
     { name = "opentelemetry-sdk" },
     { name = "parlot-core" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/38/f3/94285a12fcae1a7751cbea8eeb3c439e79a817e8117fe19d0c2e2cc0ca83/parlot_instrumentation_livekit-0.4.11.tar.gz", hash = "sha256:be38344592bfb205f1c5e59052ddeffcb9ce2d8e47c337a981a23467c9101bc7", size = 56617, upload-time = "2026-11-05T14:00:42.458Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d5/62/cdc1b721ebd6024c75b5cb8b115bee34127762a78d576a2bf7b50433eee8/parlot_instrumentation_livekit-0.4.12.tar.gz", hash = "sha256:726ffa33ac9f828fb3a078c6b7b84627a1640cd43e0586ba19e9a8df0818a155", size = 57058, upload-time = "2026-11-09T20:56:23.356Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/11/2a/243fd263b46e0f07c710dbbfe26e675678bbf4cde9467285c8a95700b0db/parlot_instrumentation_livekit-0.4.11-py3-none-any.whl", hash = "sha256:f9a5c95b4a1ba52cf57e5b91593ac87bf545b8395abafc3ac2c7541af3961919", size = 73683, upload-time = "2026-11-05T14:00:41.065Z" },
+    { url = "https://files.pythonhosted.org/packages/b1/9d/997aad475ce5b5196e85ee3fe2f24a998c8b25cdbc5afc5ec46f18285d1a/parlot_instrumentation_livekit-0.4.12-py3-none-any.whl", hash = "sha256:2ee9670c4ab800d0a14b06830afa915f62cd3cea201fd6a62c94d7a5e27b37fe", size = 74155, upload-time = "2026-11-09T20:56:22.096Z" },
 ]
 
 [[package]]
