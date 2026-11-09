@@ -46,9 +46,21 @@ def stamp_recording_disabled(span: Any, reason: str) -> None:
 
 
 def stamp_recording_error(span: Any, error: str) -> None:
-    stamp_recording_attr(span, ATTR_SESSION_RECORDING_WEBHOOK_ERROR, error[:500])
+    msg = error[:500]
+    stamp_recording_attr(span, ATTR_SESSION_RECORDING_WEBHOOK_ERROR, msg)
     stamp_recording_attr(span, ATTR_SESSION_RECORDING_STATUS, "failed")
-    logger.warning("parlot: recording failed — %s", error)
+    if _span_recording(span):
+        try:
+            from opentelemetry.trace import Status, StatusCode
+
+            span.set_status(Status(StatusCode.ERROR, msg))
+        except Exception:
+            logger.debug("parlot: failed to set recording error span status", exc_info=True)
+    # Grant denials are operational errors (Honeycomb + agent logs); keep ERROR.
+    if msg.startswith(("quota_exceeded", "feature_not_granted")):
+        logger.error("parlot: recording failed — %s", msg)
+    else:
+        logger.warning("parlot: recording failed — %s", msg)
 
 
 def stamp_recording_started(

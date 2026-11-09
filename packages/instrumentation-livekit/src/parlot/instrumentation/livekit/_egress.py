@@ -31,6 +31,27 @@ def _format_egress_error(exc: BaseException) -> str:
     return message[:500] if message else (repr(exc)[:500] or "egress_start_failed")
 
 
+def _egress_anchor_wall_ms(info: Any) -> int:
+    """Prefer LiveKit ``EgressInfo.started_at`` (ns) over RPC return wall clock.
+
+    ``EGRESS_ACTIVE`` / ``started_at`` aligns sample-0 with when compositing
+    actually began; ``time.time()`` at StartEgress return is often early.
+    """
+    started = getattr(info, "started_at", None)
+    try:
+        started_i = int(started) if started is not None else 0
+    except (TypeError, ValueError):
+        started_i = 0
+    if started_i > 0:
+        # LiveKit protocol uses unix nanoseconds for started_at.
+        if started_i >= 10_000_000_000_000:  # >= ~year 2286 if ms → treat as ns
+            return started_i // 1_000_000
+        if started_i >= 10_000_000_000:  # microseconds-ish
+            return started_i // 1_000
+        return started_i
+    return int(time.time() * 1000)
+
+
 def _stamp_recording_webhook_error(bootstrap: Any, error: str) -> None:
     stamp_recording_error(bootstrap.session_span, error)
 
@@ -75,13 +96,16 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
         return
 
     session_id = bootstrap.session_id
-    grant = await fetch_upload_grant(
+    outcome = await fetch_upload_grant(
         runtime, session_id=session_id, room_name=str(room_name)
     )
-    if grant is None:
-        _stamp_recording_webhook_error(bootstrap, "upload_grant_failed")
+    if not outcome.ok or outcome.grant is None:
+        error = outcome.error or "upload_grant_failed"
+        _stamp_recording_webhook_error(bootstrap, error)
+        logger.error("parlot: egress skipped — upload grant denied error=%s", error)
         return
 
+    grant = outcome.grant
     s3 = grant.get("s3") or {}
     filepath = grant.get("filepath") or ""
     audio_uri = grant.get("audio_recording_uri") or ""
@@ -138,7 +162,7 @@ async def maybe_start_room_composite_egress(ctx: Any) -> None:
         await lkapi.aclose()
 
     egress_id = getattr(info, "egress_id", None) or getattr(info, "egressId", None) or ""
-    anchor_ms = int(time.time() * 1000)
+    anchor_ms = _egress_anchor_wall_ms(info)
 
     session_span = bootstrap.session_span
     stamp_recording_started(

@@ -8,9 +8,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from parlot.core.context import ParlotContext
+from parlot.core.recording_upload import UploadGrantOutcome
 from parlot.core.runtime import ParlotRuntimeContext
 from parlot.instrumentation.livekit import _auto
-from parlot.instrumentation.livekit._egress import maybe_start_room_composite_egress
+from parlot.instrumentation.livekit._egress import (
+    _egress_anchor_wall_ms,
+    maybe_start_room_composite_egress,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -20,6 +24,18 @@ def _reset_runtime():
     yield
     _auto.set_configured_context(None)
     _auto._configured_record = None
+
+
+def test_egress_anchor_prefers_started_at_ns() -> None:
+    info = SimpleNamespace(started_at=1_700_000_000_000_000_000)  # ns
+    assert _egress_anchor_wall_ms(info) == 1_700_000_000_000
+
+
+def test_egress_anchor_falls_back_when_started_at_missing() -> None:
+    before = int(__import__("time").time() * 1000)
+    ms = _egress_anchor_wall_ms(SimpleNamespace(started_at=0))
+    after = int(__import__("time").time() * 1000)
+    assert before <= ms <= after + 50
 
 
 def _platform(**kwargs) -> ParlotRuntimeContext:
@@ -91,7 +107,7 @@ async def test_egress_starts_without_webhooks(monkeypatch) -> None:
         patch(
             "parlot.instrumentation.livekit._egress.fetch_upload_grant",
             new_callable=AsyncMock,
-            return_value=grant,
+            return_value=UploadGrantOutcome(grant=grant),
         ),
         patch.dict("sys.modules", {"livekit": SimpleNamespace(api=api_mod), "livekit.api": api_mod}),
     ):
@@ -104,6 +120,52 @@ async def test_egress_starts_without_webhooks(monkeypatch) -> None:
     assert "webhooks" not in kwargs
     lkapi.egress.start_room_composite_egress.assert_awaited_once_with(room_composite_req)
     bootstrap.processor.set_recording_anchor_wall_ms.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_egress_upload_grant_quota_stamps_concrete_error(
+    monkeypatch, caplog
+) -> None:
+    context = ParlotContext()
+    context.runtime = _platform()
+    _auto.set_configured_context(context)
+
+    bootstrap = MagicMock()
+    bootstrap.session_id = "sess-1"
+    bootstrap.session_span = MagicMock()
+    bootstrap.session_span.is_recording.return_value = True
+    bootstrap.processor = MagicMock()
+    bootstrap.processor._context = context
+
+    ctx = MagicMock()
+    ctx.room = SimpleNamespace(name="room-1")
+    ctx.job = SimpleNamespace(metadata='{"record": true}', agent_name="agent", dispatch_id=None)
+
+    with (
+        patch(
+            "parlot.instrumentation.livekit._session.get_job_bootstrap",
+            return_value=bootstrap,
+        ),
+        patch(
+            "parlot.instrumentation.livekit._egress.fetch_upload_grant",
+            new_callable=AsyncMock,
+            return_value=UploadGrantOutcome(
+                error="quota_exceeded:session_recordings"
+            ),
+        ),
+        caplog.at_level("ERROR"),
+    ):
+        await maybe_start_room_composite_egress(ctx)
+
+    from parlot.core.attrs import ATTR_SESSION_RECORDING_WEBHOOK_ERROR
+
+    bootstrap.session_span.set_attribute.assert_any_call(
+        ATTR_SESSION_RECORDING_WEBHOOK_ERROR,
+        "quota_exceeded:session_recordings",
+    )
+    assert any(
+        "quota_exceeded:session_recordings" in r.message for r in caplog.records
+    )
 
 
 @pytest.mark.asyncio
@@ -168,7 +230,7 @@ async def test_egress_failure_logs_descriptively_without_traceback(
         patch(
             "parlot.instrumentation.livekit._egress.fetch_upload_grant",
             new_callable=AsyncMock,
-            return_value=grant,
+            return_value=UploadGrantOutcome(grant=grant),
         ),
         patch.dict("sys.modules", {"livekit": SimpleNamespace(api=api_mod), "livekit.api": api_mod}),
     ):
