@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import logging
+from dataclasses import dataclass
 from typing import Any, Mapping, Optional, Sequence
 
 import httpx
@@ -10,6 +12,55 @@ import httpx
 from parlot.core.runtime import ParlotRuntimeContext
 
 logger = logging.getLogger("parlot.core.recording_upload")
+
+_SESSION_RECORDINGS_GRANT = "session_recordings"
+_GRANT_DENIAL_CODES = frozenset({"quota_exceeded", "feature_not_granted"})
+
+
+@dataclass(frozen=True)
+class UploadGrantOutcome:
+    """Result of ``/v1/recordings/upload-grant``.
+
+    On success ``grant`` is the JSON body. On failure ``error`` is a durable
+    ``recording_webhook_error`` string (e.g. ``quota_exceeded:session_recordings``).
+    """
+
+    grant: dict[str, Any] | None = None
+    error: str | None = None
+
+    @property
+    def ok(self) -> bool:
+        return self.grant is not None
+
+
+def recording_grant_webhook_error(
+    code: str, *, grant_type: str = _SESSION_RECORDINGS_GRANT
+) -> str:
+    """Canonical webhook_error for session_recordings grant denials."""
+    return f"{code}:{grant_type}"
+
+
+def _parse_upload_grant_error(status_code: int, body_text: str) -> str:
+    """Map HTTP error body to a durable webhook_error code."""
+    code = ""
+    grant_type = _SESSION_RECORDINGS_GRANT
+    try:
+        data = json.loads(body_text) if body_text else {}
+    except json.JSONDecodeError:
+        data = {}
+    if isinstance(data, dict):
+        raw = data.get("error") or data.get("code") or ""
+        if isinstance(raw, str):
+            code = raw.strip()
+        gt = data.get("grant_type")
+        if isinstance(gt, str) and gt.strip():
+            grant_type = gt.strip()
+    if code in _GRANT_DENIAL_CODES:
+        return recording_grant_webhook_error(code, grant_type=grant_type)
+    if status_code in (403, 429) and not code:
+        guessed = "quota_exceeded" if status_code == 429 else "feature_not_granted"
+        return recording_grant_webhook_error(guessed, grant_type=grant_type)
+    return "upload_grant_failed"
 
 
 async def fetch_upload_grant(
@@ -20,8 +71,8 @@ async def fetch_upload_grant(
     segment_index: Optional[int] = None,
     sample_offset: Optional[int] = None,
     content_type: Optional[str] = None,
-) -> Optional[dict[str, Any]]:
-    """POST ``/v1/recordings/upload-grant``; return JSON body or ``None`` on failure."""
+) -> UploadGrantOutcome:
+    """POST ``/v1/recordings/upload-grant``; return grant body or structured error."""
     url = f"{runtime.endpoint.rstrip('/')}/v1/recordings/upload-grant"
     headers = {"Authorization": f"Bearer {runtime.api_key}"}
     payload: dict[str, Any] = {"session_id": session_id}
@@ -37,18 +88,22 @@ async def fetch_upload_grant(
         async with httpx.AsyncClient(timeout=30.0) as client:
             resp = await client.post(url, json=payload, headers=headers)
         if resp.status_code >= 400:
+            error = _parse_upload_grant_error(resp.status_code, resp.text[:500])
             logger.error(
-                "parlot: upload grant failed status=%s body=%s",
+                "parlot: upload grant failed status=%s error=%s body=%s",
                 resp.status_code,
+                error,
                 resp.text[:500],
             )
-            return None
+            return UploadGrantOutcome(error=error)
         data = resp.json()
-        return data if isinstance(data, dict) else None
+        if isinstance(data, dict):
+            return UploadGrantOutcome(grant=data)
+        return UploadGrantOutcome(error="upload_grant_failed")
     except Exception as exc:
         logger.error("parlot: upload grant request failed — %s", exc)
         logger.debug("parlot: upload grant request failed", exc_info=True)
-        return None
+        return UploadGrantOutcome(error="upload_grant_failed")
 
 
 async def complete_recording(
@@ -110,8 +165,8 @@ async def complete_recording(
         data = resp.json()
         return data if isinstance(data, dict) else None
     except Exception as exc:
-        logger.error("parlot: recording complete request failed — %s", exc)
-        logger.debug("parlot: recording complete request failed", exc_info=True)
+        logger.error("parlot: recording complete failed — %s", exc)
+        logger.debug("parlot: recording complete failed", exc_info=True)
         return None
 
 
@@ -144,11 +199,15 @@ async def put_bytes_to_presigned_url(
         return False
 
 
-def grant_put_url(grant: Mapping[str, Any]) -> Optional[str]:
+def grant_put_url(grant: Mapping[str, Any] | None) -> Optional[str]:
+    if not grant:
+        return None
     url = grant.get("put_url")
     return str(url) if isinstance(url, str) and url.strip() else None
 
 
-def grant_audio_uri(grant: Mapping[str, Any]) -> Optional[str]:
+def grant_audio_uri(grant: Mapping[str, Any] | None) -> Optional[str]:
+    if not grant:
+        return None
     uri = grant.get("audio_recording_uri")
     return str(uri) if isinstance(uri, str) and uri.strip() else None

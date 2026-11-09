@@ -20,6 +20,7 @@ from parlot.core.recording_upload import (
     fetch_upload_grant,
     grant_put_url,
     put_bytes_to_presigned_url,
+    recording_grant_webhook_error,
 )
 from parlot.core.runtime import ParlotRuntimeContext
 
@@ -105,17 +106,49 @@ async def test_fetch_upload_grant_posts_segment() -> None:
     client.__aenter__.return_value = client
     client.post = AsyncMock(return_value=resp)
     with patch("parlot.core.recording_upload.httpx.AsyncClient", return_value=client):
-        grant = await fetch_upload_grant(
+        outcome = await fetch_upload_grant(
             _runtime(),
             session_id="s1",
             segment_index=3,
             sample_offset=48000,
             content_type="audio/wav",
         )
-    assert grant_put_url(grant) == "https://put"
+    assert outcome.ok
+    assert grant_put_url(outcome.grant) == "https://put"
     payload = client.post.call_args.kwargs["json"]
     assert payload["segment_index"] == 3
     assert payload["sample_offset"] == 48000
+
+
+@pytest.mark.asyncio
+async def test_fetch_upload_grant_quota_exceeded() -> None:
+    resp = MagicMock()
+    resp.status_code = 429
+    resp.text = (
+        '{"error":"quota_exceeded","grant_type":"session_recordings",'
+        '"limit_value":3,"used_value":3,"remaining":0}'
+    )
+    client = AsyncMock()
+    client.__aenter__.return_value = client
+    client.post = AsyncMock(return_value=resp)
+    with patch("parlot.core.recording_upload.httpx.AsyncClient", return_value=client):
+        outcome = await fetch_upload_grant(_runtime(), session_id="s1")
+    assert not outcome.ok
+    assert outcome.error == recording_grant_webhook_error("quota_exceeded")
+
+
+@pytest.mark.asyncio
+async def test_fetch_upload_grant_feature_not_granted() -> None:
+    resp = MagicMock()
+    resp.status_code = 403
+    resp.text = '{"error":"feature_not_granted","grant_type":"session_recordings"}'
+    client = AsyncMock()
+    client.__aenter__.return_value = client
+    client.post = AsyncMock(return_value=resp)
+    with patch("parlot.core.recording_upload.httpx.AsyncClient", return_value=client):
+        outcome = await fetch_upload_grant(_runtime(), session_id="s1")
+    assert not outcome.ok
+    assert outcome.error == recording_grant_webhook_error("feature_not_granted")
 
 
 @pytest.mark.asyncio

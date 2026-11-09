@@ -1094,20 +1094,31 @@ class TurnEnricher:
     @staticmethod
     def _speech_wall_ms_from_metrics(
         metrics: Mapping[str, float] | None,
+        *,
+        synthesize_missing_end: bool = False,
     ) -> tuple[int, int] | None:
         if not metrics:
             return None
         started = metrics.get("started_speaking_at")
-        stopped = metrics.get("stopped_speaking_at")
-        if started is None or stopped is None:
+        if started is None:
             return None
+        stopped = metrics.get("stopped_speaking_at")
+        if stopped is None:
+            if not synthesize_missing_end:
+                return None
+            # ChatMessage.metrics often omits stopped_speaking_at on user turns;
+            # synthesize end at observation time so media_segment_* can still stamp.
+            stopped = time.time()
         try:
             speech_start_wall_ms = int(float(started) * 1000)
             speech_end_wall_ms = int(float(stopped) * 1000)
         except (TypeError, ValueError):
             return None
         if speech_end_wall_ms <= speech_start_wall_ms:
-            return None
+            if synthesize_missing_end:
+                speech_end_wall_ms = speech_start_wall_ms + 1
+            else:
+                return None
         return speech_start_wall_ms, speech_end_wall_ms
 
     @staticmethod
@@ -1635,7 +1646,10 @@ class TurnEnricher:
         if speech_wall is None and self._speech_media_from_metrics_allowed(
             input_modality
         ):
-            wall_from_metrics = self._speech_wall_ms_from_metrics(metrics)
+            wall_from_metrics = self._speech_wall_ms_from_metrics(
+                metrics,
+                synthesize_missing_end=(role == "user"),
+            )
             if wall_from_metrics is not None:
                 speech_start_wall_ms, speech_end_wall_ms = wall_from_metrics
                 speech_wall = (speech_start_wall_ms, speech_end_wall_ms)

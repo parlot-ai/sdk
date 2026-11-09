@@ -353,16 +353,22 @@ class ParlotRecordingProcessor(AudioBufferProcessor):
                 pcm, sample_rate=sample_rate, num_channels=out_channels
             )
 
-        grant = await fetch_upload_grant(
+        outcome = await fetch_upload_grant(
             runtime,
             session_id=session_id,
             segment_index=self._segment_index,
             sample_offset=self._sample_offset,
             content_type=content_type,
         )
-        if grant is None:
-            self._stamp_upload_error("upload_grant_failed")
+        if not outcome.ok or outcome.grant is None:
+            error = outcome.error or "upload_grant_failed"
+            self._stamp_upload_error(error)
+            logger.error(
+                "parlot: recording segment skipped — upload grant denied error=%s",
+                error,
+            )
             return
+        grant = outcome.grant
         put_url = grant_put_url(grant)
         if not put_url:
             self._stamp_upload_error("upload_grant_failed")
