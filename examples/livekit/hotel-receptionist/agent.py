@@ -24,7 +24,12 @@ from parlot.instrumentation.livekit import parlotize
 
 __version__ = "0.2.0"
 
-parlotize("hotel-receptionist", version=__version__)
+parlotize(
+    "hotel-receptionist",
+    version=__version__,
+    # Keep the greeting after egress sample-0 so media_segment / PII beeps align.
+    await_recording=True,
+)
 
 from benchmark import build_expected, diff_databases
 from common import Userdata
