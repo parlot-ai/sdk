@@ -46,6 +46,7 @@ from livekit.agents import (
     AgentServer,
     AgentSession,
     JobContext,
+    ScenarioUserdata,
     SimulationContext,
     cli,
     inference,
@@ -86,13 +87,21 @@ server = AgentServer()
 _SEED_DB_BYTES = build_seed_bytes(TODAY)
 
 
+def _expected_state_sql(userdata: ScenarioUserdata) -> list[str]:
+    """Narrow scenario userdata's `expected_state` to SQL statement strings."""
+    raw = userdata.get("expected_state")
+    if not isinstance(raw, list):
+        return []
+    return [stmt for stmt in raw if isinstance(stmt, str)]
+
+
 async def on_simulation_end(ctx: SimulationContext) -> None:
     # Grade the run on final DB state: build the scenario's `expected_state` on a
     # fresh seed, then diff it against the agent's DB. The diff compares
     # agent-decided facts only (room type, dates, extras, status), so minted
     # codes / order / which-king don't matter and the agent need not reproduce the
     # statements — while collateral damage still surfaces.
-    expected_state = ctx.userdata().get("expected_state") or []
+    expected_state = _expected_state_sql(ctx.userdata())
     if not expected_state:
         return
 
@@ -145,7 +154,7 @@ async def on_session_end(ctx: JobContext) -> None:
                 "local expected-state diff skipped: no simulation context "
                 "(job/room metadata carried no SimulationDispatch)"
             )
-        expected_state = (sim_ctx.userdata().get("expected_state") if sim_ctx else None) or []
+        expected_state = _expected_state_sql(sim_ctx.userdata()) if sim_ctx else []
         if sim_ctx is not None and not expected_state:
             logger.info("local expected-state diff skipped: scenario has no expected_state")
         if expected_state:
