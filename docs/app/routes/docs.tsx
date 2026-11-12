@@ -32,8 +32,8 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   return {
     path: page.path,
-    title: page.title,
-    description: page.description ?? '',
+    title: page.data.title ?? page.slugs.at(-1) ?? 'Docs',
+    description: page.data.description ?? '',
     pageUrl: page.url,
     markdownUrl: getPageMarkdownUrl(page).url,
     pageTree: await source.serializePageTree(source.getPageTree()),
