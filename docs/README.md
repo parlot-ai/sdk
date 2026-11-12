@@ -33,3 +33,14 @@ Actions → Deploy website → Run workflow.
 
 CI: `.github/workflows/docs.yml` builds and runs the leak check. Local Compose
 serves this site at http://127.0.0.1:3000/docs/ (see platform `docker-compose.yml`).
+
+## Analytics (PostHog)
+
+Docs share the marketing/app PostHog project for that environment. Deploy website
+bakes `VITE_PUBLIC_POSTHOG_KEY` / `VITE_PUBLIC_POSTHOG_HOST` into the docs build
+(same secrets as the marketing site). Local: optional staging key +
+`https://stg-e.parlot.ai` in `docs/.env.local`.
+
+Consent-gated events: `docs_view`, `quickstart_started` (once per browser
+session), `code_snippet_copied`, `github_clicked`. Prefer high-intent filters
+over raw docs volume — see internal SEO plan / PostHog catalog.
