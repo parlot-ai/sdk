@@ -29,7 +29,9 @@ under `docs/content/docs/sdk/typescript/`). Regenerate via docs scripts when nee
 
 ## Git
 
-Before starting any new implementation work, create a fresh branch from up-to-date `main` (`git fetch origin && git checkout main && git pull && git checkout -b <branch>`). Do not continue on an unrelated existing branch. Never push `main`. Land via branch + PR + squash-merge. Conventional Commits feed Release Please. When the user asks to commit, push, or open a PR, load the `ship` skill (`.agents/skills/ship/SKILL.md`).
+Before starting any new implementation work, create a fresh branch from up-to-date `main` (`git fetch origin && git checkout main && git pull && git checkout -b <branch>`). Do not continue on an unrelated existing branch. Never push `main`. Land via branch + PR; humans squash-merge. Conventional Commits feed Release Please. When the user asks to commit, push, or open a PR, load the `ship` skill (`.agents/skills/ship/SKILL.md`).
+
+**Never merge a PR** (`gh pr merge`, merge API, clicking merge, approving auto-merge, merging Release Please, etc.) — even if the user asked to “ship,” “land,” or “complete” the work. Open or update the PR and stop; the human merges.
 
 ## Meta package dependency floors
 
