@@ -3,7 +3,7 @@ const DEFAULT_OG = `${SITE}/og-image.png`;
 
 /** Align with marketing site definitional copy. */
 export const PRODUCT_DEFINITION =
-  'Parlot is an observability platform for production voice AI agents that tracks per-call cost, quality, and latency for LiveKit and Pipecat.';
+  'Parlot is a voice AI observability platform that shows the cost, quality, latency, and margin of every production voice agent call, for LiveKit, Pipecat, and LangGraph.';
 
 export type SeoInput = {
   title: string;
