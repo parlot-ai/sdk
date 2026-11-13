@@ -1,0 +1,7 @@
+# Tag pins allowed for now; hash-pinning is a follow-up.
+# https://docs.zizmor.sh/audits/#unpinned-uses
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        "*": ref-pin

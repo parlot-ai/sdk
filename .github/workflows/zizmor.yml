@@ -1,0 +1,32 @@
+name: zizmor
+
+# Blocking workflow audit. Path-filtered app CI does not cover .github/workflows.
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - ".github/zizmor.yml"
+      - ".pre-commit-config.yaml"
+
+permissions: {}
+
+concurrency:
+  group: zizmor-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  zizmor:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@v10.1.0
+        with:
+          enable-cache: true # zizmor: ignore[cache-poisoning] -- Audit-only job; no release artifacts
+
+      - name: Run zizmor
+        run: uvx --from zizmor==1.32.0 zizmor .
