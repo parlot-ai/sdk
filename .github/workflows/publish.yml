@@ -26,14 +26,15 @@ on:
           - pypi
           - testpypi
 
-permissions:
-  id-token: write
-  contents: read
+permissions: {}
 
 jobs:
   publish-parlot:
     name: Publish parlot
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     environment:
       name: pypi-parlot
     if: |
@@ -41,10 +42,12 @@ jobs:
       github.event_name == 'release' && startsWith(github.event.release.tag_name, 'parlot-v')
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: astral-sh/setup-uv@v10.1.0
         with:
           version: "0.13.5"
-          enable-cache: true
+          enable-cache: false
       - name: Build parlot
         run: uv build --package parlot --out-dir dist/
       - name: Publish to PyPI
@@ -62,6 +65,9 @@ jobs:
   publish-core:
     name: Publish parlot-core
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     environment:
       name: pypi-core
     if: |
@@ -69,10 +75,12 @@ jobs:
       github.event_name == 'release' && startsWith(github.event.release.tag_name, 'core-v')
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: astral-sh/setup-uv@v10.1.0
         with:
           version: "0.13.5"
-          enable-cache: true
+          enable-cache: false
       - name: Build parlot-core
         run: uv build --package parlot-core --out-dir dist/
       - name: Publish to PyPI
@@ -90,6 +98,9 @@ jobs:
   publish-livekit:
     name: Publish parlot-instrumentation-livekit
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     environment:
       name: pypi-livekit
     if: |
@@ -97,10 +108,12 @@ jobs:
       github.event_name == 'release' && startsWith(github.event.release.tag_name, 'instrumentation-livekit-v')
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: astral-sh/setup-uv@v10.1.0
         with:
           version: "0.13.5"
-          enable-cache: true
+          enable-cache: false
       - name: Build parlot-instrumentation-livekit
         run: uv build --package parlot-instrumentation-livekit --out-dir dist/
       - name: Publish to PyPI
@@ -118,6 +131,9 @@ jobs:
   publish-langgraph:
     name: Publish parlot-instrumentation-langgraph
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     environment:
       name: pypi-langgraph
     if: |
@@ -125,10 +141,12 @@ jobs:
       github.event_name == 'release' && startsWith(github.event.release.tag_name, 'instrumentation-langgraph-v')
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: astral-sh/setup-uv@v10.1.0
         with:
           version: "0.13.5"
-          enable-cache: true
+          enable-cache: false
       - name: Build parlot-instrumentation-langgraph
         run: uv build --package parlot-instrumentation-langgraph --out-dir dist/
       - name: Publish to PyPI
@@ -146,6 +164,9 @@ jobs:
   publish-pipecat:
     name: Publish parlot-instrumentation-pipecat
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     environment:
       name: pypi-pipecat
     if: |
@@ -153,10 +174,12 @@ jobs:
       github.event_name == 'release' && startsWith(github.event.release.tag_name, 'instrumentation-pipecat-v')
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: astral-sh/setup-uv@v10.1.0
         with:
           version: "0.13.5"
-          enable-cache: true
+          enable-cache: false
       - name: Build parlot-instrumentation-pipecat
         run: uv build --package parlot-instrumentation-pipecat --out-dir dist/
       - name: Publish to PyPI

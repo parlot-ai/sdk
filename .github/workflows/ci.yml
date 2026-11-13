@@ -19,13 +19,18 @@ on:
       - 'pyproject.toml'
       - 'uv.lock'
 
+permissions: {}
+
 jobs:
   test:
     if: github.event_name != 'pull_request' || !startsWith(github.head_ref, 'release-please--')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
         with:
+          persist-credentials: false
           fetch-depth: 0
       - uses: astral-sh/setup-uv@v10.1.0
         with:
@@ -36,9 +41,10 @@ jobs:
       - name: Lint and typecheck
         run: bash scripts/lint.sh
       - name: GenAI semconv lock
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
           set -euo pipefail
-          BASE_REF="${{ github.base_ref }}"
           if [[ -z "${BASE_REF}" ]]; then
             BASE_REF=main
           fi

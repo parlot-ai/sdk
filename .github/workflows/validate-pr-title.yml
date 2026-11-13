@@ -5,7 +5,8 @@ name: Validate PR title
 # follow Conventional Commits.
 
 on:
-  pull_request_target:
+  # Title-only validation; does not check out PR head or run untrusted code.
+  pull_request_target: # zizmor: ignore[dangerous-triggers]
     types:
       - opened
       - edited
