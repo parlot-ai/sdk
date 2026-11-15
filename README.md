@@ -3,7 +3,7 @@
 Parlot shows whether production voice AI agents actually work — turns, handoffs, goal completion,
 and an evidence trail to the proving audio.
 
-Call `parlotize()` once at startup. MIT OpenTelemetry instrumentation for LiveKit Agents (Cloud, self-hosted, or [LiveKit on Telnyx](https://telnyx.com/products/livekit-on-telnyx)), Pipecat, and LangGraph.
+Call `parlotize()` once at startup. MIT OpenTelemetry instrumentation for LiveKit Agents (Cloud or self-hosted), Pipecat, and LangGraph.
 
 **Docs:** [parlot.ai/docs](https://parlot.ai/docs) · **Product:** [parlot.ai](https://parlot.ai)
 
