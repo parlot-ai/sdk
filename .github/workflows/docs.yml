@@ -53,6 +53,15 @@ jobs:
             echo "error: sitemap must not include /docs/search" >&2
             exit 1
           fi
+          # Cloudflare drop-trailing-slash serves /docs; basename "/docs/" leaves the hub inert.
+          if ! grep -q '"basename":"/docs"' build/index.html; then
+            echo "error: build/index.html must set React Router basename to /docs (no trailing slash)" >&2
+            exit 1
+          fi
+          if grep -q '"basename":"/docs/"' build/index.html; then
+            echo "error: basename /docs/ breaks first-load interactivity on /docs" >&2
+            exit 1
+          fi
           test -f build/llms.txt || { echo "error: missing build/llms.txt (static/llms.txt)" >&2; exit 1; }
       - name: Leak check
         run: bash scripts/check-public-leak.sh

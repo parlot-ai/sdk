@@ -5,7 +5,7 @@ export function loader() {
   const urls = [
     baseUrl,
     ...source.getPages().map((p) => {
-      // Page urls are site-relative (e.g. /sdk/..., /app/...) under the /docs/ basename.
+      // Page urls are site-relative (e.g. /sdk/..., /app/...) under the /docs basename.
       const path = p.url.startsWith('/docs') ? p.url : `/docs${p.url.startsWith('/') ? '' : '/'}${p.url}`;
       return `https://parlot.ai${path}`;
     }),
