@@ -3,7 +3,11 @@ import { glob } from 'node:fs/promises';
 import { getSlugs } from 'fumadocs-core/source';
 
 export default {
-  basename: '/docs/',
+  // Must match the live canonical path. Cloudflare Assets
+  // html_handling=drop-trailing-slash serves /docs (not /docs/), and React
+  // Router only mounts when location.pathname starts with basename — a
+  // trailing slash here leaves the hub at /docs as inert prerendered HTML.
+  basename: '/docs',
   ssr: false,
   async prerender({ getStaticPaths }) {
     const paths: string[] = ['/', '/api/search', '/sitemap.xml', '/llms.txt', '/llms-full.txt'];

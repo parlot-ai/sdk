@@ -31,7 +31,7 @@ export function CustomLink({
   }
 
   // If a link is written with the /docs prefix, strip it so React Router's
-  // basename="/docs/" does not double-prefix it to /docs/docs/...
+  // basename="/docs" does not double-prefix it to /docs/docs/...
   let to = href;
   if (to === '/docs' || to === '/docs/') {
     to = '/';
