@@ -35,6 +35,7 @@ from parlot.core.attrs import (
     METRIC_USAGE_TTS_AUDIO_DURATION,
     METRIC_USAGE_TTS_CHARACTERS,
 )
+from parlot.core.otlp_quota import attach_otlp_http_quota_capture, log_parlot_ingest_quota_once
 from parlot.core.provider import build_parlot_client_headers
 
 logger = logging.getLogger("parlot.core.metrics")
@@ -47,8 +48,15 @@ LONG_LIVED_METRICS_EXPORT_INTERVAL_MS = 60_000
 ATTR_TENANT_ID = "tenant_id"
 
 
+def _short_metric_error(exc: BaseException) -> str:
+    msg = str(exc).strip() or exc.__class__.__name__
+    if len(msg) > 240:
+        return msg[:237] + "..."
+    return msg
+
+
 class QuietOTLPMetricExporter(MetricExporter):
-    """Wraps an OTLP metric exporter with one-line warning logs on failure."""
+    """Wraps an OTLP metric exporter; quota 429s are swallowed after one process log."""
 
     def __init__(
         self,
@@ -62,6 +70,27 @@ class QuietOTLPMetricExporter(MetricExporter):
         )
         self._exporter = exporter
         self._endpoint_label = endpoint_label
+        self._quota_responses: list[tuple[int, str]] = []
+        attach_otlp_http_quota_capture(
+            exporter,
+            on_quota=self._record_quota_response,
+        )
+
+    def _record_quota_response(self, status_code: int, body_text: str) -> None:
+        self._quota_responses.append((status_code, body_text))
+
+    def _swallow_quota_if_present(self) -> MetricExportResult | None:
+        if not self._quota_responses:
+            return None
+        status_code, body_text = self._quota_responses[-1]
+        if status_code == 429:
+            log_parlot_ingest_quota_once(
+                channel="metrics",
+                status_code=status_code,
+                body_text=body_text,
+            )
+            return MetricExportResult.SUCCESS
+        return None
 
     def export(
         self,
@@ -69,26 +98,31 @@ class QuietOTLPMetricExporter(MetricExporter):
         timeout_millis: float = 10_000,
         **kwargs,
     ) -> MetricExportResult:
+        self._quota_responses.clear()
         try:
             result = self._exporter.export(
                 metrics_data, timeout_millis=timeout_millis, **kwargs
             )
-            if result == MetricExportResult.FAILURE:
-                logger.warning(
-                    "Parlot metrics export returned FAILURE (%s)",
-                    self._endpoint_label,
-                )
-            return result
         except Exception as exc:
-            msg = str(exc).strip() or exc.__class__.__name__
-            if len(msg) > 240:
-                msg = msg[:237] + "..."
+            swallowed = self._swallow_quota_if_present()
+            if swallowed is not None:
+                return swallowed
             logger.warning(
                 "Parlot metrics export failed (%s): %s",
                 self._endpoint_label,
-                msg,
+                _short_metric_error(exc),
             )
             return MetricExportResult.FAILURE
+
+        swallowed = self._swallow_quota_if_present()
+        if swallowed is not None:
+            return swallowed
+        if result == MetricExportResult.FAILURE:
+            logger.warning(
+                "Parlot metrics export returned FAILURE (%s)",
+                self._endpoint_label,
+            )
+        return result
 
     def force_flush(self, timeout_millis: float = 10_000) -> bool:
         return self._exporter.force_flush(timeout_millis=timeout_millis)

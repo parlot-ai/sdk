@@ -40,6 +40,24 @@ def recording_grant_error(
     return f"{code}:{grant_type}"
 
 
+def _quota_log_extras(body_text: str) -> str:
+    """Append resets_at / upgrade_url from a JSON error body for log lines."""
+    try:
+        data = json.loads(body_text) if body_text else {}
+    except json.JSONDecodeError:
+        return ""
+    if not isinstance(data, dict):
+        return ""
+    parts: list[str] = []
+    resets_at = data.get("resets_at")
+    if isinstance(resets_at, str) and resets_at.strip():
+        parts.append(f"resets_at={resets_at.strip()}")
+    upgrade_url = data.get("upgrade_url")
+    if isinstance(upgrade_url, str) and upgrade_url.strip():
+        parts.append(f"upgrade_url={upgrade_url.strip()}")
+    return "; ".join(parts)
+
+
 def _parse_upload_grant_error(status_code: int, body_text: str) -> str:
     """Map HTTP error body to a durable recording_error code."""
     code = ""
@@ -89,11 +107,13 @@ async def fetch_upload_grant(
             resp = await client.post(url, json=payload, headers=headers)
         if resp.status_code >= 400:
             error = _parse_upload_grant_error(resp.status_code, resp.text[:500])
+            extras = _quota_log_extras(resp.text[:500])
             logger.error(
-                "parlot: upload grant failed status=%s error=%s body=%s",
+                "parlot: upload grant failed status=%s error=%s body=%s%s",
                 resp.status_code,
                 error,
                 resp.text[:500],
+                f" ({extras})" if extras else "",
             )
             return UploadGrantOutcome(error=error)
         data = resp.json()

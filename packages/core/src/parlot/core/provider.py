@@ -215,14 +215,16 @@ def build_filtered_tracer_provider(
 
     Framework processors go in ``span_processors`` (before the batch exporter).
     """
-    from parlot.core.export import ExportFilterSpanExporter
+    from parlot.core.export import ExportFilterSpanExporter, QuietOTLPSpanExporter
 
     resource = build_resource(
         service_name=service_name,
         service_version=service_version,
     )
+    trace_endpoint = endpoint.rstrip("/") + "/v1/traces"
     otlp = build_otlp_http_exporter(endpoint=endpoint, api_key=api_key)
-    exporter = ExportFilterSpanExporter(otlp)
+    filtered = ExportFilterSpanExporter(otlp)
+    exporter = QuietOTLPSpanExporter(filtered, endpoint_label=trace_endpoint)
     provider = TracerProvider(resource=resource)
     for processor in span_processors:
         provider.add_span_processor(processor)
