@@ -34,7 +34,7 @@ from .parlotize import (
     normalize_glob_or_bool,
 )
 from .genai_content_capture import should_capture_genai_content
-from .export import ExportFilterSpanExporter
+from .export import ExportFilterSpanExporter, QuietOTLPSpanExporter
 from .intent import derive_intent
 from .logs_capture import should_capture_logs
 from .recording import should_record
@@ -109,6 +109,7 @@ __all__ = [
     "emit_parlot_turn_root",
     "end_session_span_ok",
     "ExportFilterSpanExporter",
+    "QuietOTLPSpanExporter",
     "force_flush_tracer_provider",
     "force_flush_with_budget",
     "LONG_LIVED_METRICS_EXPORT_INTERVAL_MS",
