@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.14](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.13...instrumentation-livekit-v0.4.14) (2026-11-17)
+
+
+### Features
+
+* **core:** fail open on OTLP ingest quota 429 ([#163](https://github.com/parlot-ai/sdk/issues/163)) ([339ffd5](https://github.com/parlot-ai/sdk/commit/339ffd5840a70ff9e4e76ab30d69ce54649d9ab9))
+
+
+### Documentation
+
+* drop LiveKit on Telnyx as a hosting option ([#161](https://github.com/parlot-ai/sdk/issues/161)) ([b14c7af](https://github.com/parlot-ai/sdk/commit/b14c7afd7cda61c51ac15ba9806e623a5193c5a0))
+
 ## [0.4.13](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.12...instrumentation-livekit-v0.4.13) (2026-11-09)
 
 

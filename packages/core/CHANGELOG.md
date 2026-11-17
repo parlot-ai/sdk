@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.15](https://github.com/parlot-ai/sdk/compare/core-v0.4.14...core-v0.4.15) (2026-11-17)
+
+
+### Features
+
+* **core:** fail open on OTLP ingest quota 429 ([#163](https://github.com/parlot-ai/sdk/issues/163)) ([339ffd5](https://github.com/parlot-ai/sdk/commit/339ffd5840a70ff9e4e76ab30d69ce54649d9ab9))
+
 ## [0.4.14](https://github.com/parlot-ai/sdk/compare/core-v0.4.13...core-v0.4.14) (2026-11-09)
 
 
