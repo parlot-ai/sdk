@@ -33,6 +33,9 @@ Full legal text ships with the platform repository `LICENSE`. For commercial que
 Hosted **Parlot Cloud** manages authentication, billing, and entitlements in the product. Open
 **Settings → Plan & billing** to see your current plan and turn usage.
 
+For how Free hard-stops ingestion, how paid plans continue past included turns, and fair-use
+notices, see the [Usage and Ingest Policy](https://parlot.ai/usage).
+
 Plans build on the Free tier. Exact entitlements can change; treat Settings → Plan & billing and
 in-app entitlements as authoritative. Typical included turns:
 
