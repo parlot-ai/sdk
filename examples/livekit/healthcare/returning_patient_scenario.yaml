@@ -1,0 +1,31 @@
+# Curated LiveKit Agent Simulation scenarios for the healthcare demo agent.
+# Run: lk agent simulate text --scenarios sim_scenarios.yaml -y
+id: SCNG_85abUxFysxMU
+name: Parlot healthcare — curated simulations
+
+scenarios:
+- id: SCN_682B4ykfeNT7
+  label: Returning patient books appointment
+  instructions: |
+    PERSONA: Mary Jane, a returning patient. Calm and cooperative.
+    OPENING LINE: "Hi, I'd like to schedule an appointment."
+    FACTS (reveal each only when asked, one per turn):
+    - full name: Mary Jane
+    - date of birth: June 10, 2001
+    - you already have insurance on file (Anthem) — don't volunteer a new insurer
+    - prefer Dr. Henry Jekyll if available; otherwise any compatible doctor is fine
+    - visit reason: annual checkup, nothing urgent
+    DO, IN ORDER:
+    1. Ask to schedule an appointment.
+    2. Authenticate when asked (name + DOB).
+    3. Pick a offered slot and confirm the booking.
+    4. When the appointment is confirmed, say thanks and hang up.
+    Do NOT ask to speak to a human or transfer.
+  agent_expectations: >
+    Authenticates Mary Jane (name + DOB), treats her as a returning patient with
+    insurance already on file, offers appointment slots (preferring Dr. Henry Jekyll
+    when available), and confirms a booked slot for an annual checkup. Must not
+    warm-transfer or invent a new insurance plan.
+  tags:
+    feature: schedule
+    difficulty: "1"
