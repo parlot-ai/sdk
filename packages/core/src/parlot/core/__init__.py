@@ -25,6 +25,13 @@ from .provider import (
     INGESTION_PROTOCOL_VERSION,
 )
 from .bootstrap import fetch_telemetry_bootstrap
+from .ingest_gate import (
+    apply_bootstrap_ingest_policy,
+    disable_parlot_ingest,
+    is_parlot_ingest_disabled,
+    parlot_ingest_disable_reason,
+    reset_parlot_ingest_gate_for_tests,
+)
 from .parlotize import (
     BaseParlotizeResult,
     ParlotizeProtocol,
@@ -136,6 +143,11 @@ __all__ = [
     "clear_active_session",
     "derive_intent",
     "fetch_telemetry_bootstrap",
+    "apply_bootstrap_ingest_policy",
+    "disable_parlot_ingest",
+    "is_parlot_ingest_disabled",
+    "parlot_ingest_disable_reason",
+    "reset_parlot_ingest_gate_for_tests",
     "get_active_session",
     "get_active_session_span",
     "human_escalation",

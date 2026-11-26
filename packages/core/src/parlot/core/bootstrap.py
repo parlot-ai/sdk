@@ -45,6 +45,9 @@ def fetch_telemetry_bootstrap(
                 endpoint.rstrip("/"),
             )
             return None
+        from parlot.core.ingest_gate import apply_bootstrap_ingest_policy
+
+        apply_bootstrap_ingest_policy(payload)
         context.runtime = runtime_from_bootstrap(endpoint, api_key, payload)
         logger.info(
             "parlot: telemetry bootstrap ok (endpoint=%s)",

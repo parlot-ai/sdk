@@ -35,6 +35,7 @@ from parlot.core.attrs import (
     METRIC_USAGE_TTS_AUDIO_DURATION,
     METRIC_USAGE_TTS_CHARACTERS,
 )
+from parlot.core.ingest_gate import is_parlot_ingest_disabled
 from parlot.core.otlp_quota import attach_otlp_http_quota_capture, log_parlot_ingest_quota_once
 from parlot.core.provider import build_parlot_client_headers
 
@@ -98,6 +99,8 @@ class QuietOTLPMetricExporter(MetricExporter):
         timeout_millis: float = 10_000,
         **kwargs,
     ) -> MetricExportResult:
+        if is_parlot_ingest_disabled():
+            return MetricExportResult.SUCCESS
         self._quota_responses.clear()
         try:
             result = self._exporter.export(

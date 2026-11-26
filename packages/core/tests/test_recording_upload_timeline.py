@@ -15,6 +15,7 @@ from parlot.core.recording_timeline import (
     set_recording_anchor_wall_ms,
     speech_wall_ms_from_span,
 )
+from parlot.core.ingest_gate import reset_parlot_ingest_gate_for_tests
 from parlot.core.recording_upload import (
     complete_recording,
     fetch_upload_grant,
@@ -23,6 +24,13 @@ from parlot.core.recording_upload import (
     recording_grant_error,
 )
 from parlot.core.runtime import ParlotRuntimeContext
+
+
+@pytest.fixture(autouse=True)
+def _reset_ingest_gate() -> None:
+    reset_parlot_ingest_gate_for_tests()
+    yield
+    reset_parlot_ingest_gate_for_tests()
 
 
 def _runtime() -> ParlotRuntimeContext:

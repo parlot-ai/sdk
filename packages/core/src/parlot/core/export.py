@@ -9,6 +9,7 @@ from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter, SpanExportResult
 
 from parlot.core.attrs import is_exportable_span_name
+from parlot.core.ingest_gate import is_parlot_ingest_disabled
 from parlot.core.otlp_quota import attach_otlp_http_quota_capture, log_parlot_ingest_quota_once
 
 logger = logging.getLogger("parlot.core.export")
@@ -74,6 +75,8 @@ class QuietOTLPSpanExporter(SpanExporter):
         return None
 
     def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
+        if is_parlot_ingest_disabled():
+            return SpanExportResult.SUCCESS
         self._quota_responses.clear()
         try:
             result = self._exporter.export(spans)
