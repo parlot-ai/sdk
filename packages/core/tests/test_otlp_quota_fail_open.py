@@ -13,7 +13,7 @@ from parlot.core.otlp_quota import reset_parlot_quota_log_for_tests
 
 def test_otlp_quota_429_does_not_raise_and_host_call_continues(caplog: pytest.LogCaptureFixture) -> None:
     reset_parlot_quota_log_for_tests()
-    caplog.set_level("WARNING", logger="parlot.core.otlp_quota")
+    caplog.set_level("WARNING", logger="parlot.core.ingest_gate")
 
     body = (
         '{"error":"quota_exceeded","resets_at":"2026-08-15T00:00:00.000Z",'
@@ -41,7 +41,8 @@ def test_otlp_quota_429_does_not_raise_and_host_call_continues(caplog: pytest.Lo
     assert result is SpanExportResult.SUCCESS
     assert host_outcome == "agent_response_ok"
     assert any(
-        "quota exceeded" in r.message
+        "ingest disabled" in r.message
+        and "error=quota_exceeded" in r.message
         and "resets_at=2026-08-15" in r.message
         and "upgrade_url=https://app.parlot.ai/settings/billing" in r.message
         for r in caplog.records

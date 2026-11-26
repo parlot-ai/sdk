@@ -27,6 +27,11 @@ class ParlotRuntimeContext:
     capture_genai_content_agents: tuple[tuple[str, bool], ...] = ()
     # True when bootstrap JSON included a ``capture_genai_content`` object (even empty).
     capture_genai_content_policy_present: bool = False
+    # Free-plan hard-stop from bootstrap ``ingest`` (default allowed when omitted).
+    ingest_allowed: bool = True
+    ingest_error: str = ""
+    ingest_resets_at: str = ""
+    ingest_upgrade_url: str = ""
 
     def recording_agents_map(self) -> dict[str, bool]:
         return dict(self.recording_agents)
@@ -132,6 +137,27 @@ def _parse_capture_genai_content_policy(
     return tuple(globs), tuple(agents), True
 
 
+def _parse_ingest_policy(
+    payload: dict[str, Any],
+) -> tuple[bool, str, str, str]:
+    ingest = payload.get("ingest")
+    if not isinstance(ingest, dict):
+        return True, "", "", ""
+    allowed = ingest.get("allowed")
+    if allowed is False:
+        error = ingest.get("error")
+        error_s = str(error).strip() if error is not None else "quota_exceeded"
+        resets = ingest.get("resets_at")
+        upgrade = ingest.get("upgrade_url")
+        return (
+            False,
+            error_s or "quota_exceeded",
+            str(resets).strip() if isinstance(resets, str) else "",
+            str(upgrade).strip() if isinstance(upgrade, str) else "",
+        )
+    return True, "", "", ""
+
+
 def runtime_from_bootstrap(
     endpoint: str, api_key: str, payload: dict[str, Any]
 ) -> ParlotRuntimeContext:
@@ -148,6 +174,9 @@ def runtime_from_bootstrap(
         capture_agents,
         capture_present,
     ) = _parse_capture_genai_content_policy(payload)
+    ingest_allowed, ingest_error, ingest_resets_at, ingest_upgrade_url = (
+        _parse_ingest_policy(payload)
+    )
     return ParlotRuntimeContext(
         endpoint=endpoint.rstrip("/"),
         api_key=api_key,
@@ -164,4 +193,8 @@ def runtime_from_bootstrap(
         capture_genai_content_globs=capture_globs,
         capture_genai_content_agents=capture_agents,
         capture_genai_content_policy_present=capture_present,
+        ingest_allowed=ingest_allowed,
+        ingest_error=ingest_error,
+        ingest_resets_at=ingest_resets_at,
+        ingest_upgrade_url=ingest_upgrade_url,
     )

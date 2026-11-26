@@ -104,6 +104,14 @@ def recording_disabled_reason(
     ctx: Any, *, context: ParlotContext | None = None
 ) -> str:
     """Why recording is off for this job (call only when ``should_record`` is False)."""
+    from parlot.core.ingest_gate import (
+        is_parlot_ingest_disabled,
+        parlot_ingest_disable_reason,
+    )
+
+    if is_parlot_ingest_disabled():
+        return parlot_ingest_disable_reason()
+
     metadata = metadata_record_flag(ctx)
     if metadata is False:
         return "job_metadata"

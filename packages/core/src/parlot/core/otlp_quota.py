@@ -2,30 +2,20 @@
 
 from __future__ import annotations
 
-import json
 import logging
-import threading
 from typing import Any, Callable
 
-logger = logging.getLogger("parlot.core.otlp_quota")
+from parlot.core.ingest_gate import (
+    disable_parlot_ingest_from_quota_body,
+    reset_parlot_ingest_gate_for_tests,
+)
 
-_quota_logged = False
-_quota_lock = threading.Lock()
+logger = logging.getLogger("parlot.core.otlp_quota")
 
 
 def reset_parlot_quota_log_for_tests() -> None:
     """Clear the process-wide quota warning latch (tests only)."""
-    global _quota_logged
-    with _quota_lock:
-        _quota_logged = False
-
-
-def _parse_error_body(body_text: str) -> dict[str, Any]:
-    try:
-        data = json.loads(body_text) if body_text else {}
-    except json.JSONDecodeError:
-        return {}
-    return data if isinstance(data, dict) else {}
+    reset_parlot_ingest_gate_for_tests()
 
 
 def log_parlot_ingest_quota_once(
@@ -34,26 +24,12 @@ def log_parlot_ingest_quota_once(
     status_code: int,
     body_text: str,
 ) -> None:
-    """Emit at most one quota warning per process."""
-    global _quota_logged
-    with _quota_lock:
-        if _quota_logged:
-            return
-        _quota_logged = True
-
-    body = _parse_error_body(body_text)
-    error = body.get("error") or body.get("code") or "quota_exceeded"
-    parts = [
-        f"Parlot {channel} ingest quota exceeded (HTTP {status_code})",
-        f"error={error}",
-    ]
-    resets_at = body.get("resets_at")
-    if isinstance(resets_at, str) and resets_at.strip():
-        parts.append(f"resets_at={resets_at.strip()}")
-    upgrade_url = body.get("upgrade_url")
-    if isinstance(upgrade_url, str) and upgrade_url.strip():
-        parts.append(f"upgrade_url={upgrade_url.strip()}")
-    logger.warning("%s", "; ".join(parts))
+    """Latch ingest off and emit at most one quota warning per process."""
+    disable_parlot_ingest_from_quota_body(
+        source=f"otlp_{channel}",
+        status_code=status_code,
+        body_text=body_text,
+    )
 
 
 def _find_otlp_http_exporter(exporter: Any) -> Any | None:

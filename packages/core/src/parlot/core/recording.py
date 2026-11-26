@@ -34,8 +34,13 @@ def should_record(
 ) -> bool:
     """Return True when session audio recording should start for this job.
 
-    Precedence: job metadata > ``parlotize(record=…)`` > bootstrap (UI) policy.
+    Precedence: ingest gate > job metadata > ``parlotize(record=…)`` > bootstrap (UI) policy.
     """
+    from parlot.core.ingest_gate import is_parlot_ingest_disabled
+
+    if is_parlot_ingest_disabled():
+        return False
+
     if metadata_record is False:
         return False
     if metadata_record is True:

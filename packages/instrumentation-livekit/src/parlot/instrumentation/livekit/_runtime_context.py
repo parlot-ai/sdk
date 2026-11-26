@@ -15,4 +15,7 @@ def apply_bootstrap_payload(
     payload: dict[str, Any],
 ) -> None:
     """Cache platform bootstrap on ``context.runtime``."""
+    from parlot.core.ingest_gate import apply_bootstrap_ingest_policy
+
+    apply_bootstrap_ingest_policy(payload)
     context.runtime = runtime_from_bootstrap(endpoint, api_key, payload)

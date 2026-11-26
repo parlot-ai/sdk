@@ -91,6 +91,19 @@ async def fetch_upload_grant(
     content_type: Optional[str] = None,
 ) -> UploadGrantOutcome:
     """POST ``/v1/recordings/upload-grant``; return grant body or structured error."""
+    from parlot.core.ingest_gate import (
+        is_parlot_ingest_disabled,
+        parlot_ingest_disable_reason,
+    )
+
+    if is_parlot_ingest_disabled():
+        return UploadGrantOutcome(
+            error=recording_grant_error(
+                parlot_ingest_disable_reason(),
+                grant_type="session_turns",
+            )
+        )
+
     url = f"{runtime.endpoint.rstrip('/')}/v1/recordings/upload-grant"
     headers = {"Authorization": f"Bearer {runtime.api_key}"}
     payload: dict[str, Any] = {"session_id": session_id}
@@ -108,6 +121,14 @@ async def fetch_upload_grant(
         if resp.status_code >= 400:
             error = _parse_upload_grant_error(resp.status_code, resp.text[:500])
             extras = _quota_log_extras(resp.text[:500])
+            if resp.status_code in (403, 429) and error.split(":", 1)[0] in _GRANT_DENIAL_CODES:
+                from parlot.core.ingest_gate import disable_parlot_ingest_from_quota_body
+
+                disable_parlot_ingest_from_quota_body(
+                    source="upload_grant",
+                    status_code=resp.status_code,
+                    body_text=resp.text[:500],
+                )
             logger.error(
                 "parlot: upload grant failed status=%s error=%s body=%s%s",
                 resp.status_code,
