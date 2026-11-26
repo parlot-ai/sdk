@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.15](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.14...instrumentation-livekit-v0.4.15) (2026-11-26)
+
+
+### Features
+
+* **core:** drop Parlot ingest when free-plan bootstrap or OTLP denies ([#166](https://github.com/parlot-ai/sdk/issues/166)) ([9d30e3c](https://github.com/parlot-ai/sdk/commit/9d30e3c121c088a52a3e45b7c64085bb639df7cb))
+
 ## [0.4.14](https://github.com/parlot-ai/sdk/compare/instrumentation-livekit-v0.4.13...instrumentation-livekit-v0.4.14) (2026-11-17)
 
 
